@@ -245,7 +245,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 				FCA_pre_tab_item();
 				if(id!=NbDomains) {
 					FCA_pre_dir("/$", Domains[itab[id]], true);
-    					FCA_tab_item(Domains[id],0);
+    					FCA_tab_item(Domains[itab[id]],0);
 				} else {
 					FCA_pre_dir("/$", "None" , true);
 					FCA_tab_item("None",0);

@@ -302,6 +302,8 @@ bool FCA_ls_cmd(char *path)
 	    	FCA_print_warning("syntax error");
 	
 	if(domain==NULL && machine==NULL && share==NULL && dir==NULL) {	/* on / */
+		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
+			FCA_printlog("listing domains");
 		FCA_list_domains();
 		return false;
 	}
@@ -344,10 +346,10 @@ bool FCA_ls_cmd(char *path)
 		IP=machine;
 	if(domain!=NULL && machine!=NULL && share==NULL && dir==NULL) {	/* in a machine, list of shares */
 			/* only if the machine is up, and cannot list */
+		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
+			FCA_printlog("listing shares of %s (%s)", machine, domain);
 		FCA_posted=false;
 		*(machine-1)='/';
-		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
-			FCA_printlog("listing shares of %s", machine);
 		if( !FCA_list_shares(target, IP) ) {
 			FCA_print_cmd_err("cannot get listing");
 			return false;
@@ -366,22 +368,22 @@ bool FCA_ls_cmd(char *path)
 		}
 	}
 	if(domain!=NULL && machine!=NULL && share!=NULL && dir==NULL) {	/* in a share, list / of a share */
+		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
+			FCA_printlog("listing share %s of machine %s (%s)", share, machine, domain);
 		*(machine-1)='/';
 		*(share-1)='/';
 		FCA_posted=false;
-		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
-			FCA_printlog("listing share %s of machine", share, machine);
 		FCA_list_dir(FCA_shrSkt, target, "/");
 		return true;
 	}
 	    	/* we don't need to verify if the dir is valid...this fonction do this */
 	if(domain!=NULL && machine!=NULL && share!=NULL && dir!=NULL) {	/* in a share, not on his / */
+		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
+			FCA_printlog("listing directory %s of share %s of machine %s (%s)", dir, share, machine, domain);
 		*(machine-1)='/';
 		*(share-1)='/';
 			*(dir-1)='/';
 		FCA_posted=false;
-		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
-			FCA_printlog("listing directory %s of share %s of machine %s", dir, share, machine);
 		FCA_list_dir(FCA_shrSkt, target, dir-1);
 		return true;
 	}
@@ -652,7 +654,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 				*(machine-1)='/';
 				*(share-1)='/';
 				if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL)
-					FCA_printlog("downloading directory %s to %s", tgt, to);
+					FCA_printlog("downloading directory %s/%s to %s", tgt, dir-1, to);
 				FCA_dw_dir(tgt,dir-1, to);
 				FCA_print_cmd_ok("Download sucessful");
 				ding();
@@ -667,8 +669,12 @@ or get /$/none/127.0.0.1/tmp/toto/
 			FCA_posted=false;
 			FCA_quiet=!toDisk;
 			
-			if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL)
-					FCA_printlog("downloading file %s to %s", tgt, to);
+			if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL) {
+				if(toDisk)
+					FCA_printlog("downloading file %s/%s to %s", tgt, dir-1, to);
+				else
+					FCA_printlog("downloading and displaying file %s/%s", tgt, dir-1);
+			}
 			code=FCA_RequestDownload(FCA_shrSkt, dir-1,
 			 toDisk?to:NULL, ( (FC_PEntry)(Ps->Data) )->Size);
 			if(code>0 )
@@ -754,7 +760,7 @@ bool FCA_find_cmd(char *args)
 	if( domain==NULL || (domain!=NULL && !SU_strcasecmp(domain,"None")) ) {	/* domain None or / -> search on all */
 		FFSS_PrintDebug(5, "(client) looking for '%s' on all domains\n", args, domain);
 		if(FCA_loglevel>=FCA_FIND_LOGLEVEL)
-			FCA_printlog("looking for '%s' on all domains\n", args, domain);
+			FCA_printlog("looking for '%s' on all domains", args, domain);
 		FCA_inDispFind=true;
 		FCA_multiFind=true;
 		res=FC_SendMessage_Search(FCA_master,NULL, args);
@@ -767,7 +773,7 @@ bool FCA_find_cmd(char *args)
 	} else {	/* search on a particular domain */
 		FCA_multiFind=false;
 		if(FCA_loglevel>=FCA_FIND_LOGLEVEL)
-			FCA_printlog("looking for '%s' on domain '%s'\n", args, domain);
+			FCA_printlog("looking for '%s' on domain '%s'", args, domain);
 		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
 		res=FC_SendMessage_Search(FCA_master,domain, args);
 	}
