@@ -7,7 +7,7 @@
 
 #define FMP_DELAY_RETRY_SEM  30
 #define FMP_DELAY_RETRY_RECO 10
-#define FMP_MIN_RECONNECT_DELAY 20
+#define FMP_MIN_RECONNECT_DELAY 2*60
 
 /* ************* */
 typedef struct
