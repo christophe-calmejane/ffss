@@ -171,11 +171,11 @@ bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
 {
   bool ret = true;
 #ifdef PLUGINS
-  void (*Fonc)(void);
+  bool (*Fonc)(void);
 
-  Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
+  Fonc = (bool(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
   if(Fonc != NULL)
-    Fonc();
+    ret = Fonc();
   else
     ret = false;
 #endif /* PLUGINS */
