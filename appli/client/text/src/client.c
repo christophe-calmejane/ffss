@@ -270,8 +270,10 @@ void FCA_uninit()
 #endif
 	FCA_exiting=true;
 	FCA_ShDisconnect();	/* disconnects if connected */
+#ifndef __BSD__
 	if( !FC_UnInit() && !FCA_quiet)	/* cannot call FCA_crash... */
 		printf("FATAL ERROR: cannot shutdown FFSS library !\n");
+#endif
 	FCA_restore_usr1();
 
 	if(!FCA_quiet)
