@@ -510,6 +510,10 @@ typedef struct
   long int BufSize;
 } FC_THandle, *FC_PHandle;
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /* ************************************************ */
 /*                 EXTERN VARIABLES                 */
 /* ************************************************ */
@@ -520,10 +524,6 @@ extern FFSS_TCallbacks FFSS_CB;
 extern char *FFSS_MyIP;
 
 extern char *FFSS_ErrorTable[];
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
 void FFSS_PrintSyslog(int Level,char *Txt, ...);
 void FFSS_PrintDebug(int Level,char *Txt, ...);
