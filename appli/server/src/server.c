@@ -70,7 +70,7 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
       Ptr2 = ((FS_PConn)Ptr->Data)->XFers;
       while(Ptr2 != NULL)
       {
-        ((FFSS_PTransfer)Ptr2->Data)->Cancel = true; 
+        ((FFSS_PTransfer)Ptr2->Data)->Cancel = true;
         Ptr2 = Ptr2->Next;
       }
     }
@@ -3000,7 +3000,7 @@ int main(int argc,char *argv[])
 #endif /* __unix__ */
     signal(SIGINT,handint);
     signal(SIGTERM,handint);
-FFSS_QoS_AddRuleToChain_Head(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,"0.0.0.0","255.255.255.255",FFSS_QOS_CRITERIA_BYTES_PER_MSEC,128,NULL);
+
     FS_MainThread();
 
     FS_ShutDown();
