@@ -502,6 +502,10 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_EJECTED);
       Error = true;
       break;
+    case FFSS_ERROR_SOCKET_ERROR :
+      if(Path->HaveIdx == false)
+        break;
+      /* else do default case */
     default :
       if(FMP_CB.OnError != NULL)
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
@@ -569,7 +573,7 @@ void FFSS_OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Des
           FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_TRANSFER_SEND);
         break;
       case FFSS_ERROR_TRANSFER_EOF :
-        if(FMP_CB.OnError != NULL)
+        if((FMP_CB.OnError != NULL) && Path->HaveIdx)
           FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_TRANSFER_EOF);
         break;
       case FFSS_ERROR_TRANSFER_READ_FILE :
