@@ -264,7 +264,8 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
   Conn = FS_GetConnFromTS(ts,Share->Conns);
   if(Conn != NULL)
   {
-    if(((Conn->XFers != NULL) || (Conn->Strms != NULL)) && !RemoveXFers) /* Xfers/Strms actives, but do NOT remove them */
+    /* If xfers are active, we don't really free connection. But if streamings are actives, we DO free it */
+    if((Conn->XFers != NULL) && !RemoveXFers)
     {
 #ifdef DEBUG
       printf("NOT REMOVING CONN... SINCE XFERS ARE STILL ACTIVES\n");
@@ -282,7 +283,8 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
 /* Assumes FS_SemShr is locked */
 void FS_CheckConnectionForRemoval(FS_PConn Conn,FS_PShare Share)
 {
-  if(Conn->ToRemove && (Conn->XFers == NULL) && (Conn->Strms == NULL))
+  /* If xfers are active, we don't really free connection. But if streamings are actives, we DO free it */
+  if(Conn->ToRemove && (Conn->XFers == NULL))
   {
     FS_DoRemoveConnectFromShare(Conn,Share,true);
   }
@@ -1292,7 +1294,7 @@ int OnSelect(void) /* 0=Do timed-out select ; 1=don't do timed-out select, but s
   }
   if(!Conn->XFerInConn) /* If use separate socket for xfers */
   {
-    res = ((Conn->XFers != NULL) || (Conn->Strms != NULL)); /* Don't timeout if a xfer is active */ /* 0 or 1 */
+    res = (Conn->XFers != NULL); /* Don't timeout if a xfer is active... but DO if it is a streaming */ /* 0 or 1 */
     SU_SEM_POST(FS_SemShr);
     return res;
   }

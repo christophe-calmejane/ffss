@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 2th 2002
+                  Last Update : June, 5th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+June, 5th 2002:
+  - When a connection is to be removed, but there are active streamings, it is still removed (and streamings closed)
 
 June, 3rd 2002:
   - Full rewrite of the semaphore usage (removed unused ones)
