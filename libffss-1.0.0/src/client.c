@@ -691,6 +691,10 @@ bool FC_Init(void)
     FFSS_LogFile = SU_OpenLogFile("FFSS_Client.log");
 #endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
+#ifdef _WIN32
+  if(!SU_WSInit(2,2))
+    return false;
+#endif /* _WIN32 */
   FC_SI_OUT_UDP = SU_CreateServer(0,SOCK_DGRAM,false);
   if(FC_SI_OUT_UDP == NULL)
   {
@@ -734,8 +738,9 @@ bool FC_UnInit(void)
   FFSS_PrintSyslog(LOG_INFO,"FFSS client shut down\n");
 #ifdef _WIN32
   SU_CloseLogFile(FFSS_LogFile);
+  SU_WSUninit();
 #endif /* _WIN32 */
   return true;
 }
 
-#endif /* FFSS_DRIVER */
+#endif /* !FFSS_DRIVER */

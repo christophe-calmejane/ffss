@@ -4,7 +4,7 @@
 #define _GNU_SOURCE
 char *Cur_KW[50];
 int Cur_Nb;
-#endif
+#endif /* INTER_BOURRIN */
 
 #include "master.h"
 #include "index.h"
@@ -56,7 +56,7 @@ char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
       return Answer;
     }
   }
-#endif
+#endif /* INTER_BOURRIN */
   return Answer;
 }
 
@@ -104,7 +104,7 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
             do_it = memmem(Ans,buf_pos,str,len-1) == NULL;
           if(do_it)
           {
-#endif
+#endif /* INTER_BOURRIN */
         while((buf_pos+len) >= buf_size)
         {
           buf_size += 50*FFSS_MAX_FILEPATH_LENGTH;
@@ -116,7 +116,7 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
 #ifdef INTER_BOURRIN
           }
         }
-#endif
+#endif /* INTER_BOURRIN */
       }
     }
   }
@@ -239,7 +239,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
     nb_sch = 0;
 #ifdef INTER_BOURRIN
     Cur_Nb = 0;
-#endif
+#endif /* INTER_BOURRIN */
     while(!done)
     {
       i = 0;
@@ -256,7 +256,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
         nb_sch++;
 #ifdef INTER_BOURRIN
         Cur_KW[Cur_Nb++] = KeyWords+key_pos;
-#endif
+#endif /* INTER_BOURRIN */
         Node = FMI_SearchKey(KeyWords+key_pos);
         if(Node != NULL)
           STAnswers = SU_AddElementHead(STAnswers,Node);

@@ -252,6 +252,10 @@ bool FM_Init(int MasterPort)
 #endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
   context;
+#ifdef _WIN32
+  if(!SU_WSInit(2,2))
+    return false;
+#endif /* _WIN32 */
   FM_SI_UDP = SU_CreateServer(MasterPort,SOCK_DGRAM,false);
   if(FM_SI_UDP == NULL)
   {
@@ -306,8 +310,9 @@ bool FM_UnInit(void)
   FFSS_PrintSyslog(LOG_INFO,"FFSS master shut down\n");
 #ifdef _WIN32
   SU_CloseLogFile(FFSS_LogFile);
+  SU_WSUninit();
 #endif /* _WIN32 */
   return true;
 }
 
-#endif /* FFSS_DRIVER */
+#endif /* !FFSS_DRIVER */

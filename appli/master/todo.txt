@@ -1,8 +1,8 @@
  TO DO :
 
+ - Passer le mode de communication entre les master de l'UDP au TCP !!
  - Quand on retire un host de la liste (30 jours)... virer aussi son index
  - Modifier les scripts de compilation pour que le fichier de conf par defaut soit copie dans /usr/doc/ffss/master
- - Creer un fichier interunion.c dans lekel je met le BuildPath et mon IntersectAnswers
 
 INDEXATION :
  - Ajouter les tags 'hst' et 'shr' qui sont utilises avec les autres tags
@@ -16,9 +16,3 @@ POSSIBLE DoS :
 
 KNOW BUGS
 ---------
-[2001/10/17-23:59:44] Search from 172.17.64.207 for domain * : mondes engloutis mpg
-Oct 17 23:59:57 gameboy Ffss Master: FFSS Crashed :-(. Check: search.c:290
-
- - Tester une connexion tardive d'un des masters (eventuellement avec changement de dns..)
-
- - BUG BUG : KILL -TERM sur server -> defunct... quitte pas !!

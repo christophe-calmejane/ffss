@@ -118,4 +118,4 @@ int FMI_GetUnusedHashPos(void);
 int FMI_GetIndexCount(void);
 #endif /* DEBUG */
 
-#endif /* __INDEX_H__ */
+#endif /* !__INDEX_H__ */

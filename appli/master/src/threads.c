@@ -1,24 +1,21 @@
 #include "index.h"
 
-#ifdef _WIN32
-void FM_ThreadPing(void *User)
-#else /* _WIN32 */
-void *FM_ThreadPing(void *User)
-#endif /* _WIN32 */
+extern volatile bool FM_ShuttingDown;
+
+SU_THREAD_ROUTINE(FM_ThreadPing,User)
 {
   SU_PList Ptr,Ptr2;
   time_t now;
   int SaveIndexCount;
 
+  SU_ThreadBlockSigs();
   FFSS_PrintDebug(2,"PING thread running...\n");
   SaveIndexCount = 0;
   while(1)
   {
-#ifdef _WIN32
-    Sleep(FFSS_PING_INTERVAL*1000);
-#else /* _WIN32 */
-    sleep(FFSS_PING_INTERVAL);
-#endif /* _WIN32 */
+    SU_SLEEP(FFSS_PING_INTERVAL);
+    if(FM_ShuttingDown)
+      SU_END_THREAD(NULL);
     SaveIndexCount++;
     if(SaveIndexCount > FM_INDEX_DUMP_INTERVAL_PING)
     {
@@ -33,11 +30,7 @@ void *FM_ThreadPing(void *User)
     /* PING SEQUENCE */
     FFSS_PrintDebug(4,"THREADS : PING : Sending PING sequence\n");
     now = time(NULL);
-#ifdef __unix__
-    sem_wait(&FM_MySem2);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem2,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem2);
     Ptr = FM_MyDomain.Hosts;
     while(Ptr != NULL)
     {
@@ -56,19 +49,11 @@ void *FM_ThreadPing(void *User)
     }
     /* Send PING message - Even if server timed out */
     FM_SendMessage_Ping();
-#ifdef __unix__
-    sem_post(&FM_MySem2);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem2,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem2);
 
     /* REMOVE SEQUENCE */
     now = time(NULL);
-#ifdef __unix__
-    sem_wait(&FM_MySem2);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem2,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem2);
     Ptr = FM_MyDomain.Hosts;
     Ptr2 = NULL;
     while(Ptr != NULL)
@@ -91,53 +76,34 @@ void *FM_ThreadPing(void *User)
         Ptr = Ptr->Next;
       }
     }
-#ifdef __unix__
-    sem_post(&FM_MySem2);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem2,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem2);
     FM_SaveHosts(FM_MyDomain.Hosts,FM_MYHOSTS_FILE);
 
   }
-#ifdef __unix__
-  return 0;
-#endif /* __unix__ */
+  SU_END_THREAD(NULL);
 }
 
 
-#ifdef _WIN32
-void FM_ThreadQueue(void *User)
-#else /* _WIN32 */
-void *FM_ThreadQueue(void *User)
-#endif /* _WIN32 */
+SU_THREAD_ROUTINE(FM_ThreadQueue,User)
 {
   char *buf;
   long int len;
   SU_PList Ptr;
 
+  SU_ThreadBlockSigs();
   FFSS_PrintDebug(2,"QUEUE thread running...\n");
   while(1)
   {
-#ifdef _WIN32
-    Sleep(FFSS_STATE_BROADCAST_INTERVAL*1000);
-#else /* _WIN32 */
-    sleep(FFSS_STATE_BROADCAST_INTERVAL);
-#endif /* _WIN32 */
+    SU_SLEEP(FFSS_STATE_BROADCAST_INTERVAL);
+    if(FM_ShuttingDown)
+      SU_END_THREAD(NULL);
     /* Building states of servers of my domain */
     /* Acquire semaphore */
-#ifdef __unix__
-    sem_wait(&FM_MySem);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem);
     buf = FM_BuildStatesBuffer(FM_MyQueue,&len);
     FM_MyQueue = NULL;
     /* Release semaphore */
-#ifdef __unix__
-    sem_post(&FM_MySem);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem);
     if(buf != NULL)
     {
       FFSS_PrintDebug(5,"THREADS : QUEUE : Sending States queue to co-masters\n");
@@ -152,9 +118,7 @@ void *FM_ThreadQueue(void *User)
       free(buf);
     }
   }
-#ifdef __unix__
-  return 0;
-#endif /* __unix__ */
+  SU_END_THREAD(NULL);
 }
 
 void FM_FreeSearch(FM_PSearch Sch)
@@ -164,11 +128,7 @@ void FM_FreeSearch(FM_PSearch Sch)
   free(Sch);
 }
 
-#ifdef _WIN32
-void FM_ThreadSearch(void *User)
-#else /* _WIN32 */
-void *FM_ThreadSearch(void *User)
-#endif /* _WIN32 */
+SU_THREAD_ROUTINE(FM_ThreadSearch,User)
 {
   char *buf;
   long int len;
@@ -180,24 +140,19 @@ void *FM_ThreadSearch(void *User)
   FM_PSearch Sch;
   char tmp[1024];
 
+  SU_ThreadBlockSigs();
   FFSS_PrintDebug(2,"SEARCH thread running...\n");
   while(1)
   {
-#ifdef _WIN32
-    Sleep(1000);
-#else /* _WIN32 */
-    sleep(1);
-#endif /* _WIN32 */
+    SU_SLEEP(1);
+    if(FM_ShuttingDown)
+      SU_END_THREAD(NULL);
 
     if(FM_SearchQueue == NULL)
       continue;
 
     Sch = (FM_PSearch)FM_SearchQueue->Data;
-#ifdef __unix__
-    sem_wait(&FM_MySem5);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem5,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem5);
     if(FM_SearchLogFile != NULL)
     {
       snprintf(tmp,sizeof(tmp),"Search from %s for domain %s : %s",inet_ntoa(Sch->Client.sin_addr),Sch->Domain,Sch->KeyWords);
@@ -212,11 +167,7 @@ void *FM_ThreadSearch(void *User)
 #ifdef DEBUG
     gettimeofday(&t2,&tz);
 #endif /* DEBUG */
-#ifdef __unix__
-    sem_post(&FM_MySem5);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem5,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem5);
 #ifdef DEBUG
     snprintf(tmp,sizeof(tmp),"Search time for %s : %.2f milli secondes",Sch->KeyWords,((t2.tv_sec*1000000+t2.tv_usec)-(t1.tv_sec*1000000+t1.tv_usec))/1000.);
     FFSS_PrintDebug(4,"%s\n",tmp);
@@ -248,20 +199,9 @@ void *FM_ThreadSearch(void *User)
     }
     FM_FreeSearch(Sch);
 
-#ifdef __unix__
-    sem_wait(&FM_MySem4);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem4,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem4);
     FM_SearchQueue = SU_DelElementHead(FM_SearchQueue);
-#ifdef __unix__
-    sem_post(&FM_MySem4);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem4,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem4);
   }
-
-#ifdef __unix__
-  return 0;
-#endif /* __unix__ */
+  SU_END_THREAD(NULL);
 }

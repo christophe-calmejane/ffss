@@ -5,15 +5,12 @@
 #include <ffss.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#include <semaphore.h>
-#include <signal.h>
 #else /* __unix__ */
 #include "../ffss.h"
 #include "../utils.h"
-#include <winbase.h>
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre44"
+#define FFSS_MASTER_VERSION "1.0-pre45"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -24,7 +21,7 @@
 #define CONFIG_FILE_NAME "./Master.conf"
 #define FM_SEARCHLOG_FILE "Search.log"
 #define FM_INDEX_DUMP_INTERVAL_PING 0
-#else /* DEBUG */
+#else /* !DEBUG */
 #define FM_MYHOSTS_FILE "/var/lib/ffss/hosts.dat"
 #define FM_MYINDEX_FILE "/var/lib/ffss/index.dat"
 #define CONFIG_FILE_NAME "/etc/ffss/master.conf"
@@ -56,31 +53,17 @@ extern SU_PList FM_MyQueue; /* FM_PQueue */
 extern SU_PList FM_OtherQueue; /* FM_PQueue */
 extern SU_PList FM_SearchQueue; /* FM_PSearch */
 extern FILE *FM_SearchLogFile;
-#ifdef __unix__
-extern sem_t FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
-extern sem_t FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
-extern sem_t FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
-extern sem_t FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
-extern sem_t FM_MySem5; /* Semaphore to protect the use of the index */
-#else /* __unix__ */
-extern HANDLE FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
-extern HANDLE FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
-extern HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
-extern HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
-extern HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
-#endif /* __unix__ */
+extern SU_SEM_HANDLE FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
+extern SU_SEM_HANDLE FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
+extern SU_SEM_HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
+extern SU_SEM_HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
+extern SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
 
 extern char *FM_User,*FM_Group;
 
-#ifdef _WIN32
-void FM_ThreadPing(void *User);
-void FM_ThreadQueue(void *User);
-void FM_ThreadSearch(void *User);
-#else /* _WIN32 */
-void *FM_ThreadPing(void *User);
-void *FM_ThreadQueue(void *User);
-void *FM_ThreadSearch(void *User);
-#endif /* _WIN32 */
+SU_THREAD_ROUTINE(FM_ThreadPing,User);
+SU_THREAD_ROUTINE(FM_ThreadQueue,User);
+SU_THREAD_ROUTINE(FM_ThreadSearch,User);
 
 FM_PHost FM_SearchHostByIP(FM_PDomain Domain,const char IP[]);
 
@@ -107,4 +90,4 @@ bool FM_IndexAnswerParse(struct sockaddr_in Client,const char Buf[],long int Len
 
 void FM_SetHostStateInIndex(const char Host[],FFSS_Field State);
 
-#endif /* __MASTER_H__ */
+#endif /* !__MASTER_H__ */

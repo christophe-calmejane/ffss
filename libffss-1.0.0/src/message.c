@@ -889,7 +889,7 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   long int Comps;
 #ifndef DRIVER
   SU_THREAD_HANDLE Thread;
-#endif
+#endif /* !DRIVER */
 
   CS = SU_ClientConnect((char *)Server,FFSS_SERVER_PORT_S,SOCK_STREAM);
   if(CS == NULL)
@@ -961,7 +961,7 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   }
 #ifndef DRIVER
   SU_CreateThread(&Thread,FC_ClientThreadTCP,(void *)CS,true);
-#endif
+#endif /* !DRIVER */
   return CS;
 }
 

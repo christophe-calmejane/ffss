@@ -187,7 +187,7 @@ int main(int argc,char *argv[])
     printf("Cannot initialize winsock2 !\n");
     return -1;
   }
-#endif
+#endif /* _WIN32 */
   printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSSWHO_VERSION);
   printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n\n",FFSS_SERVER_VERSION);
 

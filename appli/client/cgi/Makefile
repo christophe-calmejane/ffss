@@ -1,8 +1,9 @@
 CC=gcc
 PROG=ffss-cgi
 
-LIBS=-lpthread -lz -lbz2 ../../../libffss-1.0.0/src/.libs/libffss.a -L../../../skyutils/src/.libs -lskyutils
 OBJS=client.o
+
+LIBS=-lpthread -lz -lbz2 ../../../libffss-1.0.0/src/.libs/libffss.a -L../../../skyutils/src/.libs -lskyutils -ldl
 CFLAGS=-Wall -D_REENTRANT -I../../../libffss-1.0.0/src -I../../../skyutils/src -O0 -g -DDEBUG
 
 all: $(PROG)

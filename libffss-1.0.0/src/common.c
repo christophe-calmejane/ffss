@@ -245,4 +245,4 @@ void FFSS_SignalHandler_Term(int sig)
   SU_END_THREAD(NULL);
 }
 
-#endif
+#endif /* !FFSS_DRIVER */

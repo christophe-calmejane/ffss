@@ -5,7 +5,7 @@
 #include <ffss.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#else /* __unix__ */
+#else /* !__unix__ */
 #include "../ffss.h"
 #include "../utils.h"
 #include "../transfer.h"
@@ -39,9 +39,9 @@
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
-#else
+#else /* !DEBUG */
 #define CONFIG_FILE_NAME "/etc/ffss/server.conf"
-#endif
+#endif /* DEBUG */
 
 typedef struct
 {
@@ -225,5 +225,4 @@ typedef struct /* 16 bytes */
 /* End included */
 
 
-
-#endif
+#endif /* __SERVER_H__ */

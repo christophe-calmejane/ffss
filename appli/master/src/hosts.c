@@ -85,9 +85,7 @@ bool FM_SaveHosts(SU_PList Hosts,const char FileName[])
   SU_PList Ptr;
   FM_PHost Hst;
 
-#ifdef DEBUG
-  printf("MASTER : Saving my local servers\n");
-#endif /* DEBUG */
+  FFSS_PrintSyslog(LOG_WARNING,"Saving my local servers\n");
   fp = fopen(FileName,"wb");
   if(fp == NULL)
     return false;

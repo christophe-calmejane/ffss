@@ -131,7 +131,7 @@ void FS_AddConnectionToShare(FS_PShare Share,const char RemoteIP[],FS_PUser Usr,
 
 #ifdef DEBUG
   printf("ADD CONN TO SHARE\n");
-#endif
+#endif /* DEBUG */
   Conn = (FS_PConn) malloc(sizeof(FS_TConn));
   memset(Conn,0,sizeof(FS_TConn));
   Conn->Remote = strdup(RemoteIP);
@@ -164,7 +164,7 @@ void FS_FreeConn(FS_PConn Conn,bool RemoveXFers)
     printf("Removing connection, and xfers are also requested to be removed\n");
   else
     printf("Removing connection, setting Conn object of XFers to NULL\n");
-#endif
+#endif /* DEBUG */
   SU_SEM_WAIT(FS_SemXFer);
   Ptr = Conn->XFers;
   while(Ptr != NULL)
@@ -224,7 +224,7 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
   {
 #ifdef DEBUG
     printf("REMOVE CONN FORM SHARE\n");
-#endif
+#endif /* DEBUG */
     context;
     FS_FreeConn(Conn,RemoveXFers);
     Share->Conns = SU_DelElementElem(Share->Conns,Conn);
@@ -273,7 +273,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
     {
 #ifdef DEBUG
       printf("Share %s is to be removed, %d remaining connections\n",ts->Share->ShareName,SU_ListCount(ts->Share->Conns));
-#endif
+#endif /* DEBUG */
       FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
       FS_RemoveConnectionFromShare(ts->Share,ts,true);
       if(ts->Share->Conns == NULL) /* No more connection, removing share */
@@ -286,7 +286,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
     {
 #ifdef DEBUG
       printf("This connection has been requested to exit (Share %s)\n",ts->Share->ShareName);
-#endif
+#endif /* DEBUG */
       FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
       FS_RemoveConnectionFromShare(ts->Share,ts,true);
       /* Clean and kill this thread */
@@ -313,7 +313,7 @@ void OnEndTCPThread(void)
     {
 #ifdef DEBUG
       printf("REMOVE FTP CONN\n");
-#endif
+#endif /* DEBUG */
       FS_MyGlobal.FTPConn--;
     }
   }
@@ -343,7 +343,7 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
       comp = FFSS_COMPRESSION_NONE;
   }
   else
-#endif
+#endif /* HAVE_BZLIB */
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_ZLIB)
   {
     if(Comps & FFSS_COMPRESSION_ZLIB)
@@ -724,9 +724,9 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   }
 #ifdef __unix__
   snprintf(buf,sizeof(buf),"%s%s",ts->Share->Path,Path);
-#else
+#else /* !__unix__ */
   snprintf(buf,sizeof(buf),"%s\\%s",ts->Share->Path,(Path[0] == 0)?Path:(Path+1));
-#endif
+#endif /* __unix__ */
   SU_SEM_WAIT(FS_SemXFer); /* Must lock now, to protect it if the Xfer ends before the XFer is added bellow */
   if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,FS_MyGlobal.XFerInConn,&FT))
   {
@@ -746,7 +746,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       if(errno != EACCES) /* Not acces denied.. file must not exists */
         rescan = true;
     } /* Else...file exists, so must be acces denied */
-#else /* __unix__ */
+#else /* !__unix__ */
     FILE *fp;
     fp = fopen(buf,"rb");
     if(fp != NULL)
@@ -775,7 +775,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   }
 #ifdef DEBUG
   printf("ADD XFER %p TO CONN (%ld)\n",FT,SU_THREAD_SELF);
-#endif
+#endif /* DEBUG */
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
   SU_SEM_POST(FS_SemXFer); /* Unlock */
 
@@ -1042,7 +1042,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
     Conn->Strms = SU_AddElementHead(Conn->Strms,FS);
 #ifdef DEBUG
     printf("OnStrmOpen : Adding Streaming to conn (Handle=%ld Size=%ld)\n",FS->Handle,(long int)FS->fsize);
-#endif
+#endif /* DEBUG */
   }
   else
     printf("OnStrmOpen : Conn not found !!\n");
@@ -1077,7 +1077,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
     SU_SEM_POST(FS_SemXFer);
 #ifdef DEBUG
     printf("OnStrmClose : Removing Streaming from conn (Handle=%ld)\n",Handle);
-#endif
+#endif /* DEBUG */
 
     Ptr = FS_Plugins;
     while(Ptr != NULL)
@@ -1123,7 +1123,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
       len = sizeof(Buffer);
 #ifdef DEBUG
     printf("Reading %ld bytes from file\n",len);
-#endif
+#endif /* DEBUG */
     res = fread(Buffer,1,len,FS->fp);
     if(res == 0)
     {
@@ -1131,7 +1131,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
       {
 #ifdef DEBUG
         printf("OnStrmRead  : EOF\n");
-#endif
+#endif /* DEBUG */
         FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0);
       }
       else
@@ -1264,7 +1264,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
 
 #ifdef DEBUG
   printf("ADD FTP CONN\n");
-#endif
+#endif /* DEBUG */
   FS_MyGlobal.FTPConn++;
   if(FS_MyGlobal.FTPMaxConn != 0)
   {
@@ -1967,7 +1967,7 @@ bool FS_PowerUp(const char IntName[])
     {
 #ifdef DEBUG
       printf("Couldn't find interface %s. Exiting\n",IntName); /* Mettre dans le syslog */
-#endif
+#endif /* DEBUG */
       FS_UnInit();
       return false;
     }
@@ -1977,7 +1977,7 @@ bool FS_PowerUp(const char IntName[])
   {
 #ifdef DEBUG
     printf("Forcing IP %s\n",FS_MyGlobal.MyIP);
-#endif
+#endif /* DEBUG */
   }
   FFSS_PrintDebug(1,"Server running...\n");
   FS_RealBuildIndex();
@@ -2010,7 +2010,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
 {
 #ifdef DEBUG
   SU_PList Ptr;
-#endif
+#endif /* DEBUG */
 
   /* Remove XFer from Conn (Conn in FT->User) */
   if(FT->User != NULL)
@@ -2034,22 +2034,22 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
       printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferFailed !!!!!!\n",FT);
       abort();
     }
-#else
+#else /* !DEBUG */
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
-#endif
+#endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
   }
 #ifdef DEBUG
   else
     printf("REMOVE XFER %p\n",FT);
-#endif
+#endif /* DEBUG */
 }
 
 void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
 {
 #ifdef DEBUG
   SU_PList Ptr;
-#endif
+#endif /* DEBUG */
 
   /* Remove XFer from Conn (in FT->User) */
   if(FT->User != NULL)
@@ -2074,15 +2074,15 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
       printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferSuccess !!!!!!\n",FT);
       abort();
     }
-#else
+#else /* !DEBUG */
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
-#endif
+#endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
   }
 #ifdef DEBUG
   else
     printf("REMOVE XFER %p\n",FT);
-#endif
+#endif /* DEBUG */
 }
 
 void OnTransferActive(FFSS_PTransfer FT,long int Amount,bool Download)
@@ -2156,24 +2156,22 @@ void handint(int sig)
   {
     done = true;
     FFSS_PrintSyslog(LOG_ERR,"Received a %d signal in %d\n",sig,getpid());
+    memset(&FFSS_CB.SCB,0,sizeof(FFSS_CB.SCB));
     /* Shutting down server */
     FS_ShutDown();
     exit(0);
   }
   else
-  {
-    SU_SLEEP(60);
-    exit(0);
-  }
+    FFSS_PrintSyslog(LOG_WARNING,"Signal handler in %d (%d) : Server is being shut down... please wait\n",getpid(),sig);
 }
 
 #ifdef _WIN32
 #ifdef DEBUG
 int main(int argc,char *argv[])
-#else /* DEBUG */
+#else /* !DEBUG */
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
 #endif /* DEBUG */
-#else /* _WIN32 */
+#else /* !_WIN32 */
 int main(int argc,char *argv[])
 #endif /* _WIN32 */
 {
@@ -2235,7 +2233,7 @@ int main(int argc,char *argv[])
     openlog("Ffss Server",LOG_PERROR,LOG_USER);
     FFSS_PrintSyslog(LOG_INFO,"Server started with pid %d\n",getpid());
   }
-#else /* __unix__ */
+#else /* !__unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");
   FFSS_PrintSyslog(LOG_INFO,"Server started\n");
   if(!SU_WSInit(2,2))
@@ -2260,8 +2258,8 @@ int main(int argc,char *argv[])
 #ifndef _WIN32
 #ifndef DEBUG
   if(fork() == 0)
-#endif
-#endif
+#endif /* !DEBUG */
+#endif /* !_WIN32 */
   {
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
     /* UDP callbacks */

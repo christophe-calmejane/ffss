@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
+#endif /* __unix__ */
 #include <assert.h>
 
 SU_PList FS_Index=NULL; /* FS_PShare */
@@ -147,7 +147,7 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
   SU_PList Ptr;
 #ifdef _WIN32
   char Pat[]="x:";
-#endif
+#endif /* _WIN32 */
 
   Share = (FS_PShare) malloc(sizeof(FS_TShare));
   memset(Share,0,sizeof(FS_TShare));
@@ -174,7 +174,7 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
       FS_BuildIndex_rec(Share,&Share->Root,Pat);
     }
     else
-#endif
+#endif /* _WIN32 */
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
@@ -188,7 +188,7 @@ void FS_RealBuildIndex(void)
   FS_PShare Share;
 #ifdef _WIN32
   char Pat[]="x:";
-#endif
+#endif /* _WIN32 */
 
   Ptr = FS_Index;
   while(Ptr != NULL)
@@ -202,7 +202,7 @@ void FS_RealBuildIndex(void)
       FS_BuildIndex_rec(Share,&Share->Root,Pat);
     }
     else
-#endif
+#endif /* _WIN32 */
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
     Ptr = Ptr->Next;
@@ -309,7 +309,7 @@ void FS_RescanShare(FS_PShare Share)
   SU_PList Ptr;
 #ifdef _WIN32
   char Pat[]="x:";
-#endif
+#endif /* _WIN32 */
 
   Ptr = Share->Root.Dirs;
   while(Ptr != NULL)
@@ -337,7 +337,7 @@ void FS_RescanShare(FS_PShare Share)
     FS_BuildIndex_rec(Share,&Share->Root,Pat);
   }
   else
-#endif
+#endif /* _WIN32 */
     FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
 }
 
@@ -349,7 +349,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   char *tmp,*tok;
 #ifdef __unix__
   char *p;
-#endif
+#endif /* __unix__ */
   FS_PNode Node;
   long int buf_size,len,pos,i;
 
@@ -638,7 +638,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
   if(total >= FS_COMPRESSION_TRIGGER_BZLIB)
     comp = FFSS_COMPRESSION_BZLIB;
   else
-#endif
+#endif /* HAVE_BZLIB */
   if(total >= FS_COMPRESSION_TRIGGER_ZLIB)
     comp = FFSS_COMPRESSION_ZLIB;
   else
@@ -658,7 +658,7 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
   char *tmp,*tok,*tok2;
 #ifdef __unix__
   char *p;
-#endif
+#endif /* __unix__ */
   FS_PNode Node;
   long int pos=1,len;
 

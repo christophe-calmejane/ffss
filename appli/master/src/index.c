@@ -601,12 +601,8 @@ void FMI_GarbageCollector(void)
 {
   int i;
   FM_PSTNode Node;
-#ifdef __unix__
-    sem_wait(&FM_MySem5);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem5,INFINITE);
-#endif /* __unix__ */
 
+  SU_SEM_WAIT(FM_MySem5);
   FFSS_PrintDebug(4,"Starting garbage collector...\n");
   context;
   for(i=0;i<HASHTABLE_SIZE;i++)
@@ -622,11 +618,7 @@ void FMI_GarbageCollector(void)
     }
   }
   FFSS_PrintDebug(4,"Garbage collector completed\n");
-#ifdef __unix__
-    sem_post(&FM_MySem5);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem5,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem5);
 }
 
 
@@ -776,26 +768,18 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
 {
   FILE *fp;
 
-  FFSS_PrintDebug(4,"Dumping index to disk... (%s)\n",FileName);
+  FFSS_PrintSyslog(LOG_WARNING,"Dumping index to disk... (%s)\n",FileName);
   fp = fopen(FileName,"wb");
   if(fp == NULL)
     return false;
 
   context;
-#ifdef __unix__
-  sem_wait(&FM_MySem5);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem5,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem5);
   FMI_StoreFileTrees(fp);
   FMI_StoreSuffixTree(fp);
-#ifdef __unix__
-  sem_post(&FM_MySem5);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem5,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem5);
 
-  FFSS_PrintDebug(4,"Dump complete.\n");
+  FFSS_PrintSyslog(LOG_WARNING,"Dump complete.\n");
   fclose(fp);
   return true;
 }
@@ -964,21 +948,13 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
   fp = fopen(FileName,"rb");
   if(fp != NULL)
   {
-#ifdef __unix__
-    sem_wait(&FM_MySem5);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem5,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem5);
     res = FMI_LoadFileTrees(fp);
     if(res)
       res = FMI_LoadSuffixTree(fp);
     if(res)
       res = FMI_CheckIndex();
-#ifdef __unix__
-    sem_post(&FM_MySem5);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem5,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem5);
     if(!res)
     {
       FFSS_PrintSyslog(LOG_ERR,"Error loading index file '%s'. Please remove it and re-run master\n",FileName);

@@ -1,7 +1,4 @@
 #include "server.h"
-#ifdef PLUGINS
-#include <dlfcn.h>
-#endif
 
 // bool FS_LoadConfig() is defined in parser.y as this file is only used under unix
 // But must be defined here for other architectures
@@ -53,8 +50,8 @@ bool FS_LoadPlugin(const char Name[])
   FS_Plugins = SU_AddElementHead(FS_Plugins,(void *)Pl);
 #ifdef DEBUG
   printf("Successfully loaded %s\n",Pl->Name);
-#endif
-#endif
+#endif /* DEBUG */
+#endif /* PLUGINS */
   return true;
 }
 
@@ -85,6 +82,5 @@ void FS_UnLoadPlugin(void *Handle)
     i++;
     Ptr = Ptr->Next;
   }
-#endif
+#endif /* PLUGINS */
 }
-

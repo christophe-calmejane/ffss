@@ -12,25 +12,14 @@ SU_PList FM_Domains; /* FM_PDomain */
 SU_PList FM_MyQueue; /* FM_PQueue */
 SU_PList FM_OtherQueue; /* FM_PQueue */
 SU_PList FM_SearchQueue; /* FM_PSearch */
-#ifdef __unix__
-sem_t FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
-sem_t FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
-sem_t FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
-sem_t FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
-sem_t FM_MySem5; /* Semaphore to protect the use of the index */
-#else /* __unix__ */
-HANDLE FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
-HANDLE FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
-HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
-HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
-HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
-#endif /* __unix__ */
 
-#ifdef _WIN32
-unsigned long FM_THR_PING,FM_THR_QUEUE;
-#else /* _WIN32 */
-pthread_t FM_THR_PING,FM_THR_QUEUE;
-#endif /* _WIN32 */
+SU_SEM_HANDLE FM_MySem;  /* Semaphore to protect the use of FM_MyQueue */
+SU_SEM_HANDLE FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDomain */
+SU_SEM_HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
+SU_SEM_HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
+SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
+
+SU_THREAD_HANDLE FM_THR_PING,FM_THR_QUEUE;
 
 volatile FFSS_Field FM_CurrentIndexSize = 0;
 FFSS_Field FM_CurrentFileTreeSize = 0;
@@ -40,6 +29,7 @@ bool FM_CurrentSamba;
 struct sockaddr_in FM_CurrentClient;
 char *FM_User=NULL,*FM_Group=NULL;
 FILE *FM_SearchLogFile=NULL;
+volatile bool FM_ShuttingDown = false;
 
 bool FM_IsMyDomain(FM_PDomain Dom)
 {
@@ -109,17 +99,9 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
   FM_SetHostStateInIndex(Name,State);
   if(Domain == (&FM_MyDomain))
   {
-#ifdef __unix__
-    sem_wait(&FM_MySem2);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem2,INFINITE);
-#endif /* __unix__ */
+    SU_SEM_WAIT(FM_MySem2);
     Domain->Hosts = SU_AddElementHead(Domain->Hosts,Hst);
-#ifdef __unix__
-    sem_post(&FM_MySem2);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem2,1,NULL);
-#endif /* __unix__ */
+    SU_SEM_POST(FM_MySem2);
   }
   else
     Domain->Hosts = SU_AddElementHead(Domain->Hosts,Hst);
@@ -130,11 +112,7 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
 void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Comment[],FFSS_Field State)
 {
   context;
-#ifdef __unix__
-    sem_wait(&FM_MySem2);
-#else /* __unix__ */
-    WaitForSingleObject(FM_MySem2,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem2);
 #ifdef DEBUG
   printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
 #endif /* DEBUG */
@@ -155,11 +133,7 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
   }
   Hst->State = State;
   FM_SetHostStateInIndex(Name,State);
-#ifdef __unix__
-    sem_post(&FM_MySem2);
-#else /* __unix__ */
-    ReleaseSemaphore(FM_MySem2,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem2);
 }
 
 bool FM_IsHostInMyQueue(FM_PHost Hst)
@@ -217,17 +191,9 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   Que->Domain = Domain;
   Que->Host = Hst;
-#ifdef __unix__
-  sem_wait(&FM_MySem);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem);
   FM_MyQueue = SU_AddElementHead(FM_MyQueue,Que);
-#ifdef __unix__
-  sem_post(&FM_MySem);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem);
 }
 
 void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
@@ -253,17 +219,9 @@ void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   Que->Domain = Domain;
   Que->Host = Hst;
-#ifdef __unix__
-  sem_wait(&FM_MySem3);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem3,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem3);
   FM_OtherQueue = SU_AddElementHead(FM_OtherQueue,Que);
-#ifdef __unix__
-  sem_post(&FM_MySem3);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem3,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem3);
 }
 
 FM_PDomain FM_SearchDomainByIP(const char IP[])
@@ -339,6 +297,9 @@ void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain
   Dom = FM_SearchDomainByIP(buf);
   if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0))
   {
+#ifdef DEBUG
+    printf("MASTER : Received a ServerListing message from new foreign master of %s\n",Dom->Name);
+#endif /* DEBUG */
     if(Dom->Listed == false) /* If I don't have asked for hosts of this domain */
     {
 #ifdef DEBUG
@@ -476,17 +437,9 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
   Sch->Compressions = Compressions;
   Sch->Master = false;
 
-#ifdef __unix__
-  sem_wait(&FM_MySem4);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem4,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
-#ifdef __unix__
-  sem_post(&FM_MySem4);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem4,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem3);
 }
 
 /* OnSearchForward is raised by foreign masters */
@@ -523,17 +476,9 @@ void OnSearchForward(struct sockaddr_in Master,const char ClientIP[],int Port,co
   Sch->Compressions = Compressions;
   Sch->Master = true;
 
-#ifdef __unix__
-  sem_wait(&FM_MySem4);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem4,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
-#ifdef __unix__
-  sem_post(&FM_MySem4);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem4,1,NULL);
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem4);
 }
 
 /* OnMasterSearch is raised by local clients */
@@ -542,11 +487,7 @@ void OnMasterSearch(struct sockaddr_in Client,bool Server)
   FM_SendMessage_MasterSearchAnswer(Client,Server,FM_MyDomain.Name);
 }
 
-#ifdef _WIN32
-void ThreadIndexing(void *Info)
-#else /* _WIN32 */
-void *ThreadIndexing(void *Info)
-#endif /* _WIN32 */
+SU_THREAD_ROUTINE(ThreadIndexing,Info)
 {
   int sock = (int) Info;
   fd_set rfds;
@@ -566,6 +507,7 @@ void *ThreadIndexing(void *Info)
   FM_PHost Hst = NULL;
 
   context;
+  SU_ThreadBlockSigs();
 #ifdef DEBUG
   printf("Starting index thread\n");
 #endif /* DEBUG */
@@ -579,14 +521,8 @@ void *ThreadIndexing(void *Info)
 #ifdef DEBUG
       printf("%s is not on my domain... rejecting index\n",inet_ntoa(SAddr.sin_addr));
 #endif /* DEBUG */
-#ifdef __unix__
-      close(sock);
-#else /* __unix__ */
-      closesocket(sock);
-#endif /* __unix__ */
-#ifdef __unix__
-      return 0;
-#endif /* __unix__ */
+      SU_CLOSE_SOCKET(sock);
+      SU_END_THREAD(NULL);
     }
   }
 
@@ -600,30 +536,14 @@ void *ThreadIndexing(void *Info)
 #ifdef DEBUG
     printf("WARNING : Timed out waiting index from server\n");
 #endif /* DEBUG */
-#ifdef __unix__
-    close(sock);
-#else /* __unix__ */
-    closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-    _endthread();
-#else /* _WIN32 */
-    return (void *)1;
-#endif /* _WIN32 */
+    SU_CLOSE_SOCKET(sock);
+    SU_END_THREAD(NULL);
   }
   res = recv(sock,(char *)&NbShares,sizeof(NbShares),SU_MSG_NOSIGNAL);
   if(res <= 0)
   {
-#ifdef __unix__
-    close(sock);
-#else /* __unix__ */
-    closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-    _endthread();
-#else /* _WIN32 */
-    return (void *)1;
-#endif /* _WIN32 */
+    SU_CLOSE_SOCKET(sock);
+    SU_END_THREAD(NULL);
   }
   Host = (FM_PFTControler) malloc(sizeof(FM_TFTControler));
   memset(Host,0,sizeof(FM_TFTControler));
@@ -646,16 +566,8 @@ void *ThreadIndexing(void *Info)
       printf("WARNING : Timed out waiting index from server\n");
 #endif /* DEBUG */
       FMI_FreeFTControler(Host);
-#ifdef __unix__
-      close(sock);
-#else /* __unix__ */
-      closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-      _endthread();
-#else /* _WIN32 */
-      return (void *)1;
-#endif /* _WIN32 */
+      SU_CLOSE_SOCKET(sock);
+      SU_END_THREAD(NULL);
     }
     res = recv(sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
     if(res <= 0)
@@ -664,32 +576,16 @@ void *ThreadIndexing(void *Info)
       printf("WARNING : Error receiving index from server\n");
 #endif /* DEBUG */
       FMI_FreeFTControler(Host);
-#ifdef __unix__
-      close(sock);
-#else /* __unix__ */
-      closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-      _endthread();
-#else /* _WIN32 */
-      return (void *)1;
-#endif /* _WIN32 */
+      SU_CLOSE_SOCKET(sock);
+      SU_END_THREAD(NULL);
     }
     total += Size;
     if(total > IndexSize)
     {
       printf("WARNING : Index sent is greater than specified size : %ld-%ld\n",total,IndexSize);
       FMI_FreeFTControler(Host);
-#ifdef __unix__
-      close(sock);
-#else /* __unix__ */
-      closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-      _endthread();
-#else /* _WIN32 */
-      return (void *)1;
-#endif /* _WIN32 */
+      SU_CLOSE_SOCKET(sock);
+      SU_END_THREAD(NULL);
     }
 
     buf = (char *) malloc(Size);
@@ -707,16 +603,8 @@ void *ThreadIndexing(void *Info)
         printf("WARNING : Timed out waiting index from server\n");
 #endif /* DEBUG */
         FMI_FreeFTControler(Host);
-#ifdef __unix__
-        close(sock);
-#else /* __unix__ */
-        closesocket(sock);
-#endif /* __unix__ */
-#ifdef _WIN32
-        _endthread();
-#else /* _WIN32 */
-        return (void *)1;
-#endif /* _WIN32 */
+        SU_CLOSE_SOCKET(sock);
+        SU_END_THREAD(NULL);
       }
       res = recv(sock,buf+actual,Size-actual,SU_MSG_NOSIGNAL);
       if(res <= 0)
@@ -725,17 +613,9 @@ void *ThreadIndexing(void *Info)
         printf("WARNING : Error receiving index from server\n");
 #endif /* DEBUG */
         FMI_FreeFTControler(Host);
-#ifdef __unix__
-        close(sock);
-#else /* __unix__ */
-        closesocket(sock);
-#endif /* __unix__ */
+        SU_CLOSE_SOCKET(sock);
         free(buf);
-#ifdef _WIN32
-        _endthread();
-#else /* _WIN32 */
-        return (void *)1;
-#endif /* _WIN32 */
+        SU_END_THREAD(NULL);
       }
       actual += res;
     }
@@ -775,17 +655,9 @@ void *ThreadIndexing(void *Info)
     if(error)
     {
       FMI_FreeFTControler(Host);
-#ifdef __unix__
-      close(sock);
-#else /* __unix__ */
-      closesocket(sock);
-#endif /* __unix__ */
+      SU_CLOSE_SOCKET(sock);
       free(buf);
-#ifdef _WIN32
-      _endthread();
-#else /* _WIN32 */
-      return (void *)1;
-#endif /* _WIN32 */
+      SU_END_THREAD(NULL);
     }
     if(i%2) /* Nodes */
     {
@@ -801,21 +673,13 @@ void *ThreadIndexing(void *Info)
     if(free_it)
       free(data);
   }
-#ifdef __unix__
-  close(sock);
-#else /* __unix__ */
-  closesocket(sock);
-#endif /* __unix__ */
+  SU_CLOSE_SOCKET(sock);
   if(Samba)
     Host->Name = strdup(Host->FileTree);
 #ifdef DEBUG
   printf("Index thread : buffer received... now indexing\n");
 #endif /* DEBUG */
-#ifdef __unix__
-  sem_wait(&FM_MySem5);
-#else /* __unix__ */
-  WaitForSingleObject(FM_MySem5,INFINITE);
-#endif /* __unix__ */
+  SU_SEM_WAIT(FM_MySem5);
   context;
   NumHost = -1;
   for(i=0;i<FM_Controler.NbHosts;i++)
@@ -856,14 +720,8 @@ void *ThreadIndexing(void *Info)
 #ifdef DEBUG
   printf("Ending index thread... indexing completed (%d hosts)\n",FM_Controler.NbHosts);
 #endif /* DEBUG */
-#ifdef __unix__
-  sem_post(&FM_MySem5);
-#else /* __unix__ */
-  ReleaseSemaphore(FM_MySem5,1,NULL);
-#endif /* __unix__ */
-#ifdef __unix__
-  return 0;
-#endif /* __unix__ */
+  SU_SEM_POST(FM_MySem5);
+  SU_END_THREAD(NULL);
 }
 
 void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port,bool Samba)
@@ -872,11 +730,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   time_t tim;
   int sock=0;
   struct sockaddr_in SAddr;
-#ifdef _WIN32
-  unsigned long ClientThr;
-#else /* _WIN32 */
-  pthread_t ClientThr;
-#endif /* _WIN32 */
+  SU_THREAD_HANDLE ClientThr;
 
   context;
   if(!Samba)
@@ -914,41 +768,22 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   SAddr.sin_addr.s_addr = Client.sin_addr.s_addr;
   if(connect(sock,(struct sockaddr *)(&SAddr),sizeof(SAddr)) == SOCKET_ERROR)
   {
-#ifdef __unix__
-    close(sock);
-#else /* __unix__ */
-    closesocket(sock);
-#endif /* __unix__ */
+    SU_CLOSE_SOCKET(sock);
     return;
   }
   while(FM_CurrentIndexSize != 0)
-#ifdef __unix__
-    sleep(1);
-#else /* __unix__ */
-    Sleep(1000);
-#endif /* __unix__ */
+    SU_SLEEP(1);
   FM_CurrentIndexSize = IndexSize;
   FM_CurrentFileTreeSize = FileTreeSize;
   FM_CurrentNodesSize = NodesSize;
   FM_CurrentCompression = CompressionType;
   FM_CurrentSamba = Samba;
   memcpy(&FM_CurrentClient,&Client,sizeof(FM_CurrentClient));
-#ifdef _WIN32
-  if((ClientThr = _beginthread(ThreadIndexing,0,(void *)sock)) == -1)
-#else /* _WIN32 */
-  if(pthread_create(&ClientThr,NULL,&ThreadIndexing,(void *)sock) != 0)
-#endif /* _WIN32 */
+  if(!SU_CreateThread(&ClientThr,ThreadIndexing,(void *)sock,true))
   {
-#ifdef __unix__
-    close(sock);
-#else /* __unix__ */
-    closesocket(sock);
-#endif /* __unix__ */
+    SU_CLOSE_SOCKET(sock);
     return;
   }
-#ifdef __unix__
-  pthread_detach(ClientThr);
-#endif /* __unix__ */
 }
 
 void OnIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port)
@@ -971,14 +806,14 @@ void PrintHelp(void)
   exit(0);
 }
 
-#ifdef __unix__
 void handint(int sig)
 {
-  static bool done = false;
 
-  if(!done)
+  if(!FM_ShuttingDown)
   {
-    done = true;
+    FM_ShuttingDown = true;
+    FFSS_PrintSyslog(LOG_ERR,"Received a %d signal in %d\n",sig,getpid());
+    memset(&FFSS_CB.MCB,0,sizeof(FFSS_CB.MCB));
     /* Close log file, if opened */
     if(FM_SearchLogFile != NULL)
       SU_CloseLogFile(FM_SearchLogFile);
@@ -991,17 +826,16 @@ void handint(int sig)
     exit(0);
   }
   else
-    sleep(5000);
+    FFSS_PrintSyslog(LOG_WARNING,"Signal handler in %d (%d) : Master is being shut down... please wait\n",getpid(),sig);
 }
-#endif /* __unix__ */
 
 #ifdef _WIN32
 #ifdef DEBUG
 int main(int argc,char *argv[])
-#else /* DEBUG */
+#else /* !DEBUG */
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
 #endif /* DEBUG */
-#else /* _WIN32 */
+#else /* !_WIN32 */
 int main(int argc,char *argv[])
 #endif /* _WIN32 */
 {
@@ -1009,12 +843,7 @@ int main(int argc,char *argv[])
   char ConfigFile[1024];
   bool daemonize = false;
   bool log = false;
-#ifdef __unix__
-  pthread_t Thread;
-  struct sigaction action;
-#else /* __unix__ */
-  unsigned long Thread;
-#endif /* __unix__ */
+  SU_THREAD_HANDLE Thread;
 
   printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_MASTER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
@@ -1073,7 +902,7 @@ int main(int argc,char *argv[])
     openlog("Ffss Master",LOG_PERROR,LOG_USER);
     FFSS_PrintSyslog(LOG_INFO,"Master started\n");
   }
-#else /* __unix__ */
+#else /* !__unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Master.log");
   FFSS_PrintSyslog(LOG_INFO,"Master started\n");
   if(!SU_WSInit(2,2))
@@ -1108,53 +937,40 @@ int main(int argc,char *argv[])
 #ifdef __unix__
 #ifndef DEBUG
   if(fork() == 0)
-#endif /* DEBUG */
+#endif /* !DEBUG */
 #endif /* __unix__ */
   {
-#ifdef __unix__
-    sem_init(&FM_MySem,0,1);
-    sem_init(&FM_MySem2,0,1);
-    sem_init(&FM_MySem3,0,1);
-    sem_init(&FM_MySem4,0,1);
-    sem_init(&FM_MySem5,0,1);
-#else /* __unix__ */
-    FM_MySem = CreateSemaphore(NULL,1,1,"FFSSMasterSem");
-    if(FM_MySem == NULL)
+    if(!SU_CreateSem(&FM_MySem,1,1,"FFSSMasterSem"))
     {
-      printf("FFSS Server Error : Couldn't allocate semaphore\n");
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;
     }
-    FM_MySem2 = CreateSemaphore(NULL,1,1,"FFSSMasterSem2");
-    if(FM_MySem2 == NULL)
+    if(!SU_CreateSem(&FM_MySem2,1,1,"FFSSMasterSem2"))
     {
-      printf("FFSS Server Error : Couldn't allocate semaphore\n");
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;
     }
-    FM_MySem3 = CreateSemaphore(NULL,1,1,"FFSSMasterSem3");
-    if(FM_MySem3 == NULL)
+    if(!SU_CreateSem(&FM_MySem3,1,1,"FFSSMasterSem3"))
     {
-      printf("FFSS Server Error : Couldn't allocate semaphore\n");
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;
     }
-    FM_MySem4 = CreateSemaphore(NULL,1,1,"FFSSMasterSem4");
-    if(FM_MySem4 == NULL)
+    if(!SU_CreateSem(&FM_MySem4,1,1,"FFSSMasterSem4"))
     {
-      printf("FFSS Server Error : Couldn't allocate semaphore\n");
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;
     }
-    FM_MySem5 = CreateSemaphore(NULL,1,1,"FFSSMasterSem5");
-    if(FM_MySem5 == NULL)
+    if(!SU_CreateSem(&FM_MySem5,1,1,"FFSSMasterSem5"))
     {
-      printf("FFSS Server Error : Couldn't allocate semaphore\n");
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;
     }
-#endif /* __unix__ */
     context;
     FMI_IndexInit(); /* Init indexing engine */
     context;
 #ifdef DEBUG
     FMI_LoadIndex("./Dump.dat");
-#else /* DEBUG */
+#else /* !DEBUG */
     FMI_LoadIndex(FM_MYINDEX_FILE);
 #endif /* DEBUG */
     if(log)
@@ -1179,8 +995,8 @@ int main(int argc,char *argv[])
     FFSS_CB.MCB.OnIndexAnswer = OnIndexAnswer;
 #ifdef ENABLE_SAMBA
     FFSS_CB.MCB.OnIndexAnswerSamba = OnIndexAnswerSamba;
-#endif
-#endif
+#endif /* ENABLE_SAMBA */
+#endif /* !DISABLE_INDEX */
 
     context;
     if(!FM_LoadConfigFile(ConfigFile,false))
@@ -1193,64 +1009,39 @@ int main(int argc,char *argv[])
     FFSS_MyIP = FM_MyDomain.Master;
 
     context;
-#ifdef __unix__
-    if(pthread_create(&Thread,NULL,&FM_ThreadPing,NULL) != 0)
-#else /* __unix__ */
-    if((Thread = _beginthread(FM_ThreadPing,0,NULL)) == -1)
-#endif /* __unix__ */
+    if(!SU_CreateThread(&Thread,FM_ThreadPing,NULL,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating PING thread\n");
       FM_UnInit();
       return -3;
     }
-#ifdef __unix__
-    pthread_detach(Thread);
-#endif /* __unix__ */
 
-#ifdef __unix__
-    if(pthread_create(&Thread,NULL,&FM_ThreadQueue,NULL) != 0)
-#else /* __unix__ */
-    if((Thread = _beginthread(FM_ThreadQueue,0,NULL)) == -1)
-#endif /* __unix__ */
+    if(!SU_CreateThread(&Thread,FM_ThreadQueue,NULL,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating QUEUE thread\n");
       FM_UnInit();
       return -4;
     }
-#ifdef __unix__
-    pthread_detach(Thread);
-#endif /* __unix__ */
 
-#ifdef __unix__
-    if(pthread_create(&Thread,NULL,&FM_ThreadSearch,NULL) != 0)
-#else /* __unix__ */
-    if((Thread = _beginthread(FM_ThreadSearch,0,NULL)) == -1)
-#endif /* __unix__ */
+    if(!SU_CreateThread(&Thread,FM_ThreadSearch,NULL,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating SEARCH thread\n");
       FM_UnInit();
       return -5;
     }
-#ifdef __unix__
-    sigemptyset(&action.sa_mask);
-    action.sa_flags=0;
-    action.sa_handler=handint;
-#ifndef DEBUG
-    sigaction(SIGINT,&action,NULL);
-    sigaction(SIGTSTP,&action,NULL);
-    sigaction(SIGTERM,&action,NULL);
-#endif /* DEBUG */
 
-    pthread_detach(Thread);
+#ifndef DEBUG
+#ifdef __unix__
+    signal(SIGTSTP,handint);
 #endif /* __unix__ */
+    signal(SIGINT,handint);
+    signal(SIGTERM,handint);
+#endif /* !DEBUG */
 
     FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",getpid());
 
-#ifdef __unix__
-    pthread_join(FM_THR_UDP,NULL);
-#else /* __unix__ */
-    while(1) Sleep(10000);
-#endif /* __unix__ */
+    /* Main loop */
+    while(1) SU_SLEEP(10);
 
     /* Shutting down master */
     FM_UnInit();

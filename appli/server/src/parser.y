@@ -2,10 +2,10 @@
 
 %{
 #define YYSTYPE void *
-typedef unsigned int bool;
+/*typedef unsigned int bool;
 #define true 1
 #define false 0
-#include <stdio.h>
+#include <stdio.h>*/
 #include "server.h"
 FS_TShare TmpShr;
 int line;

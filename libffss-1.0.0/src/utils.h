@@ -14,4 +14,4 @@
 
 #endif /* __unix__ */
 
-#endif /* __FFSS_UTILS_H__ */
+#endif /* !__FFSS_UTILS_H__ */

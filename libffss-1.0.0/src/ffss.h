@@ -951,9 +951,9 @@ extern FILE *FFSS_LogFile;
 #define FFSS_PrintDebug() /* */
 #define SYSLOG_FN(x,y) SU_WriteToLogFile(FFSS_LogFile,y)
 #endif /* __unix__ */
-#else /* !DEBUG */
+#else /* DEBUG */
 #define SYSLOG_FN(x,y) printf(y)
-#endif /* DEBUG */
+#endif /* !DEBUG */
 
 #ifdef FFSS_CONTEXT
 void FFSS_handle_SIGNAL(int signal);
@@ -963,4 +963,4 @@ void set_context(char *file, int line);
 #define context
 #endif /* FFSS_CONTEXT */
 
-#endif /* __FFSS_H__ */
+#endif /* !__FFSS_H__ */

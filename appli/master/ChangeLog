@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : January, 20th 2002
+                  Last Update : January, 27th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+January, 27th 2002:
+  - Fixed bugs in master shutdown (really a better cleanup now)
+  - Cleaned source code using SU functions for threads/sems
 
 January, 20th 2002:
   - Added more syslog messages

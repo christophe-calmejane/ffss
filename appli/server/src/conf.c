@@ -133,7 +133,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),atoi(s_m),NULL,true);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
-#endif
+#endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -158,7 +158,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FS_Index = SU_DelElementElem(FS_Index,Share);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
-#endif
+#endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -263,7 +263,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         /* Users .... */
 #ifdef _WIN32
         FS_SaveConfig(NULL);
-#endif
+#endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);

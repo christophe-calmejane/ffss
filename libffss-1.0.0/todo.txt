@@ -13,8 +13,3 @@
 
  - TRANSFORMER LES CONSTANTES DES PORTS en variables (enfin, garder les 2, par defaut, on assigne les constantes au var) et mettre les var en globales
 
- - Re-reflechir au check des versions -> Peut etre le faire aussi au nivo du server-client ?
-
- - IMPORTANT ET URGENT !!!!!!!!!!!!!!!!!!!
-    -> Modifier le protocole (et la lib, et le server) pour utiliser des long long pour chaque champ File/Dir Size
-
