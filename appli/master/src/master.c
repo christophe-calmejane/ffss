@@ -721,7 +721,7 @@ void OnMasterConnected(SU_PClientSocket Master)
   FM_PDomain Dom;
 
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
-  if(Dom != NULL)
+  if((Dom != NULL) && (Dom->CS == NULL))
   {
 #ifdef DEBUG
     printf("MASTER : New master connected for domain %s, requesting hosts list\n",Dom->Name);
@@ -787,7 +787,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0))
   {
 #ifdef DEBUG
-    printf("MASTER : Received a ServerListing message from new foreign master of %s\n",Dom->Name);
+    printf("MASTER : Received a ServerListing message from foreign master of %s\n",Dom->Name);
 #endif /* DEBUG */
     Queue = NULL;
     Ptr = FM_MyDomain.Hosts;

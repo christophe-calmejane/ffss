@@ -43,6 +43,20 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       if(FFSS_CB.MCB.OnState != NULL)
         FFSS_CB.MCB.OnState(Client,val,str,str2,str3);
       break;
+      case FFSS_MESSAGE_SERVER_LISTING:
+        context;
+        FFSS_PrintDebug(3,"Received a server listing message from client\n");
+        val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        if((str == NULL) || (str2 == NULL))
+        {
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+          break;
+        }
+        if(FFSS_CB.MCB.OnServerListing != NULL)
+          FFSS_CB.MCB.OnServerListing(Client,str,str2,val);
+        break;
     case FFSS_MESSAGE_CLIENT_SERVER_FAILED:
       context;
       FFSS_PrintDebug(3,"Received a client/server failed message from client\n");
@@ -245,7 +259,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         break;
       case FFSS_MESSAGE_SERVER_LISTING:
         context;
-        FFSS_PrintDebug(3,"Received a server listing message\n");
+        FFSS_PrintDebug(3,"Received a server listing message from master\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);

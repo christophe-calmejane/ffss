@@ -1636,7 +1636,7 @@ bool FM_SendMessage_ServerList(int Master)
   msg[pos++] = 0; /* Domain is NULL */
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server listing message to %s\n",Master);
+  FFSS_PrintDebug(3,"Sending Server listing message to master\n");
   FD_ZERO(&rfds);
   FD_SET(Master,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
