@@ -425,6 +425,7 @@ Detail du protocole (Version 0x0010006) :
    DWord : Type de message = 84 (streaming reponse read)
    QWord : Pointeur User, envoye lors de la requete
    DWord : Handle du fichier
+   DWord : Code de l'erreur
     Datas
 
  * Message de streaming : write (Client->Server connecte) (TCP) :

@@ -39,6 +39,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "HideShare"=.\appli\server\plugins\HideShare\HideShare\HideShare.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "Log"=.\appli\server\plugins\Log\Log\Log.dsp - Package Owner=<4>
 
 Package=<5>
