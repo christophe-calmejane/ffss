@@ -544,7 +544,7 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 				nbfiles++;
 			 FCA_post_tab_item();FCA_tab_int_item();
 			  FCA_pre_tab_item();
-			  FCA_size(Sizes[ia]," %4lld");
+			  FCA_size(Sizes[res[ia]]," %4lld");
 			 FCA_post_tab_item();FCA_tab_int_item();
 			  FCA_pre_tab_item();
 			  if(! FCA_pre_path(Domain, buf[res[ia]], *(buf[res[ia]]-1), true,
