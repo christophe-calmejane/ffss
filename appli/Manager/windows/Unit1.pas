@@ -286,15 +286,15 @@ begin
         H:=HostEnt.h_name;
       End;
     End;
-    Edit3.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Name',Buf);
-    Edit4.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Comment','');
-    Edit5.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Master',H);
-    Edit6.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Idle',0));
-    Edit7.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxConn',10));
-    Edit8.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',10));
-    Edit10.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',2));
-    CheckBox1.Checked:=Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',0));
-    CheckBox4.Checked:=Not Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_XFerInConn',0));
+    Edit3.Text:=RB1.GetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Name',Buf);
+    Edit4.Text:=RB1.GetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Comment','');
+    Edit5.Text:=RB1.GetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Master',H);
+    Edit6.Text:=IntToStr(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Idle',0));
+    Edit7.Text:=IntToStr(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_MaxConn',10));
+    Edit8.Text:=IntToStr(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_FTP_MaxConn',10));
+    Edit10.Text:=IntToStr(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_MaxXFerPerConn',2));
+    CheckBox1.Checked:=Boolean(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_FTP',0));
+    CheckBox4.Checked:=Not Boolean(RB1.GetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_XFerInConn',0));
   End
   Else
   Begin
@@ -835,15 +835,15 @@ Var Buf : Array[0..10000] Of Char;
 begin
   If Limited Then
   Begin
-    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Name',Edit3.Text);
-    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Comment',Edit4.Text);
-    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Master',Edit5.Text);
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Idle',StrToInt(Edit6.Text));
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxConn',StrToInt(Edit7.Text));
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',StrToInt(Edit8.Text));
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',StrToInt(Edit10.Text));
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',Integer(CheckBox1.Checked));
-    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_XFerInConn',Integer(Not CheckBox4.Checked));
+    RB1.SetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Name',Edit3.Text);
+    RB1.SetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Comment',Edit4.Text);
+    RB1.SetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Master',Edit5.Text);
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_Idle',StrToInt(Edit6.Text));
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_MaxConn',StrToInt(Edit7.Text));
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_FTP_MaxConn',StrToInt(Edit8.Text));
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_MaxXFerPerConn',StrToInt(Edit10.Text));
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_FTP',Integer(CheckBox1.Checked));
+    RB1.SetIntValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\Global_XFerInConn',Integer(Not CheckBox4.Checked));
     Exit;
   End;
   Buf[0]:=Char(FS_OPCODE_UPDTGLOBAL);
@@ -1252,7 +1252,7 @@ end;
 
 procedure TForm1.Button6Click(Sender: TObject);
 begin
-  OpenDialog1.InitialDir:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\ServerDirectory','')+'\Plugins';
+  OpenDialog1.InitialDir:=RB1.GetStrValue('HKEY_LOCAL_MACHINE\Software\FFSS\Server\ServerDirectory','')+'\Plugins';
   If OpenDialog1.Execute Then
   Begin
     If RequestPlugins_Load(OpenDialog1.FileName) <> 0 Then

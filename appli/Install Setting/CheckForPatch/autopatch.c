@@ -91,7 +91,7 @@ void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
     return;
-  snprintf(FileToPatch,sizeof(FileToPatch),"%s%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
+  snprintf(FileToPatch,sizeof(FileToPatch),"%s\\%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
 
   AP_hwnd = CreateDialog(AP_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),GetDesktopWindow(),wndProc);
   if(AP_hwnd == NULL)
@@ -102,9 +102,9 @@ void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
 
   SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(ID_BTN1),AP_LANG(AP_LANGS_BTN1));
   SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(ID_BTN2),AP_LANG(AP_LANGS_BTN2));
-  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL1),AP_LANG(AP_LANGS_LBL1));
-  snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_LBL2),FileToPatch);
-  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL2),buf);
+  snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_LBL1),FileToPatch);
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL1),buf);
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL2),AP_LANG(AP_LANGS_LBL2));
   dlg = GetDlgItem(AP_hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
   len = Ans->Data_Length + 1;
   if(len >= sizeof(buf))
@@ -162,7 +162,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
     return;
-  snprintf(FileToPatch,sizeof(FileToPatch),"%s%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
+  snprintf(FileToPatch,sizeof(FileToPatch),"%s\\%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
 
   fp = fopen(FileToPatch,"wb");
   while(fp == NULL) /* Cannot open for writing... file in use ? */
@@ -184,6 +184,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
         return;
       }
       KillServer();
+      Sleep(500);
     }
     else /* Display message box */
     {
@@ -280,7 +281,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
       continue;
     if(FCU_Files[idx].FilePath[0] == 0)
       continue;
-    snprintf(buf,sizeof(buf),"%s%s",InstallDir,FCU_Files[idx].FilePath);
+    snprintf(buf,sizeof(buf),"%s\\%s",InstallDir,FCU_Files[idx].FilePath);
     fp = fopen(buf,"rb");
     if(fp == NULL)
       continue;

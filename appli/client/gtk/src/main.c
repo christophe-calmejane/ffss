@@ -74,14 +74,14 @@ int main (int argc, char *argv[])
 #endif /* HAVE_MASTER */
   if(MyMaster != NULL)
   {
-    if(FC_SendMessage_DomainListing(MyMaster))
-      FC_SendMessage_ServerList(MyMaster,NULL,NULL);
+    if(FC_SendMessage_DomainListing(MyMaster,0))
+      FC_SendMessage_ServerList(MyMaster,NULL,NULL,0);
     else
       FC_SendMessage_ServerSearch();
   }
   else
   {
-    FC_SendMessage_MasterSearch();
+    FC_SendMessage_MasterSearch(0);
     SU_SLEEP(4);
     if(MyMaster == NULL)
       FC_SendMessage_ServerSearch();

@@ -32,7 +32,7 @@ void FC_FreeHostList()
   Ptr = FCQ_Hosts;
   while(Ptr != NULL)
   {
-    FC_FreeHost(Ptr->Data);
+    //FC_FreeHost(Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(FCQ_Hosts);
@@ -41,16 +41,16 @@ void FC_FreeHostList()
 
 void FC_FreeDomainList()
 {
-  SU_FreeListElem(FCQ_Domains);
+  //SU_FreeListElem(FCQ_Domains);
   FCQ_Domains = NULL;
 }
 
 void FC_FreeShare(FCQ_PShare S)
 {
-  if(S->Name != NULL)
+  /*if(S->Name != NULL)
     free(S->Name);
   if(S->Comment != NULL)
-    free(S->Comment);
+    free(S->Comment);*/
   free(S);
 }
 
@@ -61,7 +61,7 @@ void FC_FreeShareList()
   Ptr = FCQ_Shares;
   while(Ptr != NULL)
   {
-    FC_FreeShare(Ptr->Data);
+    //FC_FreeShare(Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(FCQ_Shares);
@@ -70,8 +70,8 @@ void FC_FreeShareList()
 
 void FC_FreeEntry(FC_PEntry Ent)
 {
-  if(Ent->Name != NULL)
-    free(Ent->Name);
+  /*if(Ent->Name != NULL)
+    free(Ent->Name);*/
   free(Ent);
 }
 
@@ -329,7 +329,7 @@ void FCQ_LaunchNextDownload(void)
       else
       {
         add_conn_count(Conn);
-        FFSS_DownloadFile(Conn->Server,remote,local,0,(void *)Conn,false,NULL);
+        FFSS_DownloadFile(Conn->Server,remote,local,0,(void *)Conn,false,NULL,0);
       }
       if(remote != NULL)
         g_free(remote);

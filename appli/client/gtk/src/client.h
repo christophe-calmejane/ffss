@@ -23,7 +23,7 @@
 #endif /* __unix__ */
 
 /* TEMPO */
-#define HAVE_MASTER
+//#define HAVE_MASTER
 #ifdef HAVE_MASTER
 #define CLT_MASTER "ffss"
 #endif

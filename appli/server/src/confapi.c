@@ -1,4 +1,5 @@
 #include "confapi.h"
+#define bool SU_BOOL
 
 int FSCA_GetIntLen(int v)
 {

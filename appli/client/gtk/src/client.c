@@ -251,8 +251,8 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,con
 {
   printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),MasterVersion,Domain);
   MyMaster = strdup(inet_ntoa(Master.sin_addr));
-  if(FC_SendMessage_DomainListing(inet_ntoa(Master.sin_addr)))
-    FC_SendMessage_ServerList(inet_ntoa(Master.sin_addr),NULL,NULL);
+  if(FC_SendMessage_DomainListing(inet_ntoa(Master.sin_addr),0))
+    FC_SendMessage_ServerList(inet_ntoa(Master.sin_addr),NULL,NULL,0);
   else
     FC_SendMessage_ServerSearch();
 }
@@ -330,7 +330,7 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
   if(Code == FFSS_ERROR_NO_ERROR)
   {
     FC_DQ_AddOpToList_Status(Conn,"Successfully connected to server");
-    return FC_SendMessage_DirectoryListing(Server,Conn->path);
+    return FC_SendMessage_DirectoryListing(Server,Conn->path,0);
   }
   FC_DQ_AddOpToList_Status(Conn,Descr);
   return true;
@@ -361,7 +361,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
         G_LOCK(gbl_conns_lock); /* To protect Conn->rec_dir_count */
         Conn->rec_dir_count++;
         G_UNLOCK(gbl_conns_lock);
-        FC_SendMessage_DirectoryListing(Conn->Server,buf);
+        FC_SendMessage_DirectoryListing(Conn->Server,buf,0);
       }
       else
       {

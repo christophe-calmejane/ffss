@@ -55,8 +55,8 @@ on_rescan_clicked                      (GtkButton       *button,
   }
   if(MyMaster != NULL)
   {
-    if(FC_SendMessage_DomainListing(MyMaster))
-      FC_SendMessage_ServerList(MyMaster,NULL,domain);
+    if(FC_SendMessage_DomainListing(MyMaster,0))
+      FC_SendMessage_ServerList(MyMaster,NULL,domain,0);
     else
       FC_SendMessage_ServerSearch();
   }
@@ -95,7 +95,7 @@ on_button3_clicked                     (GtkButton       *button,
   }
   if(server != NULL)
   {
-    FC_SendMessage_SharesListing(server);
+    FC_SendMessage_SharesListing(server,0);
     g_free(server);
   }
 }
@@ -135,7 +135,7 @@ on_button4_clicked                     (GtkButton       *button,
             if(server != NULL)
             {
               G_LOCK(gbl_conns_lock);
-              CS = FC_SendMessage_ShareConnect(server,share,NULL,NULL); /* Login/Password set to null right now */
+              CS = FC_SendMessage_ShareConnect(server,share,NULL,NULL,0); /* Login/Password set to null right now */
               if(CS != NULL)
               {
                 PConn Conn;
@@ -272,7 +272,7 @@ on_list1_button_press_event            (GtkWidget       *widget,
                 snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
             }
             printf("Going into %s\n",buf);
-            FC_SendMessage_DirectoryListing(Conn->Server,buf);
+            FC_SendMessage_DirectoryListing(Conn->Server,buf,0);
             if(file != NULL)
               g_free(file);
           }
@@ -436,7 +436,7 @@ on_ok_button2_clicked                  (GtkButton       *button,
           Conn->recursif = true;
           MKDIR(Conn->rec_local_path);
           printf("Starting recursive download for %s -- Local savine to %s\n",Conn->rec_path,Conn->rec_local_path);
-          FC_SendMessage_DirectoryListing(Conn->Server,Conn->rec_path);
+          FC_SendMessage_DirectoryListing(Conn->Server,Conn->rec_path,0);
           if(file != NULL)
             g_free(file);
         }
@@ -482,7 +482,7 @@ on_button7_clicked                     (GtkButton       *button,
   assert(position);
 
   add_conn_count(Conn);
-  FFSS_DownloadFile(Conn->Server,remote,local,atoi(position),(void *)Conn,false,NULL);
+  FFSS_DownloadFile(Conn->Server,remote,local,atoi(position),0,(void *)Conn,false,NULL);
   if(remote != NULL)
     g_free(remote);
   if(local != NULL)

@@ -1,14 +1,14 @@
 style "default"
 {
-font_name="Arial 10"
+font_name="Arial 11"
 }
 style "clist"
 {
-font_name="Verdana 10"
+font_name="Verdana 11"
 }
 style "label"
 {
-font_name="Arial 10"
+font_name="Arial 11"
 }
 
 class "GtkWidget" style "default"
