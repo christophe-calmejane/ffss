@@ -105,6 +105,10 @@ SOURCE=..\..\index.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\plugin.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\server.c
 # End Source File
 # Begin Source File
@@ -115,6 +119,10 @@ SOURCE=..\..\transfer.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\plugin.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\..\server.h

@@ -38,6 +38,7 @@
 
 
 #define FS_AVERAGE_FILE_LENGTH 25
+#define FS_REC_AVERAGE_FILE_LENGTH 80
 #define FS_COMPRESSION_TRIGGER_ZLIB 1400
 #define FS_COMPRESSION_TRIGGER_BZLIB 5000
 
@@ -211,6 +212,8 @@ void FS_FreeIndex(void);
 void FS_RescanShare(FS_PShare Share);
 /* Returns a buffer to be sent then freed (its size in size_out), or NULL if the path is incorrect */
 char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
+/* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
+char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
 bool FS_SendIndex(const char Host[],const char Port[]);
 bool FS_CaseFilePath(FS_PShare Share,char Path[]);
 
@@ -222,6 +225,7 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers);
 void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers);
 FS_PPlugin FS_LoadPlugin(const char Name[]);
 void FS_UnLoadPlugin(SU_DL_HANDLE Handle);
+void FS_UnLoadAllPlugin(void);
 bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
 bool FS_IsPluginValid(FS_PPlugin Plugin);
 
@@ -254,4 +258,4 @@ typedef struct /* 16 bytes */
 /* End included */
 
 
-#endif /* __SERVER_H__ */
+#endif /* !__SERVER_H__ */

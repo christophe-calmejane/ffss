@@ -3,9 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 21th 2002
+                  Last Update : May, 23th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+May, 23th 2002:
+  - Added a new message to protocol : RecursiveDirectoryListing
+  - Added support for plugin query function & Started TrayConn plugin
+  - Added an invisible window (windows only) and associated thread, to trap WM_CLOSE message and exit properly
 
 May, 21th 2002:
   - Fixed crash when ejected from share (but not xfers), and re-ejected after that

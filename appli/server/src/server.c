@@ -1,4 +1,5 @@
 #include "server.h"
+#include "plugin.h"
 
 SU_SEM_HANDLE FS_SemConn;  /* Semaphore to protect the use of Conns in a FS_PShare */
 SU_SEM_HANDLE FS_SemGbl;   /* Semaphore to protect the use of MyGlobal */
@@ -19,6 +20,10 @@ int FS_MyState;
 char *FS_TimeTable[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 long int FS_CurrentStrmTag = 1;
 SU_PList FS_Plugins; /* FS_PPlugin */
+
+#ifdef _WIN32
+HINSTANCE FS_hInstance = NULL;
+#endif /* _WIN32 */
 
 void FS_FreeStreaming(FS_PStreaming FS)
 {
@@ -55,6 +60,8 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
     if(((FS_PConn)Ptr->Data)->ts != NULL)
     {
       ((FS_PConn)Ptr->Data)->ts->Remove = true;
+      FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+      SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
       ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
     }
     if(EjectXFers)
@@ -83,8 +90,13 @@ void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers)
   {
     if(strcmp(((FS_PConn)Ptr->Data)->Remote,IP) == 0)
     {
-      ((FS_PConn)Ptr->Data)->ts->Remove = true;
-      ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
+      if(((FS_PConn)Ptr->Data)->ts != NULL)
+      {
+        ((FS_PConn)Ptr->Data)->ts->Remove = true;
+        FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+        SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
+        ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
+      }
       if(EjectXFers)
       {
         Ptr2 = ((FS_PConn)Ptr->Data)->XFers;
@@ -400,6 +412,46 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
 #endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
   ans = FS_SendMessage_DirectoryListingAnswer(Client->sock,Path,buf,len,comp);
+  free(buf);
+  return ans;
+}
+
+bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps)
+{
+  char *buf;
+  long int len;
+  int comp;
+  bool ans;
+
+  buf = FS_BuildRecursiveDirectoryBuffer(Share,Path,&len);
+  if(buf == NULL)
+  {
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND]);
+  }
+#ifdef HAVE_BZLIB
+  if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_BZLIB)
+  {
+    if(Comps & FFSS_COMPRESSION_BZLIB)
+      comp = FFSS_COMPRESSION_BZLIB;
+    else if(Comps & FFSS_COMPRESSION_ZLIB)
+      comp = FFSS_COMPRESSION_ZLIB;
+    else
+      comp = FFSS_COMPRESSION_NONE;
+  }
+  else
+#endif /* HAVE_BZLIB */
+#ifndef DISABLE_ZLIB
+  if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_ZLIB)
+  {
+    if(Comps & FFSS_COMPRESSION_ZLIB)
+      comp = FFSS_COMPRESSION_ZLIB;
+    else
+      comp = FFSS_COMPRESSION_NONE;
+  }
+  else
+#endif /* !DISABLE_ZLIB */
+    comp = FFSS_COMPRESSION_NONE;
+  ans = FS_SendMessage_RecursiveDirectoryListingAnswer(Client->sock,Path,buf,len,comp);
   free(buf);
   return ans;
 }
@@ -760,6 +812,31 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing != NULL)
       ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing(Client,Path);
+    Ptr = Ptr->Next;
+  }
+  return true;
+}
+
+bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
+{
+  FS_PThreadSpecific ts;
+  SU_PList Ptr;
+
+  FFSS_PrintDebug(1,"Received a RECURSIVE DIRECTORY LISTING message\n");
+
+  ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
+  if(!FS_SendRecursiveDirectoryListing(Client,ts->Share,Path,ts->Comps))
+  {
+    FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
+    return false;
+  }
+
+  Ptr = FS_Plugins;
+  while(Ptr != NULL)
+  {
+    if(((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing != NULL)
+      ((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing(Client,Path);
     Ptr = Ptr->Next;
   }
   return true;
@@ -2155,6 +2232,8 @@ bool FS_PowerUp(const char IntName[])
 bool FS_ShutDown()
 {
   FS_MyState = FFSS_STATE_OFF;
+  /* Remove all plugins */
+  FS_UnLoadAllPlugin();
   if(FS_MyGlobal.Master != NULL)
   {
     /* Sending logout message to my master */
@@ -2250,115 +2329,6 @@ void OnTransferActive(FFSS_PTransfer FT,long int Amount,bool Download)
 {
 }
 
-FS_PPlugin FS_LoadPlugin(const char Name[])
-{
-#ifdef PLUGINS
-  SU_DL_HANDLE handle;
-  FS_PPlugin (*fonc)(void);
-  FS_PPlugin Pl;
-
-  handle = SU_DL_OPEN(Name);
-  if(!handle)
-  {
-#ifdef _WIN32
-    FFSS_PrintSyslog(LOG_ERR,"Couldn't open %s (%d)\n",Name,GetLastError());
-#else /* !_WIN32 */
-    FFSS_PrintSyslog(LOG_ERR,"Couldn't open %s (%s)\n",Name,dlerror());
-#endif /* _WIN32 */
-    return NULL;
-  }
-
-  fonc = (FS_PPlugin(*)(void) )SU_DL_SYM(handle,"Plugin_Init");
-  if(fonc == NULL)
-  {
-    FFSS_PrintSyslog(LOG_ERR,"Couldn't find Plugin_Init function for %s\n",Name);
-    return NULL;
-  }
-  Pl = fonc();
-  if(Pl == NULL)
-  {
-    FFSS_PrintSyslog(LOG_ERR,"Error in Plugin_Init function for %s\n",Name);
-    return NULL;
-  }
-  Pl->Handle = handle;
-  Pl->Path = strdup(Name);
-  SU_SEM_WAIT(FS_SemPlugin);
-  FS_Plugins = SU_AddElementHead(FS_Plugins,(void *)Pl);
-  SU_SEM_POST(FS_SemPlugin);
-#ifdef DEBUG
-  printf("Plugin successfully loaded : %s\n",Pl->Path);
-#endif /* DEBUG */
-#endif /* PLUGINS */
-  return Pl;
-}
-
-void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
-{
-#ifdef PLUGINS
-  void (*Fonc)(void);
-  SU_PList Ptr;
-  FS_PPlugin Pl;
-  int i;
-
-  SU_SEM_WAIT(FS_SemPlugin);
-  Ptr = FS_Plugins;
-  i = 0;
-  while(Ptr != NULL)
-  {
-    Pl = (FS_PPlugin) Ptr->Data;
-    if(Handle == Pl->Handle)
-    {
-      if(Pl->Path != NULL)
-        free(Pl->Path);
-      /* Do not free anything else.... freed by the plugin itself */
-      Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_UnInit");
-      if(Fonc != NULL)
-        Fonc();
-      SU_DL_CLOSE(Handle);
-      FS_Plugins = SU_DelElementPos(FS_Plugins,i);
-      break;
-    }
-    i++;
-    Ptr = Ptr->Next;
-  }
-  SU_SEM_POST(FS_SemPlugin);
-#endif /* PLUGINS */
-}
-
-bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
-{
-  bool ret = true;
-#ifdef PLUGINS
-  void (*Fonc)(void);
- 
-  Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
-  if(Fonc != NULL)
-    Fonc();
-  else
-    ret = false;
-#endif /* PLUGINS */
-  return ret;
-}
-
-bool FS_IsPluginValid(FS_PPlugin Plugin)
-{
-  SU_PList Ptr;
-
-  SU_SEM_WAIT(FS_SemPlugin);
-  Ptr = FS_Plugins;
-  while(Ptr != NULL)
-  {
-    if((void *)Plugin == Ptr->Data)
-    {
-      SU_SEM_POST(FS_SemPlugin);
-      return true;
-    }
-    Ptr = Ptr->Next;
-  }
-  SU_SEM_POST(FS_SemPlugin);
-  return false;
-}
-
 
 SU_THREAD_ROUTINE(FS_ConfFunc,Info);
 
@@ -2384,7 +2354,7 @@ char *FS_CheckGlobal(void)
     return "No Name for the server has been defined";
   if(FS_MyGlobal.Comment == NULL)
     return "No Comment for the server has been defined";
-  if(FS_MyGlobal.ConfSock)
+  if((FS_MyGlobal.ConfSock) && (FS_MyState == FFSS_STATE_OFF))
   {
     SI = SU_CreateServer(FFSS_SERVER_CONF_PORT,SOCK_STREAM,false);
     if(SI != NULL)
@@ -2437,6 +2407,60 @@ void handint(int sig)
 }
 
 #ifdef _WIN32
+LRESULT CALLBACK FS_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  switch(message)
+  {
+    case WM_DESTROY:
+      handint(15);
+      return 0;
+    case WM_CLOSE:
+      handint(15);
+      return 0;
+  }
+  return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+void ThreadFunc(void *info)
+{
+  MSG msg;
+  WNDCLASS wc;
+  HWND hwnd;
+
+  wc.style = 0;
+  wc.lpfnWndProc = FS_wndProc;
+  wc.cbClsExtra = wc.cbWndExtra = 0;
+  wc.hInstance = FS_hInstance;
+  wc.hIcon = LoadIcon(FS_hInstance, MAKEINTRESOURCE(101));
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+  wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+  wc.lpszMenuName = NULL;
+  wc.lpszClassName = "FFSSServer";
+  if(RegisterClass(&wc) == 0)
+    return false;
+  hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
+  if(hwnd == NULL)
+    return false;
+
+  while(GetMessage(&msg,hwnd,0,0))
+  {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+  /* Application received a WM_CLOSE message */
+  handint(15);
+}
+
+bool FS_InitWindow(void)
+{
+  DWORD tmp;
+
+  /* Create a thread to manage messages to our virtual window */
+  if(CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)ThreadFunc,NULL,0,&tmp) == NULL)
+    return false;
+  return true;
+}
+
 #ifdef DEBUG
 int main(int argc,char *argv[])
 #else /* !DEBUG */
@@ -2505,6 +2529,10 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_INFO,"Server started with pid %d\n",getpid());
   }
 #else /* !__unix__ */
+#ifndef DEBUG
+  FS_hInstance = hInstance;
+#endif /* !DEBUG */
+  FS_InitWindow();
   FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");
   FFSS_PrintSyslog(LOG_INFO,"Server started\n");
   if(!SU_WSInit(2,2))
@@ -2570,6 +2598,7 @@ int main(int argc,char *argv[])
     /* TCP callbacks */
     FFSS_CB.SCB.OnShareConnection = OnShareConnection;
     FFSS_CB.SCB.OnDirectoryListing = OnDirectoryListing;
+    FFSS_CB.SCB.OnRecursiveDirectoryListing = OnRecursiveDirectoryListing;
     FFSS_CB.SCB.OnDownload = OnDownload;
     FFSS_CB.SCB.OnUpload = OnUpload;
     FFSS_CB.SCB.OnRename = OnRename;
