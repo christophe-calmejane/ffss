@@ -42,9 +42,9 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
-# ADD RSC /l 0x40c /i "../../../../skyutils/src/windows/skyutils/release" /d "NDEBUG"
+# ADD RSC /l 0x40c /i "../../../../skyutils/src/windows/skyutils/release" /i "../../../../misc/windows/lib" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -65,9 +65,9 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../skyutils/src" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
-# ADD RSC /l 0x40c /d "_DEBUG"
+# ADD RSC /l 0x40c /i "../../../../misc/windows/lib" /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -88,9 +88,9 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "ffss___Win32_Release_Intel"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /I "../../../../skyutils/src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /G7 /O3 /QxiM /Qip /Qwp_ipo /c
+# ADD CPP /nologo /MT /W3 /GX /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /G7 /O3 /QxiM /Qip /Qwp_ipo /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
-# ADD RSC /l 0x40c /d "NDEBUG"
+# ADD RSC /l 0x40c /i "../../../../misc/windows/lib" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -162,11 +162,11 @@ SOURCE=..\..\utils.h
 # PROP Default_Filter "lib"
 # Begin Source File
 
-SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libbz2.lib
+SOURCE=..\..\..\..\misc\windows\lib\libbz2.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libz.lib
+SOURCE=..\..\..\..\misc\windows\lib\libz.lib
 # End Source File
 # End Group
 # End Target
