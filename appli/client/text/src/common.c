@@ -373,6 +373,15 @@ void FCA_sem_wait()
 		}
 	}
 }
+
+	/* oh  qu'elle est belle la declaration a la bourrin en plein
+		millieu
+	*/
+void handusr1()
+{
+	printf("recu SIGUSR1 dans la fille...\n");
+}
+
 #ifdef _WIN32
 void FCA_sem_timer()
 #else
@@ -390,6 +399,7 @@ void *FCA_sem_timer()
 	}
 		/* we mustn't ignore the SIG_USE1 signal */
 	FCA_restore_usr1();
+	signal(SIGUSR1, handusr1);
 	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_SEM_TIMEOUT);
 	sleep(FCA_SEM_TIMEOUT);
 		/* now we must ignore SIG_USR1 */
@@ -424,12 +434,12 @@ void FCA_sem_post()
 	else {
 			/* kill timer thread */
 		if(FCA_wait_threading) {
-/*
+
 printf("paf SIG_USR1...\n");
 			pthread_kill(*FCA_wait_thread, SIGUSR1);
 			free(FCA_wait_thread);
 printf("ahah t mort\n");
-*/
+
 			FCA_wait_threading=false;
 		}
 
