@@ -1,10 +1,6 @@
 #ifndef __FFSS_H__
 #define __FFSS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 /* Define the target OS */
 #ifdef __linux__
 #define FFSS_SERVER_OS "Linux"
@@ -66,12 +62,12 @@ extern "C" {
 #endif /* __sun__ */
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre80"
+#define FFSS_VERSION "1.0.0-pre81"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOL_VERSION                  0x0010003
-#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010002
+#define FFSS_PROTOCOL_VERSION                  0x0010004
+#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010004
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -247,6 +243,8 @@ extern "C" {
 #define FFSS_STATE_OFF    2
 #define FFSS_STATE_QUIET  4
 #define FFSS_STATE_ALL    7
+#define FFSS_SEARCH_IS_FILE  32
+#define FFSS_SEARCH_IS_SAMBA 64
 
 #define FFSS_SEEK_SET  1
 #define FFSS_SEEK_CUR  2
@@ -521,6 +519,10 @@ extern FFSS_TCallbacks FFSS_CB;
 extern char *FFSS_MyIP;
 
 extern char *FFSS_ErrorTable[];
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 void FFSS_PrintSyslog(int Level,char *Txt, ...);
 void FFSS_PrintDebug(int Level,char *Txt, ...);
