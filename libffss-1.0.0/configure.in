@@ -8,8 +8,7 @@ AC_ISC_POSIX
 AC_ARG_PROGRAM
 
 dnl Version of SkyUtils and function to search
-SU_VERSION="skyutils-1.16"
-SU_FUNCTION=SU_Dummy117
+SU_FUNCTION=SU_Dummy200
 
 #
 # Making releases:
@@ -168,23 +167,11 @@ else
 fi
 
 if test ! "$O_SKYUTILS_LIB"; then
-	AC_MSG_WARN("Cannot find libskyutils ... we will compile it")
-	O_SKYUTILS_FLAGS="-I `pwd`/$SU_VERSION -L`pwd`/$SU_VERSION"
-	O_SKYUTILS_LIB="../$SU_VERSION/libskyutils.a"
-	O_SKYUTILS_LIB_CONFIG="$libdir/libskyutils.a"
-	O_LIB_SKYUTILS="libskyutils.a"
-	O_H_SKYUTILS="skyutils.h"
-else
-  O_SKYUTILS_LIB_CONFIG=$O_SKYUTILS_LIB
+  AC_MSG_ERROR("Cannot find correct version of libskyutils ... please install or upgrade it")
 fi
 
 AC_SUBST(O_SKYUTILS_FLAGS)
 AC_SUBST(FFSS_PTHREAD_LIB)
-AC_SUBST(SU_VERSION)
-AC_SUBST(O_SKYUTILS_LIB)
-AC_SUBST(O_SKYUTILS_LIB_CONFIG)
-AC_SUBST(O_LIB_SKYUTILS)
-AC_SUBST(O_H_SKYUTILS)
 AC_SUBST(Z_LIB)
 AC_SUBST(BZ_LIB)
 AC_SUBST(O_Z_LIB)
@@ -192,7 +179,6 @@ AC_SUBST(O_BZ_LIB)
 AC_SUBST(SOLARIS)
 
 AC_OUTPUT([
-skyutils-1.16/Makefile
 Makefile
 ffss-config
 src/Makefile

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = @SU_VERSION@ src
+SUBDIRS = src
 
 bin_SCRIPTS = ffss-config
 

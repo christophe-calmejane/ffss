@@ -4,8 +4,6 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 exec_prefix_set=no
 pthread_lib=@FFSS_PTHREAD_LIB@
-skyutils_lib=@O_SKYUTILS_LIB_CONFIG@
-skyutils_flags="@O_SKYUTILS_FLAGS@"
 z_lib=@Z_LIB@
 bz_lib=@BZ_LIB@
 with_bz_lib=@O_BZ_LIB@
@@ -90,16 +88,16 @@ if test "$echo_cflags" = "yes"; then
       if test @includedir@ != /usr/include ; then
         includes=-I@includedir@
       fi
-      echo $pthread_lib $skyutils_flags $includes
+      echo $pthread_lib $includes
 fi
 
 if test "$echo_libs" = "yes"; then
       libdirs=-L@libdir@
-      echo $libdirs -lffss $skyutils_lib $z_lib $bz_lib $solaris
+      echo $libdirs -lffss -lskyutils $z_lib $bz_lib $solaris
 fi
 
 if test "$echo_libs_static" = "yes"; then
       libdirs=-L@libdir@
-      echo $libdirs @libdir@/libffss.a $skyutils_lib $z_lib $bz_lib $solaris
+      echo $libdirs @libdir@/libffss.a -lskyutils $z_lib $bz_lib $solaris
 fi
 
