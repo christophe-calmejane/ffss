@@ -5,9 +5,16 @@
 /* http://zekiller.skytech.org                  */
 /* mailto : zekiller@skytech.org                */
 
+/* TODO : dblclic gauche : ouvre manager
+          clic droit : menu contextuel : eject tout le monde...
+*/
+
 #define TRAYCONN_NAME      "Tray Conn Plugin"
 #define TRAYCONN_VERSION   "0.1"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
+
+#define MANAGER_PATH_REG_KEY "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\ManagerPath"
+#include "TrayConn\\resource.h"
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
@@ -19,27 +26,144 @@ FS_PPlugin Pl;
 
 void * (*PluginQueryFunc)(int Type,...);
 
+#define clNone    0x123456
+#define clBlack   0x000000
+#define clWhite   0xFFFFFF
+#define clBlue    0x0000FF
+#define clNavy    0x000080
+#define clLime    0x00FF00
+#define clGreen   0x008000
+#define clRed     0xFF0000
+#define clMaroon  0x800000
+#define clAqua    0x00FFFF
+#define clFuchsia 0xFF00FF
+#define clYellow  0xFFFF00
+#define clTeal    0x008080
+#define clPurple  0x800080
+#define clOlive   0x808000
+#define clLtGray  0xC0C0C0
+#define clDkGray  0x808080
+
+
 HWND TC_hwnd;
 HINSTANCE TC_hInstance;
+int TC_State;
 HBITMAP TC_bmp,TC_bmp_and;
-unsigned char TC_img[16*16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
-                               0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
-                               0,0,0,0,1,1,2,2,2,2,1,1,0,0,0,0,
-                               0,0,0,0,1,1,2,3,3,2,1,1,0,0,0,0,
-                               0,0,0,0,1,1,2,3,3,2,1,1,0,0,0,0,
-                               0,0,0,0,1,1,2,2,2,2,1,1,0,0,0,0,
-                               0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
-                               0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                               4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4};
+unsigned long int TC_img_orig[16][16] = {clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,
+                                         clLtGray,clDkGray,clDkGray,clDkGray,clDkGray,clDkGray,clWhite,clLtGray,clLtGray,clDkGray,clDkGray,clDkGray,clDkGray,clDkGray,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,clLtGray,clDkGray,clGreen,clGreen,clGreen,clGreen,clWhite,clLtGray,
+                                         clLtGray,clDkGray,clWhite,clWhite,clWhite,clWhite,clWhite,clLtGray,clLtGray,clDkGray,clWhite,clWhite,clWhite,clWhite,clWhite,clLtGray,
+                                         clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray,clLtGray};
+unsigned long int TC_img_over[16][16] = {clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clNone,clNone,
+                                         clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clNone,
+                                         clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clWhite,clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clNone,
+                                         clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clWhite,clNone,
+                                         clWhite,clWhite,clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clWhite,clWhite,clNone,
+                                         clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clWhite,clWhite,clBlack,clBlack,clWhite,clWhite,clWhite,clWhite,clWhite,clNone,
+                                         clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clNone,
+                                         clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clBlack,clWhite,clNone,
+                                         clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clWhite,clNone,
+                                         clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone,clNone};
+unsigned long int TC_img[16][16] = {clBlack,};
+char TC_Tip[64] = {0,};
 
 #define UWM_SYSTRAY (WM_USER + 1)
+#define JAUGE_OFS_BOTTOM 13
+#define JAUGE_HEIGHT     12
+#define JAUGE_OFS_LEFT   2
+#define JAUGE_OFS_RIGHT  10
+#define JAUGE_WIDTH      4
+
+void DrawJauge(int ofs,int nb)
+{
+  int i,j;
+
+  for(i=0;i<nb;i++)
+  {
+    for(j=0;j<JAUGE_WIDTH;j++)
+      TC_img[JAUGE_OFS_BOTTOM-i][ofs+j] = clLime;
+  }
+}
+
+void DrawOverlay(void)
+{
+  int i,j;
+
+  if(TC_State != FFSS_STATE_QUIET)
+    return;
+  for(i=0;i<16;i++)
+  {
+    for(j=0;j<16;j++)
+    {
+      if(TC_img_over[i][j] != clNone)
+        TC_img[i][j] = TC_img_over[i][j];
+    }
+  }
+}
+
+char *DrawBitmap(void)
+{
+  FS_PGlobal Gbl;
+  SU_PList Index,Ptr,Ptr2; /* FS_PShare */
+  FS_PShare Shr;
+  FS_PConn Conn;
+  int nb_shares = 0;
+  int max_xfers = 0,nb_xfers = 0;
+  int max_conns = 0,nb_conns = 0;
+
+  Index = (SU_PList) PluginQueryFunc(FSPQ_ACQUIRE_INDEX);
+  PluginQueryFunc(FSPQ_LOCK_CONNS);
+  PluginQueryFunc(FSPQ_LOCK_XFERS);
+  Ptr = Index;
+  while(Ptr != NULL)
+  {
+    Shr = (FS_PShare) Ptr->Data;
+    Ptr2 = Shr->Conns;
+    while(Ptr2 != NULL)
+    {
+      Conn = (FS_PConn) Ptr2->Data;
+      nb_xfers += SU_ListCount(Conn->XFers); /* Add streaming here... one day */
+      Ptr2 = Ptr2->Next;
+    }
+    max_conns += Shr->MaxConnections;
+    nb_shares++;
+    Ptr = Ptr->Next;
+  }
+  PluginQueryFunc(FSPQ_UNLOCK_XFERS);
+  PluginQueryFunc(FSPQ_UNLOCK_CONNS);
+  PluginQueryFunc(FSPQ_RELEASE_INDEX);
+
+  Gbl = (FS_PGlobal) PluginQueryFunc(FSPQ_ACQUIRE_GLOBAL);
+  max_xfers = Gbl->MaxXFerPerConn * nb_shares;
+  max_conns = max(Gbl->MaxConn,max_conns);
+  nb_conns = Gbl->Conn;
+  PluginQueryFunc(FSPQ_RELEASE_GLOBAL);
+  
+  memcpy(&TC_img,&TC_img_orig,sizeof(TC_img)); /* Reset icon */
+  DrawJauge(JAUGE_OFS_LEFT,(int)(nb_conns/(float)max_conns*JAUGE_HEIGHT));
+  DrawJauge(JAUGE_OFS_RIGHT,(int)(nb_xfers/(float)max_xfers*JAUGE_HEIGHT));
+  DrawOverlay();
+
+  snprintf(TC_Tip,sizeof(TC_Tip),"FFSS : %d conn(s) - %d xfer(s)",nb_conns,nb_xfers);
+  return TC_Tip;
+}
 
 void SetNewIcon(const char *Tip)
 {
@@ -75,11 +199,12 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   switch (message) {
     case WM_CREATE:
-      SetTimer(hwnd, 0x29a, 2000, NULL);
+      SetTimer(hwnd, 0x29a, 10000, NULL);
       return TRUE;
 
     case WM_TIMER:
-      //SetNewIcon("");
+      TC_State = (int) PluginQueryFunc(FSPQ_GET_STATE);
+      SetNewIcon(DrawBitmap());
       return TRUE;
 
     case WM_DESTROY:
@@ -94,6 +219,58 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       KillTimer(hwnd, 0x29a);
       return TRUE;
 
+    case UWM_SYSTRAY: /* We are being notified of mouse activity over the icon */
+      switch (lParam)
+      {
+        MENUITEMINFO mi;
+        case WM_RBUTTONUP: /* Let's track a popup menu */
+          GetCursorPos(&pt);
+          hmenu = LoadMenu(TC_hInstance,MAKEINTRESOURCE(IDR_MENU1));
+          memset(&mi,0,sizeof(mi));
+          mi.cbSize = sizeof(mi);
+          mi.fMask = MIIM_STATE;
+          TC_State = (int) PluginQueryFunc(FSPQ_GET_STATE);
+          if(TC_State == FFSS_STATE_QUIET)
+            mi.fState = MFS_CHECKED;
+          else
+            mi.fState = MFS_ENABLED;
+          SetMenuItemInfo(hmenu,IDM_SILENT,FALSE,&mi);
+          hpopup = GetSubMenu(hmenu, 0);
+          SetForegroundWindow(hwnd);
+          switch (TrackPopupMenu(hpopup,TPM_RETURNCMD | TPM_RIGHTBUTTON,pt.x, pt.y,0,hwnd,NULL))
+          {
+            case IDM_EJECT:
+              PluginQueryFunc(FSPQ_EJECT_ALL); /* Eject everybody */
+              SetNewIcon(DrawBitmap());
+              break;
+            case IDM_SILENT:
+              if(TC_State == FFSS_STATE_QUIET)
+                TC_State = FFSS_STATE_ON;
+              else
+                TC_State = FFSS_STATE_QUIET;
+              PluginQueryFunc(FSPQ_SET_STATE,TC_State); /* Setting new state */
+              SetNewIcon(DrawBitmap());
+              break;
+          }
+          PostMessage(hwnd,0,0,0);
+          DestroyMenu(hmenu); /* Delete loaded menu and reclaim its resources */
+          break;
+
+        case WM_LBUTTONDBLCLK: /* Open Share Manager */
+        {
+          STARTUPINFO sti;
+          PROCESS_INFORMATION pi;
+          char buf[1024];
+
+          memset(&sti,0,sizeof(sti));
+          memset(&pi,0,sizeof(pi));
+          SU_RB_GetStrValue(MANAGER_PATH_REG_KEY,buf,sizeof(buf),"");
+          CreateProcess(buf,buf,NULL,NULL,false,0,NULL,NULL,&sti,&pi);
+          break;
+        }
+      }
+      return TRUE;
+
   }
   return DefWindowProc(hwnd, message, wParam, lParam);
 }
@@ -106,7 +283,7 @@ void ThreadFunc(void *info)
   ICONINFO ii;
   HICON icon;
   MSG msg;
-  unsigned char img_and[4*16] = {255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
+  unsigned char img_and[16*16] = {0,};
 
   TC_hInstance = (HINSTANCE)info;
   wc.style = 0;
@@ -119,20 +296,23 @@ void ThreadFunc(void *info)
   wc.lpszMenuName = NULL;
   wc.lpszClassName = classname;
   if(RegisterClass(&wc) == 0)
-    return false;
+    return;
   TC_hwnd = CreateWindow(classname, classname, WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, TC_hInstance, NULL);
   if(TC_hwnd == NULL)
-    return false;
+    return;
 
   TC_bmp_and = CreateBitmap(16,16,1,1,img_and);
   if(TC_bmp_and == NULL)
-    return false;
-  TC_bmp = CreateBitmap(16,16,1,8,TC_img);
+    return;
+  TC_bmp = CreateBitmap(16,16,1,32,TC_img_orig);
   if(TC_bmp == NULL)
   {
     DeleteObject(TC_bmp_and);
-    return false;
+    return;
   }
+  TC_State = (int) PluginQueryFunc(FSPQ_GET_STATE);
+  TC_State = FFSS_STATE_QUIET;
+  DrawBitmap();
   ii.fIcon = TRUE;
   ii.hbmMask = TC_bmp_and;
   ii.hbmColor = TC_bmp;
@@ -141,7 +321,7 @@ void ThreadFunc(void *info)
   {
     DeleteObject(TC_bmp_and);
     DeleteObject(TC_bmp);
-    return false;
+    return;
   }
 
   /* Fill out NOTIFYICONDATA structure */
@@ -160,7 +340,7 @@ void ThreadFunc(void *info)
     DeleteObject(TC_bmp_and);
     DeleteObject(TC_bmp);
     DestroyIcon(icon);
-    return false;
+    return;
   }
   DestroyIcon(icon);
 
@@ -169,7 +349,6 @@ void ThreadFunc(void *info)
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
-  return;
 }
 
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
