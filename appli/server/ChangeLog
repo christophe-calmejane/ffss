@@ -3,9 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 9th 2002
+                  Last Update : June, 10th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+June, 10th 2002:
+  - Code cleanup
+  - Fixed bug in plugin shutdown query
+  - Added multiple instances detection
 
 June, 9th 2002:
   - Added firewalling rules to config file, and use new ffss filter engine

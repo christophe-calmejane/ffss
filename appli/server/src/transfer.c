@@ -22,7 +22,7 @@ bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path
 
 bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFER */
 {
-  long int rpos=0,rlen;
+  unsigned long int rpos=0,rlen;
   int len;
   bool last;
 

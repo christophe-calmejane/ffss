@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 extern HINSTANCE FS_hInstance;
+extern HWND FS_hwnd;
 #endif /* _WIN32 */
 
 void *FS_PluginQuery(int Type,...)
@@ -47,9 +48,7 @@ void *FS_PluginQuery(int Type,...)
       break;
 
     case FSPQ_SHUTDOWN :
-      FS_ShutDown();
-      exit(0);
-      //SU_TermThread(FFSS_MainThread);
+      SendMessage(FS_hwnd,WM_CLOSE,0,0);
       break;
   }
   va_end(ap);

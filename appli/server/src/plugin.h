@@ -23,13 +23,13 @@
 
 #define FSPQ_SHUTDOWN         30
 
-/* Structure returned by Plugin_QueryInfos call */
+/* Structure returned by Plugin_QueryInfos call - Freed by Plugin */
 typedef struct
 {
-  char *Name;
-  char *Version;
-  char *Copyright;
-  char *Description;
+  char *Name;        /* Freed by Plugin */
+  char *Version;     /* Freed by Plugin */
+  char *Copyright;   /* Freed by Plugin */
+  char *Description; /* Freed by Plugin */
 } FSP_TInfos, *FSP_PInfos;
 
 #ifdef __cplusplus

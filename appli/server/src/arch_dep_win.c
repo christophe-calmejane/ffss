@@ -15,6 +15,22 @@ void FS_MainThread(void)
   }
 }
 
+bool FS_IsAlreadyRunning(void)
+{
+  DWORD ProcessId;
+  HANDLE Process;
+  DWORD res;
+
+  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "ProcessId",0);
+  if(ProcessId == 0)
+    return false;
+  Process = OpenProcess(PROCESS_QUERY_INFORMATION,false,ProcessId);
+  if(Process == NULL)
+    return false;
+  CloseHandle(Process);
+  return true;
+}
+
 bool FS_LoadConfig(const char FileName[])
 {
   char Shares[4096];
@@ -173,6 +189,7 @@ N_DebugLevel = 0;
       }
       idx++;
     }
+    RegCloseKey(HK);
   }
   SU_SEM_POST(FS_SemGbl);
   return true;

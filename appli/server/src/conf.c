@@ -18,7 +18,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   SU_PClientSocket Client = (SU_PClientSocket) Info;
   FFSS_Field Size,pos;
   char *buf;
-  int buf_len;
+  unsigned int buf_len;
   char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m,*s_u;
   char *g_n,*g_c,*g_m,*g_i,*g_max,*g_max_xf,*g_f,*g_f_max;
   char *q,*r;

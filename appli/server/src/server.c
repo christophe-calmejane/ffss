@@ -22,6 +22,7 @@ SU_PList FS_Plugins; /* FS_PPlugin */
 
 #ifdef _WIN32
 HINSTANCE FS_hInstance = NULL;
+HWND FS_hwnd;
 #endif /* _WIN32 */
 
 /* Assumes FS_SemShr is locked */
@@ -35,7 +36,7 @@ void FS_FreeStreaming(FS_PStreaming FS)
 }
 
 /* Assumes FS_SemShr is locked */
-FS_PStreaming FS_GetStreamingByHandle(SU_PList Strms,long int Handle)
+FS_PStreaming FS_GetStreamingByHandle(SU_PList Strms,FFSS_Field Handle)
 {
   SU_PList Ptr;
 
@@ -180,7 +181,7 @@ void FS_AddConnectionToShare(FS_PShare Share,const char RemoteIP[],FS_PUser Usr,
 }
 
 /* Assumes FS_SemShr is locked */
-int FS_XFersCount(FS_PConn Conn)
+unsigned int FS_XFersCount(FS_PConn Conn)
 {
   return SU_ListCount(Conn->XFers);
 }
@@ -600,7 +601,7 @@ void OnSharesListing(struct sockaddr_in Client)
   SU_SEM_POST(FS_SemPlugin);
 }
 
-void OnIndexRequest(struct sockaddr_in Master,long int Port)
+void OnIndexRequest(struct sockaddr_in Master,FFSS_Field Port)
 {
   SU_PList Ptr;
 
@@ -619,7 +620,7 @@ void OnIndexRequest(struct sockaddr_in Master,long int Port)
   SU_SEM_POST(FS_SemPlugin);
 }
 
-void OnError(long int ErrorCode,const char Description[])
+void OnError(FFSS_Field ErrorCode,const char Description[])
 {
   SU_PList Ptr;
 
@@ -1464,7 +1465,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   SU_SEM_POST(FS_SemPlugin);
 }
 
-void OnStrmClose(SU_PClientSocket Client,long int Handle)
+void OnStrmClose(SU_PClientSocket Client,FFSS_Field Handle)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1511,7 +1512,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
   }
 }
 
-void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,long int Length)
+void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1588,7 +1589,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
   }
 }
 
-void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize)
+void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1631,7 +1632,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos
   }
 }
 
-void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_LongField Pos)
+void OnStrmSeek(SU_PClientSocket Client,FFSS_Field Handle,long int Flags,FFSS_LongField Pos)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -2738,7 +2739,6 @@ void ThreadFunc(void *info)
 {
   MSG msg;
   WNDCLASS wc;
-  HWND hwnd;
 
   wc.style = 0;
   wc.lpfnWndProc = FS_wndProc;
@@ -2751,11 +2751,11 @@ void ThreadFunc(void *info)
   wc.lpszClassName = "FFSSServer";
   if(RegisterClass(&wc) == 0)
     return;
-  hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
-  if(hwnd == NULL)
+  FS_hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
+  if(FS_hwnd == NULL)
     return;
 
-  while(GetMessage(&msg,hwnd,0,0))
+  while(GetMessage(&msg,FS_hwnd,0,0))
   {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
@@ -2790,6 +2790,16 @@ int main(int argc,char *argv[])
 
   printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_SERVER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
+
+  if(FS_IsAlreadyRunning())
+  {
+#ifdef __unix__
+    printf("FFSS Server is already running... exiting\n");
+#else /* !__unix__ */
+    MessageBox(NULL,"FFSS Server is already running","FFSS Server",MB_OK | MB_ICONEXCLAMATION);
+#endif /* __unix__ */
+    return -1;
+  }
 
 #ifdef __unix__
   SU_strcpy(ConfigFile,CONFIG_FILE_NAME,sizeof(ConfigFile));
@@ -2869,6 +2879,7 @@ int main(int argc,char *argv[])
     return -3;
   }
 
+  FFSS_Filter_Init(FFSS_THREAD_SERVER); /* Init FFSS Filter Engine here... as FS_Init has not been called yet */
   FS_MyState = FFSS_STATE_OFF;
   FS_Plugins = NULL;
   memset(&FS_MyGlobal,0,sizeof(FS_MyGlobal));

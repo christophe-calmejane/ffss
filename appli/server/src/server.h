@@ -88,23 +88,23 @@ typedef struct
 
 typedef struct
 {
-  char *Path;         /* Path of the share on disk */
-  char *ShareName;    /* Name of the share */
-  char *Comment;      /* Comment of the share */
-  bool Writeable;     /* If the share is writeable */
-  bool Private;       /* If we need to be a REGISTERED user (login/pwd) */
-  int MaxConnections; /* Max simultaneous connections to this share */
-  SU_PList Users;     /* FS_PUser */
+  char *Path;                  /* Path of the share on disk */
+  char *ShareName;             /* Name of the share */
+  char *Comment;               /* Comment of the share */
+  bool Writeable;              /* If the share is writeable */
+  bool Private;                /* If we need to be a REGISTERED user (login/pwd) */
+  unsigned int MaxConnections; /* Max simultaneous connections to this share */
+  SU_PList Users;              /* FS_PUser */
 
-  FS_TNode Root;      /* Files/Dirs in the root dir of the share */
-  FFSS_Field NbFiles; /* Total number of files in the share */
-  FFSS_Field NbDirs;  /* Total number of directories in the share */
-  time_t Time;        /* Time of Shared directory (Path/.) */
-  SU_PList Conns;     /* FS_PConn */
-  bool Disabled;      /* Temporarly disable the share */
-  bool Remove;        /* If the share is to be removed (close all active connections) */
+  FS_TNode Root;               /* Files/Dirs in the root dir of the share */
+  FFSS_Field NbFiles;          /* Total number of files in the share */
+  FFSS_Field NbDirs;           /* Total number of directories in the share */
+  time_t Time;                 /* Time of Shared directory (Path/.) */
+  SU_PList Conns;              /* FS_PConn */
+  bool Disabled;               /* Temporarly disable the share */
+  bool Remove;                 /* If the share is to be removed (close all active connections) */
 #ifdef _WIN32
-  HANDLE NotifyHandle;/* Notification handle */
+  HANDLE NotifyHandle;         /* Notification handle */
 #endif /* _WIN32 */
 } FS_TShare, *FS_PShare;
 
@@ -141,26 +141,26 @@ typedef struct
 
 typedef struct
 {
-  char *Name;        /* Name of my server */
-  char *Comment;     /* Comment of my server */
-  char *Master;      /* Host name of my master */
-  char *MasterIP;    /* IP of my master */
-  char *MyIP;        /* My IP */
-  int   Idle;        /* Idle time allowed on a share */
-  int   MaxConn;     /* Global Max connections (except FTP) */
-  int   Conn;        /* Number of current global connections (except FTP) */
-  int   MaxXFerPerConn; /* Global Max XFer per connection */
-  int   FTPMaxConn ; /* FTP Max connections */
-  int   FTPConn;     /* Number of current FTP connections */
-  bool  FTP;         /* FTP compatibility */
-  bool  ConfSock;    /* Using a local socket for realtime configuration */
-  bool  XFerInConn ; /* If xfer are sent using connection socket */
-  bool  LimitedBind; /* If limited bind mode is active */
+  char *Name;               /* Name of my server */
+  char *Comment;            /* Comment of my server */
+  char *Master;             /* Host name of my master */
+  char *MasterIP;           /* IP of my master */
+  char *MyIP;               /* My IP */
+  unsigned int Idle;        /* Idle time allowed on a share */
+  unsigned int MaxConn;     /* Global Max connections (except FTP) */
+  unsigned int Conn;        /* Number of current global connections (except FTP) */
+  unsigned int MaxXFerPerConn; /* Global Max XFer per connection */
+  unsigned int FTPMaxConn;  /* FTP Max connections */
+  unsigned int FTPConn;     /* Number of current FTP connections */
+  bool  FTP;                /* FTP compatibility */
+  bool  ConfSock;           /* Using a local socket for realtime configuration */
+  bool  XFerInConn ;        /* If xfer are sent using connection socket */
+  bool  LimitedBind;        /* If limited bind mode is active */
 } FS_TGlobal, *FS_PGlobal;
 
 typedef struct
 {
-  int  sock;                  /* Socket for commands */
+  SU_SOCKET  sock;            /* Socket for commands */
   FILE *fp;                   /* Opened file for reading/writing */
   char *LocalPath;            /* Local path of file used for fopen */
   FFSS_LongField StartingPos; /* Reading/Writing starting pos in the file */
@@ -176,7 +176,7 @@ typedef struct
   FFSS_LongField fsize;
 } FS_TStreaming, *FS_PStreaming;
 
-typedef struct
+typedef struct /* Allocated by Plugin / Freed by Server */
 {
   FFSS_Field size; /* Size of this structure... must be set by plugin */
   char *Path;      /* Set and freed by server */
@@ -255,6 +255,7 @@ bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
 bool FS_IsPluginValid(FS_PPlugin Plugin);
 
 /* Functions from arch dependant file */
+bool FS_IsAlreadyRunning(void);
 bool FS_LoadConfig(const char FileName[]);
 /* Locks FS_SemShr & FS_SemGbl */
 bool FS_SaveConfig(const char FileName[]);

@@ -12,6 +12,11 @@ void FS_MainThread(void)
 
 }
 
+bool FS_IsAlreadyRunning(void)
+{
+  return false;
+}
+
 bool FS_SaveConfig(const char FileName[])
 {
   return true;
