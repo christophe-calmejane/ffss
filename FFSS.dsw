@@ -15,7 +15,55 @@ Package=<4>
 
 ###############################################################################
 
+Project: "AutoPatch"=".\appli\Install Setting\CheckForPatch\AutoPatch\AutoPatch.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ConfConn"=.\appli\server\plugins\ConfConn\ConfConn\ConfConn.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Log"=.\appli\server\plugins\Log\Log\Log.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "PreInstall"=".\appli\Install Setting\preinstall\PreInstall.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "TrayConn"=.\appli\server\plugins\TrayConn\TrayConn\TrayConn.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

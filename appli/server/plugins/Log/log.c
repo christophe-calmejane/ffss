@@ -287,7 +287,8 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
 #ifdef _WIN32
-  SendMessage(L_hwnd,WM_DESTROY,0,0);
+  PostMessage(L_hwnd,WM_DESTROY,0,0);
+  SU_USLEEP(200);
 #endif /* !_WIN32 */
   SU_KillThread(L_Thr);
   SU_CloseLogFile(L_fp);

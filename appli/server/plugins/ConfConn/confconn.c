@@ -6,13 +6,15 @@
 /* mailto : zekiller@skytech.org                */
 
 #define CONFCONN_NAME      "Conf Conn Plugin"
-#define CONFCONN_VERSION   "0.1"
-#define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2001'02"
+#define CONFCONN_VERSION   "0.2"
+#define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define CONFCONN_DESCRIPTION "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
+#include "ConfConn\\resource.h"
+#include "commctrl.h"
 #undef malloc
 #undef strdup
 
@@ -27,7 +29,15 @@ typedef struct
 FS_PPlugin Pl;
 SU_PList CC_Confs = NULL; /* CC_PConf */
 FSP_TInfos CC_Infos;
-void CC_AddConf(const char IP[],const char Login[],const char Pwd[]);
+bool CC_AddConf(const char IP[],const char Login[],const char Pwd[]);
+bool CC_DelConf(const char IP[],const char Login[]);
+
+SU_THREAD_HANDLE CC_Thr;
+#ifdef _WIN32
+HWND CC_hwnd;
+HINSTANCE CC_hInstance;
+void ThreadFunc(void *info);
+#endif /* _WIN32 */
 
 /* ******************** */
 /* OS dependant section */
@@ -84,6 +94,183 @@ void CC_SaveConfig()
     Ptr = Ptr->Next;
   }
 }
+
+LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  switch (message) {
+    case WM_COMMAND:
+      switch(LOWORD(wParam))
+      {
+        HWND lst,e_ip,e_login,e_pwd;
+        char buf[1024],ip[100],login[50],pwd[50];
+        int pos;
+        DWORD adrs;
+        LVITEM item;
+        struct in_addr in;
+        char *tmp,*host;
+        BYTE f_1,f_2,f_3,f_4;
+
+        case IDOK:
+          /* Close box */
+          EndDialog(hwnd,0);
+          PostQuitMessage(0);
+          return TRUE;
+        case IDC_BUTTON1:
+          lst = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_LIST1));
+          e_ip = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_IPADDRESS1));
+          e_login = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT3));
+          e_pwd = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT4));
+          if(SendMessage(e_ip,IPM_GETADDRESS,0,(DWORD)&adrs) != 4)
+          {
+            MessageBox(hwnd,"You must specify a valid IP","Conf Conn Info",MB_OK);
+            return TRUE;
+          }
+          GetWindowText(e_login,login,sizeof(login));
+          GetWindowText(e_pwd,pwd,sizeof(pwd));
+          if(login[0] == 0)
+          {
+            MessageBox(hwnd,"You must specify a login","Conf Conn Info",MB_OK);
+            return TRUE;
+          }
+          if(pwd[0] == 0)
+          {
+            MessageBox(hwnd,"You must specify a password","Conf Conn Info",MB_OK);
+            return TRUE;
+          }
+          f_1 = (BYTE)FIRST_IPADDRESS(adrs);f_2 = (BYTE)SECOND_IPADDRESS(adrs);f_3 = (BYTE)THIRD_IPADDRESS(adrs);f_4 = (BYTE)FOURTH_IPADDRESS(adrs);
+          adrs = MAKEIPADDRESS(f_4,f_3,f_2,f_1);
+          in.S_un.S_addr = adrs;
+          tmp = inet_ntoa(in);
+          if(!CC_AddConf(tmp,login,pwd))
+          {
+            MessageBox(hwnd,"An entry with same IP and login already exists. Remove it first","Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
+            return TRUE;
+          }
+          item.mask = LVIF_TEXT;
+          item.iItem = 0;
+          item.pszText = tmp;
+          item.cchTextMax = strlen(item.pszText);
+          item.iSubItem = 0;
+          ListView_InsertItem(lst,&item);
+          host = SU_NameOfPort(tmp);
+          if(host == NULL)
+            host = tmp;
+          item.pszText = host;
+          item.cchTextMax = strlen(item.pszText);
+          item.iSubItem = 1;
+          ListView_SetItem(lst,&item);
+          item.pszText = login;
+          item.cchTextMax = strlen(item.pszText);
+          item.iSubItem = 2;
+          ListView_SetItem(lst,&item);
+          SendMessage(e_ip,IPM_CLEARADDRESS,0,0);
+          SetWindowText(e_login,"");
+          SetWindowText(e_pwd,"");
+          return TRUE;
+        case IDC_BUTTON2:
+          lst = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_LIST1));
+          pos = ListView_GetSelectionMark(lst);
+          if(pos == -1)
+            return TRUE;
+          ListView_GetItemText(lst,pos,0,ip,sizeof(ip));
+          ListView_GetItemText(lst,pos,2,login,sizeof(login));
+          snprintf(buf,sizeof(buf),"Are you sure you want to remove access for %s from %s ?\n",login,ip);
+          if(MessageBox(hwnd,buf,"Conf Conn Question",MB_YESNO) == IDYES)
+          {
+            if(CC_DelConf(ip,login))
+              ListView_DeleteItem(lst,pos);
+            else
+              MessageBox(hwnd,"Error removing access","Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
+          }
+          return TRUE;
+      }
+      break;
+    case WM_CREATE:
+      return TRUE;
+
+    case WM_DESTROY:
+      PostQuitMessage(0);
+      return TRUE;
+  }
+  return FALSE;
+}
+
+SU_THREAD_ROUTINE(ThreadFunc,info)
+{
+  MSG msg;
+  HWND dlg;
+  LVCOLUMN col;
+  INITCOMMONCONTROLSEX icc;
+  CC_PConf Conf;
+  SU_PList Ptr;
+  LVITEM item;
+  char *host;
+
+  icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
+  icc.dwICC = ICC_LISTVIEW_CLASSES | ICC_WIN95_CLASSES | ICC_INTERNET_CLASSES;
+  InitCommonControlsEx(&icc);
+  CC_hwnd = CreateDialog(CC_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),(HWND)info,CC_wndProc);
+  if(CC_hwnd == NULL)
+    return;
+
+  dlg = GetDlgItem(CC_hwnd,(int)MAKEINTRESOURCE(IDC_LIST1));
+  ListView_SetExtendedListViewStyleEx(dlg,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
+  col.mask = LVCF_TEXT | LVCF_WIDTH;
+  col.cx = 80;
+  col.pszText = "Login";
+  col.cchTextMax = strlen(col.pszText);
+  ListView_InsertColumn(dlg,0,&col);
+  col.cx = 180;
+  col.pszText = "Hostname";
+  col.cchTextMax = strlen(col.pszText);
+  ListView_InsertColumn(dlg,0,&col);
+  col.cx = 100;
+  col.pszText = "Allowed IP";
+  col.cchTextMax = strlen(col.pszText);
+  ListView_InsertColumn(dlg,0,&col);
+
+  item.mask = LVIF_TEXT;
+  item.iItem = 0;
+  Ptr = CC_Confs;
+  while(Ptr != NULL)
+  {
+    Conf = (CC_PConf) Ptr->Data;
+    item.pszText = Conf->IP;
+    item.cchTextMax = strlen(item.pszText);
+    item.iSubItem = 0;
+    ListView_InsertItem(dlg,&item);
+    host = SU_NameOfPort(Conf->IP);
+    if(host == NULL)
+      host = Conf->IP;
+    item.pszText = host;
+    item.cchTextMax = strlen(item.pszText);
+    item.iSubItem = 1;
+    ListView_SetItem(dlg,&item);
+    item.pszText = Conf->Login;
+    item.cchTextMax = strlen(item.pszText);
+    item.iSubItem = 2;
+    ListView_SetItem(dlg,&item);
+    Ptr = Ptr->Next;
+  }
+
+  //SetWindowText(dlg,L_Gbl.Path);
+  ShowWindow(CC_hwnd,SW_SHOW);
+  while(GetMessage(&msg,CC_hwnd,0,0))
+  {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+}
+
+/* This is the function called when plugin is requested to configure itself */
+FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
+{
+  /* Create a thread to manage messages */
+  if(!SU_CreateThread(&CC_Thr,ThreadFunc,User,true))
+    return false;
+  return true;
+}
+
 #else /* !_WIN32 */
 void CC_LoadConfig()
 {
@@ -96,16 +283,46 @@ void CC_SaveConfig()
 /* ********************** */
 /* OS independant section */
 /* ********************** */
-void CC_AddConf(const char IP[],const char Login[],const char Pwd[])
+CC_PConf CC_SearchConf(const char IP[],const char Login[])
+{
+  CC_PConf Conf;
+  SU_PList Ptr;
+
+  Ptr = CC_Confs;
+  while(Ptr != NULL)
+  {
+    Conf = (CC_PConf) Ptr->Data;
+    if((strcmp(IP,Conf->IP) == 0) && (strcmp(Login,Conf->Login) == 0))
+      return Conf;
+    Ptr = Ptr->Next;
+  }
+  return NULL;
+}
+
+bool CC_AddConf(const char IP[],const char Login[],const char Pwd[])
 {
   CC_PConf Conf;
 
+  if(CC_SearchConf(IP,Login) != NULL)
+    return false;
   Conf = (CC_PConf) malloc(sizeof(CC_TConf));
   memset(Conf,0,sizeof(CC_TConf));
   Conf->IP = strdup(IP);
   Conf->Login = strdup(Login);
   Conf->Pwd = strdup(Pwd);
   CC_Confs = SU_AddElementHead(CC_Confs,Conf);
+  return true;
+}
+
+bool CC_DelConf(const char IP[],const char Login[])
+{
+  CC_PConf Conf;
+
+  Conf = CC_SearchConf(IP,Login);
+  if(Conf == NULL)
+    return false;
+  CC_Confs = SU_DelElementElem(CC_Confs,Conf);
+  return true;
 }
 
 void CC_FreeConf(CC_PConf Conf)
@@ -167,7 +384,7 @@ bool OnCheckConfConn(SU_PClientSocket Client)
   if(!retval)
     return false;
   res = recv(Client->sock,Login,Length,SU_MSG_NOSIGNAL);
-  if(res != Length)
+  if(res != (int)Length)
     return false;
   Login[Length] = 0;
   /* Get pwd length */
@@ -192,7 +409,7 @@ bool OnCheckConfConn(SU_PClientSocket Client)
   if(!retval)
     return false;
   res = recv(Client->sock,Pwd,Length,SU_MSG_NOSIGNAL);
-  if(res != Length)
+  if(res != (int)Length)
     return false;
   Pwd[Length] = 0;
 
@@ -205,8 +422,11 @@ bool OnCheckConfConn(SU_PClientSocket Client)
 
 
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
-FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
+FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info)
 {
+#ifdef _WIN32
+  CC_hInstance = (HINSTANCE)Info;
+#endif /* _WIN32 */
   /* Setting all callbacks to NULL */
   Pl = (FS_PPlugin) malloc(sizeof(FS_TPlugin));
   if(Pl == NULL)
@@ -214,6 +434,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
   memset(Pl,0,sizeof(FS_TPlugin));
 
   /* Setting plugin infos */
+  Pl->size = sizeof(FS_TPlugin);
   Pl->Name = CONFCONN_NAME;
   Pl->Copyright = CONFCONN_COPYRIGHT;
   Pl->Version = CONFCONN_VERSION;
@@ -226,6 +447,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.
   */
+ThreadFunc(NULL);
   return Pl;
 }
 
@@ -243,6 +465,11 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
   }
   SU_FreeList(CC_Confs);
   CC_Confs = NULL;
+#ifdef _WIN32
+  PostMessage(CC_hwnd,WM_DESTROY,0,0);
+  SU_USLEEP(200);
+#endif /* !_WIN32 */
+  SU_KillThread(CC_Thr);
 }
 
 FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)

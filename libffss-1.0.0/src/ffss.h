@@ -1080,6 +1080,10 @@ typedef struct
 } FFSS_Filter_TApi, *FFSS_Filter_PApi;
 extern FFSS_Filter_TApi FFSS_Filter_Api;
 
+
+/* ************************************************************************* */
+/* GLOBAL VARIABLES                                                          */
+/* ************************************************************************* */
 extern char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT];
 extern char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT];
 extern char *FFSS_ImageExt[FFSS_IMAGE_NB_EXT];
