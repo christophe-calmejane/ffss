@@ -654,7 +654,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 				*(machine-1)='/';
 				*(share-1)='/';
 				if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL)
-					FCA_printlog("downloading directory %s/%s to %s", tgt, dir-1, to);
+					FCA_printlog("downloading directory %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
 				FCA_dw_dir(tgt,dir-1, to);
 				FCA_print_cmd_ok("Download sucessful");
 				ding();
@@ -671,9 +671,9 @@ or get /$/none/127.0.0.1/tmp/toto/
 			
 			if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL) {
 				if(toDisk)
-					FCA_printlog("downloading file %s/%s to %s", tgt, dir-1, to);
+					FCA_printlog("downloading file %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
 				else
-					FCA_printlog("downloading and displaying file %s/%s", tgt, dir-1);
+					FCA_printlog("downloading and displaying file %s in share %s of machine %s (%s)", dir-1, share, machine, domain);
 			}
 			code=FCA_RequestDownload(FCA_shrSkt, dir-1,
 			 toDisk?to:NULL, ( (FC_PEntry)(Ps->Data) )->Size);
