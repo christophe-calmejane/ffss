@@ -162,11 +162,11 @@ SOURCE=..\..\utils.h
 # PROP Default_Filter "lib"
 # Begin Source File
 
-SOURCE=..\..\..\..\..\VisualSkyLibs\lib\zlibdll.lib
+SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libbz2.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libbz2.lib
+SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libz.lib
 # End Source File
 # End Group
 # End Target
