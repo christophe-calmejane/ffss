@@ -276,6 +276,7 @@ void FCA_exit(int code)
 {
 	if(!FCA_exiting) {
 		if(FCA_logf) {
+			FCA_printlog("stopping logging");
 			SU_CloseLogFile(FCA_logf);
 			FCA_logf=NULL;
 		}
@@ -1332,15 +1333,20 @@ void FCA_upd_skin()
 
 void FCA_upd_log()
 {
-	if(FCA_logf)
+	if(FCA_logf) {
+		if(FCA_VAR_IS_ON(FCA_log))
+			FCA_printlog("stopping logging");
 		SU_CloseLogFile(FCA_logf);
+	}
 	if(FCA_VAR_IS_ON(FCA_log)) {
 		FCA_logf=SU_OpenLogFile(FCA_logfile);
 		if(!FCA_logf) {
 			FCA_print_cmd_err("cannot open log file, disabling log");
 			sprintf(FCA_log, "off");
-		} else
+		} else {
 			FFSS_PrintDebug(5, "(client) logfile opened\n");
+			FCA_printlog("starting logging");
+		}
 	}		
 	
 }
@@ -1353,7 +1359,9 @@ void FCA_upd_logfile()
 		if(!FCA_logf) {
 			FCA_print_cmd_err("cannot open log file, disabling log");
 			sprintf(FCA_log, "off");
-		} else
+		} else {
 			FFSS_PrintDebug(5, "(client) logfile reopen\n");
+			FCA_printlog("restarting logging");
+		}
 	}
 }

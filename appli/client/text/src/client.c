@@ -306,12 +306,6 @@ FILE *f;
 #ifdef CGI
 	if(FCA_CGI_mode) {
 		FCA_read_cfg();
-f=fopen("/tmp/ffsstest", "w");
-if(f) {
-	fprintf(f, "log_file=%s\n", FCA_logfile);
-	fclose(f);
-}
-
 /* debug
 FCA_init_headers();
 */
