@@ -112,8 +112,9 @@ void FCA_interpret_cmd()
 {
 	char *esp, *tab, *command;
 	char *lesp=NULL;
+	char *p;
 #ifdef ALIASES
-	char *p,*p2;
+	char *p2;
 #endif
 	bool messSent=false, newCommand=false;
 	bool espOk=false, aliasOk=false;
@@ -138,8 +139,12 @@ void FCA_interpret_cmd()
 		FCA_in_comment=false;
 	}
 	esp=strchr(command,'#');
-	if(esp)
-		*esp='\0';
+		/* cut here only if there's no command before */
+	if(esp) {
+		for(p=command; p<esp && (*p==' ' || *p=='\t'); p++);
+		if(p==esp)
+			*esp='\0';
+	}
 	esp=strstr(command,"//");
 	if(esp)
 		*esp='\0';
