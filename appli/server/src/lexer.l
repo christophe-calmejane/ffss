@@ -9,6 +9,7 @@ extern int line;
 
 %%
 
+"LimitedBind"        { return BIND; }
 "Plugin"             { return PLUGIN; }
 "XFerBufferSize"     { return XFERSIZE; }
 "ReadBufferSize"     { return READSIZE; }

@@ -36,8 +36,11 @@
 # Define debug level (0 if no debug)  (from 0 to 6)
 #Debug 6
 
-# If you have multiple interface, or you don't want to use eth0, define the following
+# If you have multiple interface, or you don't want to use eth0 (or xl0 for BSD), define the following
 #Interface eth1
+
+# If you want to have a limited bind for only one inteface (defined with 'Interface' or for default one), define the following
+#LimitedBind 1
 
 # If you are using BSD, or if the autodetect of interface IP fails, manually define ip of your server
 #MyIP "172.17.64.15"

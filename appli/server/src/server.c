@@ -1973,6 +1973,16 @@ bool FS_PowerUp(const char IntName[])
       FS_UnInit();
       return false;
     }
+    FS_MyGlobal.MyIP = FFSS_MyIP;
+  }
+  else
+  {
+#ifdef DEBUG
+    printf("Forcing IP %s\n",FS_MyGlobal.MyIP);
+#endif /* DEBUG */
+  }
+  if(FS_MyGlobal.LimitedBind)
+  {
     if(getuid() == 0)
     {
       FFSS_PrintSyslog(LOG_WARNING,"Entering limited bind mode to %s\n",IntName);
@@ -1988,13 +1998,6 @@ bool FS_PowerUp(const char IntName[])
     }
     else
       FFSS_PrintSyslog(LOG_WARNING,"Warning : Server launched from a non-root user. Cannot bind to %s only\n",IntName);
-    FS_MyGlobal.MyIP = FFSS_MyIP;
-  }
-  else
-  {
-#ifdef DEBUG
-    printf("Forcing IP %s\n",FS_MyGlobal.MyIP);
-#endif /* DEBUG */
   }
   FFSS_PrintDebug(1,"Server running...\n");
   FS_RealBuildIndex();

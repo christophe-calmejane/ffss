@@ -123,20 +123,21 @@ typedef struct
 
 typedef struct
 {
-  char *Name;       /* Name of my server */
-  char *Comment;    /* Comment of my server */
-  char *Master;     /* Host name of my master */
-  char *MasterIP;   /* IP of my master */
-  char *MyIP;       /* My IP */
-  int   Idle;       /* Idle time allowed on a share */
-  int   MaxConn;    /* Global Max connections (except FTP) */
-  int   Conn;       /* Number of current global connections (except FTP) */
+  char *Name;        /* Name of my server */
+  char *Comment;     /* Comment of my server */
+  char *Master;      /* Host name of my master */
+  char *MasterIP;    /* IP of my master */
+  char *MyIP;        /* My IP */
+  int   Idle;        /* Idle time allowed on a share */
+  int   MaxConn;     /* Global Max connections (except FTP) */
+  int   Conn;        /* Number of current global connections (except FTP) */
   int   MaxXFerPerConn; /* Global Max XFer per connection */
-  int   FTPMaxConn; /* FTP Max connections */
-  int   FTPConn;    /* Number of current FTP connections */
-  bool  FTP;        /* FTP compatibility */
-  bool  ConfSock;   /* Using a local socket for realtime configuration */
-  bool  XFerInConn; /* If xfer are sent using connection socket */
+  int   FTPMaxConn ; /* FTP Max connections */
+  int   FTPConn;     /* Number of current FTP connections */
+  bool  FTP;         /* FTP compatibility */
+  bool  ConfSock;    /* Using a local socket for realtime configuration */
+  bool  XFerInConn ; /* If xfer are sent using connection socket */
+  bool  LimitedBind; /* If limited bind mode is active */
 } FS_TGlobal, *FS_PGlobal;
 
 typedef struct

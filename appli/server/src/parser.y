@@ -35,6 +35,7 @@ void FS_MakeTempoUser(const char Login[],const char Password[],bool Writeable)
 
 %}
 
+%token BIND
 %token PLUGIN
 %token XFERSIZE
 %token READSIZE
@@ -95,6 +96,7 @@ fieldlineglobal:   NAME STRING                               { FS_MyGlobal.Name 
                  | FTP_MAXCONN NUM                           { FS_MyGlobal.FTPMaxConn = (int)($2); }
                  | SOCK NUM                                  { FS_MyGlobal.ConfSock = (int)($2); }
                  | XFERCONN NUM                              { FS_MyGlobal.XFerInConn = (int)($2); }
+                 | BIND NUM                                  { FS_MyGlobal.LimitedBind = (int)($2); }
                  | MYIP STRING                               { FS_MyGlobal.MyIP = strdup($2); }
                  | INTNAME STRING                            { FS_MyIntName = strdup($2); }
                  | READSIZE NUM                              { FFSS_TransferReadBufferSize = (long int)($2); }
