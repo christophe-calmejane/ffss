@@ -43,6 +43,44 @@ SU_PList SU_AddElementHead(SU_PList List,void *Elem)
   return El;
 }
 
+SU_PList SU_DelElementElem(SU_PList List,void *Elem)
+{
+  SU_PList Ptr,Ptr2,St;
+
+  if(List == NULL)
+    return NULL;
+  Ptr = List;
+  St = List;
+  Ptr2 = NULL;
+  while(Ptr != NULL)
+  {
+    if(Ptr->Data == Elem)
+    {
+      Ptr = SU_DelElementHead(Ptr);
+      if(Ptr2 == NULL)
+        St = Ptr;
+      else
+        Ptr2->Next = Ptr;
+      if(Ptr == NULL)
+        return St;
+    }
+    Ptr2 = Ptr;
+    Ptr = Ptr->Next;
+  }
+  return St;
+}
+
+SU_PList SU_DelElementHead(SU_PList List)
+{
+  SU_PList Ptr;
+
+  if(List == NULL)
+    return NULL;
+  Ptr = List->Next;
+  free(List);
+  return Ptr;
+}
+
 void SU_FreeListElem(SU_PList List)
 {
   SU_PList Ptr,Ptr2;
@@ -52,6 +90,19 @@ void SU_FreeListElem(SU_PList List)
   {
     Ptr2 = Ptr->Next;
     free(Ptr->Data);
+    free(Ptr);
+    Ptr = Ptr2;
+  }
+}
+
+void SU_FreeList(SU_PList List)
+{
+  SU_PList Ptr,Ptr2;
+
+  Ptr = List;
+  while(Ptr != NULL)
+  {
+    Ptr2 = Ptr->Next;
     free(Ptr);
     Ptr = Ptr2;
   }
@@ -507,7 +558,6 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   SU_PList Ptr;
   FC_PEntry Ent;
   bool ret_val;
-  FFSS_PTransfer FT;
   bool free_it;
   char *u_Buf;
   long int u_pos,u_Len;

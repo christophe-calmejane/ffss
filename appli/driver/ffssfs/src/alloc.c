@@ -283,9 +283,12 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
   ffss_inode = (struct ffss_inode *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode), 'puSR');
 
   ffss_inode->Type = Type;
-  ffss_inode->NameLength = strlen(Name) + 1;
-  ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
-  RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
+  if(Name != NULL)
+  {
+    ffss_inode->NameLength = strlen(Name) + 1;
+    ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
+    RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
+  }
 
   ffss_inode->RefCount = 0;
   ffss_inode->Inodes = NULL;
@@ -293,12 +296,13 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 
   ffss_inode->IP = NULL;
 
+  ffss_inode->Conns = NULL;
   ffss_inode->Conn = NULL;
   ffss_inode->Listed = 0;
   ffss_inode->Path = NULL;
 
   ffss_inode->Parent = NULL;
-  KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name : %s\n",Type,ffss_inode->Name));
+  KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name '%s'\n",Type,(ffss_inode->Name == NULL)?"no name yet":ffss_inode->Name));
 
   return ffss_inode;
 }
@@ -327,6 +331,7 @@ struct ffss_inode *FsdAssignInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL L
 VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
   int i;
+  SU_PList Ptr;
 
   if(ffss_inode == NULL)
     return;
@@ -339,12 +344,13 @@ VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   ffss_inode->RefCount--;
   if(ffss_inode->RefCount > 0)
   {
+    KdPrint(("FsdFreeInode : Delaying free for '%s'... %d ref remaining\n",ffss_inode->Name,ffss_inode->RefCount));
     if(Lock)
       UNLOCK_SUPERBLOCK_RESOURCE;
     return;
   }
 
-  KdPrint(("FsdFreeInode : Freeing inode (%d) %s\n",ffss_inode->Type,ffss_inode->Name));
+  KdPrint(("FsdFreeInode : Freeing inode (%d) '%s'\n",ffss_inode->Type,ffss_inode->Name));
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
@@ -361,6 +367,16 @@ VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
     free(ffss_inode->IP); /* Allocated by ffss library using 'malloc'... free it with 'free' */
   if(ffss_inode->Path != NULL)
     free(ffss_inode->Path); /* Allocated by ffss library using 'malloc'... free it with 'free' */
+  if(ffss_inode->Conns != NULL)
+  {
+    Ptr = ffss_inode->Conns;
+    while(Ptr != NULL)
+    {
+      FsdFreeInode((struct ffss_inode *)Ptr->Data,false);
+      Ptr = Ptr->Next;
+    }
+    SU_FreeList(ffss_inode->Conns);
+  }
 
   FsdFreePool(ffss_inode);
   if(Lock)
@@ -381,6 +397,7 @@ VOID FsdFreeSubInodes(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   if(Lock)
     LOCK_SUPERBLOCK_RESOURCE;
 
+  KdPrint(("FsdFreeSubInodes : Freeing %d sub inodes for '%s'\n",ffss_inode->NbInodes,ffss_inode->Name));
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)

@@ -53,6 +53,8 @@ class FfssTimer;
 class FfssSem : public KSemaphore
 {
 public:
+  bool TimedOut; /* Last signaled by time out ? */
+  bool Locked;   /* Avoid multiple lock */
   FfssSem() : KSemaphore(1,1) {Locked=false;}
   void SetTimer(FfssTimer *Timer) {pTimer = Timer;}
   void SignalTimer();
@@ -64,7 +66,6 @@ public:
 //  void signal() { Signal(); }
 private:
   FfssTimer *pTimer;
-  bool Locked;
 };
 
 class FfssTimer : public KTimedCallback
@@ -95,7 +96,7 @@ private:
   char *Buf;
   long int BufSize;
   int len;
-  void GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA);
+  void GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA,bool ProcessMessage);
 };
 
 class FfssTCP : public KStreamSocket
@@ -171,6 +172,7 @@ struct ffss_inode {
 
   char               *IP;      /* For Host Inodes */
 
+  SU_PList           Conns;    /* struct ffss_inode * */ /* List of connections */
   void               *Conn;    /* In tcp connected mode, FfssTCP class we are attached to */
   unsigned short int Listed;   /* In tcp connected mode, if node has been listed yet */
   char               *Path;    /* In tcp connected mode, path from root of share */ 
@@ -197,11 +199,14 @@ struct ffss_inode *FsdGetInodeFromServer(IN char *server,IN struct ffss_inode *D
 struct ffss_inode *FsdGetInodeFromServerIP(IN char *IP);
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Server);
+/* Superblock must be locked */
+bool FsdRequestInodeListing(struct ffss_inode *Inode);
 
 int FFSS_strcasecmp(const char *s,const char *p); /* != 0 if strings are equal */
 
 NTSTATUS TDI_Init();
 struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share);
+void FsdFreeConnection(IN struct ffss_inode *Conn);
 
 #ifdef __cplusplus
 };

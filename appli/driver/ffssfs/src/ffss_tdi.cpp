@@ -18,13 +18,13 @@
 
 /* ***************************** TO DO ***************************** *
    - Tester un FileOpen sur un path complet (existant) sans avoir scanner avec le domain/server/share -> Devrait pas trouver le fichier (le domain ... server ... et/ou share)
+   - Tester un GROS malloc dans une routine en DIRQL
  * ***************************************************************** */
 
 /* ********************************************************************** */
 /* **************************** GLOBALS ********************************* */
 /* ********************************************************************** */
 FfssUDP *pUDP;
-
 
 /* ********************************************************************** */
 /* ************************** UDP CALLBACKS ***************************** */
@@ -38,7 +38,6 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField Use
   if(Root == NULL)
     return;
 
-  LOCK_SUPERBLOCK_RESOURCE;
   FsdFreeSubInodes(Root,false);
 
   if(NbDomains != 0)
@@ -54,7 +53,6 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField Use
     Root->NbInodes = NbDomains;
   }
   FsdFreeInode(Root,false);
-  UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
   /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
@@ -66,7 +64,6 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS
   struct ffss_inode *Inode,*domain;
   int i,count = 0;
 
-  LOCK_SUPERBLOCK_RESOURCE;
   domain = (struct ffss_inode *) User;
   if(domain == NULL)
   {
@@ -78,7 +75,6 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS
     /* Free IPs */
     KdPrint(("OnServerListingAnswer : WARNING : Domain %s does not exist !!!!!\n",Domain));
     /* TO DO -> Creer le domain, et l'ajouter a la liste des domaines du root */
-    UNLOCK_SUPERBLOCK_RESOURCE;
     return;
   }
   FsdFreeSubInodes(domain,false);
@@ -110,7 +106,6 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS
     domain->NbInodes = count;
   }
   FsdFreeInode(domain,false);
-  UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
 void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User)
@@ -118,7 +113,6 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
   struct ffss_inode *Inode,*server;
   int i,len;
 
-  LOCK_SUPERBLOCK_RESOURCE;
   server = (struct ffss_inode *) User;
   if(server == NULL)
   {
@@ -128,7 +122,6 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
   if(server == NULL)
   {
     KdPrint(("OnSharesListing : WARNING : Server %s does not exist !!!!!\n",IP));
-    UNLOCK_SUPERBLOCK_RESOURCE;
     return;
   }
   FsdFreeSubInodes(server,false);
@@ -149,7 +142,6 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
     server->NbInodes = NbShares;
   }
   FsdFreeInode(server,false);
-  UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
 /* ********************************************************************** */
@@ -158,13 +150,6 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
 SU_BOOL OnError(FfssTCP *Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
   struct ffss_inode *Root = (struct ffss_inode *) User; /* Don't free this inode here ! */
-
-#if DBG
-  if(Root == NULL)
-  {
-    KdPrint(("AIE AIE AIE : OnError : Root Inode is NULL !!!\n"));
-  }
-#endif
 
   switch(Code)
   {
@@ -175,6 +160,7 @@ SU_BOOL OnError(FfssTCP *Server,int Code,const char Descr[],FFSS_LongField Value
   case FFSS_ERROR_SHARE_DISABLED :
   case FFSS_ERROR_SHARE_EJECTED :
   case FFSS_ERROR_INTERNAL_ERROR :
+    FsdFreeInode(Root,false);
     KdPrint(("OnError : Found fatal error code (%s). Disconnecting\n",Descr));
     return false;
   case FFSS_ERROR_FILE_NOT_FOUND :
@@ -190,13 +176,9 @@ SU_BOOL OnError(FfssTCP *Server,int Code,const char Descr[],FFSS_LongField Value
   case FFSS_ERROR_RESEND_LAST_UDP :
   case FFSS_ERROR_BAD_SEARCH_REQUEST :
   case FFSS_ERROR_NOT_IMPLEMENTED :
-    KdPrint(("OnError : Found non fatal error code (%s). Continuing\n",Descr));
-    break;
   case FFSS_ERROR_NO_ERROR :
-    if((Root->Name[0] == 0) && (!Root->Listed)) /* Connection established, list tree root */
-    {
-      FC_SendMessage_DirectoryListing(Server,"/",(FFSS_LongField)FsdAssignInode(Root,true));
-    }
+    FsdFreeInode(Root,false);
+    KdPrint(("OnError : Found non fatal error code (%s). Continuing\n",Descr));
     break;
   }
   return true;
@@ -209,38 +191,54 @@ SU_BOOL OnDirectoryListingAnswer(FfssTCP *Server,const char Path[],int NbEntries
   SU_PList Ptr;
   FC_PEntry Ent;
 
-  LOCK_SUPERBLOCK_RESOURCE;
   parent = (struct ffss_inode *) User;
   if(parent == NULL)
   {
     KdPrint(("OnDirectoryListingAnswer : User Pointer is NULL... disconnecting\n"));
-    UNLOCK_SUPERBLOCK_RESOURCE;
     return false;
   }
   FsdFreeSubInodes(parent,false);
+
   if(NbEntries != 0)
   {
-    parent->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbEntries, 'nuSS');
+    //parent->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbEntries, 'nuSS');
     Ptr = Entries;
     for(i=0;i<NbEntries;i++)
     {
       Ent = (FC_PEntry) Ptr->Data;
-      KdPrint(("OnDirectoryListingAnswer : Got entry %s for %s\n",Ent->Name,Path));
-      Inode = FsdAllocInode(Ent->Name,(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE);
-      Inode->Flags = Ent->Flags;
+      KdPrint(("OnDirectoryListingAnswer : Got entry '%s' for '%s'\n",Ent->Name,Path));
+      Inode = FsdAllocInode("plop",(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE); /* Do not set a name for the inode, since we can't use RtlCopyMemory here ! */
+      /*Inode->NameLength = strlen(Ent->Name) + 1;
+      Inode->Name = (char *) FsdAllocatePool(NonPagedPool,Inode->NameLength,(unsigned long)"fiNP");*/
+      //memcpy(Inode->Name,"plop"/*Ent->Name*/,Inode->NameLength);
+
+/*char *SU_strdup(const char *s)
+{
+  int len;
+  char *o;
+
+  len = strlen(s);
+  o = (char *) SU_malloc2(len+1);
+  if(o == NULL)
+    return NULL;
+  strcpy(o,s);
+  return o;
+}*/
+
+      
+      /*Inode->Flags = Ent->Flags;
       Inode->Parent = FsdAssignInode(parent,false);
       Inode->Conn = Server;
       len = strlen(Path) + 1;
       Inode->Path = (char *) malloc(len);
       RtlCopyMemory(Inode->Path,Path,len);
-      parent->Inodes[i] = FsdAssignInode(Inode,false);
+      parent->Inodes[i] = FsdAssignInode(Inode,false);*/
       Ptr = Ptr->Next;
     }
-    parent->NbInodes = NbEntries;
+    //parent->NbInodes = NbEntries;
   }
-  parent->Listed = 1;
-  FsdFreeInode(parent,false);
-  UNLOCK_SUPERBLOCK_RESOURCE;
+  /*parent->Listed = 1;
+  FsdFreeInode(parent,false);*/
   
   return true;
 }
@@ -252,6 +250,7 @@ SU_BOOL OnDirectoryListingAnswer(FfssTCP *Server,const char Path[],int NbEntries
 VOID TimerHandler(IN struct _KDPC *Dpc,IN PVOID DeferredContext,IN PVOID SystemArgument1,IN PVOID SystemArgument2)
 { 
   ((FfssTimer *)DeferredContext)->pSem->Signal();
+  ((FfssTimer *)DeferredContext)->pSem->TimedOut = true;
 }
 
 void FfssTimer::SetTimeout(LONGLONG msec)
@@ -275,6 +274,7 @@ void FfssSem::SignalTimer(void)
   if(Locked)
     KSemaphore::Signal();
   Locked = false;
+  TimedOut = false;
 }
 
 void FfssSem::WaitTimer(void)
@@ -347,23 +347,29 @@ TDI_STATUS FfssUDP::sendto(PTDI_CONNECTION_INFORMATION pConn,void* pBuf,uint Siz
   TDI_STATUS ret;
   Sem->WaitTimer();
   ret = KDatagramSocket::sendto(pConn,pBuf,Size,pCxt);
-  Sem->Wait();
+  Sem->Wait();   /* Force to bloc until answer arrives */
   Sem->Signal();
   return ret;
 }
 
 void FfssUDP::On_sendtoComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 {
+  if((Status != TDI_PENDING) && (Status != TDI_SUCCESS))
+  {
+    KdPrint(("FfssUDP::On_sendtoComplete : Cannot send UDP packet... signaling sem\n"));
+    Sem->SignalTimer();
+  }
   if(pCxt != NULL)
   {
     free(pCxt);
   }
 }
 
-
 uint FfssUDP::OnReceive(uint AddressLength,PTRANSPORT_ADDRESS pTA,uint OptionsLength,PVOID Options,uint Indicated,uchar* Data,uint Available,uchar** RcvBuffer,uint* RcvBufferLen)
 { 
-  GetDatagram(Data,Indicated,pTA);
+  if(!Sem->Locked) /* A time out might have occured... better ignore message */
+    KdPrint(("AIE AIE AIE... FfssUDP::OnReceive : Sem is not locked !! Ignoring message (time out might have occured\n"));
+  GetDatagram(Data,Indicated,pTA,Sem->Locked);
   KdPrint(("end of getdatagram\n"));
 
   if (Indicated < Available)
@@ -379,7 +385,9 @@ void FfssUDP::OnReceiveComplete(TDI_STATUS status,uint AddressLength,PTRANSPORT_
   if(status == TDI_SUCCESS)
   {
     KdPrint(("UDP OnReceiveComplete : Remaining %d bytes\n",Indicated));
-    GetDatagram(Data,Indicated,pTA);
+    if(!Sem->Locked) /* A time out might have occured... better ignore message */
+      KdPrint(("AIE AIE AIE... FfssUDP::OnReceiveComplete : Sem is not locked !! Ignoring message (time out might have occured\n"));
+    GetDatagram(Data,Indicated,pTA,Sem->Locked);
   }
   else
   {
@@ -390,7 +398,7 @@ void FfssUDP::OnReceiveComplete(TDI_STATUS status,uint AddressLength,PTRANSPORT_
     delete Data;
 }
 
-void FfssUDP::GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA)
+void FfssUDP::GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA,bool ProcessMessage)
 {
   FFSS_Field Size;
   bool analyse;
@@ -441,7 +449,8 @@ void FfssUDP::GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA)
     }
     else
     {
-      FC_AnalyseUDP(pTA,Buf,Size);
+      if(ProcessMessage)
+        FC_AnalyseUDP(pTA,Buf,Size);
       Sem->SignalTimer();
       if(len > Size)
       {
@@ -534,10 +543,18 @@ TDI_STATUS FfssTCP::send(void* pBuf,uint Size,bool FreeMsg,bool sem)
     /* Connection has been lost */
     KdPrint(("FfssTCP::send : Cannot send... connection lost ?\n"));
     free(pBuf);
+    if(sem)
+      Sem->SignalTimer();
+    disconnect();
   }
   if(sem)
   {
-    Sem->Wait();
+    Sem->Wait();  /* Force to bloc until answer arrives */
+    if(Sem->TimedOut)
+    {
+      KdPrint(("FfssTCP::send : Semd/Receive timed out !!! Disconnecting\n"));
+      disconnect();
+    }
     Sem->Signal();
   }
   return ret;
@@ -546,6 +563,8 @@ TDI_STATUS FfssTCP::send(void* pBuf,uint Size,bool FreeMsg,bool sem)
 
 void FfssTCP::On_sendComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 {
+  if((Status != TDI_PENDING) && (Status != TDI_SUCCESS))
+    KdPrint(("FfssTCP::On_sendComplete : Cannot send... AIE AIE AIE.. please check if FfssTCP::send displayed same message !!\n"));
   if(pCxt != NULL)
   {
     free(pCxt);
@@ -553,7 +572,13 @@ void FfssTCP::On_sendComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 }
 
 uint FfssTCP::OnReceive(uint Indicated,uchar* Data,uint Available,uchar** RcvBuffer,uint* RcvBufferLen)
-{ 
+{
+  if(!Sem->Locked) /* A time out might have occured... we should disconnect now */
+  {
+    KdPrint(("AIE AIE AIE... FfssTCP::OnReceive (%d-%d) : Sem is not locked !! Disconnecting (time out might have occured)\n",Indicated,Available));
+    disconnect();
+    return Indicated;
+  }
   if(!GetPacket(Data,Indicated))
     disconnect();
 
@@ -570,6 +595,11 @@ void FfssTCP::OnReceiveComplete(TDI_STATUS status,uint Indicated,uchar* Data)
   KdPrint(("TCP OnReceiveComplete : Remaining %d bytes\n",Indicated));
   if(status == TDI_SUCCESS)
   {
+    if(!Sem->Locked) /* A time out might have occured... we should disconnect now */
+    {
+      KdPrint(("AIE AIE AIE... FfssTCP::OnReceiveComplete : Sem is not locked !! Disconnecting (time out might have occured\n"));
+      disconnect();
+    }
     if(!GetPacket(Data,Indicated))
       disconnect();
   }
@@ -606,14 +636,14 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
 
   if(len >= BufSize)
   {
-    FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message (%d) ... DoS attack ?\n",len);
+    FFSS_PrintSyslog(LOG_INFO,"WARNING : Driver's buffer too short for this message (%d-%d) ... DoS attack ?\n",BufSize,len);
     if(FFSS_CB.CCB.OnError != NULL)
       FFSS_CB.CCB.OnError(this,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
     return false;
   }
   if(Indicated >= (BufSize - len))
   {
-    FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message (%d) ... DoS attack ?\n",len);
+    FFSS_PrintSyslog(LOG_INFO,"WARNING : Remaining space in driver's buffer too short for this packet (%d-%d) ... DoS attack ?\n",BufSize-len,Indicated);
     if(FFSS_CB.CCB.OnError != NULL)
       FFSS_CB.CCB.OnError(this,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
     return false;
@@ -676,17 +706,19 @@ extern "C" {
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
 {
-  int i;
+  SU_PList Ptr;
   struct ffss_inode *Inode;
   FfssTCP *Conn;
 
   LOCK_SUPERBLOCK_RESOURCE;
-  for(i=0;i<Share->NbInodes;i++)
+  Ptr = Share->Conns;
+  while(Ptr != NULL)
   {
-    if(FFSS_strcasecmp(Share->Name,((FfssTCP *)Share->Inodes[i]->Conn)->Share))
+    Inode = (struct ffss_inode *) Ptr->Data;
+    if(FFSS_strcasecmp(Share->Name,((FfssTCP *)Inode->Conn)->Share))
     {
       KdPrint(("FsdGetConnection : Active connection found\n"));
-      Inode = FsdAssignInode(Share->Inodes[i],false);
+      Inode = FsdAssignInode(Inode,false);
 #if DBG
       if(Share->Type != FFSS_INODE_SHARE)
         KdPrint(("AIE AIE AIE : FsdGetConnection : Inode %s is not of type SHARE !!!\n",Share->Name));
@@ -696,6 +728,7 @@ struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
       UNLOCK_SUPERBLOCK_RESOURCE;
       return Inode;
     }
+    Ptr = Ptr->Next;
   }
   KdPrint(("FsdGetConnection : No active connection for %s... creating new one\n",Share->Name));
 
@@ -704,18 +737,49 @@ struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
   Inode->Parent = FsdAssignInode(Share,false);
   Inode->Path = (char *) malloc(1);
   RtlCopyMemory(Inode->Path,"",1);
-  UNLOCK_SUPERBLOCK_RESOURCE;
-  Conn = FC_SendMessage_ShareConnect(Share->IP,Share->Name,NULL,NULL,(FFSS_LongField)FsdAssignInode(Inode,true));
+  Conn = FC_SendMessage_ShareConnect(Share->IP,Share->Name,NULL,NULL,0);
   if(Conn == NULL)
   {
     KdPrint(("FsdGetConnection : Error creating connection to %s/%s\n",Share->IP,Share->Name));
-    FsdFreeInode(Inode,true);
+    FsdFreeInode(Inode,false);
+    UNLOCK_SUPERBLOCK_RESOURCE;
     return NULL;
   }
+  Inode = FsdAssignInode(Inode,false);
   Inode->Conn = Conn;
-  Conn->Root = Inode; /* Do not assign it, since it is done in the call to ShareConnect */
+  Conn->Root = FsdAssignInode(Inode,false);
   KdPrint(("FsdGetConnection : Successfully connected to %s/%s\n",Share->IP,Share->Name));
-  return FsdAssignInode(Inode,true);
+  if(!FsdRequestInodeListing(Inode))
+  {
+    KdPrint(("FsdGetConnection : Error getting listing of root directory for %s/%s\n",Share->IP,Share->Name));
+    FsdFreeInode(Inode,false);
+    UNLOCK_SUPERBLOCK_RESOURCE;
+    return NULL;
+  }
+  Share->Conns = SU_AddElementHead(Share->Conns,FsdAssignInode(Inode,false));
+  UNLOCK_SUPERBLOCK_RESOURCE;
+  return Inode;
+}
+
+void FsdFreeConnection(IN struct ffss_inode *Conn)
+{
+  struct ffss_inode *Inode,*parent;
+
+  if(Conn == NULL)
+    return;
+  if(Conn->Parent == NULL)
+  {
+    KdPrint(("AIE AIE AIE : FsdFreeConnection : Conn->Parent is NULL !!!!\n"));
+    return;
+  }
+  LOCK_SUPERBLOCK_RESOURCE;
+  KdPrint(("FsdFreeConnection : Removing Connection from parent's list\n"));
+  Conn->Parent->Conns = SU_DelElementElem(Conn->Parent->Conns,Conn);
+  KdPrint(("FsdFreeConnection : Freeing Connection assigned to parent's list\n"));
+  FsdFreeInode(Conn,false); /* Freeing parent's list assigned */
+  KdPrint(("FsdFreeConnection : Freeing Connection itself\n"));
+  FsdFreeInode(Conn,false); /* Freeing connection itself */
+  UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
 NTSTATUS TDI_Init()
