@@ -67,10 +67,10 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
                     WS_TABSTOP,9,8,248,64
     PUSHBUTTON      "&Remove access",IDC_BUTTON2,9,76,64,12
-    LTEXT           "Login",IDC_STATIC,103,105,44,8
-    LTEXT           "Password",IDC_STATIC,155,105,44,8
-    GROUPBOX        " Add access ",IDC_STATIC,9,93,248,44
-    LTEXT           "Allowed IP",IDC_STATIC,15,105,64,8
+    LTEXT           "Login",IDC_STATIC3,103,105,44,8
+    LTEXT           "Password",IDC_STATIC4,155,105,44,8
+    GROUPBOX        " Add access ",IDC_STATIC1,9,93,248,44
+    LTEXT           "Allowed IP",IDC_STATIC2,15,105,64,8
 END
 
 

@@ -98,20 +98,20 @@ END
 // Dialog
 //
 
-IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 231, 114
+IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 231, 129
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Logging configuration"
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_EDIT1,59,7,94,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT1,87,7,137,14,ES_AUTOHSCROLL
     CONTROL         "Successful connections",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,47,92,15
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,62,92,15
     CONTROL         "Download requests",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,14,66,92,10
-    DEFPUSHBUTTON   "&Close",IDOK,89,93,50,14
-    PUSHBUTTON      "Choose &path",IDC_BUTTON1,162,7,62,14
-    GROUPBOX        " What to log ? ",IDC_STATIC,7,37,217,50
-    LTEXT           "Log files path",IDC_STATIC,7,7,51,14,SS_CENTERIMAGE
+                    WS_TABSTOP,14,81,92,10
+    DEFPUSHBUTTON   "&Close",IDOK,89,108,50,14
+    PUSHBUTTON      "Choose &path",IDC_BUTTON1,85,27,62,14
+    GROUPBOX        " What to log ? ",IDC_STATIC2,7,49,217,50
+    LTEXT           "Log files path",IDC_STATIC1,7,7,77,14,SS_CENTERIMAGE
 END
 
 
@@ -128,7 +128,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 224
         TOPMARGIN, 7
-        BOTTOMMARGIN, 107
+        BOTTOMMARGIN, 122
     END
 END
 #endif    // APSTUDIO_INVOKED

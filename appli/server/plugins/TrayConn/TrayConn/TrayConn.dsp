@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "..\..\..\..\..\misc\windows\include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "PLUGINS" /D "SU_USE_DL" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "..\..\..\..\..\misc\windows\include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "PLUGINS" /D "SU_USE_DL" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
@@ -93,6 +93,10 @@ LINK32=link.exe
 # Begin Source File
 
 SOURCE=..\TrayConn.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\trayconn.h
 # End Source File
 # Begin Source File
 

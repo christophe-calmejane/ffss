@@ -94,6 +94,10 @@ LINK32=link.exe
 
 SOURCE=..\hideshare.c
 # End Source File
+# Begin Source File
+
+SOURCE=..\hideshare.h
+# End Source File
 # End Group
 # Begin Group "Header Files"
 

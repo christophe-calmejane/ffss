@@ -10,14 +10,28 @@
 */
 
 #define TRAYCONN_NAME      "Tray Conn Plugin"
-#define TRAYCONN_VERSION   "0.5"
+#define TRAYCONN_VERSION   "1.0"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
-#define TRAYCONN_DESCRIPTION "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, set the server into quiet mode, and shutdown it."
 
-#define MANAGER_PATH_REG_KEY "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\ManagerPath"
+#define MANAGER_PATH_REG_KEY FFSS_LM_REGISTRY_PATH "Server\\ManagerPath"
 #define TIMER_DELAY 5*1000 /* Every 5 sec */
 #define TIMER_KEY 0x29a
 #include "TrayConn\\resource.h"
+
+#include "trayconn.h"
+
+char *TC_Lang[TC_LANG_COUNT][TC_LANGS_COUNT] = {/* English */
+                                                {"En",
+                                                 "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, set the server into quiet mode, and shutdown it.",
+                                                 "You are requesting FFSS Server to shut down.\n                     Are you sure ??"
+                                                },
+                                                /* French */
+                                                {"Fr",
+                                                 "Affiche une icone dans la SystemTray, qui affiche le nombre de connexions et de download en cours.\n Un double clic sur l'icone ouvre le gestionnaire de partages, et un clic droit ouvre un menu contextuel qui permet en autres d'éjecter tout le monde, et de passer le serveur en mode silencieux.",
+                                                 "Etes vous vraiment sûr de vouloir couper le serveur FFSS ??"
+                                                }
+                                               };
+#define TC_LANG(x) TC_Lang[TC_CurrentLang][x]
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
@@ -28,6 +42,7 @@
 FS_PPlugin Pl;
 FSP_TInfos TC_Infos;
 SU_THREAD_HANDLE TC_Thr;
+unsigned int TC_CurrentLang = TC_LANG_ENGLISH;
 
 void * (*PluginQueryFunc)(int Type,...);
 
@@ -95,6 +110,22 @@ char TC_Tip[64] = {0,};
 #define JAUGE_OFS_LEFT   2
 #define JAUGE_OFS_RIGHT  10
 #define JAUGE_WIDTH      4
+
+void TC_LoadLanguage(void)
+{
+  char buf[100];
+  int i;
+
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "FavoriteLanguage",buf,sizeof(buf),"En");
+  for(i=0;i<TC_LANG_COUNT;i++)
+  {
+    if(stricmp(buf,TC_Lang[i][TC_LANGS_COUNTRYCODE]) == 0)
+    {
+      TC_CurrentLang = i;
+      break;
+    }
+  }
+}
 
 void DrawJauge(int ofs,int nb)
 {
@@ -241,7 +272,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           switch (TrackPopupMenu(hpopup,TPM_RETURNCMD | TPM_RIGHTBUTTON,pt.x, pt.y,0,hwnd,NULL))
           {
             case IDM_QUIT:
-              if(MessageBox(hwnd,"You are requesting FFSS Server to shut down.\n                     Are you sure ??","Tray Conn Plugin Info",MB_YESNO | MB_DEFBUTTON2 |MB_ICONEXCLAMATION) == IDYES)
+              if(MessageBox(hwnd,TC_LANG(TC_LANGS_MB_EXIT),"Tray Conn Plugin Info",MB_YESNO | MB_DEFBUTTON2 |MB_ICONEXCLAMATION) == IDYES)
                 PluginQueryFunc(FSPQ_SHUTDOWN);
               break;
             case IDM_EJECT:
@@ -270,7 +301,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           memset(&sti,0,sizeof(sti));
           memset(&pi,0,sizeof(pi));
           SU_RB_GetStrValue(MANAGER_PATH_REG_KEY,buf,sizeof(buf),"");
-          CreateProcess(buf,buf,NULL,NULL,false,0,NULL,NULL,&sti,&pi);
+          CreateProcess(NULL,buf,NULL,NULL,false,0,NULL,NULL,&sti,&pi);
           break;
         }
       }
@@ -374,6 +405,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   Pl->Copyright = TRAYCONN_COPYRIGHT;
   Pl->Version = TRAYCONN_VERSION;
 
+  TC_LoadLanguage();
   /* Create a thread to manage messages */
   if(!SU_CreateThread(&TC_Thr,ThreadFunc,Info,true))
     return NULL;
@@ -393,9 +425,11 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 
 FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
 {
+  TC_LoadLanguage();
+
   TC_Infos.Name = TRAYCONN_NAME;
   TC_Infos.Version = TRAYCONN_VERSION;
   TC_Infos.Copyright = TRAYCONN_COPYRIGHT;
-  TC_Infos.Description = TRAYCONN_DESCRIPTION;
+  TC_Infos.Description = TC_LANG(TC_LANGS_DESCRIPTION);
   return &TC_Infos;
 }

@@ -96,6 +96,10 @@ SOURCE=..\Log.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\log.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Log.rc
 # End Source File
 # End Group

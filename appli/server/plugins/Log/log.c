@@ -9,9 +9,8 @@
 */
 
 #define LOG_NAME      "Log Plugin"
-#define LOG_VERSION   "0.4"
+#define LOG_VERSION   "1.0"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
-#define LOG_DESCRIPTION "Logs all successful connections and download requests."
 #define LOG_FILE_PREFIX "FS_Log"
 #define LOG_PLUGIN_REG_KEY FSP_BASE_REG_KEY LOG_NAME
 
@@ -25,6 +24,35 @@
 #undef malloc
 #undef strdup
 
+#include "log.h"
+
+char *L_Lang[L_LANG_COUNT][L_LANGS_COUNT] = {/* English */
+                                             {"En",
+                                              "Logs all successful connections and download requests."
+                                              "Logging configuration",
+                                              "Choose &path",
+                                              "&Close",
+                                              " What to log ? ",
+                                              "Log files path",
+                                              "Successful connections",
+                                              "Download requests",
+                                              "You must set a path to store log files\nSet it to \".\" if you want to store them in server's directory"
+                                             },
+                                              /* French */
+                                             {"Fr",
+                                              "Ecrit dans un fichier de log les connexions et les requêtes de download.",
+                                              "Configuration du plugin de log",
+                                              "&Choix chemin",
+                                              "&Fermer",
+                                              " Options de log ",
+                                              "Chemin des fichiers",
+                                              "Connexions réussies",
+                                              "Requêtes de download",
+                                              "Vous devez spécifier un chemin pour les fichiers de log\nSpécifiez \".\" si vous voulez les stoquer dans le répertoire du serveur"
+                                             }
+                                            };
+#define L_LANG(x) L_Lang[L_CurrentLang][x]
+
 typedef struct
 {
   char *Path;
@@ -36,6 +64,7 @@ typedef struct
 FS_PPlugin Pl;
 L_TGlobal L_Gbl;
 FSP_TInfos L_Infos;
+unsigned int L_CurrentLang = L_LANG_ENGLISH;
 
 void * (*PluginQueryFunc)(int Type,...);
 
@@ -67,6 +96,24 @@ bool L_OpenLogFile(void)
   if(L_fp == NULL)
     return false;
   return true;
+}
+
+void L_LoadLanguage(void)
+{
+#ifdef _WIN32
+  char buf[100];
+  int i;
+
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "FavoriteLanguage",buf,sizeof(buf),"En");
+  for(i=0;i<L_LANG_COUNT;i++)
+  {
+    if(stricmp(buf,L_Lang[i][L_LANGS_COUNTRYCODE]) == 0)
+    {
+      L_CurrentLang = i;
+      break;
+    }
+  }
+#endif /* _WIN32 */
 }
 
 void LoadConfig()
@@ -180,7 +227,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           GetWindowText(dlg,buf,sizeof(buf));
           if(buf[0] == 0)
           {
-            MessageBox(hwnd,"You must set a path to store log files\nSet it to \".\" if you want to store them in server's directory","Log Plugin Info",MB_OK);
+            MessageBox(hwnd,L_LANG(L_LANGS_MB_PATH),"Log Plugin Info",MB_OK);
             return TRUE;
           }
           if(L_Gbl.Path != NULL)
@@ -191,8 +238,8 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           /* Store config now */
           StoreConfig();
           /* Close box */
-          EndDialog(hwnd,0);
-          PostQuitMessage(0);
+          DestroyWindow(L_hwnd);
+          L_hwnd = NULL;
           return TRUE;
         case IDC_BUTTON1:
           dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
@@ -200,8 +247,6 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           return TRUE;
       }
       break;
-    case WM_CREATE:
-      return TRUE;
 
     case WM_DESTROY:
       PostQuitMessage(0);
@@ -225,6 +270,15 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
     CheckDlgButton(L_hwnd,(int)MAKEINTRESOURCE(IDC_CHECK2),BST_CHECKED);
   dlg = GetDlgItem(L_hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
   SetWindowText(dlg,L_Gbl.Path);
+  SetWindowText(L_hwnd,L_LANG(L_LANGS_WND_TITLE));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDC_BUTTON1),L_LANG(L_LANGS_BTN_PATH));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDOK),L_LANG(L_LANGS_BTN_CLOSE));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC2),L_LANG(L_LANGS_GBOX_TXT));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC1),L_LANG(L_LANGS_STC_PATH));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDC_CHECK1),L_LANG(L_LANGS_CHK_CONN));
+  SetDlgItemText(L_hwnd,(int)MAKEINTRESOURCE(IDC_CHECK2),L_LANG(L_LANGS_CHK_DWL));
+
+
   ShowWindow(L_hwnd,SW_SHOW);
   while(GetMessage(&msg,L_hwnd,0,0))
   {
@@ -234,8 +288,6 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
       DispatchMessage(&msg);
     }
   }
-  DestroyWindow(L_hwnd);
-  L_hwnd = NULL;
 }
 
 /* This is the function called when plugin is requested to configure itself */
@@ -277,6 +329,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   Pl->CB.OnDownload = OnDownload;
 
   /* Load config options */
+  L_LoadLanguage();
   memset(&L_Gbl,0,sizeof(L_TGlobal));
   LoadConfig();
 
@@ -306,9 +359,11 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 
 FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
 {
+  L_LoadLanguage();
+
   L_Infos.Name = LOG_NAME;
   L_Infos.Version = LOG_VERSION;
   L_Infos.Copyright = LOG_COPYRIGHT;
-  L_Infos.Description = LOG_DESCRIPTION;
+  L_Infos.Description = L_LANG(L_LANGS_DESCRIPTION);
   return &L_Infos;
 }

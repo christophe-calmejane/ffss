@@ -6,9 +6,8 @@
 /* mailto : zekiller@skytech.org                */
 
 #define CONFCONN_NAME      "Conf Conn Plugin"
-#define CONFCONN_VERSION   "0.3"
+#define CONFCONN_VERSION   "1.0"
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
-#define CONFCONN_DESCRIPTION "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"
 #define CONFCONN_CONFIG_FILE "ConfConn.conf"
 
@@ -16,6 +15,53 @@
 #include "../../src/plugin.h"
 #undef malloc
 #undef strdup
+
+#include "confconn.h"
+
+char *CC_Lang[CC_LANG_COUNT][CC_LANGS_COUNT] = {/* English */
+                                                {"En",
+                                                 "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
+                                                 "Conf Conn Plugin Configuration",
+                                                 "&Remove access",
+                                                 "&Add",
+                                                 "&Close",
+                                                 " Add access ",
+                                                 "Allowed IP",
+                                                 "Login",
+                                                 "Password",
+                                                 "Login",
+                                                 "Hostname",
+                                                 "Allowed IP",
+                                                 "You must specify a valid IP",
+                                                 "You must specify a login",
+                                                 "You must specify a password",
+                                                 "An entry with same IP and login already exists. Remove it first",
+                                                 "Are you sure you want to remove access for %s from %s ?\n",
+                                                 "Error removing access"
+                                                },
+                                                 /* French */
+                                                {"Fr",
+                                                 "Permet des connexions à distances sur le serveur (en utilisant un filtre ip+login+mdp), afin de contrôler les partages, éjecter des connexions, etc...",
+                                                 "Configuration du plugin Conf Conn",
+                                                 "&Retirer l'accès",
+                                                 "&Ajouter",
+                                                 "&Fermer",
+                                                 " Ajouter un accès ",
+                                                 "Adresse IP",
+                                                 "Utilisateur",
+                                                 "Mot de passe",
+                                                 "Utilisateur",
+                                                 "Hôte",
+                                                 "Adresse IP",
+                                                 "Vous devez spécifier une adresse IP valide",
+                                                 "Vous devez spécifier un nom d'utilisateur",
+                                                 "Vous devez spécifier un mot de passe",
+                                                 "Une entrée avec la même adresse IP existe déja. Retirez là avant",
+                                                 "Etes vous sûr de vouloir retirer l'accès à %s depuis %s ?\n",
+                                                 "Erreur lors de la suppression de l'accès"
+                                                }
+                                               };
+#define CC_LANG(x) CC_Lang[CC_CurrentLang][x]
 
 typedef struct
 {
@@ -31,6 +77,7 @@ FSP_TInfos CC_Infos;
 bool CC_AddConf(const char IP[],const char Login[],const char Pwd[]);
 bool CC_DelConf(const char IP[],const char Login[]);
 bool CC_Crypted = false;
+unsigned int CC_CurrentLang = CC_LANG_ENGLISH;
 
 SU_THREAD_HANDLE CC_Thr;
 #ifdef _WIN32
@@ -45,6 +92,22 @@ void ThreadFunc(void *info);
 /* OS dependant section */
 /* ******************** */
 #ifdef _WIN32
+void CC_LoadLanguage(void)
+{
+  char buf[100];
+  int i;
+
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "FavoriteLanguage",buf,sizeof(buf),"En");
+  for(i=0;i<CC_LANG_COUNT;i++)
+  {
+    if(stricmp(buf,CC_Lang[i][CC_LANGS_COUNTRYCODE]) == 0)
+    {
+      CC_CurrentLang = i;
+      break;
+    }
+  }
+}
+
 bool CC_LoadConfig()
 {
   char IP[100];
@@ -115,8 +178,8 @@ LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
         case IDOK:
           /* Close box */
-          EndDialog(hwnd,0);
-          PostQuitMessage(0);
+          DestroyWindow(CC_hwnd);
+          CC_hwnd = NULL;
           return TRUE;
         case IDC_BUTTON1:
           lst = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_LIST1));
@@ -125,19 +188,19 @@ LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
           e_pwd = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT4));
           if(SendMessage(e_ip,IPM_GETADDRESS,0,(DWORD)&adrs) != 4)
           {
-            MessageBox(hwnd,"You must specify a valid IP","Conf Conn Info",MB_OK);
+            MessageBox(hwnd,CC_LANG(CC_LANGS_MB_IP),"Conf Conn Info",MB_OK);
             return TRUE;
           }
           GetWindowText(e_login,login,sizeof(login));
           GetWindowText(e_pwd,pwd,sizeof(pwd));
           if(login[0] == 0)
           {
-            MessageBox(hwnd,"You must specify a login","Conf Conn Info",MB_OK);
+            MessageBox(hwnd,CC_LANG(CC_LANGS_MB_LOGIN),"Conf Conn Info",MB_OK);
             return TRUE;
           }
           if(pwd[0] == 0)
           {
-            MessageBox(hwnd,"You must specify a password","Conf Conn Info",MB_OK);
+            MessageBox(hwnd,CC_LANG(CC_LANGS_MB_PWD),"Conf Conn Info",MB_OK);
             return TRUE;
           }
           f_1 = (BYTE)FIRST_IPADDRESS(adrs);f_2 = (BYTE)SECOND_IPADDRESS(adrs);f_3 = (BYTE)THIRD_IPADDRESS(adrs);f_4 = (BYTE)FOURTH_IPADDRESS(adrs);
@@ -146,7 +209,7 @@ LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
           tmp = inet_ntoa(in);
           if(!CC_AddConf(tmp,login,pwd))
           {
-            MessageBox(hwnd,"An entry with same IP and login already exists. Remove it first","Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(hwnd,CC_LANG(CC_LANGS_MB_EXISTS),"Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
             return TRUE;
           }
           item.mask = LVIF_TEXT;
@@ -177,19 +240,17 @@ LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             return TRUE;
           ListView_GetItemText(lst,pos,0,ip,sizeof(ip));
           ListView_GetItemText(lst,pos,2,login,sizeof(login));
-          snprintf(buf,sizeof(buf),"Are you sure you want to remove access for %s from %s ?\n",login,ip);
+          snprintf(buf,sizeof(buf),CC_LANG(CC_LANGS_MB_REMOVE),login,ip);
           if(MessageBox(hwnd,buf,"Conf Conn Question",MB_YESNO) == IDYES)
           {
             if(CC_DelConf(ip,login))
               ListView_DeleteItem(lst,pos);
             else
-              MessageBox(hwnd,"Error removing access","Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
+              MessageBox(hwnd,CC_LANG(CC_LANGS_MB_ERR_REMOVE),"Conf Conn Info",MB_OK | MB_ICONEXCLAMATION);
           }
           return TRUE;
       }
       break;
-    case WM_CREATE:
-      return TRUE;
 
     case WM_DESTROY:
       PostQuitMessage(0);
@@ -220,17 +281,25 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
   ListView_SetExtendedListViewStyleEx(dlg,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
   col.mask = LVCF_TEXT | LVCF_WIDTH;
   col.cx = 80;
-  col.pszText = "Login";
+  col.pszText = CC_LANG(CC_LANGS_CLN_LOGIN);
   col.cchTextMax = strlen(col.pszText);
   ListView_InsertColumn(dlg,0,&col);
   col.cx = 180;
-  col.pszText = "Hostname";
+  col.pszText = CC_LANG(CC_LANGS_CLN_HOST);
   col.cchTextMax = strlen(col.pszText);
   ListView_InsertColumn(dlg,0,&col);
   col.cx = 100;
-  col.pszText = "Allowed IP";
+  col.pszText = CC_LANG(CC_LANGS_CLN_IP);
   col.cchTextMax = strlen(col.pszText);
   ListView_InsertColumn(dlg,0,&col);
+  SetWindowText(CC_hwnd,CC_LANG(CC_LANGS_WND_TITLE));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_BUTTON2),CC_LANG(CC_LANGS_BTN_REMOVE));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_BUTTON1),CC_LANG(CC_LANGS_BTN_ADD));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDOK),CC_LANG(CC_LANGS_BTN_CLOSE));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC1),CC_LANG(CC_LANGS_GBOX_TXT));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC2),CC_LANG(CC_LANGS_STC_IP));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC3),CC_LANG(CC_LANGS_STC_LOGIN));
+  SetDlgItemText(CC_hwnd,(int)MAKEINTRESOURCE(IDC_STATIC4),CC_LANG(CC_LANGS_STC_PWD));
 
   item.mask = LVIF_TEXT;
   item.iItem = 0;
@@ -265,8 +334,6 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
       DispatchMessage(&msg);
     }
   }
-  DestroyWindow(CC_hwnd);
-  CC_hwnd = NULL;
 }
 
 /* This is the function called when plugin is requested to configure itself */
@@ -515,7 +582,7 @@ bool OnCheckConfConn(SU_PClientSocket Client)
 
 
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
-FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info)
+FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
 {
 #ifdef _WIN32
   CC_hInstance = (HINSTANCE)Info;
@@ -535,6 +602,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info)
   /* Setting our callbacks */
   Pl->OnCheckConfConn = OnCheckConfConn;
 
+  CC_LoadLanguage();
   if(!CC_LoadConfig())
   {
     free(Pl);
@@ -570,9 +638,11 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 
 FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
 {
+  CC_LoadLanguage();
+
   CC_Infos.Name = CONFCONN_NAME;
   CC_Infos.Version = CONFCONN_VERSION;
   CC_Infos.Copyright = CONFCONN_COPYRIGHT;
-  CC_Infos.Description = CONFCONN_DESCRIPTION;
+  CC_Infos.Description = CC_LANG(CC_LANGS_DESCRIPTION);
   return &CC_Infos;
 }
