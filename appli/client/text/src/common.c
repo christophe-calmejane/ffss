@@ -184,11 +184,11 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	if(FCA_VAR_IS_ON(FCA_prompt)) {
 		printf("download file ");
 		if( FCA_question(RemotePath) )
-			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
+			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,0,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
 		else		/* unlike an error if we answer 'n' */
 			return -1;
 	} else
-		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
+		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,0,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
 }
 
 unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passwd)

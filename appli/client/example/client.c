@@ -1,6 +1,11 @@
 #include <ffss.h>
 
-//#define FFSS_XFERS_IN_CONN
+//#define FFSS_XFERS_IN_CONN 1
+//#define FFSS_XFERS_BLOC 1
+
+#define STARTPOS 0
+#define ENDPOS 0
+
 /* Defines to replace with variables taken from the config file */
 //#define HAVE_MASTER
 #ifdef HAVE_MASTER
@@ -8,19 +13,37 @@
 #endif
 
 FFSS_PTransfer FC_FT = NULL;
+FILE *FC_fp = NULL;
 
 void OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download)
 {
   printf("File %s from %s for %s failed (%ld:%s)\n",Download?"download":"upload",inet_ntoa(FT->Client->SAddr.sin_addr),FT->FileName,ErrorCode,Error);
   FC_FT = NULL;
+#ifdef FFSS_XFERS_BLOC
+  fclose(FC_fp);
+  FC_fp = NULL;
+#endif
 }
 
 void OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
   printf("File %s from %s for %s completed.\n",Download?"download":"upload",inet_ntoa(FT->Client->SAddr.sin_addr),FT->FileName);
   FC_FT = NULL;
+#ifdef FFSS_XFERS_BLOC
+  fclose(FC_fp);
+  FC_fp = NULL;
+#endif
 }
 
+#ifdef FFSS_XFERS_BLOC
+bool OnTransferFileWrite(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size,FFSS_LongField Offset) /* 'Offset' from FT->StartingPos */ /* True on success */
+{
+  printf("Seeking to %lld + %lld\n",FT->StartingPos,Offset);
+  if(fseek(FC_fp,FT->StartingPos+Offset,SEEK_SET) != 0)
+    return false;
+  return fwrite(Buf,1,Size,FC_fp) == Size;
+}
+#endif
 
 /* UDP callbacks */
 void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
@@ -148,9 +171,21 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
     snprintf(buf_tmp,sizeof(buf_tmp),"%s/%s",Path,tmp2);
 #ifdef FFSS_XFERS_IN_CONN
     if(FC_FT == NULL)
-      FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,true,0,&FC_FT);
+      FFSS_DownloadFile(Server,buf_tmp,"test_download",STARTPOS,ENDPOS,NULL,true,0,&FC_FT);
+#elif FFSS_XFERS_BLOC
+    FC_fp = fopen("test_bloc","rb+");
+    if(FC_fp == NULL)
+    {
+      FC_fp = fopen("test_bloc","wb+");
+      if(FC_fp == NULL)
+      {
+        abort();
+        return false;
+      }
+    }
+    FFSS_DownloadFile(Server,buf_tmp,NULL,STARTPOS,ENDPOS,NULL,false,0,&FC_FT);
 #else
-    FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,false,0,&FC_FT);
+    FFSS_DownloadFile(Server,buf_tmp,"test_download",STARTPOS,ENDPOS,NULL,false,0,&FC_FT);
 #endif
   }
 
@@ -191,16 +226,24 @@ int main()
     FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;
     FFSS_CB.CCB.OnTransferFailed = OnTransfertFailed;
     FFSS_CB.CCB.OnTransferSuccess = OnTransfertSuccess;
+#ifdef FFSS_XFERS_BLOC
+    FFSS_CB.CCB.OnTransferFileWrite = OnTransferFileWrite;
+#endif
     FFSS_CB.CCB.OnUDPError = OnUDPError;
     FFSS_CB.CCB.OnInitXFer = OnInitXFer;
     FFSS_CB.CCB.OnData = OnData;
+
+  SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
+  SU_DBG_SetOptions(true,true);
+#ifdef DEBUG
+  SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
+#endif /* DEBUG */
 
     if(!FC_Init())
       return -1;
     printf("Client running...\n");
 
-    while(1)
-      FC_SendMessage_ShareConnect("172.17.64.135","ftp",NULL,NULL,0);
+    FC_SendMessage_ShareConnect("10.0.0.2","Toto",NULL,NULL,0);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
     sleep(20);
     return 0;

@@ -482,7 +482,7 @@ on_button7_clicked                     (GtkButton       *button,
   assert(position);
 
   add_conn_count(Conn);
-  FFSS_DownloadFile(Conn->Server,remote,local,atoi(position),(void *)Conn,false,0,NULL);
+  FFSS_DownloadFile(Conn->Server,remote,local,atoi(position),0,(void *)Conn,false,0,NULL);
   if(remote != NULL)
     g_free(remote);
   if(local != NULL)

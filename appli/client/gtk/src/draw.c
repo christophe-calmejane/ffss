@@ -329,7 +329,7 @@ void FCQ_LaunchNextDownload(void)
       else
       {
         add_conn_count(Conn);
-        FFSS_DownloadFile(Conn->Server,remote,local,0,(void *)Conn,false,0,NULL);
+        FFSS_DownloadFile(Conn->Server,remote,local,0,0,(void *)Conn,false,0,NULL);
       }
       if(remote != NULL)
         g_free(remote);
