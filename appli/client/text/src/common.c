@@ -1295,13 +1295,13 @@ void FCA_printlog(char *msg, ...)
 	if(!FCA_VAR_IS_ON(FCA_log))
 		return;
 #ifdef CGI
-	snprintf(strIP, "(%s) ", getenv("REMOTE_ADDR"));
+	snprintf(strIP, 15, "(%s) ", getenv("REMOTE_ADDR"));
 #endif
 	va_start(argptr,msg);
-	vsnprintf(strtxt, 1023, msg, argptr);
+	vsnprintf(strtxt, 1007, msg, argptr);
 	va_end(argptr);
 
-	snprintf(str, "%s%s", strIP, strtxt);
+	snprintf(str, 1023, "%s%s", strIP, strtxt);
 
 	SU_WriteToLogFile(FCA_logf, str);
 }
