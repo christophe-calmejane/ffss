@@ -1,6 +1,6 @@
-#include <skyutils.h>
+#include <ffss.h>
 
-#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
+#define FFSS_REGISTRY_PATH_PROCESSID FFSS_REGISTRY_PATH "Server\\ProcessId"
 #define SLEEP_TIME 100
 #define MAX_WAIT 50
 
@@ -11,7 +11,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   DWORD res;
   int nb = 0;
 
-  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "ProcessId",0);
+  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_PROCESSID,0);
   if(ProcessId == 0)
     return 0;
   Process = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION,false,ProcessId);
