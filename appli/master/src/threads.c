@@ -21,6 +21,7 @@ void FM_CheckMasterConnections(void)
 #ifdef DEBUG
       printf("FM_CheckMasterConnections : Master of domain %s not connected... trying to reconnect...\n",Domain->Name);
 #endif /* DEBUG */
+      SU_SEM_WAIT(FM_TmpSem); /* Lock to protect a free of the CS struct before end of init */
       Domain->CS = FM_SendMessage_Connect(Domain->Master);
       if(Domain->CS != NULL)
       {
@@ -30,6 +31,7 @@ void FM_CheckMasterConnections(void)
         FM_SendMessage_MasterConnection(Domain->CS->sock);
         FM_SendMessage_ServerList(Domain->CS->sock);
       }
+      SU_SEM_POST(FM_TmpSem);
     }
     Ptr = Ptr->Next;
   }
