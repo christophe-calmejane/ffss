@@ -47,24 +47,7 @@ extern char FFSS_WinServerVersion[20];
 #endif /* !DISABLE_BZLIB */
 
 #ifdef FFSS_DRIVER
-#define SU_NO_INCLUDES
-#define SU_INCLUDE_NO_SOCKS
-#define SU_INCLUDE_NO_REG
-#define SU_INCLUDE_NO_THREAD
-#define FILE void
-#ifndef DWORD
-#define DWORD long int
-#endif /* !DWORD */
-#define strtok_r(a,b,c) strtok(a,b)
-#define LOG_INFO    2
-#define LOG_WARNING 1
-#define LOG_ERR     0
-#define time_t unsigned long int
-#define sockaddr_in _TRANSPORT_ADDRESS *
-typedef struct { void *dummy; } *SU_PServerInfo;
-#ifndef SU_PClientSocket
-#error "You must define SU_PClientSocket to your internal driver type before including ffss.h !!"
-#endif /* !SU_PClientSocket */
+#include <kffss.h>
 #endif /* FFSS_DRIVER */
 
 #include <skyutils.h>
@@ -426,6 +409,7 @@ typedef struct
   time_t LastIndex; /* For Master use */
 } FM_THost, *FM_PHost;
 
+#ifndef FFSS_DRIVER
 typedef struct
 {
   FFSS_LongField fsize,total;
@@ -451,6 +435,7 @@ typedef struct
   void *User;                 /* User information */
   FFSS_TXFerInfo XI;          /* XFer info for xfer using connection socket */
 } FFSS_TTransfer, *FFSS_PTransfer;
+#endif /* !FFSS_DRIVER */
 
 typedef struct
 {
@@ -662,8 +647,10 @@ bool FC_WaitDataTCP(SU_PClientSocket Client,FC_PHandle Hdl);
 /* Set Buf to NULL for the first call, to init the checksum */
 FFSS_Field FFSS_ComputeChecksum(FFSS_Field Old,const char Buf[],long int Len);
 
+#ifndef FFSS_DRIVER
 /* Retrieve local IP of interface named IntName */
 bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[]);
+#endif /* !FFSS_DRIVER */
 
 /*
  * FFSS_GetFileTags
@@ -684,6 +671,7 @@ unsigned char FFSS_GetWordTags(const char *Word);  /* <-- word to check for exte
  */
 char *FFSS_GetOS(void);
 
+#ifndef FFSS_DRIVER
 /* ************************************************ */
 /*              FFSS TRANSFER FUNCTIONS             */
 /* ************************************************ */
@@ -805,7 +793,7 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
 /*  Code : The error code to send                      */
 bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code);
 
-
+#endif /* !FFSS_DRIVER */
 /* ************************************************ */
 /*                  CLIENT MESSAGES                 */
 /* ************************************************ */
@@ -920,6 +908,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Lon
 bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags,FFSS_LongField StartPos);
 
 
+#ifndef FFSS_DRIVER
 /* ************************************************ */
 /*                  MASTER MESSAGES                 */
 /* ************************************************ */
@@ -1012,6 +1001,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[]);
 
 
+#endif /* !FFSS_DRIVER */
 /* ************************************************************************* */
 /* TRANSFER.H                                                                */
 /* ************************************************************************* */
@@ -1119,10 +1109,10 @@ extern char *FFSS_ZipExt[FFSS_ZIP_NB_EXT];
 
 extern int N_DebugLevel;
 extern bool N_SyslogOn;
+#ifndef FFSS_DRIVER
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 extern SU_PServerInfo FC_SI_OUT_UDP;
 extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP,FM_SI_TCP;
-#ifndef FFSS_DRIVER
 extern SU_THREAD_HANDLE FFSS_MainThread;
 #endif /* !FFSS_DRIVER */
 #ifdef _WIN32
