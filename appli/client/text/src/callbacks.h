@@ -18,7 +18,7 @@ void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
 void FCA_OnEndServerListingAnswer(void);
 void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains);
 void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares);
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,int NbAnswers);
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
 void FCA_OnMasterError(int Code,const char Descr[]);
     /* TCP */
 bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[]);

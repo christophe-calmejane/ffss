@@ -1,6 +1,6 @@
 /*
  *	FFSS client
- * 
+ *
  *	Copyright (C) 2001 bennyben (Benoit Bourdin)
  *
  *	callbacks from the library
@@ -67,22 +67,22 @@ void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comment
 	FFSS_PrintDebug(3, "(client) received a share listing from %s\n", IP);
 	FCA_print_shares(IP,Names,Comments,NbShares);
 
-/* only for debug 
+/* only for debug
 sleep(5);
 printf("POUF\n");
 */
 	FCA_sem_post();
 }
 
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,int NbAnswers)
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers)
 {
 	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
-	
+
 	if(FCA_inDispFind || !FCA_multiFind)
 		FCA_print_search(Query,Domain,Answers,NbAnswers);
 	else
 		FFSS_PrintDebug(3, "(client) sorry, too late to give your answer\n");
-    
+
     	if(!FCA_multiFind)
 		FCA_sem_post();
 }
@@ -102,14 +102,14 @@ void FCA_OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Err
 	FCA_print_cmd_err("download failed...");
 	FCA_print_cmd_err("(error code %d, %s)\n", (int)ErrorCode, Error);
 	FCA_Ptrans=NULL;
-    
+
 	FCA_sem_post();
 }
 
 void FCA_OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
 	time_t end;
-	
+
 	FFSS_PrintDebug(3, "(client) download ended without any error\n");
 	end=time(NULL);
 	if(end-FCA_dw_begin==0)
@@ -165,7 +165,7 @@ void FCA_OnEndTCPThread(SU_PClientSocket Server)
 		if(domain!=NULL && machine!=NULL)
 			*(machine-1)='/';
 	}
-	
+
 	FCA_sem_post();
 }
     /* too many UDP errors: fatal error, exits */
@@ -175,12 +175,12 @@ void FCA_OnFatalError(void)
 	if(!FCA_exiting)
 		FCA_crash("too many UDP errors, exiting");
 }
-    
+
 void FCA_OnUDPError(int ErrNum)
 {
 	FFSS_PrintDebug(1, "(client) UDP error code %d\n", ErrNum);
 	FCA_UDP_errno=ErrNum;
-    
+
 	FCA_sem_post();
 }
 
