@@ -680,30 +680,31 @@ void FCA_smb_sep_link(char *path)
 {
 	char *p, *begin=path;
 	
-	p=strchr(path, '/');
+		/* / -> \ */
+	p=path;
+	while((p=strchr(p, '/')))
+		*p='\\';
+	p=strchr(path, '\\');
 	if(p==path)
-		p=strchr(path+1, '/');
+		p=strchr(path+1, '\\');
 	if(!p) {
 		FCA_pre_link();
-		FCA_dir_arg(path, false);
-		FCA_post_link(true);
+		printf("\\\\%s'>", path);
 		printf("%s</a>", path);
 		return;
 	}
 	while(p) {
 		*p='\0';
 		FCA_pre_link();
-		FCA_dir_arg(path, false);
-		FCA_post_link(false);
+		printf("\\\\%s'>", path);
 		printf("%s</a>", begin);
 		
 		*p='/';
 		begin=p+1;
-		p=strchr(p+1, '/');
+		p=strchr(p+1, '\\');
 		printf("/");
 	}
 	FCA_pre_link();
-	FCA_dir_arg(path, false);
-	FCA_post_link(false);
+	printf("\\\\%s'>", path);
 	printf("%s</a>", begin);
 }
