@@ -459,7 +459,7 @@ typedef struct
   bool Cancel;                  /* If the transfer is to be canceled */
   void *User;                   /* User information */
   FFSS_TXFerInfo XI;            /* XFer info for xfer using connection socket */
-  unsigned long int Throughput; /* Throughput in bytes/sec */
+  unsigned long int Throughput; /* Throughput in bytes/msec */
   FFSS_LongField UserInfo;      /* UserInfo passed to Download/Upload function, and passed back in Transfer Callbacks */
 } FFSS_TTransfer, *FFSS_PTransfer;
 #endif /* !FFSS_DRIVER */

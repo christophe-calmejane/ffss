@@ -31,19 +31,19 @@ void SearchAnswerEnd(struct FMP_SSearch *Sch,FFSS_LongField UserTag)
 }
 
 
-void OnError(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode) /* 'UserTag' and 'File' passed to FMP_StartDownload */
+void OnError(struct FMP_SFile *File,FFSS_LongField UserTag,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode) /* 'UserTag' and 'File' passed to FMP_StartDownload */
 {
-  printf("Error : %ld at Idx %ld from %s for %s\n",ErrorCode,Idx,IP,Name);
+  printf("Error : %ld from %s for %s\n",ErrorCode,IP,Name);
 }
 
-void OnPacketReceived(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket,FFSS_Field Throughput) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+void OnPacketReceived(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,FFSS_Field SizeOfPacket) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc */
 {
-  //printf("Packet received for Idx %ld from %s - Size = %ld (%ld bytes/s)\n",Idx,IP,SizeOfPacket,Throughput);
+  //printf("Packet received for Idx %ld from %s - Size = %ld\n",Idx,IP,SizeOfPacket);
 }
 
-void OnBlocComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[]) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+void OnBlocComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc */
 {
-  printf("Bloc complete for Idx %ld from %s\n",Idx,IP);
+  printf("Bloc complete for Idx %ld\n",Idx);
 }
 
 void OnDownloadComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const char Name[]) /* 'UserTag' and 'File' passed to FMP_StartDownload */
