@@ -1,0 +1,21 @@
+# PREINSTALL English language file
+# 25/07/2002
+
+# Window title
+00000 FFSS Server configuration
+
+# Dialog box strings
+00001 Name of the server
+00002 Comment of the server
+00003 Name of the master
+00004 &Import existing Windows shares
+00005 Select plugins to load at startup
+00006 Select a plugin in the list
+00007 Name
+
+# Message Box
+00020 Shares added
+00021 %d shares have been added
+
+# Error messages
+00100 You need to set a name for this server

@@ -1,0 +1,24 @@
+# FFSSUPDATER French language file
+# 24/07/2002
+
+# Window title
+00000 Configuration de la mise à jour automatique FFSS
+
+# Dialog box strings
+00001 &Pas de connexion (détection désactivée, non recommendé)
+00002 Connexion &directe
+00003 &Connexion par un proxy HTTP
+00004 Nom d'hôte
+00005 Port
+00006 Utilisateur
+00007 Mot de passe
+00008 &Test
+00009 Pour utiliser la mise à jour automatique, vous devez être connecté à internet.
+00010 Utiliser les paramètres d'&Internet Explorer
+
+# Error messages
+00100 Contrôle des paramètres
+00101 Les paramètres sont corrects.
+00102 Connexion impossible, vérifiez le numéro de port.
+00103 La résolution du nom a échouée.
+00104 Echec, veuillez vérifier les paramètres (Erreur #%ld)

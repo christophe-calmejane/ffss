@@ -1,0 +1,21 @@
+# PREINSTALL English language file
+# 25/07/2002
+
+# Window title
+00000 Configuration du serveur FFSS
+
+# Dialog box strings
+00001 Nom du serveur
+00002 Commentaire
+00003 Nom du master
+00004 &Importer les partages Windows existants
+00005 Sélectionnez les modules à lancer au démarrage du serveur
+00006 Choisissez un module dans la liste
+00007 Nom
+
+# Message Box
+00020 Partages ajoutés
+00021 %d partages ont été ajoutés
+
+# Error messages
+00100 Vous devez définir un nom pour votre serveur

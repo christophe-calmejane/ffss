@@ -1,0 +1,24 @@
+# FFSSUPDATER English language file
+# 24/07/2002
+
+# Window title
+00000 FFSS Update detection configuration
+
+# Dialog box strings
+00001 &No connection (autodetection disabled, not recommended)
+00002 &Direct internet connection
+00003 &Connection using &HTTP proxy
+00004 Hostname
+00005 Port
+00006 User
+00007 Password
+00008 &Test settings
+00009 To use automatic update, you need to have a connection to the internet.
+00010 Use &Internet Explorer settings
+
+# Error messages
+00100 Settings validation
+00101 Settings are correct.
+00102 Unable to connect, check port number.
+00103 Cannot resolve hostname.
+00104 Validation failed, please check settings (Error #%ld)
