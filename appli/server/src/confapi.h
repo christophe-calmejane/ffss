@@ -73,6 +73,7 @@ extern "C" {
 bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[]);
 
 /* *************** Get Infos *************** */
+/* You are responsible for freeing the lists and the structs */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client);
 FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]);
 bool FSCA_RequestShareNameAvailable(SU_PClientSocket Client,const char ShareName[]);
