@@ -19,7 +19,7 @@
 void FCA_htmlfl_prog_begin();
 
 void FCA_htmlfl_pre_listing(char *path);
-void FCA_htmlfl_pre_search_ans(const char *query);
+void FCA_htmlfl_pre_search_ans(const char *query, const char *domain);
 
 void FCA_htmlfl_tab_top();
 void FCA_htmlfl_tab_title(const char title[]);
@@ -221,7 +221,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
 ");
 }
 
-void FCA_htmlfl_pre_search_ans(const char *query)
+void FCA_htmlfl_pre_search_ans(const char *query, const char *domain)
 {
 	char *p;
 	const FCA_Tskin *ps;
@@ -246,7 +246,7 @@ FCA_htmlfl_form_hidden_args(true);printf("
 	p=FCA_get_a_domain();
 	while(p) {
 		if(SU_strcasecmp(p, "None"))
-			printf("    <option>%s\n", p);
+			printf("    <option%s>%s\n", p, SU_strcasecmp(p, domain)?"":" checked");
 		p=FCA_get_a_domain();
 	}
 printf("   </select>&nbsp;<input type='submit' value='search'>
@@ -264,7 +264,7 @@ printf("   </select>
 </table>
 <center>
  <h2>
-  search results for '%s'", query);printf("
+  search results for '%s' on %s", query, domain);printf("
  </h2>
 </center>
 </form>

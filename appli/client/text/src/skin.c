@@ -60,10 +60,10 @@ void FCA_pre_listing(char *path)
 		FCA_skin->ps->pre_listing(path);
 }
 
-void FCA_pre_search_ans(const char *query)
+void FCA_pre_search_ans(const char *query, const char *domain)
 {
 	if(FCA_skin->ps->pre_search_ans)
-		FCA_skin->ps->pre_search_ans(query);
+		FCA_skin->ps->pre_search_ans(query, domain);
 }
 
 void FCA_tab_top()

@@ -19,7 +19,7 @@
 void FCA_playlist_prog_begin();
 
 void FCA_playlist_pre_listing(char *path);
-void FCA_playlist_pre_search_ans(const char *query);
+void FCA_playlist_pre_search_ans(const char *query, const char *domain);
 
 void FCA_playlist_tab_top();
 void FCA_playlist_tab_title(const char title[]);
@@ -140,7 +140,7 @@ void FCA_playlist_prog_begin()
 {}
 void FCA_playlist_pre_listing(char *path)
 {}
-void FCA_playlist_pre_search_ans(const char *query)
+void FCA_playlist_pre_search_ans(const char *query, const char *domain)
 {}
 void FCA_playlist_tab_top()
 {}

@@ -17,7 +17,7 @@ typedef struct
 	void (*prog_begin)();
 	
 	void (*pre_listing)(char *path);
-	void (*pre_search_ans)(const char *query);
+	void (*pre_search_ans)(const char *query, const char *domain);
 	
 	void (*tab_top)();
 	void (*tab_title)(const char title[]);
@@ -154,7 +154,7 @@ void FCA_load_skins();
 void FCA_prog_begin();
 
 void FCA_pre_listing(char *path);
-void FCA_pre_search_ans(const char *query);
+void FCA_pre_search_ans(const char *query, const char *domain);
 
 void FCA_tab_top();
 void FCA_tab_title(const char title[]);

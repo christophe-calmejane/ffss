@@ -479,7 +479,7 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 
 	res=FCA_pre_tabsort(NbAnswers);
 	if(!FCA_quiet)
-		FCA_pre_search_ans(Query);
+		FCA_pre_search_ans(Query, Domain);
 	if(NbAnswers && !FCA_quiet) {
 		if(FCA_VAR_IS_ON(FCA_sort)) {
 			buf=malloc(NbAnswers*sizeof(char*));
