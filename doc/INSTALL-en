@@ -1,0 +1,75 @@
+
+		FFSS
+	Fleming File Sharing System
+	
+User's manual
+
+1) get FFSS
+2) compile FFSS
+3) use FFSS
+4) get help
+
+
+---------------------------
+| 1) get FFSS             |
+---------------------------
+To get FFSS, you can use :
+
+ * CVS: cvs.sourceforge.net:/cvsroot/FFSS/
+ * samba: on machine bennyben or orion
+       from FLEMING (u-psud.fr)
+
+
+---------------------------
+| 2) compile FFSS        |
+---------------------------
+Before compiling FFSS, you must have these libraries installed
+on your system :
+libc (libc6)
+libpthread (libpth12, libpth-dev)
+libreadline (libreadline, libreadline-dev)
+libz (zlib, zlib-devel), version >=1.0
+libbz2 (optional but recommended and needed by the master)
+lex (to compile the server)
+
+There are 4 steps :
+
+ a) compile the FFSS library
+ b) compile the client
+ c) compile the server (if needed)
+ d) compile the master (if needed)
+
+a) the library is in the directory libFFSS-1.0.0
+b) the client is in the directory appli/client
+c) the server is in the directory appli/server
+d) the master is in the directory appli/master
+
+The best way is to launch the build-* scripts in the root directory
+
+Otherwise, you can compile manually :
+For each one, go into the directory and type :
+./configure
+ possibly with options
+make
+make install (as root)
+
+
+---------------------------
+| 3) use FFSS        |
+---------------------------
+
+There are README files in the directory correspondant to the application.
+
+---------------------------
+| 4) get help             |
+---------------------------
+
+If you can't find any help in the README and INSTALL files,
+you can use IRC :
+channel #ffss of irc.u-psud.fr
+You can ask your questions to :
+kiki
+bennyben
+fefe
+jyby
+Jal

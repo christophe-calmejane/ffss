@@ -1,0 +1,42 @@
+
+Q: probleme: trouve pas SU_strcasecmp
+A: utiliser toujours SU_strcasecmp, mettre un
+ #define SU_strcasecmp strcasecmp en cas de probleme (ifndef ...)
+
+Q: est-ce qu'il manque le check de skyutils dans le client/master/server ?
+A: le client/master/server verifie s'il y a la lib ffss. Et le configure
+ de la lib verifie si skyutils est installe, donc il n'y a pas besoin.
+
+Q: AC_HEADER_SYS_WAIT c'est quoi
+A: autogenere par autoconf je crois
+
+Q: make install de la lib fait :
+ /bin/sh: usr/bin/install: No such file or directory
+A: peut rien y faire, c'est autogenere...
+
+Q: j'aime pas le gcc ... >/dev/null 2>&1
+A: peut rien y faire non plus
+
+Q: pourquoi j'ai 2 versions de skyutils dans les sources de la lib ?
+A: recopiage d'une version plus recente de la lib par dessus une autre
+
+Q: quand on quitte le server violemment et qu'on le relance juste apres,
+ il y a un message (socket encore ouverte), on pourrait mettre un message
+ d'erreur mieux.
+A: non c'est un message d'erreur qui vient directement du systeme
+
+Q: pourquoi ne pas envisager un mode SSL (crypte) ?
+A: peut etre un jour.
+
+Q: le client est parfois dans le dossier appli/client/bennyben, parfois
+ dans appli/client.
+A: C'est une arborescence de developpement, ce ne sera pas celle distribuee
+ ni celle du CVS
+
+Q: idee: pourquoi pas utiliser 2 ports, comme pour le ftp
+A: bof...
+
+Q: on voit souvent des 'SU_free_trace Warning...'
+A: bien verifier que tout les composants sont compiles avec le malloc
+ trace. Ensuite, rapporter les bugs a kiki. Des fois cela est du
+ a un malloc dans la lib, et un free dans le server par exemple.

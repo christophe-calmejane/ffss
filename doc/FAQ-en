@@ -1,0 +1,177 @@
+
+  FAQ for ffss, fleming file sharing system
+ 
+************************************
+	COMPILATION PROBLEMS
+************************************
+ when I compile, I've got the error message :
+...../libffss-1.0.0/src/.libs/libskyutils.a: No such file or directory
+---------------------------------
+The problem is the versions of build-debug and build-release,
+Be sure these scripts comes from the same source than
+the ffss library.
+Be sure you're not using skyutils 1.16. skyutils 1.16 compiles
+its .a file in the skyutils' sources directory. You can link/copy
+libskyutils.a from the src/skyutils-1.16/src/ to the src/.libs/ directory.
+
+*********************************
+ when I compile, I've got the error message :
+/usr/local/lib/libskyutils.a: No such file or directory
+/usr/local/lib/libffss.a: No such file or directory
+---------------------------------
+You've forgotten the --libdir=... option to the configure script
+when compiling the ffss library. Use build-debug and build-release
+scripts, it's more simple.
+
+**********************************
+ I've compiled the bz2 library, but there's still the error when trying
+ to configure the ffss library :
+checking for BZ2_bzBuffToBuffCompress in -lbz2... no
+Warning: BZ2 lib not found...
+----------------------------------
+Upgrade your bz2 library (to version >= 1.0).
+Be sure there's no conflics between 2 versions of the bz2 library.
+
+*********************************
+I've got this kind of messages :
+index.c:522: `FFSS_FILE_TAGS_NOTHING' undeclared
+index.c:601: `FFSS_FILE_TAGS_NOTHING' undeclared
+or:
+server.c:817: `FFSS_STRM_OPEN_WRITE' undeclared 
+server.c:828: `FFSS_STRM_OPEN_TEXT' undeclared
+server.c:1028: `FFSS_SEEK_SET' undeclared
+server.c:1031: `FFSS_SEEK_CUR' undeclared 
+server.c:1034: `FFSS_SEEK_END' undeclared
+server.c:1997: structure has no member named `OnStrmOpen'
+----------------------------------
+It's a problem of versions. An old version of ffss library was installed,
+(make install), and you're trying to compile the server for example.
+Solution: uninstall the old version and install the correct library.
+
+**********************************
+I've got anyway the message, even if skyutils is properly installed
+configure: warning: Cannot find libskyutils ... we will compile it
+----------------------------------
+It's a known problem, and will be solved.
+
+**********************************
+  server compilation:
+conf.c: In function `FS_ClientConf':
+conf.c:528: structure has no member named `XFerPos'
+conf.c:528: structure has no member named `FileSize'
+----------------------------------
+You have an older FFSS's library installed, run make uninstall before compiling.
+
+*********************************
+  master compilation
+search.c: In function `FM_IntersectAnswers_rec':
+search.c:102: warning: implicit declaration of function `memmem'
+search.c:102: warning: comparison between pointer and integer
+search.c: In function `FM_Search':
+search.c:295: `FFSS_ERROR_TOO_MANY_ANSWERS' undeclared (first use in this function)
+search.c:295: (Each undeclared identifier is reported only once
+search.c:295: for each function it appears in.)
+----------------------------------
+You have an older FFSS's library installed, run make uninstall before compiling.
+
+**********************************
+I've got a _lot_ of warnings when compiling the server, master
+or client.
+----------------------------------
+Perhaps are you trying to compile this program with the option
+--enable-debug, but the FFSS's library is not compiled with
+this option.
+
+
+***************************************
+	USAGE PROBLEMS: GENERAL
+***************************************
+
+I've compiled ffss sucessfully, but where are the programs ?
+----------------------------------
+it's on the src/ directory of each application:
+appli/client/src
+appli/server/src
+appli/master/src
+Be sure to configure these applications before launching them !
+there are configuration files in the data/ directory.
+
+**********************************
+I've got sometimes the message:
+FFSS Crashed :-(. Check: :0
+----------------------------------
+Try to recompile the library, and check if there isn't any conflicts
+from an older version. If not, report this bug, see AUTHORS for details.
+
+**********************************
+Sometimes it's impossible to launch a search, there's a timeout.
+The master seems to be crashed.
+----------------------------------
+Perhaps your system's administrator actived the samba's scan, so
+at this moment the master is scanning all netbios shares.
+During this scan, the database is locked.
+
+
+***************************************
+	USAGE PROBLEMS: SERVER
+***************************************
+
+ when I've exited the server and Im trying to launch it again, I've
+ got the error message:
+Error creating TCP socket on port 10002 (98:Address already in use)
+----------------------------------
+Some connections to your server were opened when you killed it.
+Wait the TCP connection timeout (1-2 minutes) and retry.
+
+
+***************************************
+	USAGE PROBLEMS: MASTER
+***************************************
+
+Sometimes the master takes a lot of CPU time, the machine becomes
+very slow.
+----------------------------------
+The master dumps his database to the disk sometimes.
+
+**********************************
+At startup, I've seen that my master is looking for a file named 'Dump.dat'
+that can not be found. I've seen too, it must be 'Index.dat'.
+----------------------------------
+You are in debug mode, in release mode, you mustn't have this.
+
+**********************************
+The master is installed, and is running. Server are added to the list, but
+all servers becomes 'down' after some seconds.
+----------------------------------
+The master uses the broadcast to ping all its servers.
+Check master's log file, see the machine has got a default route.
+Otherwise, it's because the servers aren't on the same network...
+
+
+***************************************
+	USAGE PROBLEMS: CLIENT
+***************************************
+
+I've got too debug messages in my client
+----------------------------------
+try ffss-client -d 0
+or set debuglevel 0 in the client's interface.
+
+**********************************
+When I try ffss-client with options, or in CGI mode,
+I've got the error message :
+FATAL: too many UDP errors, exiting...
+or
+FFSS(1) : Error on UDP port (SOCKET_ERROR : 9)
+...
+FFSS(1) : Too many consecutive errors on UDP port, exiting
+----------------------------------
+It's a little bug, just upgrade.
+
+**********************************
+I would like to launch the client, and just lauch a find. The client
+must exit after.
+I've tryed ffss-client -e find foo, but it doesn't work.
+----------------------------------
+it's ffss-client -e "find foo"
+
