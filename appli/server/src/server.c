@@ -164,8 +164,8 @@ void FS_AddConnectionToShare(FS_PShare Share,const char RemoteIP[],FS_PUser Usr,
 {
   FS_PConn Conn;
 
-  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"ADD CONN TO SHARE");
   Conn = (FS_PConn) malloc(sizeof(FS_TConn));
+  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"ADD CONN %p TO SHARE",Conn);
   memset(Conn,0,sizeof(FS_TConn));
   Conn->Remote = strdup(RemoteIP);
   Conn->User = Usr;
@@ -236,7 +236,7 @@ FS_PConn FS_GetConnFromTS(FS_PThreadSpecific ts,SU_PList Conns)
 /* Locks FS_SemGbl */
 void FS_DoRemoveConnectFromShare(FS_PConn Conn,FS_PShare Share,bool RemoveXFers)
 {
-  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE CONN FORM SHARE");
+  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE CONN %p FROM SHARE",Conn);
   context;
   FS_FreeConn(Conn,RemoveXFers);
   Share->Conns = SU_DelElementElem(Share->Conns,Conn);
@@ -1076,7 +1076,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       return false;
     }
   }
-  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"ADD XFER %p TO CONN (%ld)",FT,SU_THREAD_SELF);
+  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"ADD XFER %p TO CONN (%p)",FT,Conn);
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
   SU_SEM_POST(FS_SemShr);
 
@@ -2594,7 +2594,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     }
     if(Ptr != NULL)
     {
-      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE XFER %p FORM CONN %d (%ld)",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
+      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"(FAIL) REMOVE XFER %p FORM CONN %p (%d remaining)",FT,FT->User,SU_ListCount(((FS_PConn)FT->User)->XFers)-1,SU_THREAD_SELF);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
@@ -2609,7 +2609,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     SU_SEM_POST(FS_SemShr);
   }
   else
-    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE XFER %p",FT);
+    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"(FAIL) REMOVE XFER %p - Conn is NULL",FT);
 }
 
 void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
@@ -2632,7 +2632,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     }
     if(Ptr != NULL)
     {
-      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE XFER %p FORM CONN %d SUCCESS (%ld)",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
+      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"(SUCCESS) REMOVE XFER %p FORM CONN %p (%d remaining)",FT,FT->User,SU_ListCount(((FS_PConn)FT->User)->XFers)-1);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
@@ -2647,7 +2647,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     SU_SEM_POST(FS_SemShr);
   }
   else
-    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE XFER %p",FT);
+    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"(SUCCESS) REMOVE XFER %p - Conn is NULL",FT);
 }
 
 void OnTransferActive(FFSS_PTransfer FT,long int Amount,bool Download)

@@ -1,3 +1,10 @@
+/*
+  TO DO :
+   - Creer un thread qui verifie regulierement l'etat des semaphores des Path
+     -> Si locked, regarder la derniere date de mise a jour (ajouter un champ time_t dans le PPath), si delai > 60s, liberer le sem (mettre l'etat a not_connected par ex)
+     -> Mise a jour du time_t dans les packets receive
+*/
+
 #include "fmp.h"
 #define FMP_NAME "FFSS Multi Path Library"
 #define FMP_VERSION "v1.1"
@@ -6,8 +13,8 @@
 #define FMP_BUFFER_SIZE 256*1024
 
 #define FMP_DELAY_RETRY_SEM  30
-#define FMP_DELAY_RETRY_RECO 10
-#define FMP_MIN_RECONNECT_DELAY 2*60
+#define FMP_DELAY_RETRY_RECO 2*60
+#define FMP_MIN_RECONNECT_DELAY 20
 
 /* ************* */
 typedef struct
@@ -483,9 +490,10 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
   }
   if(Error)
   {
-    Path->State = FMP_PATH_STATE_NOT_CONNECTED;
-    Path->Server = NULL;
     SU_SEM_WAIT(FMP_Sem_Blocs);
+    Path->State = FMP_PATH_STATE_NOT_CONNECTED;
+    FC_SendMessage_Disconnect(Path->Server);
+    Path->Server = NULL;
     if(Path->HaveIdx)
     {
       Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
