@@ -176,6 +176,10 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
 #ifdef DEBUG
   printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
+  /*if(Hst->State == FFSS_STATE_OFF)
+    Hst->OffSince = time(NULL);
+  else
+    Hst->OffSince = 0;*/
   if(FM_IsHostInMyQueue(Hst))
   {
 #ifdef DEBUG
@@ -183,10 +187,6 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
 #endif /* DEBUG */
     return;
   }
-  if(Hst->State == FFSS_STATE_OFF)
-    Hst->OffSince = time(NULL);
-  else
-    Hst->OffSince = 0;
 
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   Que->Domain = Domain;
@@ -204,6 +204,10 @@ void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
 #ifdef DEBUG
   printf("MASTER : Adding state to other queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
+  if(Hst->State == FFSS_STATE_OFF)
+    Hst->OffSince = time(NULL);
+  else
+    Hst->OffSince = 0;
   if(FM_IsHostInOtherQueue(Hst))
   {
 #ifdef DEBUG
@@ -211,10 +215,6 @@ void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
 #endif /* DEBUG */
     return;
   }
-  if(Hst->State == FFSS_STATE_OFF)
-    Hst->OffSince = time(NULL);
-  else
-    Hst->OffSince = 0;
 
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   Que->Domain = Domain;
@@ -314,8 +314,8 @@ void OnClientServerFailed(const char IP[])
       Hst->OffSince = time(NULL);
       if(Ptr->Data == (&FM_MyDomain))
         FM_AddStateToMyQueue((FM_PDomain)Ptr->Data,Hst);
-      else
-        FM_AddStateToOtherQueue((FM_PDomain)Ptr->Data,Hst);
+      /*else
+        FM_AddStateToOtherQueue((FM_PDomain)Ptr->Data,Hst);*/
       break;
     }
     Ptr = Ptr->Next;
@@ -766,10 +766,14 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
     Hst = FM_AddHostToDomain(Dom,Name,OS,Comment,IP,State);
   else
     FM_UpdateHost(Hst,Name,OS,Comment,State);
+  if(Hst->State == FFSS_STATE_OFF)
+    Hst->OffSince = time(NULL);
+  else
+    Hst->OffSince = 0;
   if(FM_IsMyDomain(Dom))
     FM_AddStateToMyQueue(Dom,Hst);
-  else
-    FM_AddStateToOtherQueue(Dom,Hst);
+  /*else
+    FM_AddStateToOtherQueue(Dom,Hst);*/
 }
 
 void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions)

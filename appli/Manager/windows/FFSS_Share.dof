@@ -55,7 +55,7 @@ DebugSourceDirs=
 UsePackages=0
 
 [Parameters]
-RunParams=D:\Travail\skytech\ffss\server\server_console
+RunParams=D:\Travail\skytech\ffss\appli\server\src\windows\server_console
 HostApplication=
 Launcher=
 UseLauncher=0
