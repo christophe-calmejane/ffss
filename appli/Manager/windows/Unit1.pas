@@ -577,6 +577,7 @@ begin
     Inc(Size,Length(Edit9.Text)+1);
     StrPCopy(Buf+Size,IntToStr(0)); // 0 Users for now
     Inc(Size,IntLength(0)+1);
+    ShareState:=SHARE_UPDT;
   End;
   CS.Socket.SendBuf(Size,sizeof(Size));
   CS.Socket.SendBuf(Buf,Size);
