@@ -84,6 +84,7 @@ void FCA_init()
 	FCA_quiet=false;
 	FCA_Servers=NULL;
 	FCA_list=NULL;
+	FCA_logf=NULL;
 	FCA_inDispServs=false;
 	FCA_everListDom=false;
 	FCA_posted=false;

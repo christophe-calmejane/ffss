@@ -124,6 +124,10 @@ void FCA_interpret_cmd()
 	command=FCA_command;
 	if(command==NULL)
 		return;
+	
+		/* log the stuff */
+	if(FCA_loglevel[0]>2)
+		FCA_printlog("cmd: %s", command);
 
 		/* comments */
 	esp=strstr(command,"*/");

@@ -7,6 +7,7 @@
  */
 
 	/* just for threads */
+#include <stdarg.h>
 #include <unistd.h>
 #include <signal.h>
 #include <ffss.h>
@@ -41,6 +42,9 @@ SU_THREAD_HANDLE FCA_wait_thread;
 int FCA_compl_wanted;
 bool FCA_sem_timeout;
 
+	/* for logs */
+FILE *FCA_logf;
+
 	/* environment variables */
 	/* WARNING for these 2 tables :
 		if you modify the variable order,
@@ -66,6 +70,9 @@ const FCA_Tvar FCA_VARS[]= {
 	{"sort_find",	"if the search answers must be sorted",		"on/off",	NULL},
 	{"sort",	"if the listings must be sorted",		"on/off",	NULL},
 	{"sort_by",	"sort method for directory listings",		"name/size/date",NULL},
+	{"log",		"if we must log",				"on/off",	FCA_upd_log},
+	{"log_file",	"the file used to log",				"filename",	FCA_upd_logfile},
+	{"log_level",	"1=downloads 2=browsing 3=commands 4=all",	"1/2/3/4",	NULL},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
@@ -88,7 +95,10 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", "240", NULL},
 	{"on","off",NULL},
 	{"on","off",NULL},
-	{"name", "size", "date",NULL},
+	{"name", "size", "date", NULL},
+	{"on","off",NULL},
+	{"", "ffss-client.log", NULL},
+	{"1", "2", "3", "4", NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
@@ -108,6 +118,9 @@ char FCA_env[][FCA_VAR_MAX]={
 	"on",
 	"on",
 	"name",
+	"off",
+	"ffss-client.log",
+	"3",
 	FCA_SKIN_ENV_VALUES
 };
 
@@ -262,6 +275,10 @@ void FCA_ShDisconnect()
 void FCA_exit(int code)
 {
 	if(!FCA_exiting) {
+		if(FCA_logf) {
+			SU_CloseLogFile(FCA_logf);
+			FCA_logf=NULL;
+		}
 		FCA_uninit();
 		exit(code);
 	}
@@ -1267,6 +1284,19 @@ bool FCA_if_val_ok(int i, const char *value)
 	return ok;
 }
 
+void FCA_printlog(char *msg, ...)
+{
+		/* printf for logs */
+	va_list argptr;
+	char str[1024];
+
+	va_start(argptr,msg);
+	vsnprintf(str, 1023, msg, argptr);
+	va_end(argptr);
+	
+	SU_WriteToLogFile(FCA_logf, str);
+}
+
 void FCA_upd_debuglevel()
 {
 	FFSS_PrintDebug(1, "(client) debug level has changed to level %d\n", (int)(FCA_debuglevel[0]-'0'));
@@ -1287,5 +1317,33 @@ void FCA_upd_skin()
 	} else {
 		FCA_skin=(FCA_Pskin)&(FCA_SKINS[i]);
 		FFSS_PrintDebug(1, "(client) the skin has changed to '%s'\n", FCA_skin_name);
+	}
+}
+
+void FCA_upd_log()
+{
+	if(FCA_logf)
+		SU_CloseLogFile(FCA_logf);
+	if(FCA_VAR_IS_ON(FCA_log)) {
+		FCA_logf=SU_OpenLogFile(FCA_logfile);
+		if(!FCA_logf) {
+			FCA_print_cmd_err("cannot open log file, disabling log");
+			sprintf(FCA_log, "off");
+		} else
+			FFSS_PrintDebug(5, "(client) logfile opened\n");
+	}		
+	
+}
+
+void FCA_upd_logfile()
+{
+	if(FCA_VAR_IS_ON(FCA_log)) {
+		SU_CloseLogFile(FCA_logf);
+		FCA_logf=SU_OpenLogFile(FCA_logfile);
+		if(!FCA_logf) {
+			FCA_print_cmd_err("cannot open log file, disabling log");
+			sprintf(FCA_log, "off");
+		} else
+			FFSS_PrintDebug(5, "(client) logfile reopen\n");
 	}
 }

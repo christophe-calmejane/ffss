@@ -49,8 +49,11 @@
 #define FCA_sort_find		FCA_env[10]
 #define FCA_sort		FCA_env[11]
 #define FCA_sort_by		FCA_env[12]
+#define FCA_log			FCA_env[13]
+#define FCA_logfile		FCA_env[14]
+#define FCA_loglevel		FCA_env[15]
 	/* modify this each time you add a variable */
-#define FCA_skin_env_index	13
+#define FCA_skin_env_index	16
 
 
 typedef struct
@@ -76,6 +79,7 @@ typedef struct
 extern int FCA_compl_wanted;
 extern FFSS_PTransfer FCA_Ptrans;
 extern bool FCA_sem_timeout;
+extern FILE *FCA_logf;
 
 
 int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], FFSS_LongField size);
@@ -137,8 +141,12 @@ void FCA_get_lpwd(char *dir);
 
 bool FCA_if_val_ok(int i, const char *value);
 
+void FCA_printlog(char *msg, ...);
+
 	/* on variables' modification */
 void FCA_upd_debuglevel();
 void FCA_upd_skin();
+void FCA_upd_log();
+void FCA_upd_logfile();
 
 #endif	/* _FCA_COMMON_H_ */
