@@ -29,7 +29,7 @@ void FM_CheckMasterConnections(void)
         printf("FM_CheckMasterConnections : Successfully connected... requesting servers list\n");
 #endif /* DEBUG */
         FM_SendMessage_MasterConnection(Domain->CS->sock);
-        FM_SendMessage_ServerList(Domain->CS->sock);
+        FM_SendMessage_ServerList(Domain->CS->sock,0);
       }
       SU_SEM_POST(FM_TmpSem);
     }
@@ -266,7 +266,7 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
       else
         comp = FFSS_COMPRESSION_NONE;
       context;
-      FM_SendMessage_SearchAnswer(Sch->Client,buf,len,comp);
+      FM_SendMessage_SearchAnswer(Sch->Client,buf,len,comp,Sch->User);
       free(buf);
     }
     FM_FreeSearch(Sch);

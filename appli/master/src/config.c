@@ -83,7 +83,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
   else
   {
     /* Add Default rule, to reject all non-master connections */
-    FFSS_Filter_AddDefaultRuleToChain(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,FFSS_FILTER_ACTION_REJECT);
+    FFSS_Filter_SetDefaultActionOfChain(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,FFSS_FILTER_ACTION_REJECT);
     fclose(fp);
   }
 
@@ -141,7 +141,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         printf("Config Loader Info : Successfully connected... requesting servers list\n");
 #endif /* DEBUG */
         FM_SendMessage_MasterConnection(Domain->CS->sock);
-        FM_SendMessage_ServerList(Domain->CS->sock);
+        FM_SendMessage_ServerList(Domain->CS->sock,0);
       }
       SU_SEM_POST(FM_TmpSem);
       Ptr = Ptr->Next;

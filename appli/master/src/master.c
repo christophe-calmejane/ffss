@@ -236,7 +236,7 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
 }
 
 /* OnServerListing is raised by local clients */
-void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions)
+void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User)
 {
   char *buf,*s_dom,*s_os;
   long int len;
@@ -271,7 +271,7 @@ void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain
   }
   else
     comp = FFSS_COMPRESSION_NONE;
-  FM_SendMessage_ServerListing(Client,buf,len,comp);
+  FM_SendMessage_ServerListing(Client,buf,len,comp,User);
   free(buf);
 }
 
@@ -321,7 +321,7 @@ void OnPong(struct sockaddr_in Server,FFSS_Field State)
 }
 
 /* OnDomainListing is raised by local clients */
-void OnDomainListing(struct sockaddr_in Client)
+void OnDomainListing(struct sockaddr_in Client,FFSS_LongField User)
 {
   char *buf[1024];
   SU_PList Ptr;
@@ -336,11 +336,11 @@ void OnDomainListing(struct sockaddr_in Client)
     nb++;
     Ptr = Ptr->Next;
   }
-  FM_SendMessage_DomainListingAnswer(Client,nb,buf);
+  FM_SendMessage_DomainListingAnswer(Client,nb,buf,User);
 }
 
 /* OnSearch is raised by local clients */
-void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions)
+void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions,FFSS_LongField User)
 {
   char *s_dom;
   FM_PSearch Sch;
@@ -367,6 +367,7 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
   Sch->KeyWords = strdup(KeyWords);
   Sch->Compressions = Compressions;
   Sch->Master = false;
+  Sch->User = User;
 
   SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
@@ -374,10 +375,10 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
 }
 
 /* OnMasterSearch is raised by local clients */
-void OnMasterSearch(struct sockaddr_in Client,bool Server)
+void OnMasterSearch(struct sockaddr_in Client,bool Server,FFSS_LongField User)
 {
   context;
-  FM_SendMessage_MasterSearchAnswer(Client,Server,FM_MyDomain.Name);
+  FM_SendMessage_MasterSearchAnswer(Client,Server,FM_MyDomain.Name,User);
 }
 
 SU_THREAD_ROUTINE(ThreadIndexing,Info)
@@ -724,7 +725,7 @@ void OnMasterConnected(SU_PClientSocket Master)
 #endif /* DEBUG */
     Dom->CS = Master;
     FM_SendMessage_MasterConnection(Master->sock);
-    FM_SendMessage_ServerList(Master->sock);
+    FM_SendMessage_ServerList(Master->sock,0);
   }
 }
 
@@ -787,7 +788,7 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
     FM_AddStateToMyQueue(Dom,Hst);
 }
 
-void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions)
+void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User)
 {
   char *buf;
   long int len;
@@ -824,7 +825,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   }
 }
 
-void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions)
+void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions,FFSS_LongField User)
 {
   FM_PSearch Sch;
   FM_PDomain Dom;
@@ -856,6 +857,7 @@ void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,cons
   Sch->KeyWords = strdup(KeyWords);
   Sch->Compressions = Compressions;
   Sch->Master = true;
+  Sch->User = User;
 
   SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);

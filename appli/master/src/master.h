@@ -7,7 +7,7 @@
 #include <net/if.h>
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre60"
+#define FFSS_MASTER_VERSION "1.0-pre62"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -28,7 +28,7 @@
 #define CONFIG_FILE_NAME "/etc/ffss/master.conf"
 #define FM_SEARCHLOG_FILE "/var/lib/ffss/search.log"
 #define FM_PID_FILE "/var/lib/ffss/master.pid"
-#define FM_INDEX_DUMP_INTERVAL_PING 30
+#define FM_INDEX_DUMP_INTERVAL_PING 60
 #endif /* DEBUG */
 #define FM_INDEX_MAX_FATHER_RECURSION 100
 
@@ -55,6 +55,7 @@ typedef struct
   char *KeyWords;
   long int Compressions;
   bool Master;
+  FFSS_LongField User;
 } FM_TSearch, *FM_PSearch;
 
 

@@ -242,7 +242,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
         FFSS_PrintDebug(4,"Forwarding search \"%s\" to %s\n",KeyWords,Dom->Master);
         if(Dom->CS != NULL)
         {
-          if(!FM_SendMessage_SearchForward(Dom->CS->sock,Sch->Client,Sch->Compressions,KeyWords))
+          if(!FM_SendMessage_SearchForward(Dom->CS->sock,Sch->Client,Sch->Compressions,KeyWords,Sch->User))
             FFSS_PrintSyslog(LOG_WARNING,"Error forwarding search to %s (%d:%s)\n",Dom->Master,errno,strerror(errno));
         }
         Ptr = Ptr->Next;
