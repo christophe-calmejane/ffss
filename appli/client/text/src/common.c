@@ -1247,8 +1247,8 @@ printf("restoring default skin, '%s' is not valid \n", FCA_skin_name);
 		FCA_skin=(FCA_Pskin)&(FCA_SKINS[0]);
 		sprintf(FCA_skin_name, FCA_SKINS[0].name);
 	} else {
-printf("new skin \n");
 		FCA_skin=(FCA_Pskin)&(FCA_SKINS[i]);
 		FFSS_PrintDebug(1, "(client) the skin has changed to '%s'\n", FCA_skin_name);
+printf("new skin (%d) %s...\n", i, FCA_skin_name);
 	}
 }
