@@ -101,7 +101,6 @@ void FCA_init()
 	FCA_Ptrans=NULL;
 	FCA_reading_file=false;
 	FCA_in_comment=false;
-printf("default skin\n");
 	FCA_skin=(FCA_Pskin)&(FCA_SKINS[0]);
 	sprintf(FCA_skin_name, FCA_SKINS[0].name);
 #ifndef _WIN32
@@ -146,7 +145,6 @@ printf("default skin\n");
 			/* use the default skin to display this critical message */
 		if(!p->name)
 			FCA_crash("cannot find a skin adapted to the CGI mode");
-printf("default CGI skin \n");
 		FCA_skin=(FCA_Pskin)p;
 		sprintf(FCA_skin_name, p->name);
 	}
