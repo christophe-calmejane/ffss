@@ -646,6 +646,7 @@ void FCA_sep_link(char *path, char *prefx, bool isDir)
 	char *p, *begin=path;
 	char p2[FFSS_MAX_FILEPATH_LENGTH];
 	
+printf ("<!-- path=%s prefx=%s isDir=%d -->\n", path, prefx, isDir);
 	p=strchr(path, '/');
 	if(p==path)
 		p=strchr(path+1, '/');
