@@ -45,7 +45,7 @@ typedef struct FMP_SPath
   char Share[100];
 
   /* Run time Values */
-  FFSS_Field State,OldState;
+  FFSS_Field State;
   SU_THREAD_HANDLE HThr;
   SU_PClientSocket Server;
   SU_SEM_HANDLE Sem;  /* FMP_PPath sem for synchronisation */
@@ -404,7 +404,7 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
 #endif
     SU_THREAD_SET_SPECIFIC(FMP_tskey,Path);
   }
-  if((Path->State == FMP_PATH_STATE_NOT_CONNECTED) && (Code == FFSS_ERROR_REMOTE_CLOSED))
+  if(((Path->State != FMP_PATH_STATE_CONNECTED) && (Path->State != FMP_PATH_STATE_TRANSFERING)) && (Code == FFSS_ERROR_REMOTE_CLOSED))
   {
 #ifdef DEBUG
     printf("FFSS_OnError : Not connected, ignoring error message\n");
@@ -471,6 +471,11 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_NEED_LOGIN_PASS);
       Error = true;
       break;
+    case FFSS_ERROR_REMOTE_CLOSED :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_REMOTE_CLOSED);
+      Error = true;
+      break;
     default :
       if(FMP_CB.OnError != NULL)
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
@@ -480,15 +485,16 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
   {
     Path->State = FMP_PATH_STATE_NOT_CONNECTED;
     Path->Server = NULL;
+    SU_SEM_WAIT(FMP_Sem_Blocs);
     if(Path->HaveIdx)
     {
-      SU_SEM_WAIT(FMP_Sem_Blocs);
       Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
+      Path->File->Blocs[Path->Idx].Pos = 0;
       if(FMP_CB.OnUnAssignBloc != NULL)
         FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
       Path->HaveIdx = false;
-      SU_SEM_POST(FMP_Sem_Blocs);
     }
+    SU_SEM_POST(FMP_Sem_Blocs);
   }
 
   if(Path->Locked)
@@ -496,26 +502,6 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
   else
     printf("WARNING : FFSS_OnError : Path->Locked is not locked !!\n");
   return true;
-}
-
-void FFSS_OnEndTCPThread(SU_PClientSocket Server)
-{
-  FMP_PPath Path = FMP_GetThreadSpecific();
-  if(Path != NULL)
-  {
-    Path->Server = NULL;
-    if(Path->HaveIdx)
-    {
-      SU_SEM_WAIT(FMP_Sem_Blocs);
-      Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
-      if(FMP_CB.OnUnAssignBloc != NULL)
-        FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
-      Path->HaveIdx = false;
-      SU_SEM_POST(FMP_Sem_Blocs);
-    }
-    Path->State = FMP_PATH_STATE_NOT_CONNECTED;
-  }
-  printf("End TCP Thread\n");
 }
 
 void FFSS_OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Descr[],bool Download)
@@ -534,6 +520,7 @@ void FFSS_OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Des
   }
   else if(Path->MustPause)
   {
+    Path->State = FMP_PATH_STATE_PAUSED;
     if(FMP_CB.OnError != NULL)
       FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_TRANSFER_SUSPENDED);
   }
@@ -617,6 +604,7 @@ void FFSS_OnTransferSuccess(FFSS_PTransfer FT,bool Download)
   Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_GOT;
   if(FMP_CB.OnUnAssignBloc != NULL)
     FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
+  Path->HaveIdx = false;
   SU_SEM_POST(FMP_Sem_Blocs);
   if(Path->Locked)
     SU_SEM_POST(Path->Sem);
@@ -677,8 +665,10 @@ bool FMP_GetNextIdx(FMP_PPath Path)
   {
     if(Path->File->Blocs[i].State == FMP_BLOC_STATE_NOT_GOT)
     {
-      Path->Idx = i;
       Path->File->Blocs[i].State = FMP_BLOC_STATE_GETTING;
+      Path->File->Blocs[i].Pos = 0;
+      Path->Idx = i;
+      Path->HaveIdx = true;
       if(FMP_CB.OnAssignBloc != NULL)
         FMP_CB.OnAssignBloc(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name);
       SU_SEM_POST(FMP_Sem_Blocs);
@@ -766,11 +756,10 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
       SU_SEM_POST(Path->Sem);
       if(Path->State != FMP_PATH_STATE_NOT_CONNECTED)
         break;
-      if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_CONNECT_FAILED);
+      //if(FMP_CB.OnError != NULL)
+        //FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_CONNECT_FAILED);
       FC_SendMessage_Disconnect(Path->Server);
       Path->Server = NULL;
-      Path->HaveIdx = false;
       SU_SLEEP(FMP_ReconnectDelay); /* Retry in 2 min */
     }
 
@@ -785,7 +774,6 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
         printf("WARNING : FMP_StreamingRoutine : Path->Locked is already locked !!\n");
       Path->Locked = true;
 
-      Path->HaveIdx = true;
       Path->Error = false;
       snprintf(Buf,sizeof(Buf),"%s/%s",Path->Path,Path->File->Name);
       StartPos = (Path->File->BlocSize*Path->Idx)+Path->File->Blocs[Path->Idx].Pos;
@@ -801,6 +789,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
         printf("Couldn't get my bloc, error might have occured... disconnecting\n");
         SU_SEM_WAIT(FMP_Sem_Blocs);
         Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
+        Path->File->Blocs[Path->Idx].Pos = 0;
         if(FMP_CB.OnUnAssignBloc != NULL)
           FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
         Path->HaveIdx = false;
@@ -810,10 +799,10 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
     }
 
     /* EOF - Disconnecting */
-    Path->State = FMP_PATH_STATE_NOT_CONNECTED;
+    if(!Path->MustCancel && Path->MustPause)
+      Path->State = FMP_PATH_STATE_NOT_CONNECTED;
     FC_SendMessage_Disconnect(Path->Server);
     Path->Server = NULL;
-    Path->HaveIdx = false;
 
     if(FMP_IsDownloadComplete(Path->File)) /* All parts completed */
     {
@@ -862,7 +851,6 @@ bool FMP_Init(const char Master[])
   FFSS_CB.CCB.OnSearchAnswer = FFSS_OnSearchAnswer;
   /* TCP CALLBACKS */
   FFSS_CB.CCB.OnError = FFSS_OnError;
-  FFSS_CB.CCB.OnEndTCPThread = FFSS_OnEndTCPThread;
   FFSS_CB.CCB.OnTransferFailed = FFSS_OnTransferFailed;
   FFSS_CB.CCB.OnTransferSuccess = FFSS_OnTransferSuccess;
   FFSS_CB.CCB.OnTransferFileWrite = FFSS_OnTransferFileWrite;
@@ -959,6 +947,11 @@ bool FMP_GetBlocInfos(struct FMP_SFile *File,FFSS_Field Idx,FFSS_Field *State,FF
     *Pos = File->Blocs[Idx].Pos;
   SU_SEM_POST(FMP_Sem_Blocs);
   return true;
+}
+
+FFSS_Field FMP_GetPathState(struct FMP_SPath *Path) /* Returns current Path state */
+{
+  return Path->State;
 }
 
 char *FMP_GetName(void)
@@ -1078,8 +1071,6 @@ void FMP_PausePath(struct FMP_SPath *Path)
   if(Path == NULL)
     return;
   Path->MustPause = true;
-  Path->OldState = Path->State;
-  Path->State = FMP_PATH_STATE_PAUSED;
 }
 
 void FMP_ResumePath(struct FMP_SPath *Path)
@@ -1087,5 +1078,5 @@ void FMP_ResumePath(struct FMP_SPath *Path)
   if(Path == NULL)
     return;
   Path->MustPause = false;
-  Path->State = Path->OldState;
+  Path->State = FMP_PATH_STATE_NOT_CONNECTED;
 }
