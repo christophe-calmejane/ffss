@@ -19,4 +19,6 @@ TO DO :
 
  - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)
 
+ - Attention AUX SYM LINKS -> On ne les suit plus... il faudrait mettre une option dans le share pour dire si on suit ou pas
+
  - Throttle de connexions (dans un plugin, dans le checkconnection) (stocke les ip, avec derniere heure de connection et nombre de connexions)
