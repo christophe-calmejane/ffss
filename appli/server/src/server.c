@@ -518,6 +518,12 @@ void OnError(long int ErrorCode,const char Description[])
   SU_PList Ptr;
 
   FFSS_PrintSyslog(LOG_ERR,"Server received an error message : (%ld) %s\n",ErrorCode,Description);
+  if(ErrorCode == FFSS_ERROR_PROTOCOL_VERSION_ERROR)
+  {
+#ifdef _WIN32
+    MessageBox(NULL,"Protocol version mismatch with your master, please upgrade your server","FFSS Server Info",MB_OK);
+#endif
+  }
   if(ErrorCode == FFSS_ERROR_RESEND_LAST_UDP) /* Ignore right now */
     return;
   if(ErrorCode == FFSS_ERROR_BUFFER_OVERFLOW) /* Ignore */

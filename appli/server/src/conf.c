@@ -517,6 +517,12 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   {
     Client = SU_ServerAcceptConnection(SI);
     FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    if(Client == NULL)
+    {
+      /* Server may being shut down */
+      SU_SLEEP(1);
+      continue;
+    }
     if(!FS_CheckConfConn(Client))
     { /* rejecting */
       SU_FreeCS(Client);
