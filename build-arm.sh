@@ -7,7 +7,7 @@ echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
 echo
 cd skyutils
-./configure --libdir=$archdir/skyutils/src/.libs --enable-reentrant --host=arm-linux --target=arm-linux
+./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --host=arm-linux --target=arm-linux
 make
 cd ..
 echo
@@ -15,7 +15,7 @@ echo '############# BUILDING FFSS LIBRARY ###############'
 echo
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --libdir=$libdir/src/.libs --with-skyutils=$archdir/skyutils --host=arm-linux --target=arm-linux --disable-zlib
+./configure --includedir=$libdir/src --libdir=$libdir/src/.libs --with-skyutils=$archdir/skyutils --host=arm-linux --target=arm-linux --disable-zlib
 make
 cd ..
 echo

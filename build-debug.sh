@@ -5,7 +5,7 @@ echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
 echo
 cd skyutils
-./configure --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal
+./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal
 make
 cd ..
 echo
@@ -13,8 +13,8 @@ echo '############# BUILDING FFSS LIBRARY ###############'
 echo
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --libdir=$libdir/src/.libs --enable-context --enable-debug --enable-malloc_trace --with-skyutils=$archdir/skyutils
-#./configure --libdir=$libdir/src/.libs --enable-context --enable-debug --with-skyutils=$archdir/skyutils
+./configure --includedir=$libdir/src --libdir=$libdir/src/.libs --enable-context --enable-debug --enable-malloc_trace --with-skyutils=$archdir/skyutils
+#./configure --includedir=$libdir/src--libdir=$libdir/src/.libs --enable-context --enable-debug --with-skyutils=$archdir/skyutils
 make
 cd ..
 echo

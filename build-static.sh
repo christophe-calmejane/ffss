@@ -5,7 +5,7 @@ echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
 echo
 cd skyutils
-./configure --libdir=$archdir/skyutils/src/.libs --enable-reentrant
+./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant
 make
 cd ..
 echo
@@ -13,7 +13,7 @@ echo '############# BUILDING FFSS LIBRARY ###############'
 echo
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --libdir=$libdir/src/.libs --enable-static --enable-context --with-skyutils=$archdir/skyutils
+./configure --includedir=$libdir/src --libdir=$libdir/src/.libs --enable-static --enable-context --with-skyutils=$archdir/skyutils
 make
 cd ..
 echo
