@@ -60,7 +60,7 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
     if(((FS_PConn)Ptr->Data)->ts != NULL)
     {
       ((FS_PConn)Ptr->Data)->ts->Remove = true;
-      FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+      FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],9);
       SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
       ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
     }
@@ -107,7 +107,7 @@ void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers)
       if(((FS_PConn)Ptr->Data)->ts != NULL)
       {
         ((FS_PConn)Ptr->Data)->ts->Remove = true;
-        FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+        FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
         SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
         ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
       }
@@ -200,6 +200,7 @@ int FS_XFersCount(FS_PConn Conn)
   return Count;
 }
 
+/* FS_SemConn and FS_SemXFer MUST HAVE BEEN LOCKED */
 void FS_FreeConn(FS_PConn Conn,bool RemoveXFers)
 {
   SU_PList Ptr;
@@ -210,7 +211,7 @@ void FS_FreeConn(FS_PConn Conn,bool RemoveXFers)
   else
     printf("Removing connection, setting Conn object of XFers to NULL\n");
 #endif /* DEBUG */
-  SU_SEM_WAIT(FS_SemXFer);
+  //SU_SEM_WAIT(FS_SemXFer); Must has been locked before
   Ptr = Conn->XFers;
   while(Ptr != NULL)
   {
@@ -229,7 +230,7 @@ void FS_FreeConn(FS_PConn Conn,bool RemoveXFers)
   }
   SU_FreeList(Conn->Strms);
   Conn->Strms = NULL;
-  SU_SEM_POST(FS_SemXFer);
+  //SU_SEM_POST(FS_SemXFer); Must has been locked before
   if(Conn->Remote != NULL)
     free(Conn->Remote);
   if(Conn->TransferBuffer != NULL)
@@ -253,6 +254,7 @@ FS_PConn FS_GetConnFromTS(FS_PThreadSpecific ts,SU_PList Conns)
   return NULL;
 }
 
+/* FS_SemConn and FS_SemXFer MUST HAVE BEEN LOCKED */
 void FS_DoRemoveConnectFromShare(FS_PConn Conn,FS_PShare Share,bool RemoveXFers)
 {
 #ifdef DEBUG
@@ -277,6 +279,7 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
   Conn = FS_GetConnFromTS(ts,Share->Conns);
   if(Conn != NULL)
   {
+    SU_SEM_WAIT(FS_SemXFer);
     if(((Conn->XFers != NULL) || (Conn->Strms != NULL)) && !RemoveXFers) /* Xfers/Strms actives, but do NOT remove them */
     {
 #ifdef DEBUG
@@ -287,12 +290,14 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
     }
     else
       FS_DoRemoveConnectFromShare(Conn,Share,RemoveXFers);
+    SU_SEM_POST(FS_SemXFer);
   }
   else
     printf("HUMMMMMMMMMMMM : Conn matching ts %p not found in FS_RemoveConnectionFromShare !!!!!!\n",ts);
   SU_SEM_POST(FS_SemConn);
 }
 
+/* FS_SemXFer MUST HAVE BEEN LOCKED */
 void FS_CheckConnectionForRemoval(FS_PConn Conn,FS_PShare Share)
 {
   if(Conn->ToRemove && (Conn->XFers == NULL) && (Conn->Strms == NULL))
@@ -340,7 +345,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
 #ifdef DEBUG
       printf("Share %s is to be removed, %d remaining connections\n",ts->Share->ShareName,SU_ListCount(ts->Share->Conns));
 #endif /* DEBUG */
-      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
       FS_RemoveConnectionFromShare(ts->Share,ts,true);
       if(ts->Share->Conns == NULL) /* No more connection, removing share */
         FS_FreeShare(ts->Share);
@@ -355,7 +360,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
 #ifdef DEBUG
       printf("This connection has been requested to exit (Share %s)\n",ts->Share->ShareName);
 #endif /* DEBUG */
-      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
+      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
       FS_RemoveConnectionFromShare(ts->Share,ts,false);
       /* Clean and kill this thread */
       SU_CLOSE_SOCKET(ts->Client->sock);
@@ -400,7 +405,7 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
   buf = FS_BuildDirectoryBuffer(Share,Path,&len);
   if(buf == NULL)
   {
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND]);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],0);
   }
 #ifdef HAVE_BZLIB
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_BZLIB)
@@ -440,7 +445,7 @@ bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,co
   buf = FS_BuildRecursiveDirectoryBuffer(Share,Path,&len);
   if(buf == NULL)
   {
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND]);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],1);
   }
 #ifdef HAVE_BZLIB
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_BZLIB)
@@ -696,7 +701,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   /* If Server if OFF */
   if(FS_MyState == FFSS_STATE_OFF)
   { /* Server is off */
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL]);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
     return false;
   }
 
@@ -704,14 +709,14 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   Share = FS_GetShareFromName(ShareName);
   if(Share == NULL)
   { /* Share not found - Sending error message */
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL]);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
     return false;
   }
 
   /* Check if share is enabled */
   if(Share->Disabled)
   { /* Share disabled - Sending error message */
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_SHARE_DISABLED,FFSS_ErrorTable[FFSS_ERROR_SHARE_DISABLED]);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_SHARE_DISABLED,FFSS_ErrorTable[FFSS_ERROR_SHARE_DISABLED],0);
     return false;
   }
 
@@ -720,7 +725,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   {
     if(FS_MyGlobal.Conn >= FS_MyGlobal.MaxConn)
     { /* Too many connections */
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS]);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],FS_MyGlobal.MaxConn);
       return false;
     }
   }
@@ -730,7 +735,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   {
     if(SU_ListCount(Share->Conns) >= Share->MaxConnections)
     { /* Too many connections */
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS]);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],Share->MaxConnections);
       return false;
     }
   }
@@ -742,7 +747,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     FFSS_PrintDebug(3,"Login/Password specified... looking for valid user\n");
     if((Login[0] == 0) || (Password[0] == 0)) /* Need both login and password - Send error message */
     {
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
       return false;
     }
     Ptr = Share->Users;
@@ -754,7 +759,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     }
     if(Ptr == NULL) /* Login not found in my list - Send error message */
     {
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
       return false;
     }
     /* Now check password */
@@ -775,7 +780,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
 #endif
     { /* Wrong password */
       FFSS_PrintDebug(3,"Tadam... wrong password !!\n");
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
       return false;
     }
     FFSS_PrintDebug(3,"Ok, user accepted\n");
@@ -783,7 +788,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   }
   if(Share->Private && (Usr == NULL)) /* Share is private, and login/pass info does not match */
   {
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
     return false;
   }
 
@@ -793,7 +798,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   FS_AddConnectionToShare(Share,inet_ntoa(Client->SAddr.sin_addr),Usr,ts);
 
   /* Send a OK message */
-  if(!FS_SendMessage_Error(Client->sock,FFSS_ERROR_NO_ERROR,NULL))
+  if(!FS_SendMessage_Error(Client->sock,FFSS_ERROR_NO_ERROR,NULL,0))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     return false;
@@ -880,11 +885,11 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   if(FS_MyGlobal.XFerInConn || Conn->XFerInConn)
   {
     if(Port != -1) /* XFer mode not supported */
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0);
   }
   if(FS_MyState != FFSS_STATE_ON)
   { /* Quiet mode - Sending error message */
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET]);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET],0);
   }
 
   if(FS_MyGlobal.MaxXFerPerConn != 0)
@@ -906,14 +911,14 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       if(!accepted) /* Still too many connections */
       {
         FFSS_PrintDebug(6,"Too many active xfers : %d\n",FS_XFersCount(Conn));
-        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS]);
+        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS],Port);
       }
     }
   }
   if(Port == -1) /* Xfer in sock */
   {
     if((!Conn->XFerInConn) && (Conn->XFers != NULL)) /* Can't start xfer in socket while there are active 'normal' xfers */
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0);
     Conn->XFerInConn = true;
     if(Conn->TransferBuffer == NULL)
     {
@@ -921,14 +926,14 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       if(Conn->TransferBuffer == NULL)
       {
         FFSS_PrintDebug(1,"Cannot allocate buffer for xfers\n");
-        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR]);
+        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR],FFSS_TRANSFER_READ_BUFFER_SIZE);
       }
     }
   }
   if(!FS_CaseFilePath(ts->Share,(char *)Path))
   {
     FFSS_PrintDebug(1,"Couldn't open file for upload : %s (%d)\n",Path,errno);
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND]);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],2);
   }
 #ifdef __unix__
   snprintf(buf,sizeof(buf),"%s%s",ts->Share->Path,Path);
@@ -1005,7 +1010,7 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received an UPLOAD message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1025,7 +1030,7 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a RENAME message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1045,7 +1050,7 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a COPY message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1065,7 +1070,7 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a DELETE message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1085,7 +1090,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a MKDIR message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1104,7 +1109,7 @@ void OnIdleTimeout(SU_PClientSocket Client)
 
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return;
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT]);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT],(FFSS_LongField)Client->User);
   /* OnEndThread will be called just after returning this function */
 
   Ptr = FS_Plugins;
@@ -2292,8 +2297,8 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
 #else /* !DEBUG */
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
-    SU_SEM_POST(FS_SemXFer);
     FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->Share);
+    SU_SEM_POST(FS_SemXFer);
   }
 #ifdef DEBUG
   else
@@ -2321,8 +2326,8 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     }
     if(Ptr != NULL)
     {
-      printf("REMOVE XFER %p FORM CONN (%ld)\n",FT,SU_THREAD_SELF);
-      //printf("REMOVE XFER %p FORM CONN %d (%ld)\n",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
+      //printf("REMOVE XFER %p FORM CONN (%ld)\n",FT,SU_THREAD_SELF);
+      printf("REMOVE XFER %p FORM CONN %d SUCCESS (%ld)\n",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
@@ -2333,8 +2338,8 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
 #else /* !DEBUG */
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
-    SU_SEM_POST(FS_SemXFer);
     FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->Share);
+    SU_SEM_POST(FS_SemXFer);
   }
 #ifdef DEBUG
   else

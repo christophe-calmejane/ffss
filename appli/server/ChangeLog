@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 30th 2002
+                  Last Update : May, 31th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+May, 31th 2002:
+  - Fixed a wrong resource freeing in the case of simultaneous conn and xfer close
 
 May, 30th 2002:
   - Fixed a bug in Server RecursiveDirectoryListing, and added directories to the listing (with relative path)
