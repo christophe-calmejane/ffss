@@ -1,6 +1,5 @@
  TO DO :
 
- - Passer le mode de communication entre les master de l'UDP au TCP !!
  - Quand on retire un host de la liste (30 jours)... virer aussi son index
  - Modifier les scripts de compilation pour que le fichier de conf par defaut soit copie dans /usr/doc/ffss/master
 
