@@ -1162,10 +1162,16 @@ int main(int argc,char *argv[])
 
     context;
     MainPid = getpid();
-    FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",MainPid);
     fp = fopen(FM_PID_FILE,"wt");
+    if(fp == NULL)
+    {
+      FFSS_PrintSyslog(LOG_ERR,"Cannot create pid file (%s). Check write access... exiting\n",FM_PID_FILE);
+      FM_UnInit();
+      return -6;
+    }
     fprintf(fp,"%d",MainPid);
     fclose(fp);
+    FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",MainPid);
 
     /* Main loop */
     while(1) SU_SLEEP(10);
