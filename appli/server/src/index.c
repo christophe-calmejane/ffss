@@ -603,6 +603,8 @@ bool FS_SendIndex(const char Host[],const char Port[])
   long int NodeSize;
   unsigned char Tags;
 
+  if(Host == NULL)
+    return true;
   Bufs = NULL;
   Sizes = NULL;
   SU_SEM_WAIT(FS_SemShr);

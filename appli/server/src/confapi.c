@@ -149,7 +149,7 @@ bool FSCA_RequestShareNameAvailable(SU_PClientSocket Client,const char ShareName
   FFSS_Field Size;
 
   /* Create request */
-  Buf[0] = FS_OPCODE_GETNAMEEVAIL;
+  Buf[0] = FS_OPCODE_GETNAMEAVAIL;
   Size = 1;
   SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
   Size += strlen(ShareName) + 1;

@@ -51,15 +51,15 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       free(buf);
       SU_END_THREAD(NULL);
     }
+    if(Size >= buf_len)
+    {
+      FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (Command greater than receive buffer)\n");
+      SU_FreeCS(Client);
+      free(buf);
+      SU_END_THREAD(NULL);
+    }
     while(pos < Size)
     {
-      if(pos >= buf_len)
-      {
-        FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (Command greater than receive buffer)\n");
-        SU_FreeCS(Client);
-        free(buf);
-        SU_END_THREAD(NULL);
-      }
       /* Receiving the command */
       FD_ZERO(&rfds);
       FD_SET(Client->sock,&rfds);
@@ -73,7 +73,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         free(buf);
         SU_END_THREAD(NULL);
       }
-      res = recv(Client->sock,buf+pos,buf_len-pos,SU_MSG_NOSIGNAL);
+      res = recv(Client->sock,buf+pos,Size-pos,SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
       {
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (read error)\n");
@@ -217,7 +217,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
-      case FS_OPCODE_GETNAMEEVAIL :
+      case FS_OPCODE_GETNAMEAVAIL :
         pos = 1;
         s_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         if(s_n == NULL)
@@ -282,6 +282,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_UPDTGLOBAL :
+      {
+        bool MasterChanged = true;
         pos = 1;
         g_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         g_c = FFSS_UnpackString(buf,buf+pos,Size,&pos);
@@ -303,10 +305,14 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FS_MyGlobal.Comment = strdup(g_c);
         if(FS_MyGlobal.Master != NULL)
         {
+          MasterChanged = strcmp(FS_MyGlobal.Master,g_m) != 0;
           free(FS_MyGlobal.Master);
           free(FS_MyGlobal.MasterIP);
         }
-        FS_MyGlobal.Master = strdup(g_m);
+        if(g_m[0] == 0) /* No master */
+          FS_MyGlobal.Master = NULL;
+        else
+          FS_MyGlobal.Master = strdup(g_m);
         FS_MyGlobal.Idle = atoi(g_i);
         FS_MyGlobal.MaxConn = atoi(g_max);
         FS_MyGlobal.MaxXFerPerConn = atoi(g_max_xf);
@@ -326,11 +332,15 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
-        /* Sending login message to my master */
-        FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FFSS_STATE_ON);
-        /* Sending index message to my master */
-        FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
+        if(MasterChanged)
+        {
+          /* Sending login message to my master */
+          FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FFSS_STATE_ON);
+          /* Sending index message to my master */
+          FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
+        }
         break;
+      }
       case FS_OPCODE_SETSTATE :
         FS_MyState = buf[1];
         FFSS_PrintDebug(6,"Client from runtime configuration : Changing state of the server : %d\n",FS_MyState);

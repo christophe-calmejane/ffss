@@ -21,7 +21,7 @@
 #define FS_OPCODE_EJECT         12
 #define FS_OPCODE_GETSHRCONNS   13
 #define FS_OPCODE_EJECTIP       14
-#define FS_OPCODE_GETNAMEEVAIL  15
+#define FS_OPCODE_GETNAMEAVAIL  15
 #define FS_OPCODE_ACK           20
 #define FS_OPCODE_NACK          21
 
@@ -33,7 +33,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre77"
+#define FFSS_SERVER_VERSION "1.0-pre78"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
