@@ -35,6 +35,9 @@ then
         cd ../gtk
 	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
 	make
+        cd ../ffssnetplay
+	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
+	make
         cd ../../..
 fi
 echo

@@ -34,6 +34,9 @@ then
         cd ../gtk
 	./configure --with-ffss=$libdir
 	make
+        cd ../ffssnetplay
+	./configure --with-ffss=$libdir
+	make
         cd ../../..
 fi
 echo

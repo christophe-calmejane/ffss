@@ -34,6 +34,9 @@ then
         cd ../gtk
 	./configure --with-ffss=$libdir --enable-static
 	make
+        cd ../ffssnetplay
+	./configure --with-ffss=$libdir --enable-static
+	make
         cd ../../..
 fi
 echo
