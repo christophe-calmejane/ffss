@@ -19,7 +19,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 #define SU_UDPSendToAddr(a,b,c,d,e) FFSS_SendUDP(b,c,d,e)
 #define SU_ClientDisconnect(x) x->disconnect(true);
 #undef free
-#define free(x) delete x
+#define free(x) x->Delete()
 
 int FFSS_SendUDPBcast(char *Text,int len,unsigned short port)
 {
@@ -897,13 +897,16 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   if(CS == NULL)
     return NULL;
   if(!CS->IsCreated())
+  {
+    CS->Delete();
     return NULL;
+  }
   CS->SetEvents(TRUE);
   CS->connect(server);
   if(!CS->IsConnected())
   {
     FFSS_PrintDebug(1,"FC_SendMessage_ShareConnect : Cannot connect to %s\n",Server);
-    delete CS;
+    CS->Delete();
     return NULL;
   }
 #endif /* !FFSS_DRIVER */
@@ -1215,6 +1218,7 @@ bool FC_SendMessage_MasterSearch(FFSS_LongField User)
   resp = FFSS_SendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
+#endif /* !FFSS_DRIVER */
 
 /* FC_SendMessage_StrmOpen Function                     */
 /* Sends an STREAMING OPEN message to a server          */
@@ -1352,7 +1356,7 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags
   FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
-#endif /* !FFSS_DRIVER */
+
 
 #ifndef FFSS_DRIVER
 /* ************************************ */
