@@ -652,7 +652,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 			FCA_quiet=!toDisk;
 
 			code=FCA_RequestDownload(FCA_shrSkt, dir-1,
-			 toDisk?to:"", ( (FC_PEntry)(Ps->Data) )->Size);
+			 toDisk?to:NULL, ( (FC_PEntry)(Ps->Data) )->Size);
 			if(code>0 )
 				FCA_print_cmd_err("Download failed");
 			else if(!code) {
