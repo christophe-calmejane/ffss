@@ -123,8 +123,7 @@ void FCA_init()
 		if( FFSS_GetFFSSOptions() & FFSS_OPTIONS_DEBUG)
 			N_SyslogOn=0;
 		sprintf(FCA_debuglevel, "0");
-			/* fun to log user agent */
-		FCA_printlog("client : %s", getenv("HTTP_USER_AGENT"));
+		
 	}
 #endif
 		/* load all skins */
@@ -240,7 +239,8 @@ printf("command to run: '%s'<br>\n", FCA_command);
 printf("</html>\n");
 exit(0);
 */
-
+		/* fun to log user agent */
+	FCA_printlog("client : %s", getenv("HTTP_USER_AGENT"));
 	FCA_run_once(dw);
 	FCA_exit(0);
 }
