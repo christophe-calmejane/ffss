@@ -7,6 +7,14 @@
 #define FSPQ_RELEASE_GLOBAL    2
 #define FSPQ_ACQUIRE_INDEX     3
 #define FSPQ_RELEASE_INDEX     4
+#define FSPQ_LOCK_CONNS        5
+#define FSPQ_UNLOCK_CONNS      6
+#define FSPQ_LOCK_XFERS        7
+#define FSPQ_UNLOCK_XFERS      8
+
+#define FSPQ_GET_STATE        20
+#define FSPQ_SET_STATE        21
+#define FSPQ_EJECT_ALL        22
 
 void *FS_PluginQuery(int Type,...);
 

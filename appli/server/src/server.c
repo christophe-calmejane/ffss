@@ -79,6 +79,20 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
   SU_SEM_POST(FS_SemConn);
 }
 
+void FS_EjectAll(bool EjectXFers)
+{
+  SU_PList Ptr;
+
+  SU_SEM_WAIT(FS_SemShr);
+  Ptr = FS_Index;
+  while(Ptr != NULL)
+  {
+    FS_EjectFromShare((FS_PShare)Ptr->Data,EjectXFers);
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_POST(FS_SemShr);
+}
+
 void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers)
 {
   SU_PList Ptr,Ptr2;
@@ -524,7 +538,7 @@ void OnServerSearch(struct sockaddr_in Client)
   if(FS_MyState == FFSS_STATE_OFF)
     return;
   FFSS_PrintDebug(1,"Server received a server search from %s (%s)\n",inet_ntoa(Client.sin_addr),SU_NameOfPort(inet_ntoa(Client.sin_addr)));
-  if(!FS_SendMessage_ServerSearchAnswer(Client,FS_MyDomain,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FS_MyState,FS_MyGlobal.MyIP,FS_MyGlobal.MasterIP))
+  if(!FS_SendMessage_ServerSearchAnswer(Client,FS_MyDomain,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState,FS_MyGlobal.MyIP,FS_MyGlobal.MasterIP))
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
 
   Ptr = FS_Plugins;
@@ -619,7 +633,10 @@ void OnError(long int ErrorCode,const char Description[])
     Ptr = Ptr->Next;
   }
 
-  FS_UnInit();
+  /* As we are un the UDP thread, a FS_Uninit will kill it first... */
+  FS_UnLoadAllPlugin();
+  SU_TermThread(FFSS_MainThread);
+  //FS_ShutDown();
   exit(-1);
 }
 
@@ -2220,7 +2237,7 @@ bool FS_PowerUp(const char IntName[])
   if(FS_MyGlobal.Master != NULL)
   {
     /* Sending login message to my master */
-    FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FFSS_STATE_ON);
+    FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FFSS_STATE_ON);
     /* Sending index message to my master */
     FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
     /* Sending stats message to my master */
@@ -2237,7 +2254,7 @@ bool FS_ShutDown()
   if(FS_MyGlobal.Master != NULL)
   {
     /* Sending logout message to my master */
-    FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FS_MyState);
+    FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
   }
   /* Shutting down server */
   FS_UnInit();
@@ -2437,10 +2454,10 @@ void ThreadFunc(void *info)
   wc.lpszMenuName = NULL;
   wc.lpszClassName = "FFSSServer";
   if(RegisterClass(&wc) == 0)
-    return false;
+    return;
   hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
   if(hwnd == NULL)
-    return false;
+    return;
 
   while(GetMessage(&msg,hwnd,0,0))
   {

@@ -5,30 +5,53 @@ extern HINSTANCE FS_hInstance;
 void *FS_PluginQuery(int Type,...)
 {
   va_list ap;
-  char *s_a,*s_b/*,*s_c*/;
-  int i_a,i_b;
-  void *v_a;
-  char buf[1024];
   void *ret = NULL;
 
   va_start(ap,Type);
   switch(Type)
   {
-    case FSPQ_ACQUIRE_GLOBAL :
+    case FSPQ_ACQUIRE_GLOBAL : /* No param */
       SU_SEM_WAIT(FS_SemGbl);
       ret = (void *) &FS_MyGlobal;
       break;
-    case FSPQ_RELEASE_GLOBAL :
+    case FSPQ_RELEASE_GLOBAL : /* No param */
       SU_SEM_POST(FS_SemGbl);
       break;
-    case FSPQ_ACQUIRE_INDEX :
+    case FSPQ_ACQUIRE_INDEX : /* No param */
       SU_SEM_WAIT(FS_SemShr);
-      ret = (void *) &FS_Index;
+      ret = (void *) FS_Index;
       break;
-    case FSPQ_RELEASE_INDEX :
+    case FSPQ_RELEASE_INDEX : /* No Param */
       SU_SEM_POST(FS_SemShr);
       break;
+    case FSPQ_LOCK_CONNS : /* No Param */
+      SU_SEM_WAIT(FS_SemConn);
+      break;
+    case FSPQ_UNLOCK_CONNS : /* No Param */
+      SU_SEM_POST(FS_SemConn);
+      break;
+    case FSPQ_LOCK_XFERS : /* No Param */
+      SU_SEM_WAIT(FS_SemXFer);
+      break;
+    case FSPQ_UNLOCK_XFERS : /* No Param */
+      SU_SEM_POST(FS_SemXFer);
+      break;
       //I = va_arg(ap, BN_PInfo); /* I */
+
+    case FSPQ_GET_STATE : /* No Param */
+      ret = (void *)FS_MyState;
+      break;
+    case FSPQ_SET_STATE : /* (int NewState) */
+      FS_MyState = va_arg(ap, int);
+      if(FS_MyGlobal.Master != NULL)
+      {
+        /* Sending new state to my master */
+        FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
+      }
+      break;
+    case FSPQ_EJECT_ALL :
+      FS_EjectAll(true);
+      break;
   }
   va_end(ap);
   return ret;
@@ -60,7 +83,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
     return NULL;
   }
 #ifdef _WIN32
-  Pl = fonc((void *)FS_hInstance,&FS_PluginQuery);
+  Pl = fonc((void *)handle,&FS_PluginQuery);
 #else /* !_WIN32 */
   Pl = fonc(NULL,&FS_PluginQuery);
 #endif /* _WIN32 */

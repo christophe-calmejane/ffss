@@ -433,7 +433,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(MasterChanged)
         {
           /* Sending login message to my master */
-          FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FFSS_STATE_ON);
+          FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FFSS_STATE_ON);
           /* Sending index message to my master */
           FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
         }
@@ -445,7 +445,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(FS_MyGlobal.Master != NULL)
         {
           /* Sending state message to my master */
-          FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FS_MyState);
+          FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
         }
         break;
       case FS_OPCODE_GETSTATE :

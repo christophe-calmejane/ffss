@@ -221,6 +221,7 @@ char *FS_CheckGlobal(void);
 
 FS_PShare FS_GetShareFromName(const char Name[]);
 FS_PShare FS_GetShareFromPath(const char Path[]);
+void FS_EjectAll(bool EjectXFers);
 void FS_EjectFromShare(FS_PShare Share,bool EjectXFers);
 void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers);
 FS_PPlugin FS_LoadPlugin(const char Name[]);

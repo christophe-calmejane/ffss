@@ -503,10 +503,10 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   return buf;
 }
 
-char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],char *buf,unsigned long int *buf_size_in_out,unsigned long int *nb_entries_in_out,long int *size_in_out)
+char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const char Relative[],char *buf,unsigned long int *buf_size_in_out,unsigned long int *nb_entries_in_out,long int *size_in_out)
 {
-  char NewDir[1024];
-  int newdir_eos;
+  char NewDir[512],NewRelative[512];
+  int newdir_eos,newrelative_eos;
   long int pos;
   unsigned long int buf_size,nb_entries,i,len;
   SU_PList Ptr;
@@ -517,24 +517,64 @@ char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],char *
   else
     snprintf(NewDir,sizeof(NewDir),"%s/",Dir);
   newdir_eos = strlen(NewDir); /* Offset to end of string */
+  if(Relative[0] == 0)
+    NewRelative[0] = 0;
+  else
+    snprintf(NewRelative,sizeof(NewRelative),"%s/",Relative);
+  newrelative_eos = strlen(NewRelative); /* Offset to end of string */
   buf_size = *buf_size_in_out;
   nb_entries = *nb_entries_in_out;
   pos = *size_in_out;
 
   /* Flush number of entries */
-  nb_entries += Node->NbFiles;
+  nb_entries += Node->NbFiles + Node->NbDirs;
 
   /* Flush directories */
   Ptr = Node->Dirs;
+  i = 0;
   while(Ptr != NULL)
   {
     NewNode = &((FS_PDir)Ptr->Data)->Files;
+    SU_strcat(NewRelative,((FS_PDir)Ptr->Data)->DirName,sizeof(NewRelative));
+    len = strlen(NewRelative)+1;
+    while((pos+len) >= buf_size)
+    {
+      buf_size += (Node->NbDirs-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
+      buf = (char *) realloc(buf,buf_size);
+    }
+    if(len > FFSS_MAX_FILEPATH_LENGTH)
+      len = FFSS_MAX_FILEPATH_LENGTH;
+    pos = FFSS_PackString(buf,pos,NewRelative,len);
+
+    if((pos+sizeof(FFSS_Field)) >= buf_size)
+    {
+      buf_size += (Node->NbDirs-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
+      buf = (char *) realloc(buf,buf_size);
+    }
+    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Flags);
+
+    if((pos+sizeof(FFSS_LongField)) >= buf_size)
+    {
+      buf_size += (Node->NbDirs-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
+      buf = (char *) realloc(buf,buf_size);
+    }
+    pos = FFSS_PackLongField(buf,pos,((FS_PDir)Ptr->Data)->Size);
+
+    if((pos+sizeof(FFSS_Field)) >= buf_size)
+    {
+      buf_size += (Node->NbDirs-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
+      buf = (char *) realloc(buf,buf_size);
+    }
+    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Time);
+
     if((NewNode->NbFiles+NewNode->NbDirs) != 0) /* If the directory is not empty */
     {
       SU_strcat(NewDir,((FS_PDir)Ptr->Data)->DirName,sizeof(NewDir));
-      buf = FS_BuildRecursiveDirectoryBuffer_rec(NewNode,NewDir,buf,&buf_size,&nb_entries,&pos);
+      buf = FS_BuildRecursiveDirectoryBuffer_rec(NewNode,NewDir,NewRelative,buf,&buf_size,&nb_entries,&pos);
       NewDir[newdir_eos] = 0; /* Reset string to current directory */
     }
+    NewRelative[newrelative_eos] = 0; /* Reset string to current relative */
+    i++;
     Ptr = Ptr->Next;
   }
 
@@ -637,7 +677,10 @@ char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int
   buf = (char *) malloc(buf_size);
   pos = sizeof(FFSS_Field); /* Keep space for nb entries */
 
-  buf = FS_BuildRecursiveDirectoryBuffer_rec(Node,Dir,buf,&buf_size,&nb_entries,&pos);
+  if(Dir[0] == 0)
+    buf = FS_BuildRecursiveDirectoryBuffer_rec(Node,"/","",buf,&buf_size,&nb_entries,&pos);
+  else
+    buf = FS_BuildRecursiveDirectoryBuffer_rec(Node,Dir,"",buf,&buf_size,&nb_entries,&pos);
 
   /* Flush number of entries */
   FFSS_PackField(buf,0,nb_entries);
