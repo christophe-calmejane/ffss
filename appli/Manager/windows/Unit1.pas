@@ -34,6 +34,10 @@ Const
   FS_OPCODE_GETNAMEAVAIL  = 15;
   FS_OPCODE_ACK           = 20;
   FS_OPCODE_NACK          = 21;
+  FS_OPCODE_PL_LOAD       = 30;
+  FS_OPCODE_PL_UNLOAD     = 31;
+  FS_OPCODE_PL_CONFIGURE  = 32;
+  FS_OPCODE_PL_ENUM       = 33;
   FFSS_STATE_ON    = 1;
   FFSS_STATE_OFF   = 2;
   FFSS_STATE_QUIET = 4;
@@ -121,6 +125,12 @@ type
     Edit10: TEdit;
     ST1: TSystemTrayIcon;
     RB1: TRegisteryBase;
+    TabSheet4: TTabSheet;
+    ListView2: TListView;
+    Button6: TButton;
+    Button7: TButton;
+    Button8: TButton;
+    OpenDialog1: TOpenDialog;
     procedure GetInitValues;
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
@@ -147,6 +157,11 @@ type
     procedure ListView1DblClick(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure Button6Click(Sender: TObject);
+    procedure Button8Click(Sender: TObject);
+    procedure Button7Click(Sender: TObject);
+    procedure ListView2Change(Sender: TObject; Item: TListItem;
+      Change: TItemChange);
   private
     { Private declarations }
   public
@@ -163,6 +178,10 @@ type
     procedure RequestEject(ShareName : String);
     Procedure RequestConns(Path : String);
     procedure RequestEjectIP(ShareName,IP : String);
+    function RequestPlugins_Load(PluginPath : String) : Integer;
+    procedure RequestPlugins_Unload(Handle : Integer);
+    function RequestPlugins_Configure(Handle : Integer) : boolean;
+    procedure RequestPlugins_Enum;
     function SetShareInfo(SharePath : String;Etat : Integer) : Boolean;
     procedure SetGlobalInfo;
     procedure SetStateInfo;
@@ -245,6 +264,7 @@ begin
 //    Limited:=true;
     TabSheet2.TabVisible:=False;
     TabSheet3.TabVisible:=False;
+    TabSheet4.TabVisible:=False;
     H:='';
     GetHostName(buf,SizeOf(buf));
     HostEnt:=gethostbyname(PChar('ffss'));
@@ -274,6 +294,7 @@ begin
   If Not Limited Then
   Begin
     Global:=RequestGlobalInfo;
+    RequestPlugins_Enum;
     Edit3.Text:=Global.Name;
     Edit4.Text:=Global.Comment;
     Edit5.Text:=Global.Master;
@@ -599,6 +620,127 @@ begin
   Inc(Size,Length(IP)+1);
   CS.Socket.SendBuf(Size,sizeof(Size));
   CS.Socket.SendBuf(Buf,Size);
+end;
+
+function TForm1.RequestPlugins_Load(PluginPath : String) : Integer;
+Var Buf : Array[0..1000] Of Char;
+    Size : DWord;
+    Got : DWord;
+    Pos : DWord;
+    p : ^ Integer;
+begin
+  Result:=0;
+  Buf[0]:=Char(FS_OPCODE_PL_LOAD);
+  Size:=1;
+  StrPCopy(Buf+Size,PluginPath);
+  Inc(Size,Length(PluginPath)+1);
+  Buf[Size]:=Char(1);
+  Inc(Size);
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got < 1 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  While Got < Size Do
+  Begin
+    Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
+  End;
+  Pos:=1;
+  p:=@(Buf[1]);
+  Result:=p^;
+end;
+
+procedure TForm1.RequestPlugins_Unload(Handle : Integer);
+Var Buf : Array[0..1000] Of Char;
+    Size : DWord;
+    Got : DWord;
+    Pos : DWord;
+    p : ^ Integer;
+begin
+  Buf[0]:=Char(FS_OPCODE_PL_UNLOAD);
+  Size:=6;
+  p:=@(Buf[1]);
+  p^:=Handle;
+  Buf[5]:=Char(1);
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got < 1 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  While Got < Size Do
+  Begin
+    Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
+  End;
+end;
+
+function TForm1.RequestPlugins_Configure(Handle : Integer) : Boolean;
+Var Buf : Array[0..1000] Of Char;
+    Size : DWord;
+    Got : DWord;
+    Pos : DWord;
+    p : ^ Integer;
+begin
+  Result:=False;
+  Buf[0]:=Char(FS_OPCODE_PL_CONFIGURE);
+  Size:=5;
+  p:=@(Buf[1]);
+  p^:=Handle;
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got < 1 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  While Got < Size Do
+  Begin
+    Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
+  End;
+  Result:=True;
+end;
+procedure TForm1.RequestPlugins_Enum;
+Var Buf : Array[0..1000] Of Char;
+    Size : DWord;
+    Got : DWord;
+    Pos : DWord;
+    p : ^ Integer;
+    nb,i : Integer;
+    Item : TListItem;
+begin
+  ListView2.Items.Clear;
+  Buf[0]:=Char(FS_OPCODE_PL_ENUM);
+  Size:=1;
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got < 1 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  While Got < Size Do
+  Begin
+    Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
+  End;
+  p:=@(Buf[1]);
+  nb:=p^;
+  Pos:=5;
+  For i:=0 To nb-1 Do
+  Begin
+    p:=@(Buf[Pos]);
+    Item:=ListView2.Items.Add;
+    Item.Data:=Pointer(p^);
+    Inc(Pos,4);
+    Item.Caption:=String(Buf+Pos);
+    Inc(Pos,StrLen(Buf+Pos)+1);
+    Item.SubItems.Add(String(Buf+Pos));
+    Inc(Pos,StrLen(Buf+Pos)+1);
+    Item.SubItems.Add(String(Buf+Pos));
+    Inc(Pos,StrLen(Buf+Pos)+1);
+  End;
 end;
 
 function TForm1.SetShareInfo(SharePath : String;Etat : Integer) : Boolean;
@@ -1072,6 +1214,43 @@ begin
     Limited:=true;
   End;
   InitDone:=False;
+end;
+
+procedure TForm1.Button6Click(Sender: TObject);
+begin
+  OpenDialog1.InitialDir:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\ServerDirectory','')+'\Plugins';
+  If OpenDialog1.Execute Then
+  Begin
+    If RequestPlugins_Load(OpenDialog1.FileName) <> 0 Then
+      RequestPlugins_Enum;
+  End;
+end;
+
+procedure TForm1.Button8Click(Sender: TObject);
+begin
+  If Not RequestPlugins_Configure(Integer(ListView2.Selected.Data)) Then
+    Application.MessageBox('Nothing to configure for this plugin','FFSS Share Info',MB_OK);
+end;
+
+procedure TForm1.Button7Click(Sender: TObject);
+begin
+  RequestPlugins_Unload(Integer(ListView2.Selected.Data));
+  ListView2.DeleteSelected;
+end;
+
+procedure TForm1.ListView2Change(Sender: TObject; Item: TListItem;
+  Change: TItemChange);
+begin
+  If ListView2.Selected = Nil Then
+  Begin
+    Button7.Enabled:=False;
+    Button8.Enabled:=False;
+  End
+  Else
+  Begin
+    Button7.Enabled:=True;
+    Button8.Enabled:=True;
+  End;
 end;
 
 end.

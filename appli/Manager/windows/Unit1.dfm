@@ -451,6 +451,63 @@ object Form1: TForm1
         end
       end
     end
+    object TabSheet4: TTabSheet
+      Caption = 'Plugins'
+      ImageIndex = 3
+      object ListView2: TListView
+        Left = 12
+        Top = 40
+        Width = 305
+        Height = 253
+        Columns = <
+          item
+            Caption = 'Nom'
+            Width = 120
+          end
+          item
+            Caption = 'Auteur'
+            Width = 130
+          end
+          item
+            Caption = 'Version'
+          end>
+        HotTrack = True
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 0
+        ViewStyle = vsReport
+        OnChange = ListView2Change
+      end
+      object Button6: TButton
+        Left = 28
+        Top = 312
+        Width = 75
+        Height = 25
+        Caption = '&Charger'
+        TabOrder = 1
+        OnClick = Button6Click
+      end
+      object Button7: TButton
+        Left = 128
+        Top = 312
+        Width = 75
+        Height = 25
+        Caption = '&Retirer'
+        Enabled = False
+        TabOrder = 2
+        OnClick = Button7Click
+      end
+      object Button8: TButton
+        Left = 228
+        Top = 312
+        Width = 75
+        Height = 25
+        Caption = '&Configurer'
+        Enabled = False
+        TabOrder = 3
+        OnClick = Button8Click
+      end
+    end
   end
   object Button1: TButton
     Left = 96
@@ -546,5 +603,11 @@ object Form1: TForm1
     Version = '1.0'
     Left = 92
     Top = 408
+  end
+  object OpenDialog1: TOpenDialog
+    Filter = 'FFSS Server Plugins (*.dll)|*.dll'
+    Title = 'Choix du plugin '#224' charger'
+    Left = 56
+    Top = 404
   end
 end
