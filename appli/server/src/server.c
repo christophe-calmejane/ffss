@@ -2790,7 +2790,8 @@ void ThreadFunc(void *info)
   wc.lpszClassName = "FFSSServer";
   if(RegisterClass(&wc) == 0)
     return;
-  FS_hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
+  FS_hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, 0, 0, 16, 16, NULL, NULL, FS_hInstance, NULL);
+  //FS_hwnd = CreateWindow("FFSSServer","FFSS Server", WS_POPUP, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, FS_hInstance, NULL);
   if(FS_hwnd == NULL)
     return;
 
