@@ -129,10 +129,24 @@ void FCA_init()
 		if( FFSS_GetFFSSOptions() & FFSS_OPTIONS_DEBUG)
 			N_SyslogOn=0;
 		sprintf(FCA_debuglevel, "0");
+	
 	}
 #endif
 		/* load all skins */
 	FCA_load_skins();
+#ifdef CGI
+	if(FCA_CGI_mode) {
+			/* we must have a good skin */
+		p=FCA_SKINS;
+		while(p->name && !p->canCGI)
+			p++;
+			/* use the default skin to display this critical message */
+		if(!p->name)
+			FCA_crash("cannot find a skin adapted to the CGI mode");
+		FCA_skin=(FCA_Pskin)p;
+		sprintf(FCA_skin_name, p->name);
+	}
+#endif
 }
 
 void FCA_process_args()

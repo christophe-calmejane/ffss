@@ -27,6 +27,7 @@ const FCA_Tskin FCA_SKINS[]={
 	{"default",	&FCA_def_ps,		FCA_default_init,	false	},
 	{"script",	&FCA_scr_ps,		FCA_script_init,	false	},
 	{"html",	&FCA_html_ps,		FCA_html_init,		true	},
+	{"html_fleming",&FCA_htmlfl_ps,		FCA_htmlfl_init,	true	},
 	{NULL,		NULL,			NULL,			false	}
 };
 

@@ -39,4 +39,7 @@ ffss_client_SOURCES = \
 		skin_script.h \
 		\
 		skin_html.c \
-		skin_html.h
+		skin_html.h \
+		\
+		skin_html_fleming.c \
+		skin_html_fleming.h

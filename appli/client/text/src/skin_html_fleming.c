@@ -142,7 +142,7 @@ printf("<html>
 </head>
  
 <body>
-<form name='browsing' action='");FCA_my_url();printf("' method=GET class='small'>");
+<form name='browsing' action='");FCA_my_url(false);printf("' method=GET class='small'>");
 printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
@@ -167,7 +167,7 @@ printf("address: <input type='text' name='dir' value='%s' tabindex=1>
 <input type='hidden' name='s' value=''>
 <input type='hidden' name='sdom' value=''>
 </form>
-<form name='search' action='");FCA_my_url();printf("' method=GET class='small'>");
+<form name='search' action='");FCA_my_url(false);printf("' method=GET class='small'>");
 FCA_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
@@ -214,7 +214,7 @@ printf("address: <input type='text' name='dir' value='/$' tabindex=1>
 <input type='hidden' name='s' value=''>
 <input type='hidden' name='sdom' value=''>
 </form>
-<form name='search' action='");FCA_my_url();printf("' method=GET class='small'>");
+<form name='search' action='");FCA_my_url(false);printf("' method=GET class='small'>");
 FCA_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
