@@ -42,3 +42,33 @@ printf(format, ...);
 
 Q: un printf("%10.10s", ...) me justifie a droite
 A: printf("%-10.10s", ...)
+
+Q: quand on fais un cd <machine> sur une machine down (dans un domaine)
+ ou sur une machine non listee dans none, j'utilise ce qu'on me donne
+ pour envoyer des messages, cad soit l'IP soit le nom de machine.
+ Je ne peux pas avoir l'IP a partir du nom...c'est pas genant ?
+A: Il ne faut pas utiliser la correspondance host->ip... car dans un server (ce qui est liste dans un domaine)
+ on peut mettre un nom qui ne correspond pas a l'alias dns.
+ En revanche, si l'utilisateur te donne un nom de host, ou une ip, tu cherches pas a comprendre, tu utilises tel quel.
+ S'il donne une chaine non resolue par le dns, c'est son pb (le sendmessage foirera de toutes facons)
+
+Q: probleme de signaux avec les thread :
+ J'arrive pas a relancer une thread (pthread_create me redonne jamais la
+ main) apres l'avoir kille, meme si je fais un free apres le kill et un
+ malloc avant le pthread_create.
+A: C'est un probleme de link avec la lib pthread, le -pthread a la compilation
+ est cense corriger cela.
+
+Q: J'ai toujours le message :
+ FFSS client waiting on arbitrary UDP port
+ et
+ FFSS client shut down
+A: C'est un message eu syslog (en mode release de la lib), qui est un printf
+ en mode debug de la lib. Compiler la lib en mode non debug pour enlever les
+ messages.
+
+Q: pour la recherche dans / ou dans none, je lance une recherche sur tout les
+ domaines, mais je ne sais pas combien de reponses vont m'arriver...comment je
+ fais ?
+A: Faire comme un broadcast, on lance la recherche, on fait un sleep.
+ Apres ce sleep, on refuse toute les reponses.

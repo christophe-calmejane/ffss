@@ -63,13 +63,4 @@ even if a master cannot be reached.
 4) Notes
 --------
 
-- To execute a command from the command line, you have the '-e' option
-(ffss-client -e <command>). For a command with arguments, for example:
-find foo
-ffss-client -e "find foo"
-Otherwise, 'foo' will be interpreted as an ffss-client's option.
-
-- If there's too debug output, specify a 0 debuglevel :
-ffss-client -d 0
-or type this command :
-set debuglevel 0
+See the file FAQ-en in the FFSS's documentation.

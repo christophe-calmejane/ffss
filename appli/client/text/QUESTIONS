@@ -1,26 +1,100 @@
 
 just for me, questions to ask to kiki...
 
-1) quand on fais un cd <machine> sur une machine down (dans un domaine)
-ou sur une machine non listee dans none, j'utilise ce qu'on me donne
-pour envoyer des messages, cad soit l'IP soit le nom de machine.
-Je ne peux pas avoir l'IP a partir du nom...c'est pas genant ?
-Ou alors il faut que j'utilise des fonctions DNS...
->> Il ne faut pas utiliser la correspondance host->ip... car dans un server (ce qui est liste dans un domaine)
->> on peut mettre un nom qui ne correspond pas a l'alias dns.
->> En revanche, si l'utilisateur te donne un nom de host, ou une ip, tu cherches pas a comprendre, tu utilises tel quel.
->> Si il donne une chaine non resolue par le dns, c'est son pb (le sendmessage foirera de toutes facons)
 
-5) Il faudrait un genre de SyslogLevel un peu comme le N_DebugLevel,
-une variable que je puisse changer en live dans mon prog et qui,
-en fonction de sa valeur, lance le syslog ou pas.
-G pas envie de devoir recompiler la lib sans debug pour ne pas avoir
-'FFSS client waiting on arbitrary UDP port' ni
-'FFSS client shut down' dans ma sortie standart.
->> Nan je ne peux pas faire ca. Si je devais ca ne serait que temporaire, mais ce n'est pas propre de faire ca.
->> Cependant, en mode debug, je peux rajouter une variable globale (comme N_DebugLevel) qui desactive le syslog.
->> Mais attention, elle ne sera valable que en mode debug... donc attention a ton code !
->> Vala, c'est fait -> N_SyslogOn a true par defaut, fout le a false pour pas printer le FFSS_PrintSyslog (uniquement en mode DEBUG) !!
+1) J'ai pris skyutils+ffss complet tout frais de cvs update.
+J'ai bien mate avant de compiler qu'il n'y ait pas de .h ou
+de .so/.a restant dans /usr/local. J'ai tout compile en debug+
+malloc trace. resultat, je lance le master :
+
+FFSS Master v1.0-pre39 (c) Ze KiLleR / SkyTech 2001
+FFSS library v1.0.0-pre68 (c) Ze KiLleR / SkyTech 2001
+Master started
+SkyUtils Information : Using SU_MALLOC_TRACE hooks : MALLOC_CHECK_=1 SU_MALLOC_TRACE=1 SU_MALLOC_PRINT=0
+Warning : Master launched from a non-root user. Cannot use setuid/setgid
+FFSS(4) : Loading index from disk... (./Dump.dat)
+FFSS(4) : Load complete : Failed
+FFSS master waiting on port 10001 (UDP)
+Using interface dummy0, with ip 192.168.80.10
+MASTER : Loading my local servers
+FFSS(2) : UDP thread launched...waiting for data
+FFSS(2) : PING thread running...
+FFSS(2) : QUEUE thread running...
+Master running with pid : 18421
+FFSS(2) : SEARCH thread running...
+
+Ok, no pb, apres je lance le server :
+
+FFSS Server v1.0-pre68 (c) Ze KiLleR / SkyTech 2001
+FFSS library v1.0.0-pre68 (c) Ze KiLleR / SkyTech 2001
+Server started with pid 18443
+SkyUtils Information : Using SU_MALLOC_TRACE hooks : MALLOC_CHECK_=1 SU_MALLOC_TRACE=1 SU_MALLOC_PRINT=0
+FFSS server waiting on port 10002 (UDP and TCP)
+Using interface dummy0, with ip 192.168.80.10
+FFSS(1) : Server running...
+FFSS(5) : Start building index for share mp3 : mp3z
+FFSS(5) :       Building index for sub-dir /win/mp3
+FFSS(1) : TCP thread launched...waiting for connections
+FFSS(2) : UDP thread launched...waiting for data
+FFSS(5) :       Building index for sub-dir /win/mp3/redhot
+... plein de building index...
+FFSS(5) : Done building mp3 (199 files, 26 directories)
+FFSS(5) : Start building index for share test : test of a share
+FFSS(5) :       Building index for sub-dir /tmp/toto
+FFSS(5) : Done building test (1 files, 0 directories)
+FFSS(3) : Sending State message to ffss
+Using BZ compression (before=5296 - after=2331)
+Using BZ compression (before=3616 - after=1105)
+Using BZ compression (before=16 - after=56)
+Using BZ compression (before=32 - after=57)
+FFSS(3) : Sending index answer message to ffss:10001
+FFSS(3) : Index successfully sent to ffss:10001
+FFSS Crashed :-(. Check: common.c:94
+Aborted
+
+Du cote du master :
+
+FFSS(5) : Data found on UDP port from 192.168.80.10 (pc333.bennyben.fr) (53 bytes)... analysing
+FFSS(3) : Received a state message from server
+MASTER : Adding host bennyben (192.168.80.10) to domain Benny
+MASTER : Adding state to my queue : bennyben (192.168.80.10) 1
+FFSS(5) : Data found on UDP port from 192.168.80.10 (pc333.bennyben.fr) (28 bytes)... analysing
+FFSS(3) : Received an index answer message (index size : 3569/5312/3648) Connect to 1035
+Starting index thread
+Index thread : buffer received... now indexing
+FFSS(6) : Checking index integrity of bennyben
+Indexing engine : Inserting host 'bennyben' (228 nodes)
+Indexing engine : Inserting of 'bennyben' complete
+Ending index thread... indexing completed (1 hosts)
+FFSS(4) : 99% of unused space in hash table
+FFSS(4) : 228 strings in index
+FFSS(4) : Starting garbage collector...
+FFSS(4) : Garbage collector completed
+FFSS(4) : Dumping index to disk... (Index.dat)
+FFSS(4) : Dump complete.
+FFSS(4) : THREADS : PING : Sending PING sequence
+FFSS(3) : Sending Ping message to servers
+MASTER : Saving my local servers
+(1mn apres...)
+FFSS Crashed :-(. Check: common.c:94
+Aborted
+(mais un processus ffss-master tourne encore et est fonctionnel)
+
+
+2) pour savoir l'etat de ses servers, le master envoie un ping broadcast,
+et les declare ON ou OFF, si g bien compris.
+Je pense que vous y avez pense, mais pourquoi ne pas envoyer de ping
+aux servers de la liste seulement ?
+
+
+3) apres avoir commente dans les sources du server, ligne 651: SU_FreeListElem(Bufs);
+Le server tourne, mais le master ne change pas d'attitude. Le client plante 1 fois sur 2.
+
+
+
+---------------------------------------
+	ANCIENNES QUESTIONS
+---------------------------------------
 
 7) ca serait pas possible dans la recherche, de me renvoyer un moyen
 de faire la difference entre une reponse fichier et une reponse dossier.
@@ -34,25 +108,6 @@ du fichier/dossier, ca peut etre pratique aussi.
 >> directement en chaines etait le plus simple. Donc dans l'immediat, il n'est pas question de changer ce message.
 >> Cependant, on pourrait peut-etre (PEUT-ETRE) rajouter un 2e message de recherche... a voir, il y a plus urgent pour le moment :)
 
-8) est-ce que me renvoyer la taille des dossiers (la taille reelle totale)
-lors d'un listing serait possible ?
-Ca serait vraiment pratique.
->> Je vais voir si c'est possible facilement... a suivre :)
-
-9) probleme de signaux avec les thread :
-J'arrive pas a relancer une thread (pthread_create me redonne jamais la
-main) apres l'avoir kille, meme si je fais un free apres le kill et un
-malloc avant le pthread_create.
->> J'avais deja eu ce genre de problemes... en debuggant, g remarque que pthread_create me rendait jamais la main.
->> Si je me souviens bien, c'etait a cause d'un mauvais link de la lib pthread
->> (il faut le mettre au bon moment dans la ligne de commande du link... mais ils ont creer une option -pthread pour que
->>  le link soit fait au bon moment justement)
-
-10) J'ai un master qui enregistre sa base de donnee pour la recherche
-dans Index.dat, mais au chargement il cherche un Dump.dat, c'est
-normal ?
->> C'est le mode debug ca.... j'utilise ca pour pas overwriter une base que j'utilise pour le debug
-
 11) ca serait pas mal de me filer des ptites stats lors d'un listing
 de domaines (rien que le nb de machines, ou de machines on).
 A moins que tu preferes que je te bourrine a coups de ServerListing...:)
@@ -60,168 +115,3 @@ MMM...ca serait pas un plugin a faire (ke je devrais faire ? :) ?
 >> Hum pourquoi pas... mais ca te sert a quoi d'avoir le nombre de machines ON ?
 >> Quand tu fais un ServerListing tu l'as... et en general quand on veux connaitre
 >> combien y a de machines On, on veut la liste de ces machines.. donc un ServerListing, nan ?
-
-12)
-Quand je lance mon client avec des arguments, pour que ca init la lib,
-ca lance une commande (et des messages au server/master), et que ca
-quitte aussitot, j'ai souvent des erreurs kom ca kan je quitte:
-FFSS client shut down
-FFSS(1 1009793186:820) : Error on UDP port (SOCKET_ERROR : 9)
-x fois, puis
-FFSS(1 1009793186:870) : Too many consecutive errors on UDP port, exiting
->> Heu je vois pas la comment ca... faudrait que je vois ton code exact pour comprendre :)
-
-
----------------------------------------
-	ANCIENNES QUESTIONS
----------------------------------------
-
-2) pour la recherche dans le / , je ne sais pas combien de reponses
-vont m'arriver, donc je ne peux pas bien coordonner mes semaphores.
-Ya pas moyen de me dire ke le OnSearchAnswer k'on me file est bien le dernier
-ou alors me donner le nombre de domaines (dois-je le trouver tout seul
-en regardant la liste des domaines ?).
--> comme dans le domaine None, le principe de broadcast
--> on lance, on sleep et couic fini
-
-6) bug avec la derniere skyutils: libskyutils.a n'est plus dans le .libs
-mais dans le dossier des sources de skyutils.
--> c fait par les build-*
-
-1)
- "FFSS client waiting on arbitrary UDP port"
- et
- "FFSS client shut down"
-Ya vraiment besoin ???
-Parce que c'est pas seulement un message de debug...
--> c'est un message au syslog
-[00:39:11] <kiki`away> prends example sur mon server
-[00:39:19] <kiki`away> il envoie des messages dans le syslog maintnant... mais pas tous
-[00:39:23] <kiki`away> y a 2 categories now
-[00:39:29] <kiki`away> print_debug et syslog
-[00:39:42] <kiki`away> sachant que dans syslog, y a INFO, WARN, et ERR
-
-2) J'ai fait le test chez moi de la compil du master...
-pour avoir le bz2 active dans la lib, il faut une version recente de
-libbz2, est-ce je pourrais savoir quelle est la version minimale
-a avoir ? (pour mettre dans la doc et pour les rpm-deb)
--> version 1.0
-
-
-3) probleme avec le master...
- En fait chez moi j'utilise l'interface dummy0 (avec l'IP 192.168.80.10)
- et bennyben/ffss dans /etc/hosts, le probleme est que le master
- ping mais le server ne fait rien (aucun message du server...)
- le master fait :
-FFSS(4) : THREADS : PING : Sending PING sequence
-FFSS(5) : THREADS : PING : Server bennyben timed out, changing state
-MASTER : Adding state to my queue : bennyben (192.168.80.10) 2
-MASTER : WARNING : Host 192.168.80.10 already in my queue
-FFSS(3) : Sending Ping message to servers
-MASTER : Saving my local servers
-FFSS(4) : THREADS : PING : Sending PING sequence
-FFSS(3) : Sending Ping message to servers
-MASTER : Saving my local servers
- le server ne bouge pas
- donc au bout d'un moment le master me met mon server off
-[00:43:39] <kiki`away> c pareil.. je peux pas faire gd chose...
-[00:43:45] <kiki`away> moi, j envoie en broadcast...
-[00:43:47] <kiki`away> (socket)
-
-
-4)  ffss-pre64 avec le server :
-conf.c: In function `FS_ClientConf':
-conf.c:528: structure has no member named `XFerPos'
-conf.c:528: structure has no member named `FileSize'
--> resultat d'un make install : il prend un ancien ffss.h
-
-5) meme chose avec le master:
-search.c:295: `FFSS_ERROR_TOO_MANY_ANSWERS' undeclared (first use in this function)
-search.c:295: (Each undeclared identifier is reported only once
-search.c:295: for each function it appears in.)
--> resultat d'un make install : il prend un ancien ffss.h
-
-1) ancien bug tjours non corrige : le pompage recursif...
-ma lib est bien : ffss version 1.0.0-pre42
-genre : pompage en lo d'un dossier de mp3
-ffss-client /$/benny/bennyben/partages/redhot> get [RED HOT CHILI PEPPERS] - One Hot Minute
-...blablabla...
-FFSS(3) : Sending Download message to server for (1er fichier)...
-FFSS(1) : Connection accepted from 127.0.0.1
-FFSS(1) : File successfully downloaded
-FFSS(3) : (client) download ended without any error
-FFSS(3) : Sending Download message to server for (2eme fichier)...
-FFSS(5) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(1) : (client) error 25~message recieved: Code: 10 (Too many active transfers)
-et du cote du server :
-FFSS(5) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(4) : Received a download message from client
-FFSS(1) : Received a DOWNLOAD message for file (1er fichier)
-ADD XFER TO CONN
-FFSS(5) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(4) : Received a download message from client
-FFSS(1) : Received a DOWNLOAD message for file (2eme fichier)
-FFSS(3) : Sending Error message (10:Too many active transfers) to client
-REMOVE XFER FORM CONN
-FFSS(1) : Successfully uploaded the file in 3 sec (1596.30 ko/s)
-
-ou encore :
-
-FFSS(3) : Sending Download message to server for /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/5 - Suck my kiss.mp3 starting at 0
-FFSS(1) : (client) FCA_sem_wait started
-FFSS(1) : (client) FCA_sem waiting
-FFSS(1) : Successfully downloaded the file in 1 sec (3342.14 ko/s)
-FFSS(1) : Connection accepted from 127.0.0.1
-FFSS(1) : (client) timer launched for 10 seconds
-FFSS(1) : File successfully downloaded
-FFSS(3) : (client) download ended without any error
-download sucessfull.
-FFSS(1) : (client) FCA_sem_post started
-FFSS(1) : (client) sem_post
-FFSS(3) : Sending Download message to server for /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/4 - Funky monks.mp3 starting at 0
-FFSS(1) : (client) FCA_sem_wait started
-FFSS(1) : (client) FCA_sem waiting
-FFSS(1) : Connection accepted from 127.0.0.1
-FFSS(1) : Successfully downloaded the file in 2 sec (1484.71 ko/s)
-FFSS(1) : (client) timer launched for 10 seconds
-FFSS(1) : (client) sem timeout...
-operation timeout
-FFSS(3) : Sending Download message to server for /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/3 - Breaking the girl.mp3 starting at 0
-FFSS(6) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(1) : (client) error message recieved: Code: 10 (Too many active transfers)
-Error from 127.0.0.1 (10:Too many active transfers)
-  server:
-FFSS(6) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(3) : Received a download message from client
-FFSS(1) : Received a DOWNLOAD message for file /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/5 - Suck my kiss.mp3 (starting at pos 0). Send it to port 1038
-ADD XFER TO CONN
-FFSS(1) : Successfully uploaded the file in 1 sec (3342.14 ko/s)
-REMOVE XFER FORM CONN
-FFSS(1) : Successfully uploaded the file in 1 sec (2969.41 ko/s)
-FFSS(3) : Server has defined a idle time out value of 300 sec for this connection
-FFSS(6) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(3) : Received a download message from client
-FFSS(1) : Received a DOWNLOAD message for file /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/4 - Funky monks.mp3 (starting at pos 0). Send it to port 1040
-ADD XFER TO CONN
-FFSS(3) : Server has defined a idle time out value of 300 sec for this connection
-FFSS(6) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(3) : Received a download message from client
-FFSS(1) : Received a DOWNLOAD message for file /redhot/[RED HOT CHILI PEPPERS]- Blood Sugar Sex Magic/3 - Breaking the girl.mp3 (starting at pos 0). Send it to port 1042
-FFSS(3) : Sending Error message (10:Too many active transfers) to client
-REMOVE XFER FORM CONN
-FFSS(1) : Successfully uploaded the file in 2 sec (2525.78 ko/s)
-FFSS(3) : Server has defined a idle time out value of 300 sec for this connection
-
-
-J'ai essaye de prendre exemple sur le client exemple (il est fait pour ca non ? :)
-Et ba....soit g :
-(avec true dans UseConnSock)
-FFSS(1) : (client) error message recieved: Code: 18 (Requested transfer mode not supported)
-(avec false)
-FFSS(3) : Sending Download message to server for /redhot/[RED HOT CHILI PEPPERS] - One Hot Minute/Red Hot Chili Pepers - Walkabout.mp3 starting at 0
-cannot execute command: Download failed (c ma faute...c juste ke FFSS_Download me renvoie la main)
-FFSS(3) : Sending Download message to server for /redhot/[RED HOT CHILI PEPPERS] - One Hot Minute/Red Hot Chili Pepers - Transcending.mp3 starting at 0
-FFSS(5) : Data found on TCP port from 127.0.0.1 (localhost.localdomain) ... analysing
-FFSS(1) : (client) error message recieved: Code: 10 (Too many active transfers)
--> je pense ke c normal...il utilise une thread / transfert
--> logs a refaire
