@@ -131,7 +131,11 @@ type
     Button7: TButton;
     Button8: TButton;
     OpenDialog1: TOpenDialog;
-    procedure GetInitValues;
+    PopupMenu2: TPopupMenu;
+    Connexiondistance1: TMenuItem;
+    N3: TMenuItem;
+    Quitter1: TMenuItem;
+    procedure GetInitValues(Remote : Boolean);
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
     procedure RadioButton2Click(Sender: TObject);
@@ -162,6 +166,8 @@ type
     procedure Button7Click(Sender: TObject);
     procedure ListView2Change(Sender: TObject; Item: TListItem;
       Change: TItemChange);
+    procedure Quitter1Click(Sender: TObject);
+    procedure Connexiondistance1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -209,7 +215,7 @@ var
 
 implementation
 
-uses Unit2, Unit3;
+uses Unit2, Unit3, Unit5;
 
 {$R *.DFM}
 
@@ -244,6 +250,7 @@ Begin
   try
     CS.Port:=FS_CONF_PORT;
     CS.Open;
+    CS.Tag:=0;
     Result:=True;
   except
     Result:=False;
@@ -251,7 +258,7 @@ Begin
   End;
 End;
 
-procedure TForm1.GetInitValues;
+procedure TForm1.GetInitValues(Remote : Boolean);
 Var buf : Array[0..512] Of Char;
   HostEnt: PHostEnt;
   H : String;
@@ -286,8 +293,12 @@ begin
     CheckBox1.Checked:=Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',0));
   End
   Else
+  Begin
+    TabSheet3.TabVisible:=True;
+    TabSheet4.TabVisible:=True;
     ConnInit:=true;
-  If ParamCount = 0 Then
+  End;
+  If (ParamCount = 0) Or Remote Then
     OnFolder:=False
   else
     OnFolder:=True;
@@ -1079,7 +1090,7 @@ procedure TForm1.FormShow(Sender: TObject);
 begin
   If Not InitDone Then
   Begin
-    GetInitValues;
+    GetInitValues(false);
     InitDone:=True;
   End;
   If OnFolder And Not Limited Then
@@ -1093,6 +1104,9 @@ end;
 
 procedure TForm1.CSDisconnect(Sender: TObject; Socket: TCustomWinSocket);
 begin
+  CS.Active:=False;
+  If CS.Tag = 1 Then
+    exit;
   If ConnInit Then
     Application.MessageBox('Connection lost with the server, some error might have occured. See FFSS_Server.log for more infos','FFSS Share Error',MB_OK Or MB_ICONEXCLAMATION);
   Close;
@@ -1101,6 +1115,9 @@ end;
 procedure TForm1.CSError(Sender: TObject; Socket: TCustomWinSocket;
   ErrorEvent: TErrorEvent; var ErrorCode: Integer);
 begin
+  CS.Active:=False;
+  If CS.Tag = 1 Then
+    exit;
   If ConnInit Then
     Application.MessageBox('Connection lost with the server, some error might have occured. See FFSS_Server.log for more infos','FFSS Share Error',MB_OK Or MB_ICONEXCLAMATION);
   Close;
@@ -1254,6 +1271,16 @@ begin
     Button7.Enabled:=True;
     Button8.Enabled:=True;
   End;
+end;
+
+procedure TForm1.Quitter1Click(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TForm1.Connexiondistance1Click(Sender: TObject);
+begin
+  Form5.ShowModal;
 end;
 
 end.

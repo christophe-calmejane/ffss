@@ -13,6 +13,7 @@ object Form1: TForm1
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  PopupMenu = PopupMenu2
   Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
@@ -609,5 +610,20 @@ object Form1: TForm1
     Title = 'Choix du plugin '#224' charger'
     Left = 56
     Top = 404
+  end
+  object PopupMenu2: TPopupMenu
+    Left = 12
+    Top = 420
+    object Connexiondistance1: TMenuItem
+      Caption = '&Connexion '#224' distance'
+      OnClick = Connexiondistance1Click
+    end
+    object N3: TMenuItem
+      Caption = '-'
+    end
+    object Quitter1: TMenuItem
+      Caption = '&Quitter'
+      OnClick = Quitter1Click
+    end
   end
 end
