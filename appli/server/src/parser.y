@@ -2,7 +2,7 @@
 
 %{
 #define YYSTYPE void *
-typedef unsigned char bool;
+typedef unsigned int bool;
 #define true 1
 #define false 0
 #include <stdio.h>
@@ -10,6 +10,7 @@ typedef unsigned char bool;
 FS_TShare TmpShr;
 int line;
 extern FILE *yyin;
+int yyerror (char *s);
 
 void FS_FreeTempoShare(void)
 {

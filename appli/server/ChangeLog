@@ -10,6 +10,7 @@ VIRER LE -PREx DE SERVER.H
 January, 5th 2002:
   - Fixed bug when exiting server if a signal was received
   - Added dir size in directory listing
+  - Fixed a bug in parser (sizeof bool changed)
 
 December, 24th 2001:
   - Rewrote/cleaned many parts of the code

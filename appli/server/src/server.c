@@ -700,9 +700,11 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
 #else
   snprintf(buf,sizeof(buf),"%s\\%s",ts->Share->Path,(Path[0] == 0)?Path:(Path+1));
 #endif
+  SU_SEM_WAIT(FS_SemXFer); /* Must lock now, to protect it if the Xfer ends before the XFer is added bellow */
   if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,FS_MyGlobal.XFerInConn,&FT))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
+    SU_SEM_POST(FS_SemXFer); /* Unlock */
     return false;
   }
   if(FT == NULL) /* If FFSS_UploadFile failed to launch XFer */
@@ -726,6 +728,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
       fclose(fp);
     }
 #endif /* __unix__ */
+    SU_SEM_POST(FS_SemXFer); /* Unlock */
     if(rescan)
     {
       /* Index is not up-to-date, force rescan */
@@ -738,14 +741,16 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   if(FS_MyGlobal.XFerInConn)
   {
     if(!FS_InitXFerUpload(Client,FT,Path,false))
+    {
+      SU_SEM_POST(FS_SemXFer); /* Unlock */
       return false;
+    }
   }
-  SU_SEM_WAIT(FS_SemXFer);
 #ifdef DEBUG
   printf("ADD XFER %p TO CONN\n",FT);
 #endif
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
-  SU_SEM_POST(FS_SemXFer);
+  SU_SEM_POST(FS_SemXFer); /* Unlock */
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1998,7 +2003,10 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
+    {
       printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferFailed !!!!!!\n",FT);
+      abort();
+    }
 #else
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif
@@ -2034,7 +2042,10 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
+    {
       printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferSuccess !!!!!!\n",FT);
+      abort();
+    }
 #else
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif
@@ -2116,6 +2127,9 @@ void handint(int sig)
   if(!done)
   {
     done = true;
+#ifdef DEBUG
+    printf("Received a %d signal in %d\n",sig,getpid());
+#endif
     /* Shutting down server */
     FS_ShutDown();
     exit(0);
@@ -2193,7 +2207,7 @@ int main(int argc,char *argv[])
   else
   {
     openlog("Ffss Server",LOG_PERROR,LOG_USER);
-    FFSS_PrintSyslog(LOG_INFO,"Server started\n");
+    FFSS_PrintSyslog(LOG_INFO,"Server started with pid %d\n",getpid());
   }
 #else /* __unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");

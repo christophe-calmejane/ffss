@@ -42,8 +42,3 @@ TO DO :
 
  - Ajouter un nouveau type de paquet 'MessageBox sous win, mail @root sous nux' uniquement depuis le master.. au moment de la connect (au moment du check du protocole par ex)
 
-8) est-ce que me renvoyer la taille des dossiers (la taille reelle totale)
-lors d'un listing serait possible ?
-Ca serait vraiment pratique.
->> Je vais voir si c'est possible facilement... a suivre :)
-
