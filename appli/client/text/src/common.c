@@ -491,7 +491,6 @@ char **FCA_completion(char *text, int start, int end)
 			rl_attempted_completion_over=true;
 		/* else, local completion (default) */
 	}
-printf("OK\n");
 
 #ifdef ALIASES
 		/* no completion for aliases */
@@ -565,7 +564,6 @@ char *FCA_cmd_gen(char *text, int state)
 	while ( NULL!=FCA_COMMANDS[list_index].name ) {
 		list_index++;
 		if( !strncasecmp(FCA_COMMANDS[list_index-1].name, text, len) && FCA_COMMANDS[list_index-1].name[0]!='\0' ) {
-	printf("%s\n", FCA_COMMANDS[list_index-1].name);
 			return strdup(FCA_COMMANDS[list_index-1].name);
 		}
 	}
@@ -581,7 +579,6 @@ char *FCA_cmd_gen(char *text, int state)
 #endif
 		/* If no names matched, then return NULL. */
 	rl_attempted_completion_over=true;
-printf ("COMPLETION OVER\n");
 	return NULL;
 }
 
