@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 1st 2003
+                  Last Update : August, 4th 2003
 
 VIRER LE -PREx DE SERVER.H
+
+August, 4th 2003:
+  - Fixed Chksum compute for win32
 
 August, 1st 2003:
   - Changed all debug messages. Now using SU_DBG_xxx functions
