@@ -476,6 +476,24 @@ bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,co
 }
 
 /* UDP callbacks */
+bool OnCheckPacket(const char IP[])
+{
+  bool ret = true;
+  SU_PList Ptr;
+
+  SU_SEM_WAIT(FS_SemPlugin);
+  Ptr = FS_Plugins;
+  while(Ptr != NULL)
+  {
+    if(((FS_PPlugin)Ptr->Data)->CB.OnCheckPacket != NULL)
+      ret &= ((FS_PPlugin)Ptr->Data)->CB.OnCheckPacket(IP);
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_POST(FS_SemPlugin);
+
+  return ret;
+}
+
 void OnPing(struct sockaddr_in Master)
 {
   SU_PList Ptr;
@@ -513,6 +531,7 @@ void OnPing(struct sockaddr_in Master)
     FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
   }
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -520,12 +539,14 @@ void OnPing(struct sockaddr_in Master)
       ((FS_PPlugin)Ptr->Data)->CB.OnPing(Master);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnStateAnswer(const char Domain[])
 {
   SU_PList Ptr;
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -533,6 +554,7 @@ void OnStateAnswer(const char Domain[])
       ((FS_PPlugin)Ptr->Data)->CB.OnStateAnswer(Domain);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   FS_MyDomain = strdup(Domain);
 }
 
@@ -546,6 +568,7 @@ void OnServerSearch(struct sockaddr_in Client)
   if(!FS_SendMessage_ServerSearchAnswer(Client,FS_MyDomain,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState,FS_MyGlobal.MyIP,FS_MyGlobal.MasterIP))
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -553,6 +576,7 @@ void OnServerSearch(struct sockaddr_in Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnServerSearch(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnSharesListing(struct sockaddr_in Client)
@@ -588,6 +612,7 @@ void OnSharesListing(struct sockaddr_in Client)
   }
   SU_SEM_POST(FS_SemShr);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -595,6 +620,7 @@ void OnSharesListing(struct sockaddr_in Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnSharesListing(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnIndexRequest(struct sockaddr_in Master,long int Port)
@@ -605,6 +631,7 @@ void OnIndexRequest(struct sockaddr_in Master,long int Port)
     return;
   FFSS_PrintDebug(1,"Server received an index request from a %s at address %s (%s)\n",(Port == FFSS_MASTER_PORT)?"Master":"Client",inet_ntoa(Master.sin_addr),SU_NameOfPort(inet_ntoa(Master.sin_addr)));
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -612,6 +639,7 @@ void OnIndexRequest(struct sockaddr_in Master,long int Port)
       ((FS_PPlugin)Ptr->Data)->CB.OnIndexRequest(Master,Port);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnError(long int ErrorCode,const char Description[])
@@ -630,6 +658,7 @@ void OnError(long int ErrorCode,const char Description[])
   if(ErrorCode == FFSS_ERROR_BUFFER_OVERFLOW) /* Ignore */
     return;
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -637,8 +666,9 @@ void OnError(long int ErrorCode,const char Description[])
       ((FS_PPlugin)Ptr->Data)->CB.OnError(ErrorCode,Description);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 
-  /* As we are un the UDP thread, a FS_Uninit will kill it first... */
+  /* As we are in the UDP thread, a FS_Uninit will kill it first... */
   FS_UnLoadAllPlugin();
   SU_TermThread(FFSS_MainThread);
   //FS_ShutDown();
@@ -668,6 +698,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
     }
   }
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -675,6 +706,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
       ((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer(Master,ProtocolVersion,Domain);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 
@@ -804,6 +836,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     return false;
   }
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -811,6 +844,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
       ((FS_PPlugin)Ptr->Data)->CB.OnShareConnection(Client,ShareName,Login,Password,Compressions);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -829,6 +863,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
     return false;
   }
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -836,6 +871,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
       ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing(Client,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -854,6 +890,7 @@ bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* P
     return false;
   }
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -861,6 +898,7 @@ bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* P
       ((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing(Client,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -992,6 +1030,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
   SU_SEM_POST(FS_SemXFer); /* Unlock */
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -999,6 +1038,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       ((FS_PPlugin)Ptr->Data)->CB.OnDownload(Client,Path,StartPos,Port);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1012,6 +1052,7 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
   FFSS_PrintDebug(1,"Received an UPLOAD message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1019,6 +1060,7 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
       ((FS_PPlugin)Ptr->Data)->CB.OnUpload(Client,Path,Size,Port);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1032,6 +1074,7 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
   FFSS_PrintDebug(1,"Received a RENAME message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1039,6 +1082,7 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
       ((FS_PPlugin)Ptr->Data)->CB.OnRename(Client,Path,NewPath);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1052,6 +1096,7 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
   FFSS_PrintDebug(1,"Received a COPY message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1059,6 +1104,7 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
       ((FS_PPlugin)Ptr->Data)->CB.OnCopy(Client,Path,NewPath);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1072,6 +1118,7 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
   FFSS_PrintDebug(1,"Received a DELETE message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1079,6 +1126,7 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
       ((FS_PPlugin)Ptr->Data)->CB.OnDelete(Client,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1092,6 +1140,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
   FFSS_PrintDebug(1,"Received a MKDIR message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1099,6 +1148,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
       ((FS_PPlugin)Ptr->Data)->CB.OnMkDir(Client,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1109,9 +1159,10 @@ void OnIdleTimeout(SU_PClientSocket Client)
 
   ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   if(ts == NULL) return;
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT],(FFSS_LongField)Client->User);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT],(FFSS_LongField)(int)Client->User); /* User = Idle time out value */
   /* OnEndThread will be called just after returning this function */
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1119,6 +1170,7 @@ void OnIdleTimeout(SU_PClientSocket Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnIdleTimeout(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 int OnSelect(void) /* 0=Do timed-out select ; 1=don't do timed-out select, but sleep ; 2=don't do timed-out select, and continue */
@@ -1192,6 +1244,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   }
   FT->Cancel = true;
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1199,6 +1252,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
       ((FS_PPlugin)Ptr->Data)->CB.OnCancelXFer(Server,XFerTag);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 /* Streaming callbacks */
@@ -1275,6 +1329,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
     printf("OnStrmOpen : Conn not found !!\n");
   SU_SEM_POST(FS_SemXFer);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1282,6 +1337,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
       ((FS_PPlugin)Ptr->Data)->CB.OnStrmOpen(Client,Flags,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnStrmClose(SU_PClientSocket Client,long int Handle)
@@ -1307,6 +1363,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
     printf("OnStrmClose : Removing Streaming from conn (Handle=%ld)\n",Handle);
 #endif /* DEBUG */
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -1314,6 +1371,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
         ((FS_PPlugin)Ptr->Data)->CB.OnStrmClose(Client,Handle);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
   }
   else
     printf("OnStrmClose : Conn not found !!\n");
@@ -1373,6 +1431,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
     FS->Position += res;
     FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,res);
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -1380,6 +1439,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
         ((FS_PPlugin)Ptr->Data)->CB.OnStrmRead(Client,Handle,StartPos,Length);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
   }
   else
     printf("OnStrmRead : Conn not found !!\n");
@@ -1406,6 +1466,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos
       return;
     }
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -1413,6 +1474,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos
         ((FS_PPlugin)Ptr->Data)->CB.OnStrmWrite(Client,Handle,StartPos,Bloc,BlocSize);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
   }
   else
     printf("OnStrmWrite : Conn not found !!\n");
@@ -1454,6 +1516,7 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_Long
     }
     FS->Position = ftell(FS->fp);
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -1461,6 +1524,7 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_Long
         ((FS_PPlugin)Ptr->Data)->CB.OnStrmSeek(Client,Handle,Flags,Pos);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
   }
   else
     printf("OnStrmSeek : Conn not found !!\n");
@@ -1511,6 +1575,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
   ts->Type = 'B';
   SU_strcpy(ts->Path,"/",sizeof(ts->Path));
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1518,6 +1583,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnConnectionFTP(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
@@ -1541,6 +1607,7 @@ void OnPWDFTP(SU_PClientSocket Client)
   snprintf(msg,sizeof(msg),"257 \"%s\" is current directory." CRLF,tspath);
   send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1548,6 +1615,7 @@ void OnPWDFTP(SU_PClientSocket Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnPWDFTP(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnTypeFTP(SU_PClientSocket Client,const char Type)
@@ -1577,6 +1645,7 @@ void OnTypeFTP(SU_PClientSocket Client,const char Type)
   if(ts == NULL) return;
   ts->Type = Type;
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1584,6 +1653,7 @@ void OnTypeFTP(SU_PClientSocket Client,const char Type)
       ((FS_PPlugin)Ptr->Data)->CB.OnTypeFTP(Client,Type);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 void OnModeFTP(SU_PClientSocket Client,const char Mode)
@@ -1609,6 +1679,7 @@ void OnModeFTP(SU_PClientSocket Client,const char Mode)
   if(ts == NULL) return;
   ts->Type = Type;*/
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1616,6 +1687,7 @@ void OnModeFTP(SU_PClientSocket Client,const char Mode)
       ((FS_PPlugin)Ptr->Data)->CB.OnModeFTP(Client,Mode);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,const char Path[])
@@ -1651,6 +1723,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
     }
     SU_SEM_POST(FS_SemShr);
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -1658,6 +1731,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
         ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListingFTP(Client,DataPort,Path);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
     return true;
   }
   SU_strcpy(tspath,ts->Path,sizeof(tspath));
@@ -1687,6 +1761,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   }
 
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -1694,6 +1769,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
       ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListingFTP(Client,DataPort,Path);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
   /* Ok, got the directory structure... listing */
   Ptr = Node->Dirs;
   while(Ptr != NULL)
@@ -2169,6 +2245,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
       return;
     }
 
+    SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
     while(Ptr != NULL)
     {
@@ -2176,6 +2253,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
         ((FS_PPlugin)Ptr->Data)->CB.OnDownloadFTP(Client,Path,StartPos,Host,Port);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemPlugin);
   }
 }
 
@@ -2188,6 +2266,7 @@ void OnIdleTimeoutFTP(SU_PClientSocket Client)
   send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   /* OnEndThread will be called just after returning this function */
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
@@ -2195,6 +2274,7 @@ void OnIdleTimeoutFTP(SU_PClientSocket Client)
       ((FS_PPlugin)Ptr->Data)->CB.OnIdleTimeoutFTP(Client);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
 }
 
 bool FS_PowerUp(const char IntName[])
@@ -2610,6 +2690,7 @@ int main(int argc,char *argv[])
   {
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
     /* UDP callbacks */
+    FFSS_CB.SCB.OnCheckPacket = OnCheckPacket;
     FFSS_CB.SCB.OnPing = OnPing;
     FFSS_CB.SCB.OnStateAnswer = OnStateAnswer;
     FFSS_CB.SCB.OnServerSearch = OnServerSearch;

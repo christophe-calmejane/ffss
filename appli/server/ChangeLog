@@ -10,6 +10,7 @@ VIRER LE -PREx DE SERVER.H
 June, 2nd 2002:
   - Plugin_Configure now returns a boolean
   - Added log plugin
+  - Added sem protection for each plugin callback call
 
 May, 31th 2002:
   - Fixed a wrong resource freeing in the case of simultaneous conn and xfer close
