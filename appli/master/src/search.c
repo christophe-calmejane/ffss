@@ -61,6 +61,7 @@ char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
   int NbIdx,i;
 
   Answer[0] = (char) Host->State;
+  printf("State is : %d\n",Host->State);
   if(Host->Samba)
     Answer[0] |= (char) FFSS_SEARCH_IS_SAMBA;
   if(&Host->FTNodes[Node->Last] == Node)

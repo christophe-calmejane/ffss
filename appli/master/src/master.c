@@ -84,6 +84,7 @@ void FM_SetHostStateInIndex(const char Host[],FFSS_Field State)
   {
     if(SU_strcasecmp(Host,FM_Controler.Hosts[i]->Name))
     {
+      printf("SetStateInIndex : %d\n",State);
       FM_Controler.Hosts[i]->State = State;
       return;
     }
@@ -96,7 +97,7 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
 
   context;
 #ifdef DEBUG
-  //printf("MASTER : Adding host %s (%s) to domain %s\n",Name,IP,Domain->Name);
+  printf("MASTER : Adding host %s (%s) to domain %s\n",Name,IP,Domain->Name);
 #endif /* DEBUG */
   Hst = (FM_PHost) malloc(sizeof(FM_THost));
   memset(Hst,0,sizeof(FM_THost));
@@ -124,8 +125,8 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
   context;
   SU_SEM_WAIT(FM_MySem2);
 #ifdef DEBUG
-  //printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
-  //printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
+  printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
+  printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
 #endif /* DEBUG */
   if(strcmp(Hst->Name,Name) != 0)
   {
@@ -143,7 +144,7 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
     Hst->Comment = strdup(Comment);
   }
   Hst->State = State;
-  FM_SetHostStateInIndex(Name,State);
+  FM_SetHostStateInIndex(Hst->Name,State);
   SU_SEM_POST(FM_MySem2);
 }
 
@@ -183,12 +184,13 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
 
   context;
 #ifdef DEBUG
-  //printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
+  printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
   if(Hst->State == FFSS_STATE_OFF)
     Hst->OffSince = time(NULL);
   else
     Hst->OffSince = 0;
+  FM_SetHostStateInIndex(Hst->Name,Hst->State);
   if(FM_IsHostInMyQueue(Hst))
     return;
 
@@ -197,32 +199,8 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
   Que->Domain = Domain;
   Que->Host = Hst;
   SU_SEM_WAIT(FM_MySem);
-  FM_SetHostStateInIndex(Hst->Name,Hst->State);
   FM_MyQueue = SU_AddElementHead(FM_MyQueue,Que);
   SU_SEM_POST(FM_MySem);
-}
-
-void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
-{
-  FM_PQueue Que;
-
-  context;
-#ifdef DEBUG
-  //printf("MASTER : Adding state to other queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
-#endif /* DEBUG */
-  if(Hst->State == FFSS_STATE_OFF)
-    Hst->OffSince = time(NULL);
-  else
-    Hst->OffSince = 0;
-  if(FM_IsHostInOtherQueue(Hst))
-    return;
-
-  Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
-  Que->Domain = Domain;
-  Que->Host = Hst;
-  SU_SEM_WAIT(FM_MySem3);
-  FM_OtherQueue = SU_AddElementHead(FM_OtherQueue,Que);
-  SU_SEM_POST(FM_MySem3);
 }
 
 FM_PDomain FM_SearchDomainByIP(const char IP[])
@@ -318,8 +296,6 @@ void OnClientServerFailed(const char IP[])
       Hst->OffSince = time(NULL);
       if(FM_IsMyDomain(Ptr->Data))
         FM_AddStateToMyQueue((FM_PDomain)Ptr->Data,Hst);
-      /*else
-        FM_AddStateToOtherQueue((FM_PDomain)Ptr->Data,Hst);*/
       break;
     }
     Ptr = Ptr->Next;
@@ -823,8 +799,6 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
     Hst->OffSince = 0;
   if(FM_IsMyDomain(Dom))
     FM_AddStateToMyQueue(Dom,Hst);
-  /*else
-    FM_AddStateToOtherQueue(Dom,Hst);*/
 }
 
 void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions)

@@ -7,6 +7,9 @@
 
 VIRER LE -PREx DE MASTER.H
 
+June, 3rd 2002:
+  - Fixed wrong STATE update in search index (again)
+
 June, 2nd 2002:
   - Fixed a bug in index thread... always getting a 0.0.0.0 ip
   - Fixed wrong STATE update in search index
