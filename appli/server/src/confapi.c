@@ -538,7 +538,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
       return Plugins;
     }
     Pl->Name = strdup(tmp1);
-    Pl->Author = strdup(tmp2);
+    Pl->Copyright = strdup(tmp2);
     Pl->Version = strdup(tmp3);
     Plugins = SU_AddElementHead(Plugins,Pl);
   }

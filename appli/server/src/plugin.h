@@ -16,6 +16,7 @@
 
 void *FS_PluginQuery(int Type,...);
 
+/* Structure returned by Plugin_QueryInfos call */
 typedef struct
 {
   char *Name;

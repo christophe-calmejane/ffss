@@ -180,7 +180,7 @@ typedef struct
 {
   char *Path;      /* Set and freed by server */
   char *Name;      /* Set and freed by plugin */
-  char *Author;    /* Set and freed by plugin */
+  char *Copyright; /* Set and freed by plugin */
   char *Version;   /* Set and freed by plugin */
   SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;

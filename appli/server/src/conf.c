@@ -682,7 +682,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Plugin = (FS_PPlugin) Ptr->Data;
           Size = FFSS_PackField(buf,Size,(FFSS_Field)Plugin);
           Size = FFSS_PackString(buf,Size,Plugin->Name,strlen(Plugin->Name)+1);
-          Size = FFSS_PackString(buf,Size,Plugin->Author,strlen(Plugin->Author)+1);
+          Size = FFSS_PackString(buf,Size,Plugin->Copyright,strlen(Plugin->Copyright)+1);
           Size = FFSS_PackString(buf,Size,Plugin->Version,strlen(Plugin->Version)+1);
           Ptr = Ptr->Next;
         }

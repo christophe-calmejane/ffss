@@ -9,9 +9,9 @@ extern "C" {
 
 typedef struct
 {
-  char *Name;
-  char *Comment;
-  char *Master;
+  char *Name;    /* Free it */
+  char *Comment; /* Free it */
+  char *Master;  /* Free it */
   int  Idle;
   int  MaxConn;
   int  MaxXFerPerConn;
@@ -21,8 +21,8 @@ typedef struct
 
 typedef struct
 {
-  char *Name;
-  char *Comment;
+  char *Name;      /* Free it */
+  char *Comment;   /* Free it */
   bool  Writeable;
   bool  Private;
   int   MaxConn;
@@ -31,8 +31,8 @@ typedef struct
 
 typedef struct
 {
-  char *Name;
-  char *Path;
+  char *Name;     /* Free it */
+  char *Path;     /* Free it */
   bool  Disabled;
   int   NbConns;
   int   NbXfers;
@@ -40,7 +40,7 @@ typedef struct
 
 typedef struct
 {
-  char *IP;
+  char *IP;       /* Free it */
   int NbXfers;
   int NbStrms;
   SU_PList Xfers; /* FSCA_PFileInfo */
@@ -49,16 +49,16 @@ typedef struct
 
 typedef struct
 {
-  char *Name;
-  char *Pct;
+  char *Name; /* Free it */
+  char *Pct;  /* Free it */
 } FSCA_TFileInfo, *FSCA_PFileInfo;
 
 typedef struct
 {
-  void *Handle;
-  char *Name;
-  char *Author;
-  char *Version;
+  void *Handle;    /* DO NOT FREE */
+  char *Name;      /* Free it */
+  char *Copyright; /* Free it */
+  char *Version;   /* Free it */
 } FSCA_TPluginInfo, *FSCA_PPluginInfo;
 
 /* *************** Get Infos *************** */
@@ -83,7 +83,7 @@ bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShar
 void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup);
 bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStartup);
 bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle);
-SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client); /* FSCA_PPluginInfo */
+SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client); /* FSCA_PPluginInfo */ /* You are responsible for freeing the list and the structs */
 
 #ifdef __cplusplus
 }
