@@ -509,6 +509,8 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		FCA_tab_pre_stitle();
 		 FCA_tab_stitle("State", 5);
 		  FCA_tab_int_stitle();
+		 FCA_tab_stitle("Size", 5);
+		  FCA_tab_int_stitle();
 		 FCA_tab_stitle("Answer", 0);
 		 FCA_tab_stitle("", 25);
 		FCA_tab_post_stitle();
@@ -540,6 +542,9 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 			}
 			if(state & FFSS_SEARCH_IS_FILE)
 				nbfiles++;
+			 FCA_post_tab_item();FCA_tab_int_item();
+			  FCA_pre_tab_item();
+			  FCA_size(Sizes[ia]," %4lld");
 			 FCA_post_tab_item();FCA_tab_int_item();
 			  FCA_pre_tab_item();
 			  if(! FCA_pre_path(Domain, buf[res[ia]], *(buf[res[ia]]-1), true,
