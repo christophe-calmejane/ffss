@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-pthread -I . -I ../../../../../skyutils/src -I ../../../../../libffss-1.0.0/src -O2 -g
-LDFLAGS=-L . -lfnp -L ../../../../../libffss-1.0.0/src/.libs -lffss -L ../../../../../skyutils/src/.libs -lskyutils -lz -lbz2 -pthread
+LDFLAGS=-L . -lfnp -L ../../../../../libffss-1.0.0/src/.libs -lffss -L ../../../../../skyutils/src/.libs -lskyutils -lz -lbz2 -pthread -ldl
 
 all: libfnp.a try
 
