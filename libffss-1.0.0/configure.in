@@ -231,6 +231,7 @@ ffss-config
 src/Makefile
 src/Windows/Makefile
 src/Windows/ffss/Makefile
+src/Windows/driver/Makefile
 ], [chmod +x ffss-config])
 
 echo ""

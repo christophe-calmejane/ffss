@@ -80,7 +80,7 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
 
 bool FFSS_SendTcpPacketCS(SU_PClientSocket Client,char *msg,long int len,bool FreeMsg,bool Answer)
 {
-  return FFSS_SendTcpPacket(CS->sock,msg,len,FreeMsg);
+  return FFSS_SendTcpPacket(Client->sock,msg,len,FreeMsg);
 }
 
 /* ************************************ */
