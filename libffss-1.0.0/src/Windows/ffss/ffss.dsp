@@ -42,9 +42,9 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
-# ADD RSC /l 0x40c /d "NDEBUG"
+# ADD RSC /l 0x40c /i "../../../../skyutils/src/windows/skyutils/release" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -65,7 +65,7 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../skyutils/src" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /d "_DEBUG"
 BSC32=bscmake.exe
@@ -88,7 +88,7 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "ffss___Win32_Release_Intel"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /G7 /O3 /QxiM /Qip /Qwp_ipo /c
+# ADD CPP /nologo /MT /W3 /GX /I "../../../../skyutils/src" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /G7 /O3 /QxiM /Qip /Qwp_ipo /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
 BSC32=bscmake.exe
@@ -110,31 +110,31 @@ LIB32=xilink6.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\client.c
+SOURCE=..\..\client.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\common.c
+SOURCE=..\..\common.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\master.c
+SOURCE=..\..\master.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\message.c
+SOURCE=..\..\message.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\server.c
+SOURCE=..\..\server.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\transfer.c
+SOURCE=..\..\transfer.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\utils.c
+SOURCE=..\..\utils.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -142,19 +142,19 @@ SOURCE=..\utils.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\Common.h
+SOURCE=..\..\common.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\Ffss.h
+SOURCE=..\..\ffss.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\transfer.h
+SOURCE=..\..\transfer.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\Utils.h
+SOURCE=..\..\utils.h
 # End Source File
 # End Group
 # Begin Group "Resources"
@@ -162,11 +162,11 @@ SOURCE=..\Utils.h
 # PROP Default_Filter "lib"
 # Begin Source File
 
-SOURCE=..\..\VisualSkyLibs\lib\zlibdll.lib
+SOURCE=..\..\..\..\..\VisualSkyLibs\lib\zlibdll.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\VisualSkyLibs\lib\libbz2.lib
+SOURCE=..\..\..\..\..\VisualSkyLibs\lib\libbz2.lib
 # End Source File
 # End Group
 # End Target
