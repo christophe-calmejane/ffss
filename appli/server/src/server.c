@@ -379,6 +379,7 @@ void OnPing(struct sockaddr_in Master)
 {
   SU_PList Ptr;
   static int Count = 0;
+  bool Changed = false;
 
   if(FS_MyState == FFSS_STATE_OFF)
     return;
@@ -398,10 +399,17 @@ void OnPing(struct sockaddr_in Master)
         FFSS_PrintDebug(5,"Detected a change... Rescaning share\n");
         FS_EjectFromShare((FS_PShare)Ptr->Data,false);
         FS_RescanShare((FS_PShare)Ptr->Data);
+        Changed = true;
       }
       Ptr = Ptr->Next;
     }
     SU_SEM_POST(FS_SemShr);
+  }
+
+  if(Changed)
+  {
+    /* Sending index message to my master */
+    FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
   }
 
   Ptr = FS_Plugins;

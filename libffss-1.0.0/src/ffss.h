@@ -5,6 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/* Define the target OS */
 #ifdef __linux__
 #define FFSS_SERVER_OS "Linux"
 #elif __FreeBSD__
@@ -26,6 +27,11 @@ extern "C" {
 #else
 #error "Unknown OS... contact devel team"
 #endif /* __linux__ */
+
+/* Define the target arch word alignment (not needed on x86) */
+#ifdef __arm__
+#define USE_ALIGNED_WORD
+#endif /* __arm__ */
 
 #ifdef _WIN32
 #define HAVE_BZLIB 1
@@ -55,7 +61,7 @@ extern "C" {
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre74"
+#define FFSS_VERSION "1.0.0-pre75"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
@@ -922,6 +928,14 @@ FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long
 /* Same with LongField */
 FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos);
 void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,char buf_out[],int Type);
+/* Packs a string (with len max char) into a message */
+/*  Returns the new pos in the message buffer */
+long int FFSS_PackString(char buf[],int pos,const char strn[],int len);
+/* Packs a FFSS_Field into a message */
+/*  Returns the new pos in the message buffer */
+long int FFSS_PackField(char buf[],int pos,FFSS_Field val);
+/* Same with LongField */
+long int FFSS_PackLongField(char buf[],int pos,FFSS_LongField val);
 void FFSS_PackIP(char *buf,const char IP[],int Type);
 
 #ifndef DISABLE_ZLIB

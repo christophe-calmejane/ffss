@@ -7,10 +7,6 @@ AM_INIT_AUTOMAKE(ffss-server, 1.0.0)
 dnl Needed version of ffss
 ffss_needed="1.0.0"
 
-dnl Change this if libffss is not installed in /usr/local
-FFSS_PREFIX=/usr/local/bin
-dnl And change line bellow too (--with-ffss)
-
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_MAKE_SET
@@ -76,7 +72,7 @@ AC_ARG_WITH(ffss, [  --with-ffss=DIR       Bin path to uninstalled copy of libff
 
 echo -n "checking for ffss-config... "
 if test x"$with_ffss" = x ; then
-  FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+  FFSS_CONFIG=`which ffss-config`
   FFSS_GET_LIBS=--libs
   if test -x "$FFSS_CONFIG"; then
     :

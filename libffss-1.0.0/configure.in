@@ -10,10 +10,6 @@ AC_ARG_PROGRAM
 dnl Needed version of libskyutils
 skyutils_needed="2.0"
 
-dnl Change this if libskyutils is not installed in /usr/local
-SU_PREFIX=/usr/local/bin
-dnl And change line bellow too (--with-skyutils)
-
 #
 # Making releases:
 #   FFSS_MICRO_VERSION += 1;
@@ -161,7 +157,7 @@ AC_ARG_WITH(skyutils, [  --with-skyutils=DIR       Bin path to uninstalled copy 
 
 echo -n "checking for skyutils-config... "
 if test x"$with_skyutils" = x ; then
-  SU_CONFIG=$SU_PREFIX/skyutils-config
+  SU_CONFIG=`which skyutils-config`
   SU_GET_LIBS=--libs
   if test -x "$SU_CONFIG"; then
     :

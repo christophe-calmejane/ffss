@@ -6,4 +6,3 @@ bin_SCRIPTS = ffss-config
 
 EXTRA_DIST = \
 	todo.txt
-

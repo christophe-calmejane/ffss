@@ -8,6 +8,10 @@
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+February, 23th 2002:
+  - Optimized message creation
+  - Added support for BIG_ENDIAN and WORD ALIGNMENT architectures
+
 February, 18th 2002:
   - Added possibility to force NO use of zlib (for cross compiling, if zlib doesn't exist)
 

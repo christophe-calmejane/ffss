@@ -88,9 +88,9 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     SU_END_THREAD(NULL);
   }
   res = send(FT->sock,(char *)&fsize,sizeof(fsize),SU_MSG_NOSIGNAL);
-#ifdef IS_BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 #error FIX ME ??
-#endif /* IS_BIG_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
   if(res == SOCKET_ERROR)
   {
     FFSS_PrintDebug(1,"Error while uploading file (size) : %d %s\n",errno,strerror(errno));
@@ -255,9 +255,9 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     free(RBuf);
     SU_END_THREAD(NULL);
   }
-#ifdef IS_BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 #error FIX ME ??
-#endif /* IS_BIG_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
   res = send(FT->sock,(char *)&Checksum,sizeof(Checksum),SU_MSG_NOSIGNAL);
   if(res == SOCKET_ERROR)
   {
@@ -429,9 +429,9 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   if(!error)
   {
     res = recv(FT->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
-#ifdef IS_BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 #error FIX ME ??
-#endif /* IS_BIG_ENDIAN */
+#endif /* WORDS_BIGENDIAN */
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(1,"Error while downloading file (size) : %d %s\n",errno,strerror(errno));

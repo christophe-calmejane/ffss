@@ -100,37 +100,69 @@ char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int
 FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long int *new_pos)
 {
   int pos = buf - beginning;
+  FFSS_Field ret = 0;
+
   if((pos+sizeof(FFSS_Field)) <= len)
   {
     *new_pos = pos + sizeof(FFSS_Field);
-#ifdef IS_BIG_ENDIAN
-#error FIX ME !!
-#endif /* IS_BIG_ENDIAN */
-    return *(FFSS_Field *)buf;
+#ifdef WORDS_BIGENDIAN
+    *(((char *)&ret)+0) = buf[3];
+    *(((char *)&ret)+1) = buf[2];
+    *(((char *)&ret)+2) = buf[1];
+    *(((char *)&ret)+3) = buf[0];
+#else /* !WORDS_BIGENDIAN */
+#ifdef USE_ALIGNED_WORD
+    *(((char *)&ret)+0) = buf[0];
+    *(((char *)&ret)+1) = buf[1];
+    *(((char *)&ret)+2) = buf[2];
+    *(((char *)&ret)+3) = buf[3];
+#else /* !USE_ALIGNED_WORD */
+    ret = *(FFSS_Field *)buf;
+#endif /* USE_ALIGNED_WORD */
+#endif /* WORDS_BIGENDIAN */
   }
   else
-  {
     FFSS_PrintSyslog(LOG_WARNING,"LongInt out of message... DoS attack ?\n");
-    return 0;
-  }
+  return ret;
 }
 
+/* Unpacks a FFSS_LongField from a message, checking if the FFSS_Field is fully in the message (prevents DoS attacks) */
+/*  Returns the FFSS_Field, or 0 if there is a problem */
 FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos)
 {
   int pos = buf - beginning;
+  FFSS_LongField ret = 0;
+
   if((pos+sizeof(FFSS_LongField)) <= len)
   {
     *new_pos = pos + sizeof(FFSS_LongField);
-#ifdef IS_BIG_ENDIAN
-#error FIX ME !!
-#endif /* IS_BIG_ENDIAN */
-    return *(FFSS_LongField *)buf;
+#ifdef WORDS_BIGENDIAN
+    *(((char *)&ret)+0) = buf[7];
+    *(((char *)&ret)+1) = buf[6];
+    *(((char *)&ret)+2) = buf[5];
+    *(((char *)&ret)+3) = buf[4];
+    *(((char *)&ret)+4) = buf[3];
+    *(((char *)&ret)+5) = buf[2];
+    *(((char *)&ret)+6) = buf[1];
+    *(((char *)&ret)+7) = buf[0];
+#else /* !WORDS_BIGENDIAN */
+#ifdef USE_ALIGNED_WORD
+    *(((char *)&ret)+0) = buf[0];
+    *(((char *)&ret)+1) = buf[1];
+    *(((char *)&ret)+2) = buf[2];
+    *(((char *)&ret)+3) = buf[3];
+    *(((char *)&ret)+4) = buf[4];
+    *(((char *)&ret)+5) = buf[5];
+    *(((char *)&ret)+6) = buf[6];
+    *(((char *)&ret)+7) = buf[7];
+#else /* !USE_ALIGNED_WORD */
+    ret = *(FFSS_LongField *)buf;
+#endif /* USE_ALIGNED_WORD */
+#endif /* WORDS_BIGENDIAN */
   }
   else
-  {
     FFSS_PrintSyslog(LOG_WARNING,"LongLongInt out of message... DoS attack ?\n");
-    return 0;
-  }
+  return ret;
 }
 
 void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,char buf_out[],int Type)
@@ -165,6 +197,66 @@ void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,ch
   {
     FFSS_PrintSyslog(LOG_WARNING,"IP out of message... DoS attack ?\n");
   }
+}
+
+/* Packs a string (with len max char) into a message */
+/*  Returns the new pos in the message buffer */
+long int FFSS_PackString(char buf[],int pos,const char strn[],int len)
+{
+  SU_strcpy(buf+pos,strn,len);
+  return pos + len;
+}
+
+/* Packs a FFSS_Field into a message */
+/*  Returns the new pos in the message buffer */
+long int FFSS_PackField(char buf[],int pos,FFSS_Field val)
+{
+#ifdef WORDS_BIGENDIAN
+  buf[pos+0] = *(((char *)&val)+3);
+  buf[pos+1] = *(((char *)&val)+2);
+  buf[pos+2] = *(((char *)&val)+1);
+  buf[pos+3] = *(((char *)&val)+0);
+#else /* !WORDS_BIGENDIAN */
+#ifdef USE_ALIGNED_WORD
+  buf[pos+0] = *(((char *)&val)+0);
+  buf[pos+1] = *(((char *)&val)+1);
+  buf[pos+2] = *(((char *)&val)+2);
+  buf[pos+3] = *(((char *)&val)+3);
+#else /* !USE_ALIGNED_WORD */
+  *(FFSS_Field *)(buf+pos) = val;
+#endif /* USE_ALIGNED_WORD */
+#endif /* WORDS_BIGENDIAN */
+  return pos + sizeof(FFSS_Field);
+}
+
+/* Packs a FFSS_LongField into a message */
+/*  Returns the new pos in the message buffer */
+long int FFSS_PackLongField(char buf[],int pos,FFSS_LongField val)
+{
+#ifdef WORDS_BIGENDIAN
+  buf[pos+0] = *(((char *)&val)+7);
+  buf[pos+1] = *(((char *)&val)+6);
+  buf[pos+2] = *(((char *)&val)+5);
+  buf[pos+3] = *(((char *)&val)+4);
+  buf[pos+4] = *(((char *)&val)+3);
+  buf[pos+5] = *(((char *)&val)+2);
+  buf[pos+6] = *(((char *)&val)+1);
+  buf[pos+7] = *(((char *)&val)+0);
+#else /* !WORDS_BIGENDIAN */
+#ifdef USE_ALIGNED_WORD
+  buf[pos+0] = *(((char *)&val)+0);
+  buf[pos+1] = *(((char *)&val)+1);
+  buf[pos+2] = *(((char *)&val)+2);
+  buf[pos+3] = *(((char *)&val)+3);
+  buf[pos+4] = *(((char *)&val)+4);
+  buf[pos+5] = *(((char *)&val)+5);
+  buf[pos+6] = *(((char *)&val)+6);
+  buf[pos+7] = *(((char *)&val)+7);
+#else /* !USE_ALIGNED_WORD */
+  *(FFSS_LongField *)(buf+pos) = val;
+#endif /* USE_ALIGNED_WORD */
+#endif /* WORDS_BIGENDIAN */
+  return pos + sizeof(FFSS_LongField);
 }
 
 void FFSS_PackIP(char *buf,const char IP[],int Type)

@@ -416,8 +416,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   pos = 0;
 
   /* Flush number of entries */
-  *(FFSS_Field *)(buf+pos) = Node->NbFiles+Node->NbDirs;
-  pos += sizeof(FFSS_Field);
+  pos = FFSS_PackField(buf,pos,Node->NbFiles+Node->NbDirs);
 
   /* Flush directories */
   Ptr = Node->Dirs;
@@ -432,32 +431,28 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
     }
     if(len > FFSS_MAX_FILEPATH_LENGTH)
       len = FFSS_MAX_FILEPATH_LENGTH;
-    SU_strcpy(buf+pos,((FS_PDir)Ptr->Data)->DirName,len);
-    pos += len;
+    pos = FFSS_PackString(buf,pos,((FS_PDir)Ptr->Data)->DirName,len);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PDir)Ptr->Data)->Flags;
-    pos += sizeof(FFSS_Field);
+    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Flags);
 
     if((pos+sizeof(FFSS_LongField)) >= buf_size)
     {
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_LongField *)(buf+pos) = ((FS_PDir)Ptr->Data)->Size;
-    pos += sizeof(FFSS_LongField);
+    pos = FFSS_PackLongField(buf,pos,((FS_PDir)Ptr->Data)->Size);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PDir)Ptr->Data)->Time;
-    pos += sizeof(FFSS_Field);
+    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Time);
 
     i++;
     Ptr = Ptr->Next;
@@ -476,32 +471,28 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
     }
     if(len > FFSS_MAX_FILEPATH_LENGTH)
       len = FFSS_MAX_FILEPATH_LENGTH;
-    SU_strcpy(buf+pos,((FS_PFile)Ptr->Data)->FileName,len);
-    pos += len;
+    pos = FFSS_PackString(buf,pos,((FS_PFile)Ptr->Data)->FileName,len);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {
       buf_size += (Node->NbFiles-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PFile)Ptr->Data)->Flags;
-    pos += sizeof(FFSS_Field);
+    pos = FFSS_PackField(buf,pos,((FS_PFile)Ptr->Data)->Flags);
 
     if((pos+sizeof(FFSS_LongField)) >= buf_size)
     {
       buf_size += (Node->NbFiles-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_LongField *)(buf+pos) = ((FS_PFile)Ptr->Data)->Size;
-    pos += sizeof(FFSS_LongField);
+    pos = FFSS_PackLongField(buf,pos,((FS_PFile)Ptr->Data)->Size);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {
       buf_size += (Node->NbFiles-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PFile)Ptr->Data)->Time;
-    pos += sizeof(FFSS_Field);
+    pos = FFSS_PackField(buf,pos,((FS_PFile)Ptr->Data)->Time);
 
     i++;
     Ptr = Ptr->Next;
@@ -551,8 +542,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     }
     if(len > FFSS_MAX_FILEPATH_LENGTH)
       len = FFSS_MAX_FILEPATH_LENGTH;
-    SU_strcpy(buf+pos,((FS_PDir)Ptr->Data)->DirName,len);
-    pos += len;
+    pos = FFSS_PackString(buf,pos,((FS_PDir)Ptr->Data)->DirName,len);
     tg = FFSS_FILE_TAGS_NOTHING;
 
     /* Flush sub directory */
@@ -587,8 +577,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     }
     if(len > FFSS_MAX_FILEPATH_LENGTH)
       len = FFSS_MAX_FILEPATH_LENGTH;
-    SU_strcpy(buf+pos,((FS_PFile)Ptr->Data)->FileName,len);
-    pos += len;
+    pos = FFSS_PackString(buf,pos,((FS_PFile)Ptr->Data)->FileName,len);
 
     i++;
     Ptr = Ptr->Next;
@@ -639,8 +628,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
       len = strlen(Share->ShareName)+1;
       if(len > FFSS_MAX_SHARENAME_LENGTH)
         len = FFSS_MAX_SHARENAME_LENGTH;
-      SU_strcpy(buf,Share->ShareName,len);
-      pos = len;
+      pos = FFSS_PackString(buf,0,Share->ShareName,len);
 
       buf = FS_BuildIndexBuffer(&Share->Root,buf,&pos,total,&size,TabNodes,&NodePos,&Tags,0,total_node);
       TabNodes[0].Last = total_node + NodePos - 1;
