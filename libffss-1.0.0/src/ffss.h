@@ -73,7 +73,7 @@ extern char FFSS_WinServerVersion[20];
 #endif /* __sun__ */
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre82"
+#define FFSS_VERSION "1.0.0-pre83"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 

@@ -12,6 +12,7 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
   fd_set rfds;
   struct timeval tv;
 
+  context;
   FD_ZERO(&rfds);
   FD_SET(Client,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
