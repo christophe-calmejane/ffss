@@ -251,7 +251,7 @@ FsdAllocateFcb (
 
     Fcb->Flags = 0;
 
-    Fcb->ffss_inode = FsdAssignFFSSInode(ffss_inode);
+    Fcb->ffss_inode = FsdAssignFFSSInode(ffss_inode,true);
 
     RtlZeroMemory(&Fcb->CommonFCBHeader, sizeof(FSRTL_COMMON_FCB_HEADER));
 
@@ -276,8 +276,7 @@ FsdAllocateFcb (
     return Fcb;
 }
 
-/* Vcb->MainResource must be locked */
-struct ffss_inode *FsdAllocInode(void)
+struct ffss_inode *FsdAllocInode(const char Name[])
 {
   struct ffss_inode *ffss_inode;
 
@@ -286,33 +285,58 @@ struct ffss_inode *FsdAllocInode(void)
   ffss_inode->Inodes = NULL;
   ffss_inode->NbInodes = 0;
   ffss_inode->RefCount = 0;
+  ffss_inode->NameLength = strlen(Name)+1;
+  ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
+  RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
+  KdPrint(("FsdAllocInode : Allocating inode with name : %s\n",ffss_inode->Name));
 
   return ffss_inode;
 }
 
-/* Vcb->MainResource must be locked */
-struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode)
+/* SuperBlock must be locked (or Lock must be TRUE) */
+struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock)
 {
-  ffss_inode->RefCount++;
+#if DBG
+  if(Lock != true || Lock != false)
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignFFSSInode !!!\n"));
+#endif
+  if(Lock)
+  {
+    LOCK_SUPERBLOCK_RESOURCE;
+    ffss_inode->RefCount++;
+    UNLOCK_SUPERBLOCK_RESOURCE;
+  }
+  else
+    ffss_inode->RefCount++;
   return ffss_inode;
 }
 
-/* Vcb->MainResource must be locked */
-VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode)
+/* SuperBlock must be locked (or Lock must be TRUE) */
+VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock)
 {
   int i;
 
   if(ffss_inode == NULL)
     return;
+#if DBG
+  if(Lock != true || Lock != false)
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeFFSSInode !!!\n"));
+#endif
+  if(Lock)
+    LOCK_SUPERBLOCK_RESOURCE;
   ffss_inode->RefCount--;
   if(ffss_inode->RefCount != 0)
+  {
+    if(Lock)
+      UNLOCK_SUPERBLOCK_RESOURCE;
     return;
+  }
 
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
     {
-      FsdFreeFFSSInode(ffss_inode->Inodes[i]);
+      FsdFreeFFSSInode(ffss_inode->Inodes[i],false);
     }
     FsdFreePool(ffss_inode->Inodes);
   }
@@ -320,6 +344,8 @@ VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode)
     FsdFreePool(ffss_inode->Name);
 
   FsdFreePool(ffss_inode);
+  if(Lock)
+    UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
 struct ffss_super_block *FsdAllocSuperBlock(void)
@@ -342,15 +368,19 @@ VOID FsdFreeSuperBlock(IN struct ffss_super_block *ffss_super_block)
   if(ffss_super_block == NULL)
     return;
 
+  LOCK_SUPERBLOCK_RESOURCE;
   if(ffss_super_block->NbDomains != 0)
   {
     for(i=0;i<ffss_super_block->NbDomains;i++)
     {
-      FsdFreeFFSSInode(ffss_super_block->Domains[i]);
+      FsdFreeFFSSInode(ffss_super_block->Domains[i],false);
     }
     FsdFreePool(ffss_super_block->Domains);
+    ffss_super_block->Domains = NULL;
+    ffss_super_block->NbDomains = 0;
   }
 
+  UNLOCK_SUPERBLOCK_RESOURCE;
   ExDeleteResourceLite(&ffss_super_block->Resource);
   FsdFreePool(ffss_super_block);
 }
@@ -377,7 +407,7 @@ FsdFreeFcb (
 
     FsdFreePool(Fcb->AnsiFileName.Buffer);
 
-	FsdFreeFFSSInode(Fcb->ffss_inode);
+	FsdFreeFFSSInode(Fcb->ffss_inode,true);
 
     FsdFreePool(Fcb);
 }

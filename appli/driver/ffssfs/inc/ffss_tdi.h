@@ -17,6 +17,9 @@
 #ifndef _FFSS_TDI_H_
 #define _FFSS_TDI_H_
 
+#define FFSS_MASTER_IP "172.17.64.3"
+//#define FFSS_MASTER_IP "192.168.223.1"
+
 #ifdef __cplusplus
 
 #include <vdw.h>
@@ -124,7 +127,15 @@ private:
 extern FfssUDP *pUDP;
 
 extern "C" {
+#if DBG
+PVOID FsdAllocatePool (IN POOL_TYPE PoolType,IN ULONG NumberOfBytes,IN ULONG Tag);
+VOID FsdFreePool (IN PVOID p);
+#else // !DBG
+#define FsdAllocatePool(PoolType, NumberOfBytes, Tag) ExAllocatePool(PoolType, NumberOfBytes)
+#define FsdFreePool(p) ExFreePool(p)
+#endif // !DBG
 #endif /* __cplusplus */
+
 #undef malloc
 #undef free
 #define malloc(NumberOfBytes) ExAllocatePool(NonPagedPool,NumberOfBytes)
@@ -152,9 +163,9 @@ extern struct ffss_super_block *FFSS_SuperBlock;
 #define LOCK_SUPERBLOCK_RESOURCE ExAcquireResourceExclusiveLite(&FFSS_SuperBlock->Resource,TRUE)
 #define UNLOCK_SUPERBLOCK_RESOURCE ExReleaseResourceForThreadLite(&FFSS_SuperBlock->Resource,ExGetCurrentResourceThread())
 
-struct ffss_inode *FsdAllocInode(void);
-struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode);
-VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode);
+struct ffss_inode *FsdAllocInode(const char Name[]);
+struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock);
+VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock);
 
 
 NTSTATUS TDI_Init();

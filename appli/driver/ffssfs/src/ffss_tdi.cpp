@@ -13,6 +13,9 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+/*#include "ntifs.h"
+#include "fsd.h"
+#include "ffss_fs.h"*/
 #include <ffss_tdi.h>
 
 /* ********************************************************************** */
@@ -34,12 +37,22 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
   {
     for(i=0;i<FFSS_SuperBlock->NbDomains;i++)
     {
-      FsdFreeFFSSInode(FFSS_SuperBlock->Domains[i]);
+      FsdFreeFFSSInode(FFSS_SuperBlock->Domains[i],false);
     }
-    FsdFreePool(FFSS_SuperBlock->Domains);
+    //FsdFreePool(FFSS_SuperBlock->Domains);
+    FFSS_SuperBlock->Domains = NULL;
+    FFSS_SuperBlock->NbDomains = 0;
   }
 
-  //Inode = FsdAllocInode();
+  if(NbDomains != 0)
+  {
+    FFSS_SuperBlock->Domains = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'puSR');
+    for(i=0;i<NbDomains;i++)
+    {
+      FFSS_SuperBlock->Domains[i] = FsdAssignFFSSInode(FsdAllocInode(Domains[i]),false);
+    }
+    FFSS_SuperBlock->NbDomains = NbDomains;
+  }
   UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
