@@ -42,6 +42,7 @@
 #define FMP_ERRCODE_TRANSFER_CHECKSUM       26
 #define FMP_ERRCODE_TRANSFER_CANCELED       27
 #define FMP_ERRCODE_TRANSFER_SUSPENDED      28
+#define FMP_ERRCODE_REMOTE_CLOSED           29
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +94,7 @@ char *FMP_GetLastError(void);
 void FMP_ListPaths(struct FMP_SFile *File,FFSS_LongField UserTag,FMP_LISTPATHS_CB Func); /* 'UserTag' is passed back in Func */
 FFSS_Field FMP_GetBlocsCount(struct FMP_SFile *File);
 bool FMP_GetBlocInfos(struct FMP_SFile *File,FFSS_Field Idx,FFSS_Field *State,FFSS_LongField *Pos); /* False if failed : Use FMP_GetLastError for more infos */
+FFSS_Field FMP_GetPathState(struct FMP_SPath *Path); /* Returns current Path state */
 char *FMP_GetName(void);
 char *FMP_GetVersion(void);
 char *FMP_GetCopyright(void);

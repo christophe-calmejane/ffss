@@ -799,7 +799,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
     }
 
     /* EOF - Disconnecting */
-    if(!Path->MustCancel && Path->MustPause)
+    if(!Path->MustCancel && !Path->MustPause)
       Path->State = FMP_PATH_STATE_NOT_CONNECTED;
     FC_SendMessage_Disconnect(Path->Server);
     Path->Server = NULL;
