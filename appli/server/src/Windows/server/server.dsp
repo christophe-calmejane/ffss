@@ -127,6 +127,10 @@ SOURCE=..\..\server.h
 
 SOURCE=.\icon1.ico
 # End Source File
+# Begin Source File
+
+SOURCE=".\server-icon.rc"
+# End Source File
 # End Group
 # End Target
 # End Project
