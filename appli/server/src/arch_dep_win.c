@@ -328,3 +328,4 @@ void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
   SU_RB_DelValue(tmp);
   Plugin->Startup = false;
 }
+

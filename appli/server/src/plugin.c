@@ -91,6 +91,11 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
     FFSS_PrintSyslog(LOG_ERR,"Error in Plugin_Init function for %s\n",Name);
     return NULL;
   }
+  if(Pl->size != sizeof(FS_TPlugin))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Plugin_Init function returned a wrong sized FS_PPlugin... rebuild plugin %s\n",Name);
+    return NULL;
+  }
   Pl->Handle = handle;
   Pl->Path = strdup(Name);
   SU_SEM_WAIT(FS_SemPlugin);

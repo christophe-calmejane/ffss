@@ -7,7 +7,8 @@
 #define false 0
 #include <stdio.h>*/
 #include "server.h"
-FS_TShare TmpShr;
+FS_TShare TmpShr = {0,};
+FS_PPlugin Pl;
 int line;
 extern FILE *yyin;
 int yyerror (char *s);
@@ -31,6 +32,40 @@ void FS_MakeTempoUser(const char Login[],const char Password[],bool Writeable)
   Usr->Password = strdup(Password);
   Usr->Writeable = Writeable;
   TmpShr.Users = SU_AddElementHead(TmpShr.Users,Usr);
+}
+
+typedef struct
+{
+  char *IP;
+  char *Mask;
+  char *Name;
+  FFSS_FILTER_CHAIN Chain;
+  FFSS_FILTER_ACTION Action;
+  bool Default;
+} FS_TmpRule;
+FS_TmpRule TmpRule = {0,};
+
+void FS_FreeTempoRule(void)
+{
+  if(TmpRule.IP != NULL)
+    free(TmpRule.IP);
+  if(TmpRule.Mask != NULL)
+    free(TmpRule.Mask);
+  if(TmpRule.Name != NULL)
+    free(TmpRule.Name);
+  memset(&TmpRule,0,sizeof(TmpRule));
+}
+
+bool FS_AddFilterRule()
+{
+  bool res;
+
+  if(TmpRule.Default)
+    res =  FFSS_Filter_AddDefaultRuleToChain(TmpRule.Chain,TmpRule.Action);
+  else
+    res = FFSS_Filter_AddRuleToChain_Tail(TmpRule.Chain,TmpRule.IP,TmpRule.Mask,TmpRule.Action,TmpRule.Name);
+  FS_FreeTempoRule();
+  return res;
 }
 
 %}
@@ -67,6 +102,13 @@ void FS_MakeTempoUser(const char Login[],const char Password[],bool Writeable)
 %token MAXXFERCONN
 %token FTP_MAXCONN
 %token USERS
+%token FILTER
+%token FILTER_UDP
+%token FILTER_TCP
+%token FILTER_TCP_FTP
+%token FILTER_ACCEPT
+%token FILTER_REJECT
+%token FILTER_DEFAULT
 
 %% /* Grammar rules and actions follow */
 
@@ -101,8 +143,9 @@ fieldlineglobal:   NAME STRING                               { FS_MyGlobal.Name 
                  | INTNAME STRING                            { FS_MyIntName = strdup($2); }
                  | READSIZE NUM                              { FFSS_TransferReadBufferSize = (long int)($2); }
                  | XFERSIZE NUM                              { FFSS_TransferBufferSize = (long int)($2); }
-                 | PLUGIN STRING                             { FS_LoadPlugin($2); }
+                 | PLUGIN STRING                             { Pl = FS_LoadPlugin($2); if(Pl != NULL) Pl->Startup = true; }
                  | DBG NUM                                   { N_DebugLevel = (int)($2); }
+                 | FILTER rule                               { if(!FS_AddFilterRule()) yyerror("Error adding filter rule"); }
 ;
 
 fieldline:         PATH STRING                               { TmpShr.Path = strdup($2); }
@@ -111,6 +154,20 @@ fieldline:         PATH STRING                               { TmpShr.Path = str
                  | PRIVATE NUM                               { TmpShr.Private = (int)($2); }
                  | MAXCONN NUM                               { TmpShr.MaxConnections = (int)($2); }
                  | USERS users
+;
+
+rule:   type STRING STRING action                            { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3);}
+      | type STRING STRING action STRING                     { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3);TmpRule.Name = strdup($5);}
+      | FILTER_DEFAULT type STRING STRING action             { TmpRule.IP = strdup($3);TmpRule.Mask = strdup($4);TmpRule.Default = true;}
+;
+
+type:   FILTER_UDP                                           { TmpRule.Chain = FFSS_FILTER_CHAINS_SERVER_UDP_PACKET; }
+      | FILTER_TCP                                           { TmpRule.Chain = FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION; }
+      | FILTER_TCP_FTP                                       { TmpRule.Chain = FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION; }
+;
+
+action:   FILTER_ACCEPT                                      { TmpRule.Action = FFSS_FILTER_ACTION_ACCEPT; }
+        | FILTER_REJECT                                      { TmpRule.Action = FFSS_FILTER_ACTION_REJECT; }
 ;
 
 users:   L_BRACE usersrec R_BRACE

@@ -32,6 +32,15 @@ extern int line;
 "MaxXFerConnections" { return MAXXFERCONN; }
 "FTP_MaxConnections" { return FTP_MAXCONN; }
 "Users"              { return USERS; }
+"Filter"             { return FILTER; }
+"udp"                { return FILTER_UDP; }
+"tcp"                { return FILTER_TCP; }
+"tcp_ftp"            { return FILTER_TCP_FTP; }
+"accept"             { return FILTER_ACCEPT; }
+"reject"             { return FILTER_REJECT; }
+"default"            { return FILTER_DEFAULT; }
+
+
 [A-Za-z][A-Za-z0-9_]* { yylval = (void *)strdup(yytext); return STRING; }
 \"[^"]*              { if (yytext[yyleng-1] == '\\')
                          yymore();

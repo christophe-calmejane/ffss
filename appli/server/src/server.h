@@ -178,6 +178,7 @@ typedef struct
 
 typedef struct
 {
+  FFSS_Field size; /* Size of this structure... must be set by plugin */
   char *Path;      /* Set and freed by server */
   char *Name;      /* Set and freed by plugin */
   char *Copyright; /* Set and freed by plugin */
@@ -231,6 +232,7 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[]);
 
 /* Assumes FS_SemGbl is locked */
 char *FS_CheckGlobal(void);
+bool FS_ShutDown();
 
 /* Assumes FS_SemShr is locked */
 FS_PShare FS_GetShareFromName(const char Name[]);

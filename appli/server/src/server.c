@@ -463,24 +463,6 @@ bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,co
 }
 
 /* UDP callbacks */
-bool OnCheckPacket(const char IP[])
-{
-  bool ret = true;
-  SU_PList Ptr;
-
-  SU_SEM_WAIT(FS_SemPlugin);
-  Ptr = FS_Plugins;
-  while(Ptr != NULL)
-  {
-    if(((FS_PPlugin)Ptr->Data)->CB.OnCheckPacket != NULL)
-      ret &= ((FS_PPlugin)Ptr->Data)->CB.OnCheckPacket(IP);
-    Ptr = Ptr->Next;
-  }
-  SU_SEM_POST(FS_SemPlugin);
-
-  return ret;
-}
-
 void OnPing(struct sockaddr_in Master)
 {
   SU_PList Ptr;
@@ -711,7 +693,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
 void OnBeginTCPThread(SU_PClientSocket Client,void *Info)
 { /* This is the first callback in the new client-server connection thread */
   FS_PThreadSpecific ts = (FS_PThreadSpecific) Info;
-  
+
   SU_SEM_WAIT(FS_SemShr);
   FS_GetThreadSpecific(true); /* Only called to create the ts key */
   SU_THREAD_SET_SPECIFIC(FS_tskey,ts); /* Now, really set the struct in the key */
@@ -1707,26 +1689,6 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_Long
   }
 }
 
-/* Check all incoming TCP connections here */
-bool FS_CheckConn(const char IP[])
-{
-  bool ret = true;
-  SU_PList Ptr;
-
-  /* Check authorized connections here */
-  SU_SEM_WAIT(FS_SemPlugin);
-  Ptr = FS_Plugins;
-  while(Ptr != NULL)
-  {
-    if(((FS_PPlugin)Ptr->Data)->CB.OnCheckConnection != NULL)
-      ret &= ((FS_PPlugin)Ptr->Data)->CB.OnCheckConnection(IP);
-    Ptr = Ptr->Next;
-  }
-  SU_SEM_POST(FS_SemPlugin);
-
-  return ret;
-}
-
 /* FTP callbacks */
 bool OnConnectionFTP(SU_PClientSocket Client)
 {
@@ -1735,10 +1697,6 @@ bool OnConnectionFTP(SU_PClientSocket Client)
   SU_PList Ptr;
 
   FFSS_PrintDebug(1,"Received a FTP CONNECTION message\n");
-
-  /* Check here if IP is correct */
-  if(FS_CheckConn(inet_ntoa(Client->SAddr.sin_addr)) == false)
-    return false;
 
   /* Creates a new ts */
   SU_SEM_WAIT(FS_SemShr);
@@ -2933,7 +2891,6 @@ int main(int argc,char *argv[])
   {
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
     /* UDP callbacks */
-    FFSS_CB.SCB.OnCheckPacket = OnCheckPacket;
     FFSS_CB.SCB.OnPing = OnPing;
     FFSS_CB.SCB.OnStateAnswer = OnStateAnswer;
     FFSS_CB.SCB.OnServerSearch = OnServerSearch;
@@ -2959,7 +2916,6 @@ int main(int argc,char *argv[])
     FFSS_CB.SCB.OnTransferFailed = OnTransferFailed;
     FFSS_CB.SCB.OnTransferSuccess = OnTransferSuccess;
     FFSS_CB.SCB.OnTransferActive = OnTransferActive;
-    FFSS_CB.SCB.OnCheckConnection = FS_CheckConn;
     /* Streaming callbacks */
     FFSS_CB.SCB.OnStrmOpen = OnStrmOpen;
     FFSS_CB.SCB.OnStrmClose = OnStrmClose;
