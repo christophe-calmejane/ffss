@@ -67,6 +67,11 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         FM_MyDomain.Name = strdup(Value);
       else if(strcasecmp(Name,"Interface") == 0)
         Int = strdup(Value);
+      else if(strcasecmp(Name,"Bcast") == 0)
+      {
+        FFSS_AddBroadcastAddr(Value);
+        FFSS_PrintSyslog(LOG_WARNING,"Adding %s as broadcast address\n",Value);
+      }
     }
   }
 
@@ -83,13 +88,29 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
       FFSS_PrintSyslog(LOG_ERR,"Config Loader : No domain specified for local domain\n");
       return false;
     }
+    if(Int != NULL)
+    {
+      if(getuid() == 0)
+      {
+        if(setsockopt(FM_SI_UDP->sock,SOL_SOCKET,SO_BINDTODEVICE,Int,strlen(Int)+1) == SOCKET_ERROR)
+          FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s : %s\n",Int,strerror(errno));
+        else
+          FFSS_PrintSyslog(LOG_WARNING,"Entering limited bind mode to %s\n",Int);
+      }
+      else
+        FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot bind to %s only\n",Int);
+    }
     if(FM_MyDomain.Master == NULL)
     {
       context;
       if(Int == NULL)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"Config Loader : No network interface defined... using eth0\n");
+#ifdef __BSD__
+        Int = strdup("xl0");
+#elif __linux__
         Int = strdup("eth0");
+#endif /* __BSD__ */
+        FFSS_PrintSyslog(LOG_WARNING,"Config Loader : No network interface defined... using %s\n",Int);
       }
       if(!FFSS_GetMyIP(FM_SI_UDP,Int))
       {

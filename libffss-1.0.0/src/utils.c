@@ -19,6 +19,7 @@ char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","
 
 SU_THREAD_KEY_HANDLE FFSS_Context_tskey;
 SU_THREAD_ONCE_HANDLE FFSS_Context_once = SU_THREAD_ONCE_INIT;
+SU_PList FFSS_Broadcast = NULL; /* char * */
 
 typedef struct
 {
@@ -237,6 +238,31 @@ bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[])
 #endif /* __unix__ */
 }
 
+void FFSS_AddBroadcastAddr(const char Addr[])
+{
+  FFSS_Broadcast = SU_AddElementTail(FFSS_Broadcast,strdup(Addr));
+}
+
+int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port)
+{
+  int res=len,v;
+  SU_PList Ptr;
+
+  if(FFSS_Broadcast == NULL)
+    return SU_UDPSendBroadcast(SI,Text,len,port);
+  else
+  {
+    Ptr = FFSS_Broadcast;
+    while(Ptr != NULL)
+    {
+      v = SU_UDPSendToAddr(SI,Text,len,(char *)Ptr->Data,port);
+      if(v == SOCKET_ERROR)
+        res = v;
+      Ptr = Ptr->Next;
+    }
+  }
+  return res;
+}
 
 bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
 {

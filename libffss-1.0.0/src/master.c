@@ -4,7 +4,7 @@
 #include "utils.h"
 #include "common.h"
 
-SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP;
+SU_PServerInfo FM_SI_UDP=NULL,FM_SI_OUT_UDP=NULL;
 SU_THREAD_HANDLE FM_THR_UDP;
 
 void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
@@ -303,8 +303,10 @@ bool FM_UnInit(void)
   SU_TermThread(FM_THR_UDP);
   SU_ServerDisconnect(FM_SI_UDP);
   SU_ServerDisconnect(FM_SI_OUT_UDP);
-  free(FM_SI_UDP);
-  free(FM_SI_OUT_UDP);
+  if(FM_SI_UDP != NULL)
+    free(FM_SI_UDP);
+  if(FM_SI_OUT_UDP != NULL)
+    free(FM_SI_OUT_UDP);
   if(FFSS_MyIP != NULL)
     free(FFSS_MyIP);
   FFSS_PrintSyslog(LOG_INFO,"FFSS master shut down\n");

@@ -8,6 +8,10 @@
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+February, 3rd 2002:
+  - Added possibility to send bcast message to multiple sub-net
+  - Fixed possible bug in shutdown routines
+
 January, 25th 2002:
   - Added SU_WSInit/SU_WSUnint in lib init (for win32 app that forget to do it :)
 

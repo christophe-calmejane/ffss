@@ -1,33 +1,40 @@
 ### FFSS Master config file ###
 
-# Interface Line :
-#  Defines interface name to use (defaults to 'eth0')
+# Interface Line (Optional) :
+#  Defines interface name to bind only for (defaults to all interfaces)
 # Syntaxe :
 #  Interface <Interface Name>
 #Interface eth1
 
 
-# IP Line :
+# IP Line (Optional) :
 #  If you are using BSD, or if the autodetect of interface IP fails, manually define ip of your server
 # Syntaxe :
 #  MyIP <IP of the master>
 #MyIP 172.17.64.15
 
 
-# Domain Line :
+# Bcast Line (Optional) :
+#  If you have multiple interfaces (and so, sub-net), you must specify here the address of each bcast addr
+# Syntaxe :
+#  Bcast <IP of the broadcast>
+#Bcast 172.17.67.255
+
+
+# Domain Line (Mandatory) :
 #  Defines the name of your domain
 # Syntaxe :
 #  Domain <Domain Name>
 #Domain Lamers
 
 
-# Master Line :
+# Master Line (Optional) :
 #  Defines a foreign master
 # Syntaxe :
 #  Master <Domain Name>,<Master IP or HostName>
 #Master Lamers,lamers.lame.net
 
-# User/Group Lines :
+# User/Group Lines (Optional) :
 #  Defines the user and/or group to setid
 #  Defaults to User 'ffss' and group 'nogroup'
 User ffss

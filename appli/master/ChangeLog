@@ -7,6 +7,10 @@
 
 VIRER LE -PREx DE MASTER.H
 
+February, 3rd 2002:
+  - Fixed possible bug in shutdown routine
+  - Added possibility to bind only for a specified interface, and possibility to specify multiple sub-net for bcast messages
+
 January, 27th 2002:
   - Fixed bugs in master shutdown (really a better cleanup now)
   - Cleaned source code using SU functions for threads/sems

@@ -9,7 +9,11 @@ SU_THREAD_ONCE_HANDLE FS_once = SU_THREAD_ONCE_INIT;
 
 FS_TGlobal FS_MyGlobal;
 char *FS_MyDomain = "None";
+#ifdef __BSD__
+char *FS_MyIntName = "xl0";
+#else
 char *FS_MyIntName = "eth0";
+#endif
 int FS_MyState;
 char *FS_TimeTable[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 long int FS_CurrentStrmTag = 1;
@@ -1965,12 +1969,25 @@ bool FS_PowerUp(const char IntName[])
   {
     if(!FFSS_GetMyIP(FS_SI_TCP,IntName))
     {
-#ifdef DEBUG
-      printf("Couldn't find interface %s. Exiting\n",IntName); /* Mettre dans le syslog */
-#endif /* DEBUG */
+      FFSS_PrintSyslog(LOG_ERR,"Couldn't find interface %s. Exiting\n",IntName);
       FS_UnInit();
       return false;
     }
+    if(getuid() == 0)
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"Entering limited bind mode to %s\n",IntName);
+      if(setsockopt(FS_SI_TCP->sock,SOL_SOCKET,SO_BINDTODEVICE,IntName,strlen(IntName)+1) == SOCKET_ERROR)
+        FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s for TCP socket : %s\n",IntName,strerror(errno));
+      if(setsockopt(FS_SI_UDP->sock,SOL_SOCKET,SO_BINDTODEVICE,IntName,strlen(IntName)+1) == SOCKET_ERROR)
+        FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s for UDP socket : %s\n",IntName,strerror(errno));
+      if(FS_MyGlobal.FTP)
+      {
+        if(setsockopt(FS_SI_TCP_FTP->sock,SOL_SOCKET,SO_BINDTODEVICE,IntName,strlen(IntName)+1) == SOCKET_ERROR)
+          FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s for TCP_FTP socket : %s\n",IntName,strerror(errno));
+      }
+    }
+    else
+      FFSS_PrintSyslog(LOG_WARNING,"Warning : Server launched from a non-root user. Cannot bind to %s only\n",IntName);
     FS_MyGlobal.MyIP = FFSS_MyIP;
   }
   else

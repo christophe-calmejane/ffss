@@ -5,7 +5,7 @@
 #include "common.h"
 #include "transfer.h"
 
-SU_PServerInfo FC_SI_OUT_UDP;
+SU_PServerInfo FC_SI_OUT_UDP=NULL;
 SU_THREAD_HANDLE FC_THR_UDP;
 
 void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
@@ -732,7 +732,8 @@ bool FC_UnInit(void)
   FFSS_ShuttingDown = true;
   SU_TermThread(FC_THR_UDP);
   SU_ServerDisconnect(FC_SI_OUT_UDP);
-  free(FC_SI_OUT_UDP);
+  if(FC_SI_OUT_UDP != NULL)
+    free(FC_SI_OUT_UDP);
   if(FFSS_MyIP != NULL)
     free(FFSS_MyIP);
   FFSS_PrintSyslog(LOG_INFO,"FFSS client shut down\n");

@@ -49,7 +49,7 @@
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre72"
+#define FFSS_VERSION "1.0.0-pre73"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
@@ -924,6 +924,8 @@ char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out);
 bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out);
 char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out);
 #endif /* HAVE_BZLIB */
+/* Adds a broadcast address to send to, when using bcast send */
+void FFSS_AddBroadcastAddr(const char Addr[]);
 /* Returns FFSS library compilation options (FFSS_OPTIONS_xx) */
 int FFSS_GetFFSSOptions(void);
 

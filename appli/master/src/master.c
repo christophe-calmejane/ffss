@@ -919,7 +919,6 @@ int main(int argc,char *argv[])
   if(!FM_LoadConfigFile(ConfigFile,true)) /* Only get user and group */
   {
     FFSS_PrintSyslog(LOG_ERR,"Cannot open config file : %s\n",ConfigFile);
-    FM_UnInit();
     return -1;
   }
 #ifdef __unix__

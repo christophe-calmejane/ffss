@@ -42,4 +42,4 @@ TO DO :
 
  - Ajouter un nouveau type de paquet 'MessageBox sous win, mail @root sous nux' uniquement depuis le master.. au moment de la connect (au moment du check du protocole par ex)
 
- - BUG BUG : KILL -TERM sur server -> defunct... quitte pas !!
+[23:32:23] <kiki>  hum.. d ailleurs, faut que j ajoute un callback OnShutdown et OnStartup

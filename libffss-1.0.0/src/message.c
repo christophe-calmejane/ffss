@@ -388,7 +388,7 @@ bool FS_SendMessage_MasterSearch()
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
-  resp = SU_UDPSendBroadcast(FS_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
+  resp = FFSS_SendBroadcast(FS_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -791,7 +791,7 @@ bool FC_SendMessage_ServerSearch(void)
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Servers Search message to broadcast\n");
-  resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
+  resp = FFSS_SendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1255,7 +1255,7 @@ bool FC_SendMessage_MasterSearch()
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
-  resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
+  resp = FFSS_SendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1517,7 +1517,7 @@ bool FM_SendMessage_Ping()
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Ping message to servers\n");
-  resp = SU_UDPSendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
+  resp = FFSS_SendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
   free(msg);
   return (resp != SOCKET_ERROR);
 }
