@@ -793,7 +793,7 @@ struct FMP_SSearch *FMP_SearchFiles(const char Key[],FFSS_LongField UserTag)
   return Sch;
 }
 
-void FMP_ListPaths(struct FMP_SFile *File,void (*CB_ListPaths)(const struct FMP_SFile *File,const char IP[],const char Path[],FFSS_Field State))
+void FMP_ListPaths(struct FMP_SFile *File,FFSS_LongField UserTag,FMP_LISTPATHS_CB Func)
 {
   SU_PList Ptr;
   FMP_PPath Pth;
@@ -803,7 +803,7 @@ void FMP_ListPaths(struct FMP_SFile *File,void (*CB_ListPaths)(const struct FMP_
   while(Ptr != NULL)
   {
     Pth = (FMP_PPath) Ptr->Data;
-    CB_ListPaths(File,Pth->IP,Pth->FullPath,Pth->State);
+    Func(File,Pth->IP,Pth->FullPath,Pth->State,UserTag);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FMP_Sem_Search);

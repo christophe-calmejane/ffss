@@ -43,6 +43,7 @@ typedef struct
   void (*OnDownloadComplete)(FFSS_LongField UserTag,const char Name[],struct FMP_SFile *File); /* 'UserTag' and 'File' passed to FMP_StartDownload */
 } FMP_TCB, *FMP_PCB;
 
+typedef void (* FMP_LISTPATHS_CB)(const struct FMP_SFile *File,const char IP[],const char Path[],FFSS_Field State,FFSS_LongField UserTag);
 
 /* INIT / UNINIT FUNCTIONS */
 bool FMP_Init(const char Master[]); /* False if failed : Use FMP_GetLastError for more infos */ /* Overrides all FFSS_CB.CCB values */
@@ -51,19 +52,19 @@ void FMP_SetMaster(const char Master[]);
 void FMP_SetBlocSize(FFSS_Field BS);
 
 /* SEARCH FUNCTIONS */
-struct FMP_SSearch *FMP_SearchFiles(const char Key[],FFSS_LongField UserTag); /* UserTag is passed back in OnSearchAnswerXXX callbacks */
+struct FMP_SSearch *FMP_SearchFiles(const char Key[],FFSS_LongField UserTag); /* 'UserTag' is passed back in OnSearchAnswerXXX callbacks */
 void FMP_FreeSearch(struct FMP_SSearch *Sch); /* When you free a Search, Files returned by OnSearchAnswerItem cannot be used anymore for StartDownload and ListPaths, but active File download still go on */
 void FMP_FreeFile(struct FMP_SFile *File); /* Must be called after download finished (or canceled) */
 
 /* DOWNLOAD FUNCTIONS */
-bool FMP_StartDownload(struct FMP_SFile *File,const char DestFileName[],FFSS_LongField UserTag); /* UserTag is passed back in OnPacketReceived */ /* False if failed : Use FMP_GetLastError for more infos */
+bool FMP_StartDownload(struct FMP_SFile *File,const char DestFileName[],FFSS_LongField UserTag); /* 'UserTag' is passed back in OnPacketReceived */ /* False if failed : Use FMP_GetLastError for more infos */
 void FMP_CancelDownload();
 void FMP_PauseDownload();
 void FMP_ResumeDownload();
 
 /* QUERY INFOS FUNCTIONS */
 char *FMP_GetLastError();
-void FMP_ListPaths(struct FMP_SFile *File,void (*CB_ListPaths)(const struct FMP_SFile *File,const char IP[],const char Path[],FFSS_Field State));
+void FMP_ListPaths(struct FMP_SFile *File,FFSS_LongField UserTag,FMP_LISTPATHS_CB Func); /* 'UserTag' is passed back in Func */
 FFSS_Field FMP_GetBlocsCount(struct FMP_SFile *File);
 bool FMP_GetBlocInfos(struct FMP_SFile *File,FFSS_Field Idx,FFSS_Field *State,FFSS_LongField *Pos); /* False if failed : Use FMP_GetLastError for more infos */
 
