@@ -876,6 +876,8 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
   Node = &Share->Root;
   if((Path[0] != 0) && (Path[0] == '/'))
   {
+    if(Path[1] == 0)
+      return false;
     tmp = strdup(Path);
     tok = strtok_r(tmp,"/",&p);
     tok2 = NULL;

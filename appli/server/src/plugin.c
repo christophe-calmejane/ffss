@@ -57,6 +57,10 @@ void *FS_PluginQuery(int Type,...)
       SendMessage(FS_hwnd,WM_CLOSE,0,0);
       break;
 #endif /* _WIN32 */
+
+    case FSPQ_DBG_FLAGS : /* (int DebugFlags) */
+      N_DebugLevel = va_arg(ap, int);
+      break;
   }
   va_end(ap);
   return ret;

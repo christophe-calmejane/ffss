@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : July, 22th 2002
+                  Last Update : August, 2th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+August, 2nd 2002:
+  - Fixed a segfault (and possible DoS) in download/strmOpen functions
 
 July, 22th 2002:
   - Upgraded to new protocol

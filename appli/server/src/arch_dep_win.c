@@ -54,7 +54,7 @@ bool FS_LoadConfig(const char FileName[])
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "ServerDirectory",Path);
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",GetCurrentProcessId());
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",FFSS_VERSION);
-N_DebugLevel = 0;
+N_DebugLevel = 6;
   FS_MyGlobal.ConfSock = true;
   FFSS_PrintDebug(5,"Loading config from registry\n");
   SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "ShareNames",Shares,sizeof(Shares),"");

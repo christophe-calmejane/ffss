@@ -1549,7 +1549,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
     if(len > sizeof(Buffer))
       len = sizeof(Buffer);
 #ifdef DEBUG
-    printf("Reading %ld bytes from file\n",len);
+    printf("Reading %ld bytes from file starting at %ld\n",len,StartPos);
 #endif /* DEBUG */
     res = fread(Buffer,1,len,FS->fp);
     if(res == 0)
