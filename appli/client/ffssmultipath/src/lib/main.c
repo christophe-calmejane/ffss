@@ -28,22 +28,22 @@ void SearchAnswerEnd(struct FMP_SSearch *Sch,FFSS_LongField UserTag)
 }
 
 
-void OnError(FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode) /* 'UserTag' passed to FMP_StartDownload */
+void OnError(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode) /* 'UserTag' and 'File' passed to FMP_StartDownload */
 {
   printf("Error : %ld at Idx %ld from %s for %s\n",ErrorCode,Idx,IP,Name);
 }
 
-void OnPacketReceived(FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket) /* 'UserTag' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+void OnPacketReceived(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
 {
   printf("Packet received for Idx %ld from %s - Size = %ld\n",Idx,IP,SizeOfPacket);
 }
 
-void OnBlocComplete(FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[]) /* 'UserTag' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+void OnBlocComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[]) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
 {
   printf("Bloc complete for Idx %ld from %s\n",Idx,IP);
 }
 
-void OnDownloadComplete(FFSS_LongField UserTag,const char Name[],struct FMP_SFile *File) /* 'UserTag' passed to FMP_StartDownload */
+void OnDownloadComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const char Name[]) /* 'UserTag' and 'File' passed to FMP_StartDownload */
 {
   printf("Download complete for file %s\n",Name);
   FMP_FreeFile(File);

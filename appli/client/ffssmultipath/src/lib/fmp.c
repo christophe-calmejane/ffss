@@ -450,22 +450,22 @@ void FFSS_OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],FFSS_Field 
   {
     case FFSS_ERROR_SERVER_IS_QUIET :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_SERVER_IS_QUIET);
+        FMP_CB.OnError(Pth->File,Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_SERVER_IS_QUIET);
       break;
     case FFSS_ERROR_ACCESS_DENIED :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_ACCESS_DENIED);
+        FMP_CB.OnError(Pth->File,Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_ACCESS_DENIED);
       break;
     case FFSS_ERROR_FILE_NOT_FOUND :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_FILE_NOT_FOUND);
+        FMP_CB.OnError(Pth->File,Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_FILE_NOT_FOUND);
       break;
     case FFSS_ERROR_NO_ERROR :
       Pth->Error = false;
       break;
     default :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
+        FMP_CB.OnError(Pth->File,Pth->File->UserTag,0,Pth->IP,Pth->FullPath,Pth->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
   }
   if(Pth->Locked)
     SU_SEM_POST(Pth->Sem);
@@ -486,15 +486,15 @@ void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char 
       break;
     case FFSS_ERROR_BAD_HANDLE :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_BAD_FILE_HANDLE);
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_BAD_FILE_HANDLE);
       Error = true;
     case FFSS_ERROR_IO_ERROR :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_IO_ERROR);
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_IO_ERROR);
       Error = true;
     default :
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
       Error = true;
   }
   if(Error)
@@ -510,7 +510,7 @@ void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char 
   }
 
   if((FMP_CB.OnPacketReceived != NULL) && (BlocSize != 0))
-    FMP_CB.OnPacketReceived(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,BlocSize);
+    FMP_CB.OnPacketReceived(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,BlocSize);
 
   SU_SEM_WAIT(FMP_Sem_Blocs);
   Path->State = FMP_PATH_STATE_TRANSFERING;
@@ -523,7 +523,7 @@ void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char 
     if(fwrite(Bloc,1,BlocSize,Path->File->fp) != BlocSize)
     {
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_WRITE_ERROR);
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_WRITE_ERROR);
       Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
       SU_SEM_POST(FMP_Sem_Blocs);
       if(Path->Locked)
@@ -540,7 +540,7 @@ void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char 
   if(BlocSize == 0) /* End of file or bloc */
   {
     if(FMP_CB.OnBlocComplete != NULL)
-      FMP_CB.OnBlocComplete(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name);
+      FMP_CB.OnBlocComplete(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name);
     SU_SEM_WAIT(FMP_Sem_Blocs);
     Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_GOT;
     SU_SEM_POST(FMP_Sem_Blocs);
@@ -602,7 +602,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
   while(SU_CreateSem(&Path->Sem,1,1,NULL) == false)
   {
     if(FMP_CB.OnError != NULL)
-      FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SEMAPHORE_CREATE_ERROR);
+      FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SEMAPHORE_CREATE_ERROR);
     SU_SLEEP(FMP_DELAY_RETRY_SEM); /* Retry in 30 sec */
   }
   Path->Locked = false;
@@ -626,7 +626,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
         Path->Locked = false;
         SU_SEM_POST(Path->Sem);
         if(FMP_CB.OnError != NULL)
-          FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_HOST_DOWN);
+          FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_HOST_DOWN);
         SU_SLEEP(FMP_DELAY_RETRY_RECO); /* Retry in 2 min */
         continue;
       }
@@ -636,7 +636,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
       if(Path->State != FMP_PATH_STATE_NOT_CONNECTED)
         break;
       if(FMP_CB.OnError != NULL)
-        FMP_CB.OnError(Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_CONNECT_FAILED);
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->Idx,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_CONNECT_FAILED);
       FC_SendMessage_Disconnect(Path->Server);
       Path->Server = NULL;
       Path->Handle = 0;
@@ -707,7 +707,7 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
 	fclose(Path->File->fp);
         SU_SEM_POST(FMP_Sem_Search);
         if(FMP_CB.OnDownloadComplete != NULL)
-          FMP_CB.OnDownloadComplete(Path->File->UserTag,Path->File->Name,Path->File);
+          FMP_CB.OnDownloadComplete(Path->File,Path->File->UserTag,Path->File->Name);
         SU_SEM_WAIT(FMP_Sem_Search);
       }
       FMP_FreeFile_internal(Path->File);
