@@ -74,6 +74,9 @@ typedef struct
 	void (*pre_file_exec)(const char *prefx, const char *name, bool isName);
 	void (*post_file_exec)(bool isName);
 	
+	bool (*pre_path)(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
+	void (*post_path)(bool isName);
+	
 	void (*post_listing)(char *path);
 	void (*post_search_ans)(const char *query);
 	
@@ -207,6 +210,9 @@ void FCA_post_file(bool isName);
 	
 void FCA_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_post_file_exec(bool isName);
+
+bool FCA_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
+void FCA_post_path(bool isName);
 
 void FCA_post_listing(char *path);
 void FCA_post_search_ans(const char *query);

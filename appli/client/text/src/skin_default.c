@@ -61,6 +61,9 @@ void FCA_def_post_dir(bool isName);
 void FCA_def_pre_file(const char *prefx, const char *name, bool isName);
 void FCA_def_post_file(bool isName);
 
+bool FCA_def_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
+void FCA_def_post_path(bool isName);
+
 void FCA_def_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_def_post_file_exec(bool isName);
 
@@ -116,6 +119,9 @@ void FCA_default_init()
 
 	FCA_def_ps.pre_file=FCA_def_pre_file;
 	FCA_def_ps.post_file=FCA_def_post_file;
+	
+	FCA_def_ps.pre_path=FCA_def_pre_path;
+	FCA_def_ps.post_path=FCA_def_post_path;
 	
 	FCA_def_ps.pre_file_exec=FCA_def_pre_file_exec;
 	FCA_def_ps.post_file_exec=FCA_def_post_file_exec;
@@ -367,6 +373,34 @@ void FCA_def_post_file(bool isName)
 void FCA_def_pre_file_exec(const char *prefx, const char *name, bool isName)
 {
 	FCA_ansi_chs(32);	/* green */
+}
+
+bool FCA_def_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir)
+{
+	unsigned int col, style;
+	
+	if(state & FFSS_STATE_OFF) {
+		col=33;
+		style=33;
+	} else if(state & FFSS_STATE_QUIET) {
+		col=36;
+		style=36;
+	} else {
+		col=37;
+		style=37;
+	}
+	if(isSamba) {
+		col=35;
+		style=35;
+	}
+	FCA_ansi_chs(col);
+	FCA_ansi_chs(style);
+	return false;
+}
+
+void FCA_def_post_path(bool isName)
+{
+	FCA_ansi_chs(0);
 }
 
 void FCA_def_post_file_exec(bool isName)

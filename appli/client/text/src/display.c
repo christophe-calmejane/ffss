@@ -467,10 +467,9 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 
 void FCA_print_search(const char *Query,const char *Domain,const char **Answers,int NbAnswers)
 {
-	int ia;
+	int ia, nbav=0, nbsmb=0, nbfiles=0, state;
 	char tmp[128], tmp2[128], **buf=(char**)Answers;
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
-	const char *p;
 	int *res=NULL;
 #ifdef BENCHMARK
 	struct timeb now;
@@ -503,32 +502,48 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		FCA_tab_untitle();
 		
 		FCA_tab_pre_stitle();
-		FCA_tab_stitle("Answer", 0);
-		FCA_tab_stitle("", 28);
+		 FCA_tab_stitle("State", 5);
+		  FCA_tab_int_stitle();
+		 FCA_tab_stitle("Answer", 0);
+		 FCA_tab_stitle("", 25);
 		FCA_tab_post_stitle();
 		
 		FCA_tab_pre_bar();
-		FCA_tab_bar(36);
+		 FCA_tab_bar(5);FCA_tab_int_bar();FCA_tab_bar(36);
 		FCA_tab_post_bar();
 	}
 	
 	if(!FCA_quiet) {
 		snprintf(dom, FFSS_MAX_DOMAIN_LENGTH+2, "/$/%s", Domain);
 		for(ia=0; ia<NbAnswers; ia++) {
+			state=*(buf[res[ia]]-1);
 			FCA_tab_pre_item();
 			 FCA_pre_tab_item();
-			p=strrchr(buf[res[ia]], '/');
-			if(!p)	p=buf[res[ia]];
-			if(!strchr(p, '.')) {
-				  FCA_pre_dir(dom, buf[res[ia]], true);
-				   FCA_tab_item(buf[res[ia]],0);
-				  FCA_post_dir(true);
-			} else {
-				  FCA_pre_file(dom, buf[res[ia]], true);
-				   FCA_tab_item(buf[res[ia]],0);
-				  FCA_post_file(true);
+			  FCA_pre_path(Domain, buf[res[ia]], state, false,
+			   state & FFSS_SEARCH_IS_SAMBA, !(state & FFSS_SEARCH_IS_FILE));
+			  FCA_post_path(false);
+			if( state & FFSS_STATE_ON ) {
+			 	FCA_tab_item("on", 5);
+				nbav++;
+			} else if( state & FFSS_STATE_OFF )
+				FCA_tab_item("off", 5);
+			else if( state & FFSS_STATE_QUIET )
+				FCA_tab_item("quiet", 5);
+			else {
+				FCA_tab_item("samba", 5);
+				nbsmb++;
 			}
-			 FCA_post_tab_item();
+			if(state & FFSS_SEARCH_IS_FILE)
+				nbfiles++;
+			 FCA_post_tab_item();FCA_tab_int_item();
+			  FCA_pre_tab_item();
+			  if(! FCA_pre_path(Domain, buf[res[ia]], *(buf[res[ia]]-1), true,
+			   *(buf[res[ia]]-1) & FFSS_SEARCH_IS_SAMBA, !(*(buf[res[ia]]-1) & FFSS_SEARCH_IS_FILE)) )
+			  	FCA_tab_item(buf[res[ia]], 0);
+			  else
+			  	FCA_tab_item("", 0);
+			  FCA_post_path(true);
+			  FCA_post_tab_item();
 			FCA_tab_post_item();
 		}
 	
@@ -540,8 +555,22 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		FCA_infos(" founds");
 	else
 		FCA_infos(" found");
-	if(NbAnswers)	/* no anwser on any domain */
-	    	FCA_infos(" in domain %s.", Domain);
+	if(NbAnswers) {
+		FCA_infos(" (");
+		FCA_num(nbfiles, "file");
+		FCA_infos(", ");
+		FCA_num(NbAnswers-nbfiles, "folder");
+		if(nbav) {
+			if(nbav==NbAnswers)
+				FCA_infos(", all available");
+			else
+				FCA_infos(", %d available", nbav);
+		} else
+			FCA_infos(", nothing available");
+		if(nbsmb)
+			FCA_infos(", %d on samba", nbsmb);
+	    	FCA_infos(") in domain %s.", Domain);
+	}
 	FCA_post_infos();
 
 #ifdef BENCHMARK

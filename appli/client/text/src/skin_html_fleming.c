@@ -67,6 +67,9 @@ void FCA_htmlfl_post_file(bool isName);
 void FCA_htmlfl_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_htmlfl_post_file_exec(bool isName);
 
+bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
+void FCA_htmlfl_post_path(bool isName);
+
 void FCA_htmlfl_post_listing(char *path);
 void FCA_htmlfl_post_search_ans(const char *query);
 
@@ -130,6 +133,9 @@ void FCA_htmlfl_init()
 
 	FCA_htmlfl_ps.pre_file_exec=FCA_htmlfl_pre_file_exec;
 	FCA_htmlfl_ps.post_file_exec=FCA_htmlfl_post_file_exec;
+	
+	FCA_htmlfl_ps.pre_path=FCA_htmlfl_pre_path;
+	FCA_htmlfl_ps.post_path=FCA_htmlfl_post_path;
 
 	FCA_htmlfl_ps.post_listing=FCA_htmlfl_post_listing;
 	FCA_htmlfl_ps.post_search_ans=FCA_htmlfl_post_search_ans;
@@ -208,7 +214,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
 </table>
 <center>
  <h2>
-  ");FCA_sep_link(path);printf("
+  ");FCA_sep_link(path, "");printf("
  </h2>
 </center>
 </form>
@@ -482,6 +488,41 @@ void FCA_htmlfl_post_file_exec(bool isName)
 	if(isName)
 		printf("</a>*");
 }
+
+bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir)
+{
+	char *all;
+	char dom[FFSS_MAX_FILEPATH_LENGTH];
+	
+	if(state==FFSS_STATE_OFF)
+		printf("<font color=gray>");
+	else if(state==FFSS_STATE_QUIET)
+		printf("<font color=brown>");
+	else
+		printf("<font color=black>");
+	
+	if(isName) {
+		if(state!=FFSS_STATE_OFF) {
+			all=strdup(path);
+			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s", domain);
+			if(isSamba)
+				FCA_smb_sep_link(all);
+			else
+				FCA_sep_link(all, dom);
+			if(all)
+				free(all);
+		}
+	}
+	return true;
+}
+
+void FCA_htmlfl_post_path(bool isName)
+{
+	printf("</font>");
+	if(isName)
+		printf("</a>");
+}
+
 
 void FCA_htmlfl_post_listing(char *path)
 {

@@ -325,6 +325,19 @@ void FCA_post_file_exec(bool isName)
 		FCA_skin->ps->post_file_exec(isName);
 }
 
+bool FCA_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir)
+{
+	if(FCA_skin->ps->pre_path)
+		return FCA_skin->ps->pre_path(domain, path, state,isName, isSamba, isDir);
+	return false;
+}
+
+void FCA_post_path(bool isName)
+{
+	if(FCA_skin->ps->post_path)
+		FCA_skin->ps->post_path(isName);
+}
+
 void FCA_post_listing(char *path)
 {
 	if(FCA_skin->ps->post_listing)

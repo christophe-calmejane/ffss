@@ -66,6 +66,9 @@ void FCA_html_post_file(bool isName);
 void FCA_html_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_html_post_file_exec(bool isName);
 
+bool FCA_html_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
+void FCA_html_post_path(bool isName);
+
 void FCA_html_post_listing(char *path);
 void FCA_html_post_search_ans(const char *query);
 
@@ -126,6 +129,9 @@ void FCA_html_init()
 
 	FCA_html_ps.pre_file_exec=FCA_html_pre_file_exec;
 	FCA_html_ps.post_file_exec=FCA_html_post_file_exec;
+	
+	FCA_html_ps.pre_path=FCA_html_pre_path;
+	FCA_html_ps.post_path=FCA_html_post_path;
 
 	FCA_html_ps.post_listing=FCA_html_post_listing;
 	FCA_html_ps.post_search_ans=FCA_html_post_search_ans;
@@ -204,7 +210,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
 </table>
 <center>
  <h2>
-  ");FCA_sep_link(path);printf("
+  ");FCA_sep_link(path, "");printf("
  </h2>
 </center>
 ");
@@ -472,6 +478,41 @@ void FCA_html_post_file_exec(bool isName)
 		printf("</a>*");
 }
 
+bool FCA_html_pre_path(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir)
+{
+	char *all;
+	char dom[FFSS_MAX_FILEPATH_LENGTH];
+
+	if(state==FFSS_STATE_OFF)
+		printf("<font color=gray>");
+	else if(state==FFSS_STATE_QUIET)
+		printf("<font color=brown>");
+	else
+		printf("<font color=black>");
+	
+	if(isName) {
+		if(state!=FFSS_STATE_OFF) {
+			all=strdup(path);
+			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s", domain);
+			if(isSamba)
+				FCA_smb_sep_link(all);
+			else
+				FCA_sep_link(all, dom);
+			if(all)
+				free(all);
+		}
+	}
+	return true;
+}
+
+void FCA_html_post_path(bool isName)
+{
+	printf("</font>");
+	if(isName)
+		printf("</a>");
+}
+
+
 void FCA_html_post_listing(char *path)
 {
 
@@ -600,7 +641,42 @@ void FCA_my_url(bool isDownload)
 		);
 }
 
-void FCA_sep_link(char *path)
+void FCA_sep_link(char *path, char *prefx)
+{
+	char *p, *begin=path;
+	char p2[FFSS_MAX_FILEPATH_LENGTH];
+	
+	p=strchr(path, '/');
+	if(p==path)
+		p=strchr(path+1, '/');
+	if(!p) {
+		FCA_pre_link();
+		snprintf(p2, FFSS_MAX_FILEPATH_LENGTH-1, "%s%s", prefx, path);
+		FCA_dir_arg(p2, false);
+		FCA_post_link(true);
+		printf("%s</a>", path);
+		return;
+	}
+	while(p) {
+		*p='\0';
+		FCA_pre_link();
+		snprintf(p2, FFSS_MAX_FILEPATH_LENGTH-1, "%s%s", prefx, path);
+		FCA_dir_arg(p2, false);
+		FCA_post_link(false);
+		printf("%s</a>", begin);
+		
+		*p='/';
+		begin=p+1;
+		p=strchr(p+1, '/');
+		printf("/");
+	}
+	FCA_pre_link();
+	FCA_dir_arg(path, false);
+	FCA_post_link(false);
+	printf("%s</a>", begin);
+}
+
+void FCA_smb_sep_link(char *path)
 {
 	char *p, *begin=path;
 	
