@@ -54,9 +54,8 @@ typedef struct
 
 /* *************** Get Infos *************** */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client);
-/* Request info for the share defined by ShareName and SharePath.
-   If this couple doesn't exist, ShareNameIsAvailable indicates if ShareName is free to use */
-FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char ShareName[],const char SharePath[],bool *ShareNameIsAvailable);
+FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]);
+bool FSCA_RequestShareNameAvailable(SU_PClientSocket Client,const char ShareName[]);
 int FSCA_RequestStateInfo(SU_PClientSocket Client); /* -1 on error */
 SU_PList FSCA_RequestConns(SU_PClientSocket Client,const char Path[]); /* FSCA_PConn */
 SU_PList FSCA_RequestSharesList(SU_PClientSocket Client); /* FSCA_PShareLst */

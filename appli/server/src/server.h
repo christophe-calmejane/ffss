@@ -21,6 +21,7 @@
 #define FS_OPCODE_EJECT         12
 #define FS_OPCODE_GETSHRCONNS   13
 #define FS_OPCODE_EJECTIP       14
+#define FS_OPCODE_GETNAMEEVAIL  15
 #define FS_OPCODE_ACK           20
 #define FS_OPCODE_NACK          21
 

@@ -190,9 +190,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         break;
       case FS_OPCODE_GETSHARE :
         pos = 1;
-        s_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((s_n == NULL) || (s_p == NULL))
+        if(s_p == NULL)
         {
           error = true;
           break;
@@ -200,13 +199,9 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Share = FS_GetShareFromPath(s_p);
         if(Share == NULL)
         {
-          Size = 2;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          Size = 1;
           buf[0] = FS_OPCODE_NACK;
-          if(FS_GetShareFromName(s_n) != NULL)
-            buf[1] = FS_OPCODE_NACK;
-          else
-            buf[1] = FS_OPCODE_ACK;
+          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
@@ -220,6 +215,22 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->MaxConnections) + FS_GetIntLen(SU_ListCount(Share->Users)) + 4;
         Size = pos;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        break;
+      case FS_OPCODE_GETNAMEEVAIL :
+        pos = 1;
+        s_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        if(s_n == NULL)
+        {
+          error = true;
+          break;
+        }
+        Size = 1;
+        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        if(FS_GetShareFromName(s_n) != NULL)
+          buf[0] = FS_OPCODE_NACK;
+        else
+          buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_UPDTSHARE :

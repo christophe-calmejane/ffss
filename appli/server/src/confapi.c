@@ -112,7 +112,7 @@ FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
   return Gbl;
 }
 
-FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char ShareName[],const char SharePath[],bool *ShareNameIsAvailable)
+FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[])
 {
   char Buf[10000];
   FFSS_Field Size;
@@ -122,18 +122,10 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char ShareName[]
   /* Create request */
   Buf[0] = FS_OPCODE_GETSHARE;
   Size = 1;
-  SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
-  Size += strlen(ShareName) + 1;
   SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
   Size += strlen(SharePath) + 1;
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
-  {
-    if(Size == 1)
-      *ShareNameIsAvailable = (Buf[1] == FS_OPCODE_ACK);
-    else
-      *ShareNameIsAvailable = false;
     return NULL;
-  }
 
   Share = (FSCA_PShare) malloc(sizeof(FSCA_TShare));
   memset(Share,0,sizeof(FSCA_TShare));
@@ -149,6 +141,19 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char ShareName[]
   Share->MaxConn = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos) +1;
   return Share;
+}
+
+bool FSCA_RequestShareNameAvailable(SU_PClientSocket Client,const char ShareName[])
+{
+  char Buf[10000];
+  FFSS_Field Size;
+
+  /* Create request */
+  Buf[0] = FS_OPCODE_GETNAMEEVAIL;
+  Size = 1;
+  SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
+  Size += strlen(ShareName) + 1;
+  return FSCA_RequestAndReceive(Client,Buf,&Size);
 }
 
 int FSCA_RequestStateInfo(SU_PClientSocket Client) /* -1 on error */
