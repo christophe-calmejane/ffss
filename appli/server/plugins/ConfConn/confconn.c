@@ -215,7 +215,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
 
   /* Setting plugin infos */
   Pl->Name = CONFCONN_NAME;
-  Pl->Author = CONFCONN_COPYRIGHT;
+  Pl->Copyright = CONFCONN_COPYRIGHT;
   Pl->Version = CONFCONN_VERSION;
 
   /* Setting our callbacks */

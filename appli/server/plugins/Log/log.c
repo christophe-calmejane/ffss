@@ -234,7 +234,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 
   /* Setting plugin infos */
   Pl->Name = LOG_NAME;
-  Pl->Author = LOG_COPYRIGHT;
+  Pl->Copyright = LOG_COPYRIGHT;
   Pl->Version = LOG_VERSION;
 
   /* Setting our callbacks */

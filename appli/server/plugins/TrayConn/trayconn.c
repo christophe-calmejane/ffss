@@ -367,7 +367,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 
   /* Setting plugin infos */
   Pl->Name = TRAYCONN_NAME;
-  Pl->Author = TRAYCONN_COPYRIGHT;
+  Pl->Copyright = TRAYCONN_COPYRIGHT;
   Pl->Version = TRAYCONN_VERSION;
 
   /* Setting our callbacks */
