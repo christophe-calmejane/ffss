@@ -427,10 +427,10 @@ void ProcOnOkRedirect(SU_PAnswer Ans,void *User)
   SU_PHTTPActions Act;
   char *p,*q;
 
-  p = strstr(Ans->Data,"3;URL=");
+  p = strstr(Ans->Data,";URL=");
   if(p == NULL)
     return;
-  p += 6;
+  p += 5;
   q = strchr(p,'"');
   if(q == NULL)
     return;
