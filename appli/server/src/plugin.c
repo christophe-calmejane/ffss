@@ -27,18 +27,6 @@ void *FS_PluginQuery(int Type,...)
     case FSPQ_RELEASE_INDEX : /* No Param */
       SU_SEM_POST(FS_SemShr);
       break;
-    case FSPQ_LOCK_CONNS : /* No Param */
-      SU_SEM_WAIT(FS_SemConn);
-      break;
-    case FSPQ_UNLOCK_CONNS : /* No Param */
-      SU_SEM_POST(FS_SemConn);
-      break;
-    case FSPQ_LOCK_XFERS : /* No Param */
-      SU_SEM_WAIT(FS_SemXFer);
-      break;
-    case FSPQ_UNLOCK_XFERS : /* No Param */
-      SU_SEM_POST(FS_SemXFer);
-      break;
       //I = va_arg(ap, BN_PInfo); /* I */
 
     case FSPQ_GET_STATE : /* No Param */
@@ -46,11 +34,13 @@ void *FS_PluginQuery(int Type,...)
       break;
     case FSPQ_SET_STATE : /* (int NewState) */
       FS_MyState = va_arg(ap, int);
+      SU_SEM_WAIT(FS_SemGbl);
       if(FS_MyGlobal.Master != NULL)
       {
         /* Sending new state to my master */
         FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
       }
+      SU_SEM_POST(FS_SemGbl);
       break;
     case FSPQ_EJECT_ALL :
       FS_EjectAll(true);
@@ -60,7 +50,7 @@ void *FS_PluginQuery(int Type,...)
   return ret;
 }
 
-
+/* Locks FS_SemPlugin */
 FS_PPlugin FS_LoadPlugin(const char Name[])
 {
 #ifdef PLUGINS
@@ -107,6 +97,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
   return Pl;
 }
 
+/* Locks FS_SemPlugin */
 void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
 {
 #ifdef PLUGINS
@@ -140,6 +131,7 @@ void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
 #endif /* PLUGINS */
 }
 
+/* Locks FS_SemPlugin */
 void FS_UnLoadAllPlugin(void)
 {
 #ifdef PLUGINS
@@ -182,6 +174,7 @@ bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
   return ret;
 }
 
+/* Locks FS_SemPlugin */
 bool FS_IsPluginValid(FS_PPlugin Plugin)
 {
   SU_PList Ptr;

@@ -116,8 +116,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         if(FS_GetShareFromName(s_n) != NULL) /* If a share with this name already exists */
         {
+          SU_SEM_POST(FS_SemShr);
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with same name already exists : %s\n",s_n);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -125,6 +127,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
+        SU_SEM_POST(FS_SemShr);
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_c = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_w = FFSS_UnpackString(buf,buf+pos,Size,&pos);
@@ -170,12 +173,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
             r = strchr(q,',');
         }
         /* Building index */
-        SU_SEM_WAIT(FS_SemShr);
         FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),atoi(s_m),Ptr,true);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
-        SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
@@ -184,9 +185,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       case FS_OPCODE_DELSHARE :
         pos = 1;
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromPath(s_p);
         if(Share == NULL)
         {
+          SU_SEM_POST(FS_SemShr);
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -194,13 +197,12 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
-        SU_SEM_WAIT(FS_SemShr);
-        FS_FreeShare(Share);
         FS_Index = SU_DelElementElem(FS_Index,Share);
+        FS_FreeShare(Share);
+        SU_SEM_POST(FS_SemShr);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
-        SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
@@ -209,6 +211,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       case FS_OPCODE_GETGLOBAL :
         buf[0] = FS_OPCODE_ACK;
         pos = 1;
+        SU_SEM_WAIT(FS_SemGbl);
         SU_strcpy(buf+pos,FS_MyGlobal.Name,buf_len-pos);
         pos += strlen(FS_MyGlobal.Name) + 1;
         SU_strcpy(buf+pos,FS_MyGlobal.Comment,buf_len-pos);
@@ -225,6 +228,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%d",FS_MyGlobal.Idle,0,FS_MyGlobal.MaxConn,0,FS_MyGlobal.MaxXFerPerConn,0,FS_MyGlobal.FTP,0,FS_MyGlobal.FTPMaxConn);
         pos += FS_GetIntLen(FS_MyGlobal.Idle) + FS_GetIntLen(FS_MyGlobal.MaxConn) + FS_GetIntLen(FS_MyGlobal.MaxXFerPerConn) + FS_GetIntLen(FS_MyGlobal.FTP) + FS_GetIntLen(FS_MyGlobal.FTPMaxConn) + 5;
+        SU_SEM_POST(FS_SemGbl);
         Size = pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
@@ -237,9 +241,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromPath(s_p);
         if(Share == NULL)
         {
+          SU_SEM_POST(FS_SemShr);
           Size = 1;
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -272,6 +278,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%s",Share->Writeable,0,Share->Private,0,Share->MaxConnections,0,Users);
         pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->MaxConnections) + strlen(Users) + 4;
         Size = pos;
+        SU_SEM_POST(FS_SemShr);
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -285,10 +292,12 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         Size = 1;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        SU_SEM_WAIT(FS_SemShr);
         if(FS_GetShareFromName(s_n) != NULL)
           buf[0] = FS_OPCODE_NACK;
         else
           buf[0] = FS_OPCODE_ACK;
+        SU_SEM_POST(FS_SemShr);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_UPDTSHARE :
@@ -300,10 +309,12 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromPath(s_p);
         shr2 = FS_GetShareFromName(s_n);
         if((Share == NULL) || ((shr2 != NULL) && (shr2 != Share)))
         {
+          SU_SEM_POST(FS_SemShr);
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist, or with this name exists : %s -> %s\n",s_p,s_n);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -318,10 +329,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         if((s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
         {
+          SU_SEM_POST(FS_SemShr);
           error = true;
           break;
         }
-        SU_SEM_WAIT(FS_SemShr);
+        FS_EjectFromShare(Share,false);
         free(Share->ShareName);
         Share->ShareName = strdup(s_n);
         if(Share->Comment != NULL)
@@ -370,10 +382,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
             r = strchr(q,',');
         }
         Share->Users = Ptr;
+        SU_SEM_POST(FS_SemShr);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
-        SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
@@ -396,6 +408,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemGbl);
         free(FS_MyGlobal.Name);
         FS_MyGlobal.Name = strdup(g_n);
         if(FS_MyGlobal.Comment != NULL)
@@ -418,6 +431,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FS_MyGlobal.FTPMaxConn = (bool)atoi(g_f_max);
         if(FS_CheckGlobal() != NULL)
         {
+          SU_SEM_POST(FS_SemGbl);
           FFSS_PrintDebug(6,"Client from runtime configuration : Cannot restart server.. error in Global fields\n");
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -425,6 +439,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
+        SU_SEM_POST(FS_SemGbl);
         FS_SaveConfig(CONFIG_FILE_NAME);
         Size = 1;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -432,21 +447,25 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         if(MasterChanged)
         {
+          SU_SEM_WAIT(FS_SemGbl);
           /* Sending login message to my master */
           FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FFSS_STATE_ON);
           /* Sending index message to my master */
           FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
+          SU_SEM_POST(FS_SemGbl);
         }
         break;
       }
       case FS_OPCODE_SETSTATE :
         FS_MyState = buf[1];
         FFSS_PrintDebug(6,"Client from runtime configuration : Changing state of the server : %d\n",FS_MyState);
+        SU_SEM_WAIT(FS_SemGbl);
         if(FS_MyGlobal.Master != NULL)
         {
           /* Sending state message to my master */
           FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
         }
+        SU_SEM_POST(FS_SemGbl);
         break;
       case FS_OPCODE_GETSTATE :
         Size = 2;
@@ -456,7 +475,6 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_GETSHRLIST :
-        SU_SEM_WAIT(FS_SemConn);
         buf[0] = FS_OPCODE_ACK;
         pos = 1;
         SU_SEM_WAIT(FS_SemShr);
@@ -485,7 +503,6 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Ptr = Ptr->Next;
         }
         SU_SEM_POST(FS_SemShr);
-        SU_SEM_POST(FS_SemConn);
         Size = pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
@@ -498,11 +515,13 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromName(s_n);
         if(Share == NULL)
           break;
         FS_EjectFromShare(Share,true);
         FS_RescanShare(Share);
+        SU_SEM_POST(FS_SemShr);
         break;
       case FS_OPCODE_SETSHARESTATE:
         pos = 2;
@@ -512,10 +531,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromName(s_n);
-        if(Share == NULL)
-          break;
-        Share->Disabled = (buf[1] == 0);
+        if(Share != NULL)
+          Share->Disabled = (buf[1] == 0);
+        SU_SEM_POST(FS_SemShr);
         break;
       case FS_OPCODE_EJECT :
         pos = 1;
@@ -525,17 +545,20 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           error = true;
           break;
         }
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromName(s_n);
-        if(Share == NULL)
-          break;
-        FS_EjectFromShare(Share,true);
+        if(Share != NULL)
+          FS_EjectFromShare(Share,true);
+        SU_SEM_POST(FS_SemShr);
         break;
       case FS_OPCODE_GETSHRCONNS :
         pos = 1;
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromPath(s_p);
         if(Share == NULL)
         {
+          SU_SEM_POST(FS_SemShr);
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -543,7 +566,6 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
-        SU_SEM_WAIT(FS_SemConn);
         buf[0] = FS_OPCODE_ACK;
         pos = 1;
         snprintf(buf+pos,buf_len-pos,"%d",SU_ListCount(Share->Conns));
@@ -576,7 +598,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           }
           Ptr = Ptr->Next;
         }
-        SU_SEM_POST(FS_SemConn);
+        SU_SEM_POST(FS_SemShr);
         Size = pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
@@ -585,10 +607,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         pos = 1;
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromPath(s_p);
-        if((Share == NULL) || (s_n == NULL))
-          break;
-        FS_EjectFromShareByIP(Share,s_n,true);
+        if((Share != NULL) && (s_n != NULL))
+          FS_EjectFromShareByIP(Share,s_n,true);
+        SU_SEM_POST(FS_SemShr);
         break;
       case FS_OPCODE_PL_LOAD :
         pos = 1;

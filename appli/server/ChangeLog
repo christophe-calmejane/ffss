@@ -7,6 +7,10 @@
 
 VIRER LE -PREx DE SERVER.H
 
+June, 3rd 2002:
+  - Full rewrite of the semaphore usage (removed unused ones)
+  - Fixed a bug in ShareConnection, which may allow many more connections than allowed (semaphore problem)
+
 June, 2nd 2002:
   - Plugin_Configure now returns a boolean
   - Added log plugin

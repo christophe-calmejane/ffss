@@ -152,7 +152,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
 }
 #endif /* __unix__ */
 
-/* Assumes FS_SemShr semaphore is locked */
+/* Locks FS_SemShr */
 void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now)
 {
   FS_PShare Share;
@@ -191,10 +191,12 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
 
-  /* Assumes FS_SemShr semaphore is locked */
+  SU_SEM_WAIT(FS_SemShr);
   FS_Index = SU_AddElementHead(FS_Index,Share);
+  SU_SEM_POST(FS_SemShr);
 }
 
+/* Locks FS_SemShr */
 void FS_RealBuildIndex(void)
 {
   SU_PList Ptr;
@@ -265,6 +267,7 @@ void FS_FreeUser(FS_PUser Usr)
   free(Usr);
 }
 
+/* Assumes FS_SemShr is locked */
 void FS_FreeShare(FS_PShare Share)
 {
   SU_PList Ptr;
@@ -308,6 +311,7 @@ void FS_FreeShare(FS_PShare Share)
   free(Share);
 }
 
+/* Locks FS_SemShr */
 void FS_FreeIndex(void)
 {
   SU_PList Ptr;
@@ -324,6 +328,7 @@ void FS_FreeIndex(void)
   SU_SEM_POST(FS_SemShr);
 }
 
+/* FS_SemShr must has been locked */
 void FS_RescanShare(FS_PShare Share)
 {
   SU_PList Ptr;
@@ -365,6 +370,7 @@ void FS_RescanShare(FS_PShare Share)
   Share->Disabled = Old;
 }
 
+/* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
 char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out)
 {
@@ -626,6 +632,7 @@ char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const 
   return buf;
 }
 
+/* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
 char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out)
 {
@@ -689,6 +696,7 @@ char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int
   return buf;
 }
 
+/* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed */
 char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int total,long int *buf_size,FM_TFTNode *TabNodes,long int *NodePos,unsigned char *Tags,long int father,long int total_node)
 {
@@ -777,6 +785,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
   return buf;
 }
 
+/* Locks FS_SemShr */
 bool FS_SendIndex(const char Host[],const char Port[])
 {
   char *buf;
@@ -853,6 +862,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
   return res;
 }
 
+/* Assumes FS_SemShr is locked */
 bool FS_CaseFilePath(FS_PShare Share,char Path[])
 {
   SU_PList Ptr;

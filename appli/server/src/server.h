@@ -187,10 +187,9 @@ typedef struct
   bool (*OnCheckConfConn)(SU_PClientSocket Client);
 } FS_TPlugin, *FS_PPlugin;
 
-extern SU_SEM_HANDLE FS_SemConn;  /* Semaphore to protect the use of Conns in a FS_PShare */
+/* Order of Semaphore locking */
 extern SU_SEM_HANDLE FS_SemGbl;   /* Semaphore to protect the use of MyGlobal */
-extern SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index */
-extern SU_SEM_HANDLE FS_SemXFer;  /* Semaphore to protect the use of FFSS_PTransfer */
+extern SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index and all sub structs */
 extern SU_SEM_HANDLE FS_SemPlugin;/* Semaphore to protect the use of FS_Plugins */
 extern SU_THREAD_KEY_HANDLE FS_tskey;
 extern SU_THREAD_ONCE_HANDLE FS_once;
@@ -203,38 +202,59 @@ extern int FS_MyState;
 extern char *FS_TimeTable[];
 extern SU_PList FS_Plugins; /* FS_PPlugin */
 
-void FS_RealBuildIndex(void);
-/* Assumes FS_SemShr semaphore is locked */
+/* Locks FS_SemShr */
 void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now);
+/* Locks FS_SemShr */
+void FS_RealBuildIndex(void);
 void FS_FreeUser(FS_PUser Usr);
+/* Assumes FS_SemShr is locked */
 void FS_FreeShare(FS_PShare Share);
+/* Locks FS_SemShr */
 void FS_FreeIndex(void);
+/* Assumes FS_SemShr is locked */
 void FS_RescanShare(FS_PShare Share);
+/* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed (its size in size_out), or NULL if the path is incorrect */
 char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
+/* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
 char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
+/* Locks FS_SemShr */
 bool FS_SendIndex(const char Host[],const char Port[]);
+/* Assumes FS_SemShr is locked */
 bool FS_CaseFilePath(FS_PShare Share,char Path[]);
 
+/* Assumes FS_SemGbl is locked */
 char *FS_CheckGlobal(void);
 
+/* Assumes FS_SemShr is locked */
 FS_PShare FS_GetShareFromName(const char Name[]);
+/* Assumes FS_SemShr is locked */
 FS_PShare FS_GetShareFromPath(const char Path[]);
+/* Locks FS_SemShr */
 void FS_EjectAll(bool EjectXFers);
+/* Assumes FS_SemShr is locked */
 void FS_EjectFromShare(FS_PShare Share,bool EjectXFers);
+/* Assumes FS_SemShr is locked */
 void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers);
+/* Locks FS_SemPlugin */
 FS_PPlugin FS_LoadPlugin(const char Name[]);
+/* Locks FS_SemPlugin */
 void FS_UnLoadPlugin(SU_DL_HANDLE Handle);
+/* Locks FS_SemPlugin */
 void FS_UnLoadAllPlugin(void);
 bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
+/* Locks FS_SemPlugin */
 bool FS_IsPluginValid(FS_PPlugin Plugin);
 
 /* Functions from arch dependant file */
 bool FS_LoadConfig(const char FileName[]);
+/* Locks FS_SemShr & FS_SemGbl */
 bool FS_SaveConfig(const char FileName[]);
 void FS_MainThread(void);
+/* Assumes FS_SemShr is locked */
 void FS_RemoveShare(FS_PShare Share);
+/* Assumes FS_SemShr is locked */
 bool FS_CheckDirectoryChanged(FS_PShare Share);
 void FS_AddPluginToStartup(FS_PPlugin Plugin);
 void FS_RemovePluginFromStartup(FS_PPlugin Plugin);
@@ -258,5 +278,9 @@ typedef struct /* 16 bytes */
 
 /* End included */
 
+/*#undef SU_SEM_WAIT
+#undef SU_SEM_POST
+#define SU_SEM_WAIT(x) { printf("Locking %d (%s:%d)\n",x,__FILE__,__LINE__);WaitForSingleObject(x,INFINITE);printf("Got %d\n",x); }
+#define SU_SEM_POST(x) { printf("Releasing %d (%s:%d)\n",x,__FILE__,__LINE__);ReleaseSemaphore(x,1,NULL); }*/
 
 #endif /* !__SERVER_H__ */

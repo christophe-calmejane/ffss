@@ -34,6 +34,7 @@ bool FS_LoadConfig(const char FileName[])
   char GBL_Master[1024];
   HKEY HK;
 
+  SU_SEM_WAIT(FS_SemGbl);
   GetCurrentDirectory(sizeof(Path),Path);
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH "ServerDirectory",Path);
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH "ProcessId",GetCurrentProcessId());
@@ -168,9 +169,11 @@ N_DebugLevel = 0;
       idx++;
     }
   }
+  SU_SEM_POST(FS_SemGbl);
   return true;
 }
 
+/* Locks FS_SemShr & FS_SemGbl */
 bool FS_SaveConfig(const char FileName[])
 {
   char Shares[10000];
@@ -181,6 +184,7 @@ bool FS_SaveConfig(const char FileName[])
   FS_PUser Usr;
 
   FFSS_PrintDebug(5,"Saving config to registry\n");
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   Shares[0] = 0;
   while(Ptr != NULL)
@@ -228,8 +232,10 @@ bool FS_SaveConfig(const char FileName[])
 
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemShr);
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH "ShareNames",Shares);
 
+  SU_SEM_WAIT(FS_SemGbl);
   /* Set global Name */
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH "Global_Name",FS_MyGlobal.Name);
   /* Set global Comment */
@@ -255,6 +261,8 @@ bool FS_SaveConfig(const char FileName[])
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_ReadBufferSize",FFSS_TransferReadBufferSize);
   /* Set global BufferSize */
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_XFerBufferSize",FFSS_TransferBufferSize);
+
+  SU_SEM_POST(FS_SemGbl);
   return true;
 }
 
@@ -282,6 +290,7 @@ void FS_RemoveShare(FS_PShare Share)
   SU_RB_DelValue(key);
 }
 
+/* Assumes FS_SemShr is locked */
 bool FS_CheckDirectoryChanged(FS_PShare Share)
 {
   FFSS_PrintDebug(5,"Checking for a change in share %s (%s)\n",Share->ShareName,Share->Path);
