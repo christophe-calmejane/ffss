@@ -3,10 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : July, 24th 2002
+                  Last Update : Auguest, 6th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+August, 6th 2002:
+  - Added a new field in StreamingReadAnswer (error code)
 
 July, 24th 2002:
   - Fixed a possible DoS attack in the library (tcp thread function)

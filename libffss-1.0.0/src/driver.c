@@ -764,8 +764,9 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       context;
       lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       Length = Len-FFSS_MESSAGESIZE_STREAMING_READ_ANSWER*sizeof(FFSS_Field);
-      if((val == 0) || (Length < 0))
+      if((val == 0) || (Length < 0) || (val2 == 0))
       {
         FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",Server->IP);
         ret_val = false;
@@ -773,7 +774,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a streaming read answer message (%d bytes)\n",Length);
       if(FFSS_CB.CCB.OnStrmReadAnswer != NULL)
-        FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length,lval2);
+        FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length,val2,lval2);
       break;
     case FFSS_MESSAGE_STREAMING_WRITE_ANSWER :
       context;

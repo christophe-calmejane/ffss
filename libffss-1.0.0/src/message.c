@@ -723,8 +723,9 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
+/*  Code : The error code to send                     */
 /*  User : User pointer returned in message answer    */
-bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_LongField User)
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_Field Code,FFSS_LongField User)
 {
   char *msg;
   long int size,pos;
@@ -736,6 +737,7 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_READ_ANSWER);
   pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Handle);
+  pos = FFSS_PackField(msg,pos,Code);
   memcpy(msg+pos,Buf,BlocLen);
   pos += BlocLen;
 

@@ -253,9 +253,9 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      (4+2*2)
 #define FFSS_MESSAGESIZE_STREAMING_CLOSE            3
 #define FFSS_MESSAGESIZE_STREAMING_READ             (4+2*2)
-#define FFSS_MESSAGESIZE_STREAMING_READ_ANSWER      5
+#define FFSS_MESSAGESIZE_STREAMING_READ_ANSWER      (4+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_WRITE            (3+2*2)
-#define FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER     6
+#define FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER     (4+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_SEEK             (4+1*2)
 #define FFSS_MESSAGESIZE_INIT_XFER                  3
 #define FFSS_MESSAGESIZE_CANCEL_XFER                3
@@ -308,6 +308,9 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_ERROR_TOO_MANY_ANSWERS          21
 #define FFSS_ERROR_SOCKET_ERROR              22
 #define FFSS_ERROR_ATTACK                    23
+#define FFSS_ERROR_END_OF_FILE               24
+#define FFSS_ERROR_IO_ERROR                  25
+#define FFSS_ERROR_BAD_HANDLE                26
 #define FFSS_ERROR_NOT_IMPLEMENTED          100
 #define FFSS_ERROR_NO_ERROR                 666
 
@@ -504,11 +507,11 @@ typedef struct
   /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
   void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User);
   void (*OnUDPError)(int ErrNum);
-  void (*OnMasterError)(int Code,const char Descr[]);
+  void (*OnMasterError)(FFSS_Field ErrorCode,const char Descr[]);
 
   /* TCP callbacks */
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
-  bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
+  bool (*OnError)(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
   bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
   bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
   void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
@@ -518,9 +521,9 @@ typedef struct
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag); /* Returns PTransfer from RequestedFileName */
   FFSS_PTransfer (*OnData)(SU_PClientSocket Server,FFSS_Field XFerTag); /* Returns PTransfer from XFerTag */
-  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
-  void (*OnStrmReadAnswer)(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User);
-  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,FFSS_Field Handle,int Code,FFSS_LongField User);
+  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],FFSS_Field ErrorCode,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
+  void (*OnStrmReadAnswer)(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_Field ErrorCode,FFSS_LongField User);
+  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_Field ErrorCode,FFSS_LongField User);
 
   /* Fatal error */
   void (*OnFatalError)(void);
@@ -790,8 +793,9 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
+/*  Code : The error code to send                     */
 /*  User : User pointer returned in message answer    */
-bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_LongField User);
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_Field Code,FFSS_LongField User);
 
 /* FS_SendMessage_StrmWriteAnswer Function             */
 /* Sends an STREAMING WRITE answer message to a client */
