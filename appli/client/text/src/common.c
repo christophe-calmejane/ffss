@@ -1089,7 +1089,7 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 	bool modified=true;
 	unsigned int ir, sav;
 	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
-	
+
 	if(Nbels<2) {
 		FFSS_PrintDebug(1, "(client) 1 element, nothing to sort\n");
 		return;
@@ -1145,15 +1145,15 @@ bool FCA_hostlist_comp(SU_PList p1, SU_PList p2)
 	case 'I':	/* by IP */
 		return (strcasecmp(
 			((FM_PHost)(p1->Data))->IP,
-			((FM_PHost)(p2->Data))->IP)*ord <0);
+			((FM_PHost)(p2->Data))->IP)*ord <=0);
 	case 'c':	/* by comment */
 		return (strcasecmp(
 			((FM_PHost)(p1->Data))->Comment,
-			((FM_PHost)(p2->Data))->Comment)*ord <0);
+			((FM_PHost)(p2->Data))->Comment)*ord <=0);
 	default:	/* default, by name */
 		return (strcasecmp(
 			((FM_PHost)(p1->Data))->Name,
-			((FM_PHost)(p2->Data))->Name)*ord <0);
+			((FM_PHost)(p2->Data))->Name)*ord <=0);
 	}
 }
 
