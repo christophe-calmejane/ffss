@@ -688,6 +688,7 @@ bool FC_Init(void)
 
 #ifdef FFSS_CONTEXT
   signal(SIGSEGV,FFSS_handle_SIGNAL);
+  FFSS_MainThread = SU_THREAD_SELF;
   context;
 #endif
   signal(SIGTERM,FFSS_SignalHandler_Term);

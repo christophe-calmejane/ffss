@@ -14,6 +14,7 @@
 
 #endif /* __unix__ */
 
+extern SU_THREAD_HANDLE FFSS_MainThread;
 int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port);
 extern SU_PList FFSS_Broadcast; /* char * */
 

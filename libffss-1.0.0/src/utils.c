@@ -17,6 +17,7 @@ char *FFSS_DocExt[FFSS_DOC_NB_EXT] = {"htm","html","txt","doc","pdf","nfo","tex"
 char *FFSS_ExeExt[FFSS_EXE_NB_EXT] = {"exe","com","bat","sys","dll"} ; /* 5 */
 char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","bz2","deb","rpm"} ; /* 10 */
 
+SU_THREAD_HANDLE FFSS_MainThread;
 SU_THREAD_KEY_HANDLE FFSS_Context_tskey;
 SU_THREAD_ONCE_HANDLE FFSS_Context_once = SU_THREAD_ONCE_INIT;
 SU_PList FFSS_Broadcast = NULL; /* char * */
@@ -70,6 +71,14 @@ void FFSS_handle_SIGNAL(int signal)
   {
     FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
     FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %d (%d) :-(. Check: %s:%d\n",SU_THREAD_SELF,getpid(),ts->File,ts->Line);
+    if(FFSS_MainThread != SU_THREAD_SELF)
+    {
+      FFSS_PrintSyslog(LOG_ERR,"I (%d) am not the main thread (%d). Signaling the main thread\n",SU_THREAD_SELF,FFSS_MainThread);
+#ifdef __linux__
+      pthread_kill_other_threads_np();
+#endif /* __linux__ */
+      SU_TermThread(FFSS_MainThread);
+    }
 #ifdef _WIN32
     SU_CloseLogFile(FFSS_LogFile);
 #endif /* _WIN32 */

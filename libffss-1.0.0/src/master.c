@@ -477,6 +477,7 @@ bool FM_Init(int MasterPort)
 {
 #ifdef FFSS_CONTEXT
   signal(SIGSEGV, FFSS_handle_SIGNAL);
+  FFSS_MainThread = SU_THREAD_SELF;
   context;
 #endif
 #ifdef __unix__

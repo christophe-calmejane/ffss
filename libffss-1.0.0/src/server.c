@@ -8,7 +8,7 @@ bool FS_FTP;
 SU_PServerInfo FS_SI_UDP=NULL,FS_SI_OUT_UDP=NULL,FS_SI_TCP=NULL,FS_SI_TCP_FTP=NULL;
 SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 
-char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Need login/password for this share","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers"};
+char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers"};
 
 void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 {
@@ -887,6 +887,7 @@ bool FS_Init(int ServerPort,bool FTP)
 {
 #ifdef FFSS_CONTEXT
   signal(SIGSEGV, FFSS_handle_SIGNAL);
+  FFSS_MainThread = SU_THREAD_SELF;
   context;
 #endif
 #ifdef __unix__
