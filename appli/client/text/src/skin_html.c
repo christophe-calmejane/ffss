@@ -671,7 +671,8 @@ void FCA_sep_link(char *path, char *prefx)
 		printf("/");
 	}
 	FCA_pre_link();
-	FCA_dir_arg(path, false);
+	snprintf(p2, FFSS_MAX_FILEPATH_LENGTH-1, "%s%s", prefx, path);
+	FCA_dir_arg(p2, false);
 	FCA_post_link(false);
 	printf("%s</a>", begin);
 }
