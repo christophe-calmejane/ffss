@@ -8,7 +8,7 @@
 /* TODO :
 */
 
-#define LOG_NAME      "Log Plugin"
+#define LOG_NAME      "Log"
 #define LOG_VERSION   "1.0"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define LOG_FILE_PREFIX "FS_Log"

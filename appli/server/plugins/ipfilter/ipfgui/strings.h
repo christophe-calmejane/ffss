@@ -36,4 +36,6 @@
 #define ST_C_CURRENT	26
 #define ST_C_CANCEL		27
 
+#define ST_TITLE		28
+
 #endif /* !__STRINGS_H__ */

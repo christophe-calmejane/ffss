@@ -8,10 +8,9 @@
 /* TODO :
 */
 
-#define HS_NAME      "Hide Shares Plugin"
+#define HS_NAME      "Hide Shares"
 #define HS_VERSION   "1.0"
 #define HS_COPYRIGHT "(c) Ze KiLleR - 2002"
-#define HS_FILE_PREFIX "FS_Log"
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
@@ -56,7 +55,7 @@ void HS_LoadLanguage(void)
 
 bool OnCheckShowShare(FS_PShare Share)
 {
-  if((Share->Path != NULL) && (Share->Path[0] != '$'))
+  if((Share->ShareName != NULL) && (Share->ShareName[0] != '$'))
     return true;
   return false;
 }

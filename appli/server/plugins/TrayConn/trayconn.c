@@ -9,7 +9,7 @@
           clic droit : menu contextuel : eject tout le monde...
 */
 
-#define TRAYCONN_NAME      "Tray Conn Plugin"
+#define TRAYCONN_NAME      "Tray Conn"
 #define TRAYCONN_VERSION   "1.0"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 

@@ -47,7 +47,7 @@
 
 extern FFSS_Filter_PApi g_pFAPI;
 extern unsigned int		g_Language;
-extern char* ST[][28];
+extern char* ST[][29];
 extern char** CurST;
 
 //{{AFX_INSERT_LOCATION}}

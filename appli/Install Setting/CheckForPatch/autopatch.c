@@ -282,9 +282,9 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
       continue;
     snprintf(buf,sizeof(buf),"%s%s",InstallDir,FCU_Files[idx].FilePath);
     fp = fopen(buf,"rb");
-    /*if(fp == NULL)
+    if(fp == NULL)
       continue;
-    fclose(fp);*/
+    fclose(fp);
     CurrentIdx = idx;
 
     /* Check local version */

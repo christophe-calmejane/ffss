@@ -142,7 +142,7 @@ DWORD WINAPI ThreadFunc( LPVOID lpParam )
 
 
 /////////////////////////////////////////////////////////////////////////////
-extern "C" FS_PLUGIN_EXPORT bool Plugin_Configure(void* hWnd)
+extern "C" FS_PLUGIN_EXPORT SU_BOOL Plugin_Configure(void* hWnd)
 {
 	if( g_hThread!=NULL ) {
 		return(true);

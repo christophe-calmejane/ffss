@@ -1,23 +1,25 @@
 
 char **CurST;
 
-char* ST[][28] = { 
+char* ST[][29] = { 
 	{ 
-		"IP Filter", 
+		"IP Filter settings",
 		"Add rule...","Delete rule",
 		"No chain",
 		"Rules (order is important)","Default action, if no rule matched","Move up","Move down",
 		"IP","Mask","Action","Name",
 		"Filter rule","Rule name","IP","Netmask","Action","Apply to","Current chain","All chains","OK","Cancel",
-		"Delete rule","Remove the following rule","from","All chains","Current chain","Cancel"
+		"Delete rule","Remove the following rule","from","All chains","Current chain","Cancel",
+		"IP Filter"
 	}, 
 	{ 
-		"Filtre IP",
+		"Configuration du module de filtrage IP",
 		"Ajouter...","Supprimer",
 		"Pas de chaînes",
 		"Règles (l'ordre est significatif)","Action par défaut","Monter","Descendre",
 		"IP","Masque","Action","Nom",
 		"Règle de filtrage","Nom de la règle","Adresse IP","Masque","Action","Appliquer à","Cette chaîne uniquement","Toutes les chaînes","OK","Annuler",
-		"Supprimer la règle","Supprimer cette règle","de","Toutes les chaînes","La chaîne courante","Annuler"
+		"Supprimer la règle","Supprimer cette règle","de","Toutes les chaînes","La chaîne courante","Annuler",
+		"Filter IP"
 	}
 	};

@@ -5,7 +5,7 @@
 /* http://zekiller.skytech.org                  */
 /* mailto : zekiller@skytech.org                */
 
-#define CONFCONN_NAME      "Conf Conn Plugin"
+#define CONFCONN_NAME      "Conf Conn"
 #define CONFCONN_VERSION   "1.0"
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"

@@ -119,7 +119,7 @@ void CChainsSheet::Init()
 	m_pChainPages.clear();
 	g_pFAPI->EnumChains(OnEnumChains);
 	if( m_pChainPages.size()==0 ) {
-		MessageBox(CurST[ST_MSG_NOCHAIN],CurST[ST_WIN_TITLE],MB_OK|MB_ICONINFORMATION);
+		MessageBox(CurST[ST_MSG_NOCHAIN],CurST[ST_TITLE],MB_OK|MB_ICONINFORMATION);
 	}
 }
 
