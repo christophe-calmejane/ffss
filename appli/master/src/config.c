@@ -22,8 +22,10 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
     {
       if(strcasecmp(Name,"User") == 0)
         User = strdup(Value);
-      if(strcasecmp(Name,"Group") == 0)
+      else if(strcasecmp(Name,"Group") == 0)
         Group = strdup(Value);
+      else if(strcasecmp(Name,"Interface") == 0)
+        Int = strdup(Value);
     }
     else
     {
@@ -64,8 +66,6 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
       }
       else if(strcasecmp(Name,"Domain") == 0)
         FM_MyDomain.Name = strdup(Value);
-      else if(strcasecmp(Name,"Interface") == 0)
-        Int = strdup(Value);
       else if(strcasecmp(Name,"Bcast") == 0)
       {
         FFSS_AddBroadcastAddr(Value);
@@ -86,18 +86,6 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
     {
       FFSS_PrintSyslog(LOG_ERR,"Config Loader : No domain specified for local domain\n");
       return false;
-    }
-    if(Int != NULL)
-    {
-      if(getuid() == 0)
-      {
-        if(setsockopt(FM_SI_UDP->sock,SOL_SOCKET,SO_BINDTODEVICE,Int,strlen(Int)+1) == SOCKET_ERROR)
-          FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s : %s\n",Int,strerror(errno));
-        else
-          FFSS_PrintSyslog(LOG_WARNING,"Entering limited bind mode to %s\n",Int);
-      }
-      else
-        FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot bind to %s only\n",Int);
     }
     if(FM_MyDomain.Master == NULL)
     {
@@ -158,6 +146,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
       User = strdup("ffss");
     FM_User = User;
     FM_Group = Group;
+    FM_Iface = Int;
   }
 
   return true;

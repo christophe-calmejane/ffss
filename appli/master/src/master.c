@@ -27,7 +27,7 @@ FFSS_Field FM_CurrentNodesSize = 0;
 int FM_CurrentCompression = FFSS_COMPRESSION_NONE;
 bool FM_CurrentSamba;
 struct sockaddr_in FM_CurrentClient;
-char *FM_User=NULL,*FM_Group=NULL;
+char *FM_User=NULL,*FM_Group=NULL,*FM_Iface=NULL;
 FILE *FM_SearchLogFile=NULL;
 volatile bool FM_ShuttingDown = false;
 
@@ -1045,17 +1045,6 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_ERR,"Cannot open config file : %s\n",ConfigFile);
     return -1;
   }
-#ifdef __unix__
-  if(getuid() == 0)
-  {
-    if(!SU_SetUserGroup(NULL,FM_Group))
-      FFSS_PrintSyslog(LOG_WARNING,"Warning : cannot setgid to group %s\n",FM_Group);
-    if(!SU_SetUserGroup(FM_User,NULL))
-      FFSS_PrintSyslog(LOG_WARNING,"Warning : cannot setuid to user %s\n",FM_User);
-  }
-  else
-    FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot use setuid/setgid\n");
-#endif /* __unix__ */
 
   context;
 #ifdef __unix__
@@ -1101,7 +1090,7 @@ int main(int argc,char *argv[])
       FM_SearchLogFile = SU_OpenLogFile(FM_SEARCHLOG_FILE);
 
     context;
-    if(!FM_Init(FFSS_MASTER_PORT))
+    if(!FM_Init(FFSS_MASTER_PORT,FM_User,FM_Group,FM_Iface))
       return -2;
 
     memset(&FFSS_CB,0,sizeof(FFSS_CB));

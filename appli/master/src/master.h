@@ -10,7 +10,7 @@
 #include "../utils.h"
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre54"
+#define FFSS_MASTER_VERSION "1.0-pre55"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -70,7 +70,7 @@ extern SU_SEM_HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue
 extern SU_SEM_HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
 extern SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
 
-extern char *FM_User,*FM_Group;
+extern char *FM_User,*FM_Group,*FM_Iface;
 
 SU_THREAD_ROUTINE(FM_ThreadPing,User);
 SU_THREAD_ROUTINE(FM_ThreadSearch,User);
