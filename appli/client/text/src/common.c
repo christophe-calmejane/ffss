@@ -424,12 +424,12 @@ void FCA_sem_post()
 	else {
 			/* kill timer thread */
 		if(FCA_wait_threading) {
-
+/*
 printf("paf SIG_USR1...\n");
 			pthread_kill(*FCA_wait_thread, SIGUSR1);
 			free(FCA_wait_thread);
 printf("ahah t mort\n");
-
+*/
 			FCA_wait_threading=false;
 		}
 
