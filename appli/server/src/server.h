@@ -8,7 +8,6 @@
 #define FS_PLUGIN_EXPORT
 #else /* !__unix__ */
 #define FS_PLUGIN_EXPORT __declspec(dllexport)
-#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
 #endif /* __unix__ */
 
 #ifdef USE_CRYPT
@@ -231,6 +230,8 @@ bool FS_SaveConfig(const char FileName[]);
 void FS_MainThread(void);
 void FS_RemoveShare(FS_PShare Share);
 bool FS_CheckDirectoryChanged(FS_PShare Share);
+void FS_AddPluginToStartup(FS_PPlugin Plugin);
+void FS_RemovePluginFromStartup(FS_PPlugin Plugin);
 
 
 extern FFSS_Field FS_CurrentXFerTag;

@@ -32,3 +32,11 @@ bool FS_CheckDirectoryChanged(FS_PShare Share)
   else
     return false;
 }
+
+void FS_AddPluginToStartup(FS_PPlugin Plugin)
+{
+}
+
+void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
+{
+}

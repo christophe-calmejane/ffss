@@ -605,9 +605,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           if(buf[pos]) /* Add plugin at server startup */
           {
-            char tmp[1024];
-            _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
-            SU_RB_SetStrValue(tmp,Plugin->Path);
+            FS_AddPluginToStartup(Plugin);
           }
           Size = 1;
           buf[0] = FS_OPCODE_ACK;
@@ -625,9 +623,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           FS_UnLoadPlugin(Plugin->Handle);
           if(buf[pos]) /* Remove plugin from server startup */
           {
-            char tmp[1024];
-            _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
-            SU_RB_DelValue(tmp);
+            FS_RemovePluginFromStartup(Plugin);
           }
           buf[0] = FS_OPCODE_ACK;
         }

@@ -5,6 +5,8 @@
 
 #include "server.h"
 
+#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
+
 void FS_MainThread(void)
 {
   while(1)
@@ -293,4 +295,18 @@ bool FS_CheckDirectoryChanged(FS_PShare Share)
     return true;
   }
   return false;
+}
+
+void FS_AddPluginToStartup(FS_PPlugin Plugin)
+{
+  char tmp[1024];
+  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
+  SU_RB_SetStrValue(tmp,Plugin->Path);
+}
+
+void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
+{
+  char tmp[1024];
+  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
+  SU_RB_DelValue(tmp);
 }
