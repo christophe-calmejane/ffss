@@ -6,19 +6,9 @@ unit Unit1;
 }
 interface
 
-{$IFDEF LINUX}
-uses
-  SysUtils, Types, Classes, QGraphics, QForms, QDialogs,
-  QMenus, QTypes, QComCtrls,
-  QExtCtrls, QStdCtrls, QControls, Sockets;
-{$DEFINE CS.Socket.SendBuf CS.SendBuf}
-{$DEFINE CS.Socket.ReceiveBuf CS.RecvBuf}
-{$DEFINE MB_OK [smbOK]}
-{$ELSE}
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, ScktComp, Menus;
-{$ENDIF}
+  StdCtrls, ExtCtrls, ComCtrls, ScktComp, Menus, SystemTray, RegisteryUnit, Winsock;
 
 Const
   STRING_YES = 'Oui';
@@ -26,11 +16,7 @@ Const
   SHARE_DELETE = 1;
   SHARE_ADD    = 2;
   SHARE_UPDT   = 3;
-{$IFDEF LINUX}
-  FS_CONF_PORT = '10001';
-{$ELSE}
-  FS_CONF_PORT = 10001;
-{$ENDIF}
+  FS_CONF_PORT = 10004;
   FS_OPCODE_ADDSHARE      =  1;
   FS_OPCODE_DELSHARE      =  2;
   FS_OPCODE_GETGLOBAL     =  3;
@@ -43,11 +29,13 @@ Const
   FS_OPCODE_RESCAN        = 10;
   FS_OPCODE_SETSHARESTATE = 11;
   FS_OPCODE_EJECT         = 12;
+  FS_OPCODE_GETSHRCONNS   = 13;
+  FS_OPCODE_EJECTIP       = 14;
   FS_OPCODE_ACK           = 20;
   FS_OPCODE_NACK          = 21;
   FFSS_STATE_ON    = 1;
   FFSS_STATE_OFF   = 2;
-  FFSS_STATE_QUIET = 3;
+  FFSS_STATE_QUIET = 4;
 
 type
   TGlobal = record
@@ -105,11 +93,7 @@ type
     Button4: TButton;
     Label9: TLabel;
     Edit9: TEdit;
-{$IFDEF LINUX}
-    CS: TTcpClient;
-{$ELSE}
     CS: TClientSocket;
-{$ENDIF}
     TabSheet3: TTabSheet;
     RadioGroup1: TRadioGroup;
     GroupBox3: TGroupBox;
@@ -125,6 +109,8 @@ type
     Button5: TButton;
     Label10: TLabel;
     Edit10: TEdit;
+    ST1: TSystemTrayIcon;
+    RB1: TRegisteryBase;
     procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
@@ -136,13 +122,9 @@ type
     procedure Edit3Change(Sender: TObject);
     procedure Edit1Change(Sender: TObject);
     procedure FormShow(Sender: TObject);
-{$IFDEF LINUX}
-    procedure CSError(sender: TObject; SocketError: Integer);
-{$ELSE}
     procedure CSDisconnect(Sender: TObject; Socket: TCustomWinSocket);
     procedure CSError(Sender: TObject; Socket: TCustomWinSocket;
       ErrorEvent: TErrorEvent; var ErrorCode: Integer);
-{$ENDIF}
     procedure Edit5Change(Sender: TObject);
     procedure RadioGroup1Click(Sender: TObject);
     procedure Supprimer1Click(Sender: TObject);
@@ -152,8 +134,11 @@ type
     procedure Dsactiver1Click(Sender: TObject);
     procedure Ejecter1Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure ListView1DblClick(Sender: TObject);
   private
     { Private declarations }
+  public
+    { Public declarations }
     function GetSharePath : String;
     function GetGoodSharePath : String;
     function IntLength(V : Integer) : Integer;
@@ -163,6 +148,8 @@ type
     procedure RequestStateInfo;
     procedure RequestSharesList;
     procedure RequestEject(ShareName : String);
+    Procedure RequestConns(Path : String);
+    procedure RequestEjectIP(ShareName,IP : String);
     function SetShareInfo(SharePath : String;Etat : Integer) : Boolean;
     procedure SetGlobalInfo;
     procedure SetStateInfo;
@@ -170,8 +157,6 @@ type
     procedure SendRescanQuery(ShareName : String);
     function CheckGlobal : Boolean;
     function CheckShare : Boolean;
-  public
-    { Public declarations }
   end;
 
 var
@@ -186,14 +171,14 @@ var
   SuggestedName : String;
   Reboot : Boolean;
   OnFolder : Boolean;
+  ConnInit : Boolean;
+  Limited  : Boolean;
 
 implementation
 
-{$IFDEF LINUX}
-{$R *.xfm}
-{$ELSE}
-{$R *.dfm}
-{$ENDIF}
+uses Unit2;
+
+{$R *.DFM}
 
 function TForm1.GetSharePath : String;
 Begin
@@ -224,11 +209,7 @@ end;
 function TForm1.InitConnection : Boolean;
 Begin
   try
-{$IFDEF LINUX}
-    CS.RemotePort:=FS_CONF_PORT;
-{$ELSE}
     CS.Port:=FS_CONF_PORT;
-{$ENDIF}
     CS.Open;
     Result:=True;
   except
@@ -238,25 +219,58 @@ Begin
 End;
 
 procedure TForm1.FormCreate(Sender: TObject);
+Var buf : Array[0..512] Of Char;
+  HostEnt: PHostEnt;
+  H : String;
 begin
+  ConnInit:=false;
+  Limited:=false;
   If Not InitConnection Then
   Begin
-    Application.MessageBox('Cannot connect to ffss server... is server running ?','FFSS Share Error',MB_OK);
-    Halt;
-  End;
+    Application.MessageBox('FFSS server does not seem to be running. Executing in limited configuration mode','FFSS Share Info',MB_OK);
+    Limited:=true;
+    TabSheet2.TabVisible:=False;
+    TabSheet3.TabVisible:=False;
+    H:='';
+    GetHostName(buf,SizeOf(buf));
+    HostEnt:=gethostbyname(PChar('ffss'));
+    If HostEnt <> Nil Then
+    Begin
+      H:=HostEnt.h_name;
+      If Pos('.',HostEnt.h_name) <> 0 Then
+      Begin                           
+        H:=HostEnt.h_name;
+      End;
+    End;
+    Edit3.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Name',Buf);
+    Edit4.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Comment','');
+    Edit5.Text:=RB1.GetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Master',H);
+    Edit6.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Idle',0));
+    Edit7.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxConn',10));
+    Edit8.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',10));
+    Edit10.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',2));
+    CheckBox1.Checked:=Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',0));
+  End
+  Else
+    ConnInit:=true;
   If ParamCount = 0 Then
     OnFolder:=False
   else
     OnFolder:=True;
-  Global:=RequestGlobalInfo;
-  Edit3.Text:=Global.Name;
-  Edit4.Text:=Global.Comment;
-  Edit5.Text:=Global.Master;
-  Edit6.Text:=IntToStr(Global.Idle);
-  Edit7.Text:=IntToStr(Global.MaxConn);
-  CheckBox1.Checked:=Global.FTP;
-  Edit8.Text:=IntToStr(Global.FTP_MaxConn);
-  If OnFolder Then
+  ST1.ShowAppIcon:=False;
+  ST1.Icon:=Application.Icon;
+  If Not Limited Then
+  Begin
+    Global:=RequestGlobalInfo;
+    Edit3.Text:=Global.Name;
+    Edit4.Text:=Global.Comment;
+    Edit5.Text:=Global.Master;
+    Edit6.Text:=IntToStr(Global.Idle);
+    Edit7.Text:=IntToStr(Global.MaxConn);
+    CheckBox1.Checked:=Global.FTP;
+    Edit8.Text:=IntToStr(Global.FTP_MaxConn);
+  End;
+  If OnFolder And Not Limited Then
   Begin
     Form1.Caption:='Propriétés de '+GetSharePath;
     Share:=RequestShareInfo(GetGoodSharePath);
@@ -280,8 +294,11 @@ begin
   End
   Else
     TabSheet2.TabVisible:=False;
-  RequestStateInfo;
-  RequestSharesList;
+  If Not Limited Then
+  Begin
+    RequestStateInfo;
+    RequestSharesList;
+  End;
   Button3.Enabled:=False;
   GblChanged:=False;
   ShrChanged:=False;
@@ -436,6 +453,8 @@ begin
     Inc(Pos,StrLen(Buf+Pos)+1);
     Item.SubItems.Add(String(Buf+Pos));
     Inc(Pos,StrLen(Buf+Pos)+1);
+    Item.SubItems.Add(String(Buf+Pos));
+    Inc(Pos,StrLen(Buf+Pos)+1);
   End;
 end;
 
@@ -451,6 +470,78 @@ begin
   CS.Socket.SendBuf(Buf,Size);
 end;
 
+Procedure TForm1.RequestConns(Path : String);
+Var Buf : Array[0..10000] Of Char;
+    Size : DWord;
+    Got : DWord;
+    Pos : DWord;
+    NB,I,J : DWord;
+    Item : TListItem;
+begin
+  Buf[0]:=Char(FS_OPCODE_GETSHRCONNS);
+  Size:=1;
+  StrPCopy(Buf+Size,Path);
+  Inc(Size,Length(Path)+1);
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got < 1 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  While Got < Size Do
+  Begin
+    Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
+  End;
+  Pos:=1;
+  Nb:=StrToInt(String(Buf+Pos));
+  If Nb = 0 Then Exit;
+  Inc(Pos,StrLen(Buf+Pos)+1);
+  For I:=0 To Nb-1 Do
+  Begin
+    Item:=Form2.ListView1.Items.Add;
+    Item.Caption:=String(Buf+Pos);
+    Inc(Pos,StrLen(Buf+Pos)+1);
+    Item.SubItems.Add(String(Buf+Pos));
+    Inc(Pos,StrLen(Buf+Pos)+1);
+    Item.SubItems.Add(String(Buf+Pos));
+    Inc(Pos,StrLen(Buf+Pos)+1);
+    If StrToInt(Item.SubItems[0]) <> 0 Then
+    Begin
+      For J:=0 To StrToInt(Item.SubItems[0])-1 Do
+      Begin
+        // Get String(Buf+Pos)
+        Inc(Pos,StrLen(Buf+Pos)+1);
+        // Get %
+        Inc(Pos,StrLen(Buf+Pos)+1);
+      End;
+    End;
+    If StrToInt(Item.SubItems[1]) <> 0 Then
+    Begin
+      For J:=0 To StrToInt(Item.SubItems[1])-1 Do
+      Begin
+        // Get String(Buf+Pos)
+        Inc(Pos,StrLen(Buf+Pos)+1);
+        // Get %
+        Inc(Pos,StrLen(Buf+Pos)+1);
+      End;
+    End;
+  End;
+end;
+
+procedure TForm1.RequestEjectIP(ShareName,IP : String);
+Var Buf : Array[0..1000] Of Char;
+    Size : DWord;
+begin
+  Buf[0]:=Char(FS_OPCODE_EJECTIP);
+  Size:=1;
+  StrPCopy(Buf+Size,ShareName);
+  Inc(Size,Length(ShareName)+1);
+  StrPCopy(Buf+Size,IP);
+  Inc(Size,Length(IP)+1);
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+end;
 
 function TForm1.SetShareInfo(SharePath : String;Etat : Integer) : Boolean;
 Var Buf : Array[0..10000] Of Char;
@@ -478,7 +569,7 @@ begin
     Inc(Size,Length(SharePath)+1);
     StrPCopy(Buf+Size,Edit2.Text);
     Inc(Size,Length(Edit2.Text)+1);
-    StrPCopy(Buf+Size,IntToStr(Integer(CheckBox2.Checked)));
+    StrPCopy(Buf+Size,IntToStr(Integer(Not CheckBox2.Checked)));
     Inc(Size,IntLength(Integer(CheckBox2.Checked))+1);
     StrPCopy(Buf+Size,IntToStr(Integer(CheckBox3.Checked)));
     Inc(Size,IntLength(Integer(CheckBox3.Checked))+1);
@@ -506,6 +597,18 @@ Var Buf : Array[0..10000] Of Char;
     Size : DWord;
     Got : DWord;
 begin
+  If Limited Then
+  Begin
+    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Name',Edit3.Text);
+    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Comment',Edit4.Text);
+    RB1.SetStrValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Master',Edit5.Text);
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_Idle',StrToInt(Edit6.Text));
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxConn',StrToInt(Edit7.Text));
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',StrToInt(Edit8.Text));
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',StrToInt(Edit10.Text));
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',Integer(CheckBox1.Checked));
+    Exit;
+  End;
   Buf[0]:=Char(FS_OPCODE_UPDTGLOBAL);
   Size:=1;
   StrPCopy(Buf+Size,Edit3.Text);
@@ -637,6 +740,11 @@ begin
     SetGlobalInfo;
     GblChanged:=False;
   End;
+  If Limited Then
+  Begin
+    Button3.Enabled:=False;
+    Exit;
+  End;
   If ShrChanged Then
   Begin
     If Not CheckShare Then Exit;
@@ -745,7 +853,7 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-  If OnFolder Then
+  If OnFolder And Not Limited Then
   Begin
     If Share = Nil Then
       RadioButton1.SetFocus
@@ -754,23 +862,20 @@ begin
   End;
 end;
 
-{$IFDEF LINUX}
-procedure TForm1.CSError(sender: TObject; SocketError: Integer);
-begin
-  Close;
-end;
-{$ELSE}
 procedure TForm1.CSDisconnect(Sender: TObject; Socket: TCustomWinSocket);
 begin
+  If ConnInit Then
+    Application.MessageBox('Connection lost with the server, some error might have occured. See FFSS_Server.log for more infos','FFSS Share Error',MB_OK Or MB_ICONEXCLAMATION);
   Close;
 end;
 
 procedure TForm1.CSError(Sender: TObject; Socket: TCustomWinSocket;
   ErrorEvent: TErrorEvent; var ErrorCode: Integer);
 begin
+  If ConnInit Then
+    Application.MessageBox('Connection lost with the server, some error might have occured. See FFSS_Server.log for more infos','FFSS Share Error',MB_OK Or MB_ICONEXCLAMATION);
   Close;
 end;
-{$ENDIF}
 
 procedure TForm1.Edit5Change(Sender: TObject);
 begin
@@ -849,6 +954,21 @@ end;
 procedure TForm1.Button5Click(Sender: TObject);
 begin
   RequestSharesList;
+end;
+
+procedure TForm1.ListView1DblClick(Sender: TObject);
+begin
+  If ListView1.Selected <> Nil Then
+  Begin
+    If ListView1.Selected.SubItems[3] <> '0' Then
+    Begin
+      Form2.Caption := 'Connexions à ' + ListView1.Selected.Caption;
+      Form2.ListView1.Items.Clear;
+      Form2.ListView1Click(Sender);
+      RequestConns(ListView1.Selected.SubItems[0]);
+      Form2.ShowModal;
+    End;
+  End;
 end;
 
 end.

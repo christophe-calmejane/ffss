@@ -13,7 +13,7 @@ object Form1: TForm1
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDefault
+  Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
   PixelsPerInch = 96
@@ -27,15 +27,16 @@ object Form1: TForm1
     HotTrack = True
     ParentShowHint = False
     ShowHint = False
+    TabIndex = 1
     TabOrder = 0
     object TabSheet1: TTabSheet
-      Caption = 'Général'
+      Caption = 'G'#233'n'#233'ral'
       object Label3: TLabel
         Left = 16
         Top = 20
         Width = 80
         Height = 13
-        Hint = 'Le nom de votre machine sur le voisinage réseau'
+        Hint = 'Le nom de votre machine sur le voisinage r'#233'seau'
         Caption = 'Nom de machine'
         ParentShowHint = False
         ShowHint = True
@@ -45,7 +46,7 @@ object Form1: TForm1
         Top = 56
         Width = 61
         Height = 13
-        Hint = 'Le commentaire de votre machine sur le voisinage réseau'
+        Hint = 'Le commentaire de votre machine sur le voisinage r'#233'seau'
         Caption = 'Commentaire'
         ParentShowHint = False
         ShowHint = True
@@ -65,10 +66,10 @@ object Form1: TForm1
         Top = 132
         Width = 51
         Height = 13
-        Hint =
-          'Le délai max d'#39'inactivité sur un partage avant de déconnecter le' +
+        Hint = 
+          'Le d'#233'lai max d'#39'inactivit'#233' sur un partage avant de d'#233'connecter le' +
           ' client (en sec) (ou 0 pour infini)'
-        Caption = 'Délai d'#39'idle'
+        Caption = 'D'#233'lai d'#39'idle'
         ParentShowHint = False
         ShowHint = True
       end
@@ -77,8 +78,8 @@ object Form1: TForm1
         Top = 172
         Width = 92
         Height = 13
-        Hint =
-          'Le nombre max de connexions simultanées à votre serveur (ou 0 po' +
+        Hint = 
+          'Le nombre max de connexions simultan'#233'es '#224' votre serveur (ou 0 po' +
           'ur infini)'
         Caption = 'Max de connexions'
         ParentShowHint = False
@@ -89,8 +90,8 @@ object Form1: TForm1
         Top = 208
         Width = 111
         Height = 13
-        Hint =
-          'Le nombre max de transferts simultanés par connexion (ou 0 pour ' +
+        Hint = 
+          'Le nombre max de transferts simultan'#233's par connexion (ou 0 pour ' +
           'infini)'
         Caption = 'Max transferts par conn'
         ParentShowHint = False
@@ -101,7 +102,7 @@ object Form1: TForm1
         Top = 16
         Width = 121
         Height = 21
-        Hint = 'Le nom de votre machine sur le voisinage réseau'
+        Hint = 'Le nom de votre machine sur le voisinage r'#233'seau'
         MaxLength = 15
         ParentShowHint = False
         ShowHint = True
@@ -113,7 +114,7 @@ object Form1: TForm1
         Top = 52
         Width = 181
         Height = 21
-        Hint = 'Le commentaire de votre machine sur le voisinage réseau'
+        Hint = 'Le commentaire de votre machine sur le voisinage r'#233'seau'
         MaxLength = 50
         ParentShowHint = False
         ShowHint = True
@@ -136,8 +137,8 @@ object Form1: TForm1
         Top = 128
         Width = 40
         Height = 21
-        Hint =
-          'Le délai max d'#39'inactivité sur un partage avant de déconnecter le' +
+        Hint = 
+          'Le d'#233'lai max d'#39'inactivit'#233' sur un partage avant de d'#233'connecter le' +
           ' client (en sec) (ou 0 pour infini)'
         ParentShowHint = False
         ShowHint = True
@@ -150,8 +151,8 @@ object Form1: TForm1
         Top = 168
         Width = 40
         Height = 21
-        Hint =
-          'Le nombre max de connexions simultanées à votre serveur (ou 0 po' +
+        Hint = 
+          'Le nombre max de connexions simultan'#233'es '#224' votre serveur (ou 0 po' +
           'ur infini)'
         ParentShowHint = False
         ShowHint = True
@@ -164,10 +165,10 @@ object Form1: TForm1
         Top = 236
         Width = 185
         Height = 105
-        Hint =
-          'La compatibilité FTP permet de se connecter à votre serveur avec' +
+        Hint = 
+          'La compatibilit'#233' FTP permet de se connecter '#224' votre serveur avec' +
           ' un client FTP'
-        Caption = ' Compatibilité FTP '
+        Caption = ' Compatibilit'#233' FTP '
         ParentShowHint = False
         ShowHint = True
         TabOrder = 6
@@ -176,8 +177,8 @@ object Form1: TForm1
           Top = 64
           Width = 92
           Height = 13
-          Hint =
-            'Le nombre max de connexions simultanées à votre serveur FTP (ou ' +
+          Hint = 
+            'Le nombre max de connexions simultan'#233'es '#224' votre serveur FTP (ou ' +
             '0 pour infini)'
           Caption = 'Max de connexions'
           ParentShowHint = False
@@ -188,7 +189,7 @@ object Form1: TForm1
           Top = 28
           Width = 97
           Height = 17
-          Hint = 'Activer la compatibilité FTP'
+          Hint = 'Activer la compatibilit'#233' FTP'
           Caption = 'Active'
           ParentShowHint = False
           ShowHint = True
@@ -200,13 +201,13 @@ object Form1: TForm1
           Top = 60
           Width = 40
           Height = 21
-          Hint =
-            'Le nombre max de connexions simultanées à votre serveur FTP (ou ' +
+          Hint = 
+            'Le nombre max de connexions simultan'#233'es '#224' votre serveur FTP (ou ' +
             '0 pour infini)'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
-          Text = '0'
+          Text = '10'
           OnChange = Edit5Change
         end
       end
@@ -215,8 +216,8 @@ object Form1: TForm1
         Top = 204
         Width = 41
         Height = 21
-        Hint =
-          'Le nombre max de transferts simultanés par connexion (ou 0 pour ' +
+        Hint = 
+          'Le nombre max de transferts simultan'#233's par connexion (ou 0 pour ' +
           'infini)'
         ParentShowHint = False
         ShowHint = True
@@ -261,8 +262,8 @@ object Form1: TForm1
           Top = 204
           Width = 98
           Height = 13
-          Hint =
-            'Le nombre max de connexions simultanées à ce partage (0 pour inf' +
+          Hint = 
+            'Le nombre max de connexions simultan'#233'es '#224' ce partage (0 pour inf' +
             'ini)'
           Caption = 'Max de connexions :'
           ParentShowHint = False
@@ -297,10 +298,10 @@ object Form1: TForm1
           Top = 96
           Width = 265
           Height = 93
-          Hint =
-            'Règle les droits d'#39'accès au partage, et les utilisateurs privilé' +
-            'giés'
-          Caption = ' Accès '
+          Hint = 
+            'R'#232'gle les droits d'#39'acc'#232's au partage, et les utilisateurs privil'#233 +
+            'gi'#233's'
+          Caption = ' Acc'#232's '
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
@@ -309,7 +310,7 @@ object Form1: TForm1
             Top = 28
             Width = 97
             Height = 17
-            Hint = 'Indique si on peut écrire sur le partage'
+            Hint = 'Indique si on peut '#233'crire sur le partage'
             Caption = 'Lecture seule'
             Checked = True
             Color = clBtnFace
@@ -323,10 +324,10 @@ object Form1: TForm1
             Top = 56
             Width = 97
             Height = 17
-            Hint =
-              'En mode privé, seuls les utilisateurs privilégiés peuvent se con' +
+            Hint = 
+              'En mode priv'#233', seuls les utilisateurs privil'#233'gi'#233's peuvent se con' +
               'necter'
-            Caption = 'Privé'
+            Caption = 'Priv'#233
             TabOrder = 1
             OnClick = CheckBox2Click
           end
@@ -335,7 +336,7 @@ object Form1: TForm1
             Top = 48
             Width = 75
             Height = 25
-            Hint = 'Editer les utilisateurs privilégiés'
+            Hint = 'Editer les utilisateurs privil'#233'gi'#233's'
             Caption = 'Utilisateurs'
             TabOrder = 2
           end
@@ -345,8 +346,8 @@ object Form1: TForm1
           Top = 204
           Width = 40
           Height = 21
-          Hint =
-            'Le nombre max de connexions simultanées à ce partage (0 pour inf' +
+          Hint = 
+            'Le nombre max de connexions simultan'#233'es '#224' ce partage (0 pour inf' +
             'ini)'
           ParentShowHint = False
           ShowHint = True
@@ -361,7 +362,7 @@ object Form1: TForm1
         Top = 24
         Width = 113
         Height = 17
-        Caption = 'N&on partagé'
+        Caption = 'N&on partag'#233
         TabOrder = 0
         OnClick = RadioButton1Click
       end
@@ -371,7 +372,7 @@ object Form1: TForm1
         Top = 48
         Width = 121
         Height = 17
-        Caption = '&Partagé en tant que : '
+        Caption = '&Partag'#233' en tant que : '
         TabOrder = 1
         OnClick = RadioButton2Click
       end
@@ -384,9 +385,9 @@ object Form1: TForm1
         Top = 20
         Width = 297
         Height = 73
-        Hint =
+        Hint = 
           'En mode silencieux, aucune connexion n'#39'est possible, mais on peu' +
-          't quand même regarder la liste des partages'
+          't quand m'#234'me regarder la liste des partages'
         Caption = ' Etat du serveur '
         ItemIndex = 0
         Items.Strings = (
@@ -412,19 +413,23 @@ object Form1: TForm1
           Columns = <
             item
               Caption = 'Nom'
-              Width = 80
+              Width = 75
             end
             item
               Caption = 'Chemin'
-              Width = 110
+              Width = 90
             end
             item
               Caption = 'Actif'
-              Width = 40
+              Width = 35
             end
             item
               Caption = 'Conns'
-              Width = 47
+              Width = 42
+            end
+            item
+              Caption = 'Xfer'
+              Width = 35
             end>
           HotTrack = True
           ReadOnly = True
@@ -432,13 +437,14 @@ object Form1: TForm1
           PopupMenu = PopupMenu1
           TabOrder = 0
           ViewStyle = vsReport
+          OnDblClick = ListView1DblClick
         end
         object Button5: TButton
           Left = 112
           Top = 212
           Width = 75
           Height = 25
-          Caption = '&Rescan'
+          Caption = '&Rafraichir'
           TabOrder = 1
           OnClick = Button5Click
         end
@@ -511,7 +517,7 @@ object Form1: TForm1
       OnClick = Actif1Click
     end
     object Dsactiver1: TMenuItem
-      Caption = '&Désactiver'
+      Caption = '&D'#233'sactiver'
       OnClick = Dsactiver1Click
     end
     object N2: TMenuItem
@@ -521,5 +527,23 @@ object Form1: TForm1
       Caption = '&Ejecter tout le monde'
       OnClick = Ejecter1Click
     end
+  end
+  object ST1: TSystemTrayIcon
+    Enabled = True
+    ShowHint = False
+    UserID = 0
+    Visible = True
+    AnimInterval = 200
+    AnimPingPong = False
+    Animate = False
+    RestoreOnClick = True
+    Left = 4
+    Top = 408
+  end
+  object RB1: TRegisteryBase
+    Societe = 'SkyTecH Group'
+    Version = '1.0'
+    Left = 92
+    Top = 408
   end
 end
