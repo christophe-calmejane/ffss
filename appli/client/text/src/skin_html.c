@@ -136,7 +136,7 @@ void FCA_html_init()
 
 void FCA_html_prog_begin()
 {
-if(FCA_html_included_doc[1]=='f')
+if(!FCA_VAR_IS_ON(FCA_html_included_doc))
 printf("<html>
 <head>
  <title>ffss client</title>
@@ -487,7 +487,7 @@ printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>
 </form>
 ");
-if(FCA_html_included_doc[1]=='f')
+if(!FCA_VAR_IS_ON(FCA_html_included_doc))
 printf("
 </body>
 </html>
@@ -520,7 +520,7 @@ void FCA_dir_arg(const char *dir, bool isFile)
 	tl=FCA_cgi_escape_special_chars(dir);
 	FCA_my_url(isFile);
 	printf("%cdir=%s",
-		FCA_html_firstarg[1]=='n'?'?':'&',
+		FCA_VAR_IS_ON(FCA_html_firstarg)?'?':'&',
 		tl);
 	free(tl);
 }
@@ -535,7 +535,7 @@ void FCA_post_link(bool firstArg)
 	char *p;
 	
 		/* firstArg: if there was an argument before */
-	printf("%c", (FCA_html_firstarg[1]=='f' || !firstArg)?'&':'?');
+	printf("%c", (!FCA_VAR_IS_ON(FCA_html_firstarg) || !firstArg)?'&':'?');
 	printf("prefix=%s",
 		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
 	free(p);

@@ -32,7 +32,10 @@
 #	define rl_completion_matches	completion_matches
 #endif
 
-	/* environment variables */
+#define FCA_VAR_IS_ON(x)	x[1]=='n'
+	/* environment variables
+	    to update each time you add a variable
+	 */
 #define FCA_can_ansi		FCA_env[0]
 #define FCA_debuglevel		FCA_env[1]
 #define FCA_disp_off		FCA_env[2]
@@ -43,7 +46,11 @@
 #define FCA_broadcast_timeout	atoi(FCA_env[7])
 #define FCA_search_timeout	atoi(FCA_env[8])
 #define FCA_operation_timeout	atoi(FCA_env[9])
-#define FCA_skin_env_index	10
+#define FCA_sort_find		FCA_env[10]
+#define FCA_sort		FCA_env[11]
+#define FCA_sort_by		FCA_env[12]
+	/* modify this each time you add a variable */
+#define FCA_skin_env_index	13
 
 
 typedef struct
@@ -116,7 +123,8 @@ char *FCA_strtolower(char *str);
 
 void FCA_dw_dir(char *path, char *dir, char *dest);
 
-unsigned int *FCA_sort_res(const char **Answers,int NbAnswers);
+unsigned int *FCA_pre_tabsort(int nbEl);
+void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels);
 
 	/* sendMessage redefinitions */
 bool FCA_list_dir(SU_PClientSocket Server,const char Path[], const char Dir[]);

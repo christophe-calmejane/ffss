@@ -2,93 +2,43 @@
 just for me, questions to ask to kiki...
 
 
-1) J'ai pris skyutils+ffss complet tout frais de cvs update.
-J'ai bien mate avant de compiler qu'il n'y ait pas de .h ou
-de .so/.a restant dans /usr/local. J'ai tout compile en debug+
-malloc trace. resultat, je lance le master :
+gcc -DHAVE_CONFIG_H -I. -I. -I.. -g -O2 -Wall -DDEBUG -DSU_MALLOC_TRACE
+ -DHAVE_BZLIB -DPLUGINS  -I/usr/local/include -D_REENTRANT -pthread
+ -L/home/bennyben/prog/c/ffss/ffss/skyutils/src/.libs
+ -I/home/bennyben/prog/c/ffss/ffss/skyutils/src -I/usr/local/include
+ -L/home/bennyben/prog/c/ffss/ffss/libffss-1.0.0/src/.libs
+ -I/home/bennyben/prog/c/ffss/ffss/libffss-1.0.0/src -c arch_dep_unix.c
+arch_dep_unix.c: In function `FS_LoadPlugin':
+arch_dep_unix.c:30: warning: implicit declaration of function `dlopen'
+arch_dep_unix.c:30: `RTLD_LAZY' undeclared (first use in this function)
+arch_dep_unix.c:30: (Each undeclared identifier is reported only once
+arch_dep_unix.c:30: for each function it appears in.)
+arch_dep_unix.c:30: warning: assignment makes pointer from integer without a cast
+arch_dep_unix.c:33: warning: implicit declaration of function `dlerror'
+arch_dep_unix.c:37: warning: implicit declaration of function `dlsym'
+arch_dep_unix.c:37: warning: assignment makes pointer from integer without a cast
+arch_dep_unix.c:38: warning: assignment makes pointer from integer without a cast
+arch_dep_unix.c: In function `FS_UnLoadPlugin':
+arch_dep_unix.c:66: warning: assignment makes pointer from integer without a cast
+arch_dep_unix.c:67: warning: assignment makes pointer from integer without a cast
+arch_dep_unix.c:69: warning: implicit declaration of function `dlclose'
+alors que :
+checking for dlopen in -ldl... yes
+-> #include <dlfcn.h> au debut de arch_dep_unix.c = nikel
 
-FFSS Master v1.0-pre39 (c) Ze KiLleR / SkyTech 2001
-FFSS library v1.0.0-pre68 (c) Ze KiLleR / SkyTech 2001
-Master started
-SkyUtils Information : Using SU_MALLOC_TRACE hooks : MALLOC_CHECK_=1 SU_MALLOC_TRACE=1 SU_MALLOC_PRINT=0
-Warning : Master launched from a non-root user. Cannot use setuid/setgid
-FFSS(4) : Loading index from disk... (./Dump.dat)
-FFSS(4) : Load complete : Failed
-FFSS master waiting on port 10001 (UDP)
-Using interface dummy0, with ip 192.168.80.10
-MASTER : Loading my local servers
-FFSS(2) : UDP thread launched...waiting for data
-FFSS(2) : PING thread running...
-FFSS(2) : QUEUE thread running...
-Master running with pid : 18421
-FFSS(2) : SEARCH thread running...
 
-Ok, no pb, apres je lance le server :
+2 x --enable-malloc-trace dans le configure du master
 
-FFSS Server v1.0-pre68 (c) Ze KiLleR / SkyTech 2001
-FFSS library v1.0.0-pre68 (c) Ze KiLleR / SkyTech 2001
-Server started with pid 18443
-SkyUtils Information : Using SU_MALLOC_TRACE hooks : MALLOC_CHECK_=1 SU_MALLOC_TRACE=1 SU_MALLOC_PRINT=0
-FFSS server waiting on port 10002 (UDP and TCP)
-Using interface dummy0, with ip 192.168.80.10
-FFSS(1) : Server running...
-FFSS(5) : Start building index for share mp3 : mp3z
-FFSS(5) :       Building index for sub-dir /win/mp3
-FFSS(1) : TCP thread launched...waiting for connections
-FFSS(2) : UDP thread launched...waiting for data
-FFSS(5) :       Building index for sub-dir /win/mp3/redhot
-... plein de building index...
-FFSS(5) : Done building mp3 (199 files, 26 directories)
-FFSS(5) : Start building index for share test : test of a share
-FFSS(5) :       Building index for sub-dir /tmp/toto
-FFSS(5) : Done building test (1 files, 0 directories)
-FFSS(3) : Sending State message to ffss
-Using BZ compression (before=5296 - after=2331)
-Using BZ compression (before=3616 - after=1105)
-Using BZ compression (before=16 - after=56)
-Using BZ compression (before=32 - after=57)
-FFSS(3) : Sending index answer message to ffss:10001
-FFSS(3) : Index successfully sent to ffss:10001
-FFSS Crashed :-(. Check: common.c:94
-Aborted
-
-Du cote du master :
-
-FFSS(5) : Data found on UDP port from 192.168.80.10 (pc333.bennyben.fr) (53 bytes)... analysing
-FFSS(3) : Received a state message from server
-MASTER : Adding host bennyben (192.168.80.10) to domain Benny
-MASTER : Adding state to my queue : bennyben (192.168.80.10) 1
-FFSS(5) : Data found on UDP port from 192.168.80.10 (pc333.bennyben.fr) (28 bytes)... analysing
-FFSS(3) : Received an index answer message (index size : 3569/5312/3648) Connect to 1035
-Starting index thread
-Index thread : buffer received... now indexing
-FFSS(6) : Checking index integrity of bennyben
-Indexing engine : Inserting host 'bennyben' (228 nodes)
-Indexing engine : Inserting of 'bennyben' complete
-Ending index thread... indexing completed (1 hosts)
-FFSS(4) : 99% of unused space in hash table
-FFSS(4) : 228 strings in index
-FFSS(4) : Starting garbage collector...
-FFSS(4) : Garbage collector completed
-FFSS(4) : Dumping index to disk... (Index.dat)
-FFSS(4) : Dump complete.
+le master me met mon server off au bout d'un moment...
+MASTER : Adding host bennyben (127.0.0.1) to domain Benny
+MASTER : Adding state to my queue : bennyben (127.0.0.1) 1
+ok nikel mais apres :
 FFSS(4) : THREADS : PING : Sending PING sequence
-FFSS(3) : Sending Ping message to servers
-MASTER : Saving my local servers
-(1mn apres...)
-FFSS Crashed :-(. Check: common.c:94
-Aborted
-(mais un processus ffss-master tourne encore et est fonctionnel)
+FFSS(5) : THREADS : PING : Server bennyben timed out, changing state
+MASTER : Adding state to my queue : bennyben (127.0.0.1) 2
+ du cote du server, ya rien, aucun PING du master visible
+ j'ai mis le server et le master en localhost.
 
-
-2) pour savoir l'etat de ses servers, le master envoie un ping broadcast,
-et les declare ON ou OFF, si g bien compris.
-Je pense que vous y avez pense, mais pourquoi ne pas envoyer de ping
-aux servers de la liste seulement ?
-
-
-3) apres avoir commente dans les sources du server, ligne 651: SU_FreeListElem(Bufs);
-Le server tourne, mais le master ne change pas d'attitude. Le client plante 1 fois sur 2.
 
 
 

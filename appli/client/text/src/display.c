@@ -53,8 +53,8 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 	FCA_PServs dom;
 	FC_PEntry Es;
 
-	if(!FCA_quiet && !(FCA_disp_off[0]=='f' && State==FFSS_STATE_OFF)
-		&& ! (FCA_disp_quiet[0]=='f' && State==FFSS_STATE_QUIET) ) {
+	if(!FCA_quiet && !(!FCA_VAR_IS_ON(FCA_disp_off) && State==FFSS_STATE_OFF)
+		&& ! (!FCA_VAR_IS_ON(FCA_disp_quiet) && State==FFSS_STATE_QUIET) ) {
 		if(!FCA_nb_states) {
 			snprintf(tmp, 127, "/$/None");
 			FCA_pre_listing(tmp);
@@ -199,14 +199,19 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 	SU_PList sav;
 	FC_PEntry Es;
 	FCA_PServs dom;
+	unsigned int *itab=NULL;
     
 	    	/* prepare the listing structure */
 	SU_strcpy(FCA_listed_dir, "/$", FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
 	FCA_list=NULL;
-    
+
 	if(NbDomains>=0) {
+		itab=FCA_pre_tabsort(NbDomains);
 	    	if(!FCA_quiet) {
+			if(FCA_VAR_IS_ON(FCA_sort))
+				FCA_sort_chartab(itab, Domains, NbDomains);
+			FCA_sort_chartab(itab,Domains, NbDomains);
 			FCA_pre_listing("/$");
 			FCA_tab_width=9;
 			FCA_tab_top();
@@ -224,7 +229,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 			Es=malloc( sizeof(FC_TEntry) );
 			if(!Es)	FCA_crash("memory full");
 			if(id!=NbDomains)
-				Es->Name=strdup(Domains[id]);
+				Es->Name=strdup(Domains[itab[id]]);
 			else
 				Es->Name=strdup("None");
 			Es->Flags=FFSS_FILE_DIRECTORY;
@@ -239,7 +244,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 				FCA_tab_pre_item();
 				FCA_pre_tab_item();
 				if(id!=NbDomains) {
-					FCA_pre_dir("/$", Domains[id], true);
+					FCA_pre_dir("/$", Domains[itab[id]], true);
     					FCA_tab_item(Domains[id],0);
 				} else {
 					FCA_pre_dir("/$", "None" , true);
@@ -252,13 +257,13 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 	
 				/* update the data structure */
 			if(id!=NbDomains)
-				Pdoms=FCA_get_Domain(Domains[id]);
+				Pdoms=FCA_get_Domain(Domains[itab[id]]);
 			else
 				Pdoms=FCA_get_Domain("None");
 			sav=FCA_Servers;
 			FCA_Servers=doms;
 			if(id!=NbDomains)
-				doms=FCA_add_Domain(Domains[id]);
+				doms=FCA_add_Domain(Domains[itab[id]]);
 			else
 				doms=FCA_add_Domain("None");
 			FCA_Servers=sav;
@@ -272,7 +277,9 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 	FCA_free_Domain_list();
 		/* replace by the new listing */
 	FCA_Servers=doms;
-    
+
+	if(itab)
+		free(itab);
 	if(FCA_quiet)
 		return;
 	FCA_tab_btm();
@@ -346,8 +353,8 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 			FCA_list=Ps;
 		}
 	
-		if(!FCA_quiet  && !(FCA_disp_off[1]=='f' && H->State==FFSS_STATE_OFF)
-		 && ! (FCA_disp_quiet[0]=='f' && H->State==FFSS_STATE_QUIET)) {
+		if(!FCA_quiet  && !(!FCA_VAR_IS_ON(FCA_disp_off) && H->State==FFSS_STATE_OFF)
+		 && ! (!FCA_VAR_IS_ON(FCA_disp_quiet) && H->State==FFSS_STATE_QUIET)) {
 		 	if(!nbdisp) {
 				FCA_pre_listing(FCA_listed_dir);
 				FCA_tab_width=73;
@@ -467,10 +474,12 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	unsigned short m;
 #endif
 
+	res=FCA_pre_tabsort(NbAnswers);
 	if(!FCA_quiet)
 		FCA_pre_search_ans(Query);
 	if(NbAnswers && !FCA_quiet) {
-		res=FCA_sort_res(Answers, NbAnswers);
+		if(FCA_VAR_IS_ON(FCA_sort_find))
+			FCA_sort_chartab(res,Answers, NbAnswers);
 		FCA_tab_width=38;
 		FCA_tab_top();
 		
@@ -544,7 +553,8 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	FCA_main_num(m, "milisecond");
 	FCA_post_infos();
 #endif
-
+	if(res)
+		free(res);
 	if(!FCA_quiet)
 		FCA_post_search_ans(Query);
 }
@@ -684,16 +694,20 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 	int ish;
 	SU_PList Ps=NULL;
 	FC_PEntry Es;
+	unsigned int *itab=NULL;
     
 	    	/* prepare the internal structure */
 	SU_strcpy(FCA_listed_dir, FCA_tolist_dir, FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
 	FCA_list=NULL;
 
+	itab=FCA_pre_tabsort(NbShares);
 	if(!FCA_quiet)
 		FCA_pre_listing(FCA_listed_dir);
 	if(NbShares) {
 		if(! FCA_quiet) {
+			if(FCA_VAR_IS_ON(FCA_sort))
+				FCA_sort_chartab(itab, Names, NbShares);
 			FCA_tab_width=33;
 			FCA_tab_top();
 			
@@ -713,7 +727,7 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 				/* copy element to the structure */
 			Es=malloc( sizeof(FC_TEntry) );
 			if(!Es)     FCA_crash("memory full");
-			Es->Name=strdup(Names[ish]);
+			Es->Name=strdup(Names[itab[ish]]);
 			    	/* it can be like a directory for this structure */
 			Es->Flags=FFSS_FILE_DIRECTORY;
 			if( Ps ) {
@@ -727,13 +741,13 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 			if(! FCA_quiet) {
 				FCA_tab_pre_item();
 				 FCA_pre_tab_item();
-				  FCA_pre_dir(FCA_tolist_dir, Names[ish], true);
-				   FCA_tab_item(Names[ish],FFSS_MAX_SHARENAME_LENGTH);
+				  FCA_pre_dir(FCA_tolist_dir, Names[itab[ish]], true);
+				   FCA_tab_item(Names[itab[ish]],FFSS_MAX_SHARENAME_LENGTH);
 				  FCA_post_dir(true);
 				 FCA_post_tab_item();
 				FCA_tab_int_item();
 				 FCA_pre_tab_item();
-				  FCA_tab_item(Comments[ish],0);
+				  FCA_tab_item(Comments[itab[ish]],0);
 				 FCA_post_tab_item();
 				FCA_tab_post_item();
 			}
@@ -749,6 +763,8 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 		FCA_post_infos();
 		FCA_post_listing(FCA_listed_dir);
 	}
+	if(itab)
+		free(itab);
 }
 
 void FCA_print_prog_bar()

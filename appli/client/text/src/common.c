@@ -45,8 +45,8 @@ bool FCA_sem_timeout;
 	/* WARNING for these 2 tables :
 		if you modify the variable order,
 		 check the index in cgi.c in the FCA_CGI_ARGS table
-		if you add a variable, BE sure to modify FCA_skin_env_index
-		 in common.h AND FCA_env in client.c
+		if you add a variable, BE SURE to modify FCA_skin_env_index
+		 in common.h
 	*/
 const FCA_Tvar FCA_VARS[]= {
 /*
@@ -63,11 +63,14 @@ const FCA_Tvar FCA_VARS[]= {
 	{"broadcast_timeout","timeout when listing domain None, in seconds","1-120",	NULL},
 	{"search_timeout","timeout when searching in all domains, in seconds","1-120",	NULL},
 	{"operation_timeout","timeout when doing something, in seconds","1-120",	NULL},
+	{"sort_find",	"if the search answers must be sorted",		"on/off",	NULL},
+	{"sort",	"if the listings must be sorted",		"on/off",	NULL},
+	{"sort_by",	"sort method for directory listings",		"name/size/date",NULL},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
 	/* possible values to variables
-	 WARNING: all strings here MUSTN'T have a length > FCA_VAR_MAX
+	 WARNING: all strings here MUST NOT have a length > FCA_VAR_MAX
 	  first field can be "" -> all values are accepted
 	  after "", you can put purposed values for completion
 	 */
@@ -83,9 +86,31 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", "240", NULL},
+	{"on","off",NULL},
+	{"on","off",NULL},
+	{"name", "size", "date",NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
+
+	/* default value to variables */
+char FCA_env[][FCA_VAR_MAX]={
+	"on",
+	"0",
+	"on",
+	"on",
+	"",
+	"off",
+	"default",
+	"5",
+	"20",
+	"10",
+	"on",
+	"on",
+	"name",
+	FCA_SKIN_ENV_VALUES
+};
+
 
 
 int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], FFSS_LongField size)
@@ -121,7 +146,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 		} else
 			FFSS_PrintDebug(1, "(client) local file doesn\'t exists, cannot resume\n");
 	}
-	if(FCA_prompt[1]=='n') {
+	if(FCA_VAR_IS_ON(FCA_prompt)) {
 		printf("download file ");
 		if( FCA_question(RemotePath) )
 			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,false,&FCA_Ptrans);
@@ -999,32 +1024,46 @@ char *FCA_strtolower(char *str)
 	return str;
 }
 
-unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
+	/* SORTING */
+
+unsigned int *FCA_pre_tabsort(int nbEl)
 {
-		/* sort search results */
-	bool modified=true;
-	unsigned int ir, sav;
+	unsigned int ir;
 	unsigned int *res;
 	
-	FFSS_PrintDebug(1, "(client) sorting answers...\n");
-	FFSS_PrintDebug(5, "(client) preparing index table [0->%d]\n", NbAnswers-1);
+		/* prepare the int array */
+	if(nbEl<1)
+		return NULL;
+	FFSS_PrintDebug(1, "(client) sorting...\n");
+	FFSS_PrintDebug(5, "(client) preparing index table [0->%d]\n", nbEl-1);
 		/* prepare the index table */
-	res=malloc(NbAnswers*sizeof(int));
+	res=malloc(nbEl*sizeof(int));
 	if(!res)
 		FCA_crash("no such memory");
 	FFSS_PrintDebug(5, "(client) filling index table...\n");
 		/* fill this */
-	for(ir=0; ir<NbAnswers; ir++)
+	for(ir=0; ir<nbEl; ir++)
 		res[ir]=ir;
+	return res;
+}
+
+void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
+{
+		/* sort search results */
+	bool modified=true;
+	unsigned int ir, sav;
 	
-	if(NbAnswers<2)
-		return res;
+	if(Nbels<2) {
+		FFSS_PrintDebug(1, "(client) 1 element, nothing to sort\n");
+		return;
+	}
+	FFSS_PrintDebug(1, "(client) let's sort...\n");
 		/* while we have something to sort */
 	while(modified) {
 			/* first, from left to right */
-		for(ir=0; ir<NbAnswers-1; ir++) {
+		for(ir=0; ir<Nbels-1; ir++) {
 				/* answer > next answer.... */
-			if( strcmp(*(Answers+res[ir]), *(Answers+res[ir+1]))>0 ) {
+			if( strcmp(*(els+res[ir]), *(els+res[ir+1]))>0 ) {
 				sav=res[ir];
 				res[ir]=res[ir+1];
 				res[ir+1]=sav;
@@ -1034,9 +1073,9 @@ unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 		if(modified) {
 			modified=false;
 				/* second (if needed), from right to left */
-			for(ir=NbAnswers-2; ir>0; ir--) {
+			for(ir=Nbels-2; ir>0; ir--) {
 					/* answer > next answer.... */
-				if( strcmp(*(Answers+res[ir]), *(Answers+res[ir+1]))>0 ) {
+				if( strcmp(*(els+res[ir]), *(els+res[ir+1]))>0 ) {
 					sav=res[ir];
 					res[ir]=res[ir+1];
 					res[ir+1]=sav;
@@ -1046,7 +1085,7 @@ unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 		}
 	}
 	FFSS_PrintDebug(1, "(client) answers sorted\n");
-	return res;
+	return;
 }
 
 

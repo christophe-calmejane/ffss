@@ -2,21 +2,37 @@ ffss client application
 par bennyben
 
 Si vous rencontrez un probleme avec ce client, contactez bennyben (benoit bourdin):
-    <bennybben@caramail.com>
+    <bennybben@yahoo.fr>
     channel #ffss de irc.u-psud.fr
 
 table des matieres
 ----------------
 
-1) librairies necessaires
-2) compilation
-3) utilisation
+1) fonctions disponibles
+2) librairies necessaires
+3) compilation
 4) notes    
 
 
 
+1) fonctions disponibles
+-------------------------
 
-1) librairies necessaires
+ fonctions en ligne de commande :
+   parcourir (cd/ls)
+   telecharger un fichier ou un dossier (recursivement)
+   chercher un fichier/dossier
+   obtenir de l'aide sur une commande
+   lancer des commandes locales
+ support des alias
+ support des skins
+ mode CGI (pour obtenir les arguments CGI, et avec une skin html)
+ completion intelligente
+
+voir les pages de man pour d'autres details
+
+
+2) librairies necessaires
 --------------------
 
 Pour installer ce client, vous avez besoin des librairies suivantes :
@@ -31,44 +47,19 @@ Pour installer ce client, vous avez besoin des librairies suivantes :
 	libCGI version 0.1 update 6
 
 
-2) compilation
+3) compilation
 --------------
 
-Apres avoir installe ceci, vous pouvez lancer la compilation
+ Je recommande d'utiliser les scripts (build-*.sh) pour compiler ffss.
+Si vous voulez compiler ce client seulement :
 ./configure
 make
 make install (en root)
 voir le fichier INSTALL pour les details
 
 
-3) utilisation
+3) Notes
 --------
 
-Vous obtenez un executable dans le dossier src/ nomme ffss-client,
-vous pouvez le deplacer ou vous voulez.
-
-Utilisation:
-
-ffss client utilise un fichier de configuration nomme 'ffss-client.conf'
-C'est par default dans le repertoire courant, mais vous pouvez specifier
-un autre chemin:
-ffss-client -c (config-file)
-par example: ffss-client -c /etc/ffss-client.conf
-
-Il y a aussi d'autres arguments en ligne de commande, pour les decouvrir, taper :
-ffss-client --help
-
-Il y a aussi la commande 'help' du client qui pourra vous aider.
-
-
-4) Notes
---------
-
-- Pour lancer une commande du client en ligne de commande, l'option '-e' existe :
-(ffss-client -e <command>).
-Pour lancer une commande qui a des arguments, par exemple :
-find fooFind
-Il suffit de faire :
-ffss-client -e "find fooFind"
-Autrement, fooFind sera interprete comme un autre argument en ligne de commande
-donne au client.
+Voir le fichier FAQ-fr dans la documentation de ffss.
+Voir les pages de man pour infos sur les commandes et la configuration.

@@ -141,7 +141,7 @@ void FCA_htmlfl_init()
 
 void FCA_htmlfl_prog_begin()
 {
-if(FCA_html_included_doc[1]=='f')
+if(!FCA_VAR_IS_ON(FCA_html_included_doc))
 printf("<html>
 <head>
  <title>ffss client</title>
@@ -499,7 +499,7 @@ printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</font></center>
 </form>
 ");
-if(FCA_html_included_doc[1]=='f')
+if(!FCA_VAR_IS_ON(FCA_html_included_doc))
 printf("</body>
 </html>
 ");

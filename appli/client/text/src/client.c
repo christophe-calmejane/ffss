@@ -35,20 +35,6 @@ bool FCA_exiting;
 struct timeb FCA_starttime, FCA_stoptime;
 #endif
 
-char FCA_env[][FCA_VAR_MAX]={
-	"on",
-	"0",
-	"on",
-	"on",
-	"",
-	"off",
-	"default",
-	"5",
-	"20",
-	"10",
-	FCA_SKIN_ENV_VALUES
-};
-
 
 void FCA_init()
 {

@@ -2,21 +2,35 @@ ffss client application
 by bennyben
 
 if you have any problem with this client, please contact bennyben (benoit bourdin):
-    <bennybben@caramail.com>
+    <bennybben@yahoo.fr>
     channel #ffss of irc.u-psud.fr
 
 table of content
 ----------------
 
-1) libraries nedded
-2) compilation
-3) usage
-4) notes    
+1) features
+2) libraries nedded
+3) compilation
+4) notes
 
 
 
+1) features
+------------
+ command-line functions :
+   to browse (cd, ls)
+   to download a file or a directory (recursively)
+   to find a file/directory
+   to get help on commands
+   to run local commands
+ alias support
+ skin support
+ CGI mode (to get CGI arguments, and with an html skin)
+ intelligent completion
 
-1) libraries nedded
+see manpage for details
+
+2) libraries nedded
 --------------------
 
 to install this client, you need:
@@ -29,38 +43,19 @@ to install this client, you need:
 	termcap lib (used by readline)
 
 
-2) compilation
+3) compilation
 --------------
 
-After having installed all of this, you can compile:
+ I recommand using ffss scripts (build-*.sh) to compile ffss.
+If you to compile this client only :
 ./configure
 make
 make install (as root)
 see INSTALL for details
 
 
-3) usage    
---------
-
-so you will have an executable file in this directory named 'ffss-client'
-you can move it where you want.
-
-Usage:
-
-ffss client uses a configuration file named 'ffss-client.conf'
-It's by default in this directory, but you can specify a new location:
-ffss-client -c (config-file)
-for example: ffss-client -c /my/dir/ffss-client.conf
-
-There's some others command-line options, type ffss-client --help
-
-There's a 'help' command, if you want too :)
-
-there's a domain none, it's used to broadcast, and access to the shares
-even if a master cannot be reached.
-
-
 4) Notes
 --------
 
 See the file FAQ-en in the FFSS's documentation.
+See manpages for help about commands and configuration.

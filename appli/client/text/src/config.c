@@ -18,26 +18,34 @@ char FCA_file_status[FCA_MAX_FILE_STATUS];
 
 	/* the config file's locations */
 char *FCA_CONFIG_FILES[]={
-	"/usr/local/share/ffss/clientrc",
-	"/usr/local/share/ffss/Client.conf",
+	"/usr/local/share/ffss/clientrc",	/* deprecated */
+	"/usr/local/share/ffss/ffss-clientrc",	/* deprecated */
+	"/usr/local/share/ffss/ffss-client.conf",/* deprecated */
+	"/usr/local/share/ffss/Client.conf",	/* deprecated */
 	
-	"/usr/share/ffss/clientrc",
-	"/usr/share/ffss/Client.conf",
+	"/usr/share/ffss/clientrc",		/* deprecated */
+	"/usr/share/ffss/ffss-clientrc",	/* deprecated */
+	"/usr/share/ffss/ffss-client.conf",	/* deprecated */
+	"/usr/share/ffss/Client.conf",		/* deprecated */
 	
 	"/etc/ffss/clientrc",
-	"/etc/ffss/Client.conf",
+	"/etc/ffss//ffss-clientrc",
+	"/etc/ffss/ffss-client.conf",		/* deprecated */
+	"/etc/ffss/Client.conf",		/* deprecated */
 	
 	"/usr/local/etc/ffss/clientrc",
-	"/usr/local/etc/ffss/Client.conf",
+	"/usr/local/etc/ffss/ffss-clientrc",
+	"/usr/local/etc/ffss/ffss-client.conf",	/* deprecated */
+	"/usr/local/etc/ffss/Client.conf",	/* deprecated */
 #ifdef __unix__	
-	"$.ffss-clientrc",
-	"$.ffss-client.conf",
 	"$.ffss-client",
+	"$.ffss-clientrc",			/* deprecated */
+	"$.ffss-client.conf",			/* deprecated */
 #endif	
 	"ffss-clientrc",
-	"ffss-client.conf",
 	"clientrc",
-	"Client.conf",
+	"ffss-client.conf",			/* deprecated */
+	"Client.conf",				/* deprecated */
 	NULL
 };
 

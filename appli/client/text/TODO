@@ -7,20 +7,6 @@ les plus importants.
 
 
 
----------------------------
-semaphore: timeout a _faire_
--> choper la commande handle a kiki/botnet
-c comme un process normal, si tu hook pas le signal, ca termine
-faut que tu ajoutes le hook du signal SIG_TERM
-man signal
-fait attention, faut faire un truc particulier si tu veux que ca soit actif QUE pour certains threads
-
-void BN_UnsetSigs(bool Fork)
-sigfillset(&mask);
-pthread_sigmask(SIG_BLOCK,&mask,NULL);
-sigset_t mask;
--> voir les questions
-
 ----------------------------
 trier les machines, les classer par ordre alphabetique par exemple.
 
@@ -37,6 +23,7 @@ voir le pb avec completion_matches et les versions de readline.
 
 ----------------------------
 afficher un meilleur status du download: un numero de fichier en cours
++ taux de transfert en cours
 
 ----------------------------
 bug dans la completion locale: ne fait pas de \ devant les espaces
@@ -49,13 +36,11 @@ c sa taille sinon, tous les 10Mo
 [21:12:28] <kiki> a propos du timeout que tu init lors d un download ?
 
 ----------------------------
-DEBUGGER le pompage recursif
-
-----------------------------
 faire un FCA_PrintDebug (mais pas le passer en printf si FFSS_PrintDebug existe pas)
 
 ----------------------------
-mettre a jour les FAQ et les mans
+clean du code: mettre en .h seulement les fonctions publiques
+clean de la gestion des arguments (faire un tableau)
 
 ----------------------------
 aliaser la completion comme pour les commandes
@@ -65,11 +50,14 @@ bug: completion -> listing
 download recursif -> meme listing, regarde pas dans le cache
 
 ---------------------------
-faire un more
+faire un more (un peu comme le cat)
 -> get !more !rm dans /tmp, avec le nom d'un fichier temporaire
 
 ----------------------------
 faire un mget the*red*
+
+----------------------------
+afficher le temps de reponse au broadcast pour le listing dans none
 
 ----------------------------
 faire un choix all/none dans les questions
@@ -95,8 +83,7 @@ rajouter une variable d'env pour controler si on l'autorise,
 idem pour le none.
 
 ----------------------------
-boucler le tri et proposer au find de n'afficher que les machines
-off.
+proposer au find de n'afficher que les machines on
 
 ----------------------------
 bug: aller n'importe ou, puis faire cd -> completion marche pu
@@ -111,8 +98,8 @@ if(ProtocolVersion < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE)
  ffss-master administrator for upgrade\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
 
 ----------------------------
-pompage de dossiers a finir
 si erreur lors du pompage, redw automatiquement (3 essais max)
+(var d'env pour regler ca)
 
 --------------------------
 revoir le configure, checker bien toute les fonctions que j'utilise
@@ -139,7 +126,7 @@ calculer soi meme le taux de transfert,
 revoir la gestion des arguments
 
 ----------------------------
-tester les cas suivants:
+reretester les cas suivants:
  si le master est down
  si le master est up sans master (ServerList renvoie true)
  si le server en cours est down
@@ -160,7 +147,7 @@ pour aller dans notre domaine, celui dans lequel on tombe au depart
 mais aussi: cd ~/toto
 
 ----------------------------
-revoir si on a ni master ni server, si server down pdant k'on le browse, etc...
+rererevoir si on a ni master ni server, si server down pdant k'on le browse, etc...
 et master down
 
 ----------------------------
@@ -190,4 +177,3 @@ get de la /			-> pas bon
 ----------------------------
 nlles fonctions des commandes
 option des commandes, comme ls recursif
-

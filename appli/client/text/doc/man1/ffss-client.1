@@ -1,4 +1,4 @@
-.TH FFSS-CLIENT 1 "2001 September 9"
+.TH FFSS-CLIENT 1 "2002 March 1"
 .SH NAME
 ffss-client \-  FFSS client
 .SH SYNOPSIS
@@ -32,6 +32,35 @@ ffss-client \-  FFSS client
 .B \-c
 .I filename
 ]
+.br
+[
+.B \-e
+.I command
+]
+.br
+[
+.B \-d
+.I debuglevel
+]
+.br
+[
+.B \-a
+]
+.br
+[
+.B \-m
+.I hostname
+]
+.br
+[
+.B \-s
+.I skinname
+]
+.br
+[
+.B \-b
+.I file
+]
 .ad b
 .hy 1
 .SH DESCRIPTION
@@ -40,62 +69,30 @@ ffss-client \-  FFSS client
 is a client for the 
 .B Fleming File Sharing System (FFSS).
 It allows you to browse domains, servers and shares using an intuitive interface.
-.LP
-If you launch it without any option, you get a command prompt. By default, you are on / directory (or in your domain), where are all the domains.
-In a domain (for example, /$/fleming), there are all this servers of this domain. Each server can share some directories.
 .br
-The path format is not unlike unix filesystem, or samba filesystem, but with a '$': /$/fleming, /$/ile/tahiti.
+If you launch it without any option, you get a command prompt.
+By default, you are on your domain (or in /$/none), where are all
+the servers.
 .br
-You can use the command and paths completion, using the <tab> key.
-Commands are listed below.
-.br
-.I Client.conf
-is the configuration file. It can be in the current directory, in /etc/ffss, or in /usr/local/etc/ffss.
-It can be 
-.I ffss-client.conf
- in the current directory too.
-For file's entries, see ffss-client.conf(5).
 
-.SH COMMANDS
-.TP
-.BI "ls, dir [ " directory " ]"
-List a (remote) directory, domain, a domain list or a share list. Can list a specified directory.
-.TP
-.BI "cd " directory
-Change the current (remote) directory.
-.TP
-.B pwd
-Show the current directory.
-.TP
-.BI "get " directory " | " file
-Download the file, or the directory recursively. Put it on the current local directory.
-.TP
-.BI "lcd " directory
-Change the current local directory.
-NOTE: don't use !cd, use lcd instead.
-.TP
-.BI lpwd
-Get the current local directory.
-.TP
-.BI "!" command
-Execute a local command, by using the system() system call.
-.TP
-.B !, local, sh
-Launch a shell on the current local directory.
-NOTE: In this shell, if you change your current directory (with local cd command), the new local directory won't change after exiting this shell.
-.TP
-.BI "help [ " command " ]"
-Get any help on specified or not commands.
-.TP
-.BI "find " keyword(s)
-Find a file over the network by using the correct master (of the domain).
-If your current directory is a domain (/$/fleming for example), the search is only done in this domain. If you're on /, it's in all domains.
-.TP
-.B close
-close the current connection to a share.
-.TP
-.B exit, close, bye, <Ctrl>-<D> key
-close the current connection, uninit FFSS library and exit.
+
+.SH PATH FORMAT
+.LP
+The path format is not unlike unix filesystem, or samba filesystem,
+but with a '$': /$/fleming, /$/ile/tahiti.
+All paths are like: 
+.I /$/<domain>/<server>/<share>/<path>
+.br
+In a domain, we have some servers (machines). Each server can share
+one or more directories (shares). In each share we have some files and
+directories.
+.br
+The
+.B None
+domain is used when you can't reach any master. When you do a listing
+in this directory, it uses a broadcast to find servers. It can be useful
+to list servers that are on the same local network.
+
 
 .SH OPTIONS
 \..PD 0
@@ -114,21 +111,508 @@ List a ffss directory. For example, ffss-client -l /$/fleming/orion.
 .TP
 .BI "\-c " filename
 Specify a configuration file to use.
+.TP
+.BI "\-e " command
+Run a specified command. It can be some commands separated by a ';'.
+.br
+.I NOTE:
+Be sure to escape caracters like ';'. Either, it will be interpreted
+by your shell. If your command is more than one word, use '"'. For
+example: -e "find foo".
+.TP
+.BI "\-d " debuglevel
+Specify a debug level (0 = no debug, 6 is the max).
+.TP
+.B \-a
+Disable ansi colors.
+.TP
+.BI "\-m " hostname
+Specify the master, the hostname used to have server listings, and
+to make researchs.
+.TP
+.BI "\-s " skinname
+Specify a skin.
+.TP
+.BI "\-b " file
+Specify a file for benchmark use. See
+.B BENCHMARK
+section for details.
 
-.SH FILES
-.I ffss-client.conf
+
+.SH COMMANDS
+.TP
+.BI "ls [ " directory " ]"
+List a (remote) directory, domain, a domain list or a share list.
+Can list a specified directory.
+.TP
+.BI "cd " directory
+Change the current (remote) directory.
+.TP
+.B pwd
+Shows the current directory.
+.TP
+.BI "get " directory " | " file
+Download the file, or the directory recursively.
+Put it on the current local directory.
+.TP
+.BI "lcd " directory
+Change the current local directory.
+.I NOTE:
+don't use !cd, use lcd instead.
+.TP
+.BI lpwd
+Get the current local directory.
+.TP
+.BI "!" command
+Execute a local command, by using the system() system call.
+.TP
+.B !
+Launch a shell on the current local directory.
+.I NOTE:
+In this shell, if you change your current directory
+(with local cd command), the new local directory won't
+change after exiting this shell.
+.TP
+.BI "help [ " command " | set " variable " ]"
+Get any help on specified or not commands. It can help on variable usage.
+.TP
+.BI "find " keyword(s)
+Find a file over the network by using the correct master (of the domain).
+If your current directory is a domain (/$/fleming for example),
+the search is only done in this domain. If you're on /,
+it's in all domains.
+See
+.B SEARCHING
+section for details.
+.TP
+.BI "cat " file
+Displays the content of a file.
+.TP
+.B close
+Closes the current connection to a share.
+.TP
+.B exit, <Ctrl>-<D> key
+Closes the current connection, uninits FFSS library and exits.
+.TP
+.BI "set " variable "=" value
+Sets a variable to a value.
+See
+.B VARIABLES
+for details.
+.TP
+.BI "alias " name "=" command
+Add a new alias to a command.
+.TP
+.BI "unalias " name
+Removes an existing alias.
+
+
+.SH COMPLETION
+.LP
+You can using completion like bash using the
+.I <tab>
+key. There's some different kinds of completions :
+.sp 1
+.IP \(bu
+.B command completion
+- <tab> on 
+.I command prompt
+, or after the
+.I help
+command.
+.IP \(bu
+.B file/directory completion
+- <tab> after the 
+.IR ls ,
+.IR cd ,
+.IR get
+or
+.IR cat
+command.
+Files are completed only after the 
+.I get
+or
+.I cat
+command.
+.IP \(bu
+.B local file/directory completion
+- <tab> after the 
+.I lcd
+or
+.I !...
+command
+.IP \(bu
+.B variable completion
+- for example : 
+.I set
+<tab> or
+.I help set
+<tab>
+.IP \(bu
+.B value completion
+- for a variable's value. For example :
+.I set debug_level
+<tab>
+
+
+.SH SEARCHING
+.LP
+You can give any keyword but each keyword must be at least a
+4 letters word. Either, it is considered as a file type.
+A 
+.B file type
+is a 3-letter word, which can be 'avi', 'mp3' or 'zip' for example.
+
+
+.SH VARIABLES
+.TP
+.B color
+.br
+value : 
+.IR on / off
+, default is 
+.I on
+.br
+Determines if we can use ansi sequence to display colored messages.
+.TP
+.B debug_level
+.br
+value : 
+.IR 0 / 6
+, default is 
+.I 0
+.br
+The debug level. Only used for debugging. 0 is used to have not debug
+messages. 6 is the maximum.
+.TP
+.B disp_off
+.br
+value : 
+.IR on / off
+, default is 
+.I on
+.br
+Determines if server whose state is 'off' can be displayed in the
+server listing.
+.TP
+.B disp_quiet
+.br
+value : 
+.IR on / off
+, default is 
+.I on
+.br
+Determines if server whose state is 'quiet' can be displayed in the
+server listing.
+.TP
+.B master
+.br
+value : 
+.IR hostname / IP
+, no default
+.br
+The master, the hostname used to have server listings, and
+to make researchs.
+.TP
+.B prompt
+.br
+value : 
+.IR on / off
+, default is 
+.I off
+.br
+Determines if user is prompted at every download
+.TP
+.B skin
+.br
+value : 
+.IR skinname
+, default is 
+.I default
+.br
+Specifies the skin to use.
+.TP
+.B broadcast_timeout
+.br
+value : 
+.IR 1 - 120
+, default is 
+.I 5
+.br
+Specify the time (in seconds) the client waits for any answer to the broadcast
+(listing in /$/None).
+.TP
+.B search_timeout
+.br
+value : 
+.IR 1 - 120
+, default is 
+.I 20
+.br
+Specify the time (in seconds) the client waits for any answer to any
+search on all domains (find on /).
+.TP
+.B operation_timeout
+.br
+value : 
+.IR 1 - 240
+, default is 
+.I 10
+.br
+Specify the time (in seconds) the client waits for any answer to any
+query to the master (or to a server).
+.LP
+For any help on skin-specific variables see the 
+.B SKINS
+section
+
+
+.SH CONFIGURATION
+.LP
+To configure, just create a configuration file (see bellow) which
+contains commands to execute at startup, like a profile script.
+.br
+.TP
+Configuration filenames can be :
+.br
+.I ffss-clientrc
+.br
+.I clientrc
 .br
 .I Client.conf
+(deprecated)
 .br
-.I /etc/ffss/Client.conf
+.I ffss-client.conf
+(deprecated)
+.LP
+These files can be located in the current directory, in
+.I /etc/ffss
+,
+.I /usr/local/etc/ffss
+,
+.I /usr/share/ffss
+(deprecated) or in 
+.I /usr/local/share/ffss
+(deprecated).
 .br
-.I /usr/local/etc/ffss/Client.conf
+It can be in your home directory too : 
+.I $HOME/.ffss-client
+,
+.I $HOME/.ffss-clientrc
+(deprecated) or
+.I $HOME/.ffss-client.conf
+(deprecated).
+
+
+.SH SKINS
+.LP
+There's some skins you can use. To do another skin, spend 3 cups
+of coffee while reading the ffss-client's code, write your own skin
+and send me it.
+.br
+.SS SCRIPT SKIN
+This is a basic skin, that can be used by shell scripts.
+All fields are separated by a 
+.I separator.
+.br
+.TP 8
+.B VARIABLES
+.RS
+.PD 0
+.TP
+.B script_delim
+value : 
+.I any caracter
+, default is 
+.I ':'
+.br
+The field delimiter.
+
+.SS HTML SKIN
+This skin is used to generate html output, in particular for cgi mode.
+See
+.B CGI MODE
+for details.
+.br
+All fields are on a table. There's no image nor colors. This is a basic html
+skin.
+.br
+.TP 8
+.B VARIABLES
+.RS
+.PD 0
+.TP
+.B html_prefix
+value : 
+.I any caracter
+, default is 
+.I ffss-client
+.br
+What the client put before an href. It should be http://your-site.com/path-to-ffss/ffss-client.
+.TP
+.B html_img_prefix
+value : 
+.I any caracter
+, no default.
+.br
+What the client put before an image src. It should be http://your-site.com/path-to-ffss/img for example.
+.TP
+.B html_dw_prefix
+value : 
+.I any caracter
+, default is 
+.I ffss-client
+.br
+What the client put before a link to a ffss-shared file. It should be http://your-site.com/path-to-ffss/ffss-client.
+.TP
+.B html_firstarg
+value : 
+.IR on / off
+, default is 
+.I on
+.br
+Specifies if we can use '?' instead of '&' after html_prefix to specify arguments to
+the CGI.
+.TP
+.B html_included_doc
+value : 
+.IR on / off
+, default is 
+.I off
+.br
+Specifies if the client can put <html> <body> and </html> headers. By default, it can.
+
+.SS HTML_FLEMING SKIN
+This skin, adapted from the html skin, is an example of an adaptation to a special
+website. In this website, we have stylesheets, and all paragraphs/texts must be in
+the 'small' style. Moreover, all pages are under this form : 
+http://website/index.php?page=path-to-the-wanted-page.
+.br
+There's no variable specific to this skin.
+
+
+.SH CGI MODE
+To use CGI mode, be sure the client has been compiled with the 
+.I --enable-cgi
+option.
+You can specify the 
+.I --enable-cgi-downloads
+option too.
+After, just the program in a folder that allows CGI scripts, and try. It should
+work well.
+.br
+The client can autodectect if it's in a CGI environment (the CGI mode is enabled)
+or not. To see that, it looks for the 
+.I REQUEST_METHOD
+environment variable.
+So, be sure you have not this variable in your shell environment before trying
+to launch the client in a console.
+.br
+You can specify options in the url (ffss-client?myoption=myvalue&opt=val).
+It's variables you can specify. You can use all html-skin-specific variable (without
+the 'html_' prefix in the name) like ffss-client?firstarg=on&included_doc=off.
+.SS CGI VARIABLES
+.TP
+.B skin
+.br
+value : 
+.I skinname
+, default is 
+.I 'default'
+.br
+The skin name to use.
+.TP
+.B dir
+.br
+value : 
+.I any ffss path
+, default is
+.I /
+.br
+Specify the current directory (the directory to list). It must be in ffss path format.
+.TP
+.B s
+.br
+value : 
+.I keyword(s)
+, no default.
+.br
+A keyword to search.
+.TP
+.B sdom
+.br
+value : 
+.I any ffss domain
+, default is 
+.I none
+.br
+The ffss domain in which we must launch the research. By default, it's all domains.
+.TP
+.B master
+.br
+value : 
+.IR hostname / IP
+, no default.
+.br
+The ffss master to use for domain listing, server listing and research.
+.TP
+.B debug
+.br
+value : 
+.I debuglevel
+, default is 
+.I 0
+.br
+The debug level (0=no debug, 6 is the maximum).
+.TP
+.B download
+.br
+value : 
+.IR 0 / 1
+, default is 
+.I 0
+.br
+Specify if the dir is a path to a file to download.
+.TP
+.B can_header
+.br
+value : 
+.IR 0 / 1
+, default is 
+.I 1
+.br
+Specify if we can send http headers, like 'Content-typ: text/html'.
+
+
+.SH BENCHMARKS
+You must compile the client with the 
+.I --enable-benchmark
+option.
+It allows you to benchmark research.
+.br
+It adds a message after search that indicates the time spent to launch
+a search request and get the answers.
+.br
+You can use the 
+.I -b
+option to the command line (see 
+.B OPTIONS
+section for details) to specify a file which contains a list of keywords
+to search. After all the searchs, the client gives you the total duration.
+
+
+.SH FILES
+.I /etc/ffss/clientrc
+.br
+.I $HOME/.ffss-clientrc
+
 
 .SH AUTHOR
-The FFSS client were written by Benoit Bourdin (bennyben)
-<bennybben@caramail.com>. For further details, use IRC :
+The FFSS client were written by Benoit Bourdin (aka bennyben)
+<bennybben@yahoo.fr>. For further details, use IRC :
 server irc.u-psud.fr, channel #ffss
+
+
 .SH "SEE ALSO"
-.BR ffss-client.conf (5),
 .BR ffss-server (1),
 .BR ffss-master (1),
