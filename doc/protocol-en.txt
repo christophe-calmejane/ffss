@@ -313,6 +313,7 @@ Detail of the protocol (Version 0x0010005):
    DWord : Size of the message
    DWord : Message type = 200 (Error message)
    DWord : Errornum
+   QWord : Value depending on Errornum
    ZStr : Error description
 
  * Search message (friandise) (Client->Master 695) (UDP) :

@@ -251,7 +251,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_CANCEL_XFER                3
 #define FFSS_MESSAGESIZE_DATA                       3
 #define FFSS_MESSAGESIZE_DISCONNECT                 2
-#define FFSS_MESSAGESIZE_ERROR                      3
+#define FFSS_MESSAGESIZE_ERROR                      5
 
 #define FFSS_STATE_ON     1
 #define FFSS_STATE_OFF    2
@@ -391,6 +391,7 @@ typedef struct
 typedef struct
 {
   int  sock;                  /* Opened socket for file transfer */
+  int  Port;                  /* Port sock is listening to (download) */
   FILE *fp;                   /* Opened file for reading/writing */
   char *FileName;             /* Remote file name */ /* NULL on server side */
   char *LocalPath;            /* Local path of file used for fopen */
@@ -475,7 +476,7 @@ typedef struct
 
   /* TCP callbacks */
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
-  bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[]);
+  bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value);
   bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
   bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
   void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
@@ -685,12 +686,13 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
 /*  State : The state of my server  */
 bool FS_SendMessage_Pong(struct sockaddr_in Master,int State);
 
-/* FS_SendMessage_Error Function              */
-/* Sends an ERROR message to a client         */
-/*  Client : The socket of the client         */
-/*  Code : The error code to send             */
-/*  Descr : The description of the error code */
-bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[]);
+/* FS_SendMessage_Error Function                */
+/* Sends an ERROR message to a client           */
+/*  Client : The socket of the client           */
+/*  Code : The error code to send               */
+/*  Descr : The description of the error code   */
+/*  Value : Extra value depending on error code */
+bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value);
 
 /* FS_SendMessage_DirectoryListingAnswer Function                     */
 /* Sends a DIRECTORY LISTING ANSWER message to a client               */

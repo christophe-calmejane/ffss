@@ -693,7 +693,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
   if(fp == NULL)
   {
     FFSS_PrintDebug(1,"Couldn't open file for upload : %s (%d)\n",FilePath,errno);
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND]);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],Port);
   }
   if(!UseConnSock)
   {
@@ -701,7 +701,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
     if(sock == SOCKET_ERROR)
     {
       fclose(fp);
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR]);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR],0);
     }
     SAddr.sin_family = AF_INET;
     SAddr.sin_port = htons(Port);
@@ -710,7 +710,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
     {
       SU_CLOSE_SOCKET(sock);
       fclose(fp);
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_CANNOT_CONNECT,FFSS_ErrorTable[FFSS_ERROR_CANNOT_CONNECT]);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_CANNOT_CONNECT,FFSS_ErrorTable[FFSS_ERROR_CANNOT_CONNECT],Port);
     }
   }
   FT = (FFSS_PTransfer) malloc(sizeof(FFSS_TTransfer));
@@ -722,6 +722,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
     FT->sock = Client->sock;
   else
     FT->sock = sock;
+  FT->Port = Port; /* CHECK THIS !!! MAY NOT BE THIS PORT (INSTEAD LOCAL PORT, NOT REMOTE) */
   FT->LocalPath = strdup(FilePath);
   FT->Client = Client;
   FT->User = User;
@@ -731,7 +732,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
     if(!SU_CreateThread(&Thread,FFSS_UploadFileFunc,(void *)FT,true))
     {
       FFSS_FreeTransfer(FT);
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS]);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS],Port);
     }
   }
   if(FT_out != NULL)
@@ -742,6 +743,8 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
 bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
 {
   int sock;
+  struct sockaddr_in saddr;
+  int i;
   SU_THREAD_HANDLE Thread;
   FFSS_PTransfer FT;
 
@@ -752,6 +755,8 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
     FFSS_PrintDebug(1,"Error sending DOWNLOAD request : %d\n",errno);
     return false;
   }
+  i = sizeof(saddr);
+  getsockname(sock,(struct sockaddr *)&saddr,&i);
   FT = (FFSS_PTransfer) malloc(sizeof(FFSS_TTransfer));
   memset(FT,0,sizeof(FFSS_TTransfer));
   FT->FileName = strdup(RemotePath);
@@ -763,6 +768,7 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
     FT->sock = Server->sock;
   else
     FT->sock = sock;
+  FT->Port = ntohs(saddr.sin_port);
   FT->Client = Server;
   FT->User = User;
   FT->ThreadType = FFSS_THREAD_CLIENT;

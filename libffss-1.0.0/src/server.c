@@ -124,7 +124,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
     {
       if((val > FFSS_PROTOCOL_VERSION) || (val < FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE))
       {
-        FS_SendMessage_Error(Client->sock,FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR]);
+        FS_SendMessage_Error(Client->sock,FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR],FFSS_PROTOCOL_VERSION);
         ret_val = false;
       }
       else
@@ -580,7 +580,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   Buf = (char *) malloc(BufSize);
   if(Buf == NULL)
   {
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR]);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR],0);
     SU_FreeCS(Client);
     SU_END_THREAD(NULL);
   }

@@ -186,12 +186,13 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   return (resp != SOCKET_ERROR);
 }
 
-/* FS_SendMessage_Error Function              */
-/* Sends an ERROR message to a client         */
-/*  Client : The socket of the client         */
-/*  Code : The error code to send             */
-/*  Descr : The description of the error code */
-bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
+/* FS_SendMessage_Error Function                */
+/* Sends an ERROR message to a client           */
+/*  Client : The socket of the client           */
+/*  Code : The error code to send               */
+/*  Descr : The description of the error code   */
+/*  Value : Extra value depending on error code */
+bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
@@ -200,6 +201,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
   pos = FFSS_PackField(msg,pos,Code);
+  pos = FFSS_PackLongField(msg,pos,Value);
   if(Descr != NULL)
   {
     len = strlen(Descr)+1;
@@ -211,7 +213,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Error message (%d:%s) to client\n",Code,Descr);
+  FFSS_PrintDebug(3,"Sending Error message (%d:%s:%ld) to client\n",Code,Descr,Value);
   return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 

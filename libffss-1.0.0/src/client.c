@@ -411,6 +411,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
     case FFSS_MESSAGE_ERROR :
       context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
       {
@@ -418,9 +419,9 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a server error message (%d:%s)\n",val,str);
+      FFSS_PrintDebug(3,"Received a server error message (%d:%s:%ld)\n",val,str,lval);
       if(FFSS_CB.CCB.OnError != NULL)
-        ret_val = FFSS_CB.CCB.OnError(Server,val,str);
+        ret_val = FFSS_CB.CCB.OnError(Server,val,str,lval);
       break;
     case FFSS_MESSAGE_DIRECTORY_LISTING_ANSWER :
       context;
@@ -658,7 +659,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       break;
     default:
       if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
+        FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0);
       FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),Type);
       ret_val = false;
   }
@@ -719,7 +720,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     {
       FFSS_PrintDebug(1,"Error on TCP port of the client (SOCKET_ERROR : %d)\n",errno);
       if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR],0);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);
@@ -729,7 +730,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     else if(res == 0)
     {
       if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR],0);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);
@@ -745,7 +746,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       {
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
         if(FFSS_CB.CCB.OnError != NULL)
-          FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
+          FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0);
         SU_FreeCS(Client);
         if(FFSS_CB.CCB.OnEndTCPThread != NULL)
           FFSS_CB.CCB.OnEndTCPThread(Client);
