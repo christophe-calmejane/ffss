@@ -23,7 +23,7 @@
 #elif _WIN32
 #define FFSS_SERVER_OS "Win32"
 extern char FFSS_WinServerVersion[20];
-#elif __MACH__
+#elif defined __MACH__ && defined __APPLE__
 #define FFSS_SERVER_OS "MacOS"
 #define __unix__
 #elif __CYGWIN32__

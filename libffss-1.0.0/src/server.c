@@ -611,7 +611,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   char *Buf;
   unsigned long int BufSize;
   FFSS_LongField UserInfo;
-  FFSS_PQosConn Qos;
+  FFSS_PQosConn Qos = NULL;
 
   SU_ThreadBlockSigs();
   Client = Tmp->Client;

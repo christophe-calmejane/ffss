@@ -102,6 +102,7 @@ bool FFSS_QoS_CreateChain(FFSS_QOS_CHAIN Chain,const char Name[])
 SU_THREAD_ROUTINE(FFSS_CPUSpeedCompute,Info)
 {
  FFSS_CpuSpeed = SU_GetCPUSpeed();
+ SU_END_THREAD(0);
 }
 
 bool FFSS_QoS_Init(FFSS_LongField BandWidth)
@@ -117,7 +118,7 @@ bool FFSS_QoS_Init(FFSS_LongField BandWidth)
 
   if(!SU_CreateThread(&Thread,FFSS_CPUSpeedCompute,NULL,true))
     return false;
- 
+
   FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,"Upload Traffic");
   FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,"TCP Connection");
   FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,"TCP FTP Connection");
@@ -367,7 +368,7 @@ unsigned long int FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain,unsigned long IP,sign
 {
   SU_PList Ptr;
   FFSS_PQosRule Rule;
-  unsigned long int value,ret = 0;
+  unsigned long int value = 1,ret = 0;
 
   if(Chain >= FFSS_QOS_CHAINS_COUNT)
     return 0;

@@ -18,6 +18,7 @@ libffss_la_SOURCES = \
 	utils.c \
 	utils.h \
 	filter.c \
+	qos.c \
         driver.c
 
 libffss_la_LDFLAGS = \

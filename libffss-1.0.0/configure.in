@@ -62,7 +62,7 @@ fi
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h sys/ioctl.h sys/time.h unistd.h signal.h zlib.h bzlib.h)
+AC_CHECK_HEADERS(fcntl.h sys/ioctl.h sys/time.h unistd.h signal.h zlib.h bzlib.h sys/sockio.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
