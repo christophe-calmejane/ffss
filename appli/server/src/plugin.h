@@ -11,8 +11,8 @@
 #include "server.h"
 
 #ifdef _WIN32
-#define FSP_BASE_REG_ROOTHKEY HKEY_CURRENT_USER
-#define FSP_BASE_REG_ROOTKEY "HKEY_CURRENT_USER"
+#define FSP_BASE_REG_ROOTHKEY HKEY_LOCAL_MACHINE
+#define FSP_BASE_REG_ROOTKEY "HKEY_LOCAL_MACHINE"
 #define FSP_BASE_REG_SUBKEY "Software\\FFSS\\Server\\PluginsConf\\"
 #define FSP_BASE_REG_KEY FSP_BASE_REG_ROOTKEY "\\" FSP_BASE_REG_SUBKEY
 #endif /* _WIN32 */
@@ -23,6 +23,7 @@
 #define FSPQ_RELEASE_INDEX     4
 
 #define FSPQ_GET_FILTER_API    10
+#define FSPQ_GET_QOS_API    11
 
 #define FSPQ_GET_STATE        20
 #define FSPQ_SET_STATE        21

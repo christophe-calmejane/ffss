@@ -9,6 +9,7 @@
 #endif /* __cplusplus */
 
 #include "server.h"
+#define FSCA_CONNECT_TIMEOUT 5
 
 typedef struct
 {
@@ -70,7 +71,8 @@ typedef struct
 extern "C" {
 #endif /* __cplusplus */
 
-/* *************** Authentification *************** */
+/* *************** Connection & Authentification *************** */
+SU_PClientSocket FSCA_Connection(const char Server[]);
 bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[]);
 
 /* *************** Get Infos *************** */

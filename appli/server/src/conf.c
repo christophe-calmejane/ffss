@@ -758,6 +758,16 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   SU_THREAD_HANDLE ClientThr;
 
   SU_ThreadBlockSigs();
+  while(FS_MyState == FFSS_STATE_OFF) /* Wait till server is up */
+  {
+    SU_SLEEP(1);
+  }
+  if(SU_ServerListen(SI) == SOCKET_ERROR)
+  {
+    FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (listen)\n");
+    SU_FreeSI(SI);
+    SU_END_THREAD(NULL);
+  }
   while(1)
   {
     Client = SU_ServerAcceptConnection(SI);

@@ -35,6 +35,11 @@ void *FS_PluginQuery(int Type,...)
         ret = (void *)&FFSS_Filter_Api;
       break;
 
+    case FSPQ_GET_QOS_API : /* No Param */
+      if(FFSS_QoS_Api.Initialized)
+        ret = (void *)&FFSS_QoS_Api;
+      break;
+
     case FSPQ_GET_STATE : /* No Param */
       ret = (void *)FS_MyState;
       break;

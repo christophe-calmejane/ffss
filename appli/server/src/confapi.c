@@ -33,20 +33,32 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   tv.tv_usec = 0;
   retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   Got = recv(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
   if(Got != sizeof(Size))
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   FD_ZERO(&rfds);
   FD_SET(Client->sock,&rfds);
   tv.tv_sec = 5;
   tv.tv_usec = 0;
   retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   Got = recv(Client->sock,Buf,Size,SU_MSG_NOSIGNAL);
   if(Got < 1)
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   if(Buf[0] != FS_OPCODE_ACK)
   {
     *Len = 1;
@@ -60,7 +72,10 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
     tv.tv_usec = 0;
     retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
     if(!retval)
+    {
+      SU_ClientDisconnect(Client);
       return false;
+    }
     Got += recv(Client->sock,Buf+Got,Size-Got,SU_MSG_NOSIGNAL);
   }
   *Len = Size;
@@ -70,15 +85,31 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
 bool FSCA_Request(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
 {
   FFSS_Field Size;
+  int res;
 
   Size = *Len;
   /* Send request */
-  SU_ClientSendBuf(Client,(char *)&Size,sizeof(Size));
-  SU_ClientSendBuf(Client,Buf,Size);
+  res = SU_ClientSendBuf(Client,(char *)&Size,sizeof(Size));
+  if(res <= 0)
+  {
+    SU_ClientDisconnect(Client);
+    return false;
+  }
+  res = SU_ClientSendBuf(Client,Buf,Size);
+  if(res <= 0)
+  {
+    SU_ClientDisconnect(Client);
+    return false;
+  }
   return true;
 }
 
-/* authentification */
+/* Connection & authentification */
+SU_PClientSocket FSCA_Connection(const char Server[])
+{
+  return SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
+}
+
 bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[])
 {
   FFSS_Field Length;
@@ -87,17 +118,29 @@ bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[
   Length = strlen(Login);
   res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != sizeof(Length)))
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   res = send(Client->sock,Login,Length,SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != (int)Length))
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   Length = strlen(Pwd);
   res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != sizeof(Length)))
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   res = send(Client->sock,Pwd,Length,SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != (int)Length))
+  {
+    SU_ClientDisconnect(Client);
     return false;
+  }
   return true;
 }
 

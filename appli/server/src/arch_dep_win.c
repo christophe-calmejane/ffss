@@ -5,7 +5,9 @@
 
 #include "server.h"
 
-#define FFSS_REGISTRY_PATH_SERVER FFSS_REGISTRY_PATH "Server\\"
+#define FFSS_REGISTRY_PATH_SERVER FFSS_LM_REGISTRY_PATH "Server\\"
+
+HANDLE FS_GlobalMutex = 0;
 
 void FS_MainThread(void)
 {
@@ -17,17 +19,12 @@ void FS_MainThread(void)
 
 bool FS_IsAlreadyRunning(void)
 {
-  DWORD ProcessId;
-  HANDLE Process;
-
-  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",0);
-  if(ProcessId == 0)
+  FS_GlobalMutex = CreateMutex(NULL,false,"FFSSServerGlobalMutex");
+  if(FS_GlobalMutex == 0)
     return false;
-  Process = OpenProcess(PROCESS_QUERY_INFORMATION,false,ProcessId);
-  if(Process == NULL)
-    return false;
-  CloseHandle(Process);
-  return true;
+  if(GetLastError() == ERROR_ALREADY_EXISTS)
+    return true;
+  return false;
 }
 
 bool FS_LoadConfig(const char FileName[])
@@ -53,8 +50,8 @@ bool FS_LoadConfig(const char FileName[])
   GetCurrentDirectory(sizeof(Path),Path);
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "ServerDirectory",Path);
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",GetCurrentProcessId());
-  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",FFSS_VERSION);
-N_DebugLevel = 6;
+  SU_RB_SetStrValue(FFSS_LM_REGISTRY_PATH "CurrentVersion",FFSS_VERSION);
+
   FS_MyGlobal.ConfSock = true;
   FFSS_PrintDebug(5,"Loading config from registry\n");
   SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "ShareNames",Shares,sizeof(Shares),"");
@@ -122,8 +119,11 @@ N_DebugLevel = 6;
       else
         r = strchr(q,',');
     }
-    /* Building index */
-    FS_BuildIndex(Path,p,Comment,(bool)Writeable,(bool)Private,MaxConn,Ptr,false);
+    if(Path[0] != 0)
+    {
+      /* Building index */
+      FS_BuildIndex(Path,p,Comment,(bool)Writeable,(bool)Private,MaxConn,Ptr,false);
+    }
 
     if((s == NULL) || (s[0] == 0))
       p = NULL;
@@ -349,4 +349,5 @@ void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
 void FS_ShuttingDown()
 {
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",0);
+  CloseHandle(FS_GlobalMutex);
 }

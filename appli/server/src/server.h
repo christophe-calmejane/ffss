@@ -206,7 +206,7 @@ extern FS_TGlobal FS_MyGlobal;
 extern SU_PList FS_Index; /* FS_PShare */
 extern char *FS_MyDomain;
 extern char *FS_MyIntName;
-extern int FS_MyState;
+extern volatile int FS_MyState;
 extern char *FS_TimeTable[];
 extern SU_PList FS_Plugins; /* FS_PPlugin */
 

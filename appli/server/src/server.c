@@ -15,7 +15,7 @@ char *FS_MyIntName = "xl0";
 #else
 char *FS_MyIntName = "eth0";
 #endif
-int FS_MyState;
+volatile int FS_MyState;
 char *FS_TimeTable[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 long int FS_CurrentStrmTag = 1;
 SU_PList FS_Plugins; /* FS_PPlugin */
@@ -2722,18 +2722,10 @@ char *FS_CheckGlobal(void)
     SI = SU_CreateServer(FFSS_SERVER_CONF_PORT,SOCK_STREAM,false);
     if(SI != NULL)
     {
-      if(SU_ServerListen(SI) == SOCKET_ERROR)
+      if(!SU_CreateThread(&Thread,FS_ConfFunc,(void *)SI,true))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (listen)\n");
+        FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (thread)\n");
         SU_FreeSI(SI);
-      }
-      else
-      {
-        if(!SU_CreateThread(&Thread,FS_ConfFunc,(void *)SI,true))
-        {
-          FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (thread)\n");
-          SU_FreeSI(SI);
-        }
       }
     }
     else
@@ -2782,6 +2774,7 @@ LRESULT CALLBACK FS_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       handint(15);
       return 0;
   }
+
   return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
@@ -2842,6 +2835,13 @@ int main(int argc,char *argv[])
 
   printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_SERVER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
+
+#ifdef _WIN32
+#ifndef DEBUG
+  FS_hInstance = hInstance;
+#endif /* !DEBUG */
+  FS_InitWindow();
+#endif /* _WIN32 */
 
   if(FS_IsAlreadyRunning())
   {
@@ -2904,10 +2904,6 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_INFO,"Server started with pid %d\n",getpid());
   }
 #else /* !__unix__ */
-#ifndef DEBUG
-  FS_hInstance = hInstance;
-#endif /* !DEBUG */
-  FS_InitWindow();
   FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");
   FFSS_PrintSyslog(LOG_INFO,"Server started\n");
   if(!SU_WSInit(2,2))

@@ -145,7 +145,7 @@ int main(int argc,char *argv[])
     }
   }
 
-  Client = SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
+  Client = FSCA_Connection(Server);
   if(Client == NULL)
   {
     printf("Cannot connect to %s:%s\n",Server,FFSS_SERVER_CONF_PORT_S);
