@@ -330,7 +330,12 @@ Detail du protocole (Version 0x0010005) :
    DWord : Nombre de domaines
     ZStr : Nom du domaine
     DWord : Nombre de reponses
-     ZStr : Chaine reponse contenant le nom du server et son domaine (suffit a identifier un serveur), le partage, le path dans le partage
+     DWord : Type d'adresse du server (0=Neant,1=IPv4,2=IPv6)
+      DWord : IPv4 du server
+      DWord : Reserve
+      DWord : Reserve
+      DWord : Reserve
+     ZStr : Chaine reponse contenant le nom du server, le partage, le path dans le partage
 
  * Message de recherche forwarde (Master->Master 695) (TCP) :
    DWord : Taille du message

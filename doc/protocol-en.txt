@@ -37,7 +37,7 @@ Regularly the master sends a UDP ping request to the servers which are in his li
 The master sends broadcast messages of status only all X seconds, by sending several changes at the same time (message of type 3)
 If the master receive a message as a friandise-like search then it sends the request to its Co-masters and waits the reply's before answering the client.
 
-Detail of the protocol (Version 1):
+Detail of the protocol (Version 0x0010005):
 ---------------------------------
  * Status message (Server->Master 695) (UDP) :
    DWord : Size of the message
@@ -332,15 +332,20 @@ Detail of the protocol (Version 1):
    DWord : Number of domain
     ZStr : Name of the domain
     DWord : Number of replies
-     ZStr : Answer string giving name of the server and his domain (that identifies a server), the share and the path whithin it
+     DWord : Version of the IP address of the server (0=Nil,1=IPv4,2=IPv6)
+      DWord : IPv4 of the server
+      DWord : Reserved
+      DWord : Reserved
+      DWord : Reserved
+     ZStr : Answer string giving name of the server, the share and the path whithin it
 
  * Forwarded search message (Master->Master 695) (UDP) :
    DWord : Size of the message
    DWord : Message type = 52 (forwarded search)
    DWord : Client's port for the reply
    DWord : Compression types authorized in the reply
-   DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
-    DWord : IPv4 of the server
+   DWord : Version of the IP address of the client (0=Nil,1=IPv4,2=IPv6)
+    DWord : IPv4 of the client
     DWord : Reserved
     DWord : Reserved
     DWord : Reserved
