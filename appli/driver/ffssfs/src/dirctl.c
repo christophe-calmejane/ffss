@@ -314,6 +314,7 @@ FsdQueryDirectory (
         while (UsedLength < Length)
         {
           /* Get next entry starting at FileIndex in the tab of domain/server/share/entry */
+          Inode = FsdGetInodeByIndex(Fcb,FileIndex,&Status);
 
           /* Attention : Si on recup un inode, faudra penser a faire un free !! */
             //Status = FsdReadInodeByIndex(Vcb->TargetDeviceObject,FileIndex,Inode);
@@ -641,6 +642,11 @@ FsdQueryDirectory (
     }
     __finally
     {
+        if(Inode != NULL)
+        {
+          FsdFreeFFSSInode(Inode,true);
+        }
+
         if (FcbResourceAcquired)
         {
             ExReleaseResourceForThreadLite(&Fcb->MainResource,ExGetCurrentResourceThread());
@@ -650,11 +656,6 @@ FsdQueryDirectory (
         {
             FsdFreePool(UpcaseFileName.Buffer);
         }
-
-        /*if (Inode != NULL)
-        {
-            FsdFreePool(Inode);
-        }*/ /* TO DO */
 
         if (InodeFileName.Buffer != NULL)
         {

@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 10th 2002
+                  Last Update : July, 22th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+July, 22th 2002:
+  - Upgraded to new protocol
 
 June, 12th 2002:
   - Fixed bug in confapi (wrong argument passed)

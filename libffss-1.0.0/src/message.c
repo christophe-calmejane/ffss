@@ -182,7 +182,8 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
 /*  ShareNames : A tab of the share names of my server       */
 /*  ShareComments : A tab of the share comments of my server */
 /*  NbShares : The number of shares of my server             */
-bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[],const char **ShareNames,const char **ShareComments,int NbShares)
+/*  User : User pointer returned in message answer           */
+bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[],const char **ShareNames,const char **ShareComments,int NbShares,FFSS_LongField User)
 {
   char *msg;
   long int size,len,pos;
@@ -194,6 +195,7 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_IP_TYPE);
   FFSS_PackIP(msg+pos,IP,FFSS_IP_TYPE);
   pos += FFSS_IP_FIELD_SIZE;
@@ -237,13 +239,14 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   return (resp != SOCKET_ERROR);
 }
 
-/* FS_SendMessage_Error Function                */
-/* Sends an ERROR message to a client           */
-/*  Client : The socket of the client           */
-/*  Code : The error code to send               */
-/*  Descr : The description of the error code   */
-/*  Value : Extra value depending on error code */
-bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value)
+/* FS_SendMessage_Error Function                   */
+/* Sends an ERROR message to a client              */
+/*  Client : The socket of the client              */
+/*  Code : The error code to send                  */
+/*  Descr : The description of the error code      */
+/*  Value : Extra value depending on error code    */
+/*  User : User pointer returned in message answer */
+bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
@@ -251,6 +254,7 @@ bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FF
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Code);
   pos = FFSS_PackLongField(msg,pos,Value);
   if(Descr != NULL)
@@ -275,7 +279,8 @@ bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FF
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
+/*  User : User pointer returned in message answer                    */
+bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression,FFSS_LongField User)
 {
   char *msg;
   long int len,size,pos;
@@ -289,6 +294,7 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DIRECTORY_LISTING_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
 
   len = strlen(Path)+1;
   if(len > FFSS_MAX_PATH_LENGTH)
@@ -342,7 +348,8 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
+/*  User : User pointer returned in message answer                    */
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression,FFSS_LongField User)
 {
   char *msg;
   long int len,size,pos;
@@ -356,6 +363,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_REC_DIR_LISTING_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
 
   len = strlen(Path)+1;
   if(len > FFSS_MAX_PATH_LENGTH)
@@ -431,9 +439,10 @@ bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName
   return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
-/* FS_SendMessage_MasterSearch Function      */
-/* Sends a MASTER SEARCH message to broadcast */
-bool FS_SendMessage_MasterSearch()
+/* FS_SendMessage_MasterSearch Function            */
+/* Sends a MASTER SEARCH message to broadcast      */
+/*  User : User pointer returned in message answer */
+bool FS_SendMessage_MasterSearch(FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_MASTER];
   long int pos;
@@ -442,6 +451,7 @@ bool FS_SendMessage_MasterSearch()
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_SERVER);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
@@ -678,7 +688,8 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize)
+/*  User : User pointer returned in message answer    */
+bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
@@ -686,6 +697,7 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_OPEN_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
 
   if(Path != NULL)
   {
@@ -711,7 +723,8 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
-bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen)
+/*  User : User pointer returned in message answer    */
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_LongField User)
 {
   char *msg;
   long int size,pos;
@@ -721,6 +734,7 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_READ_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Handle);
   memcpy(msg+pos,Buf,BlocLen);
   pos += BlocLen;
@@ -735,7 +749,8 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
 /*  Client : The socket of the client                  */
 /*  Handle : The handle of the file                    */
 /*  Code : The error code to send                      */
-bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code)
+/*  User : User pointer returned in message answer     */
+bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER];
   long int pos;
@@ -743,6 +758,7 @@ bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Fiel
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_WRITE_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Handle);
   pos = FFSS_PackField(msg,pos,Code);
   FFSS_PackField(msg,0,pos);
@@ -777,7 +793,8 @@ bool FC_SendMessage_ServerSearch(void)
 /* FC_SendMessage_SharesListing Function                       */
 /* Sends a SHARES LISTING message to a server                  */
 /*  Server : The name of the server we want the shares listing */
-bool FC_SendMessage_SharesListing(const char Server[])
+/*  User : User pointer returned in message answer             */
+bool FC_SendMessage_SharesListing(const char Server[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARES_LISTING];
   long int pos;
@@ -788,6 +805,7 @@ bool FC_SendMessage_SharesListing(const char Server[])
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Shares Listing message to %s\n",Server);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
@@ -799,7 +817,8 @@ bool FC_SendMessage_SharesListing(const char Server[])
 /*  Master : The name of my master, or NULL if none        */
 /*  OS : The desired OS, or NULL if requesting all         */
 /*  Domain : The desired domain, or NULL if requesting all */
-bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Domain[])
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Domain[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_DOMAIN_LENGTH+1];
   long int len,pos;
@@ -811,6 +830,7 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
 
   Comps = FFSS_COMPRESSION_NONE;
 #ifndef DISABLE_ZLIB
@@ -851,7 +871,8 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
 /*  ShareName : The Share Name we wish to connect to     */
 /*  Login : The Login we may use (or NULL if none)       */
 /*  Password : The Password we may use (or NULL if none) */
-SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char ShareName[],const char Login[],const char Password[])
+/*  User : User pointer returned in message answer       */
+SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char ShareName[],const char Login[],const char Password[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARE_CONNECTION + FFSS_MAX_SHARENAME_LENGTH+1 + FFSS_MAX_LOGIN_LENGTH+1 + FFSS_MAX_PASSWORD_LENGTH+1];
   long int len,pos;
@@ -890,6 +911,7 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   FFSS_PrintDebug(2,"Connected to %s\n",Server);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARE_CONNECTION);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
 
   Comps = FFSS_COMPRESSION_NONE;
@@ -942,7 +964,8 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
 /* Sends a DIRECTORY LISTING message to a server        */
 /*  Server : The Server's structure we are connected to */
 /*  Path : The path we request a listing                */
-bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DIRECTORY_LISTING + FFSS_MAX_PATH_LENGTH+1];
   long int pos;
@@ -953,6 +976,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DIRECTORY_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
   len = strlen(Path)+1;
   if(len > FFSS_MAX_PATH_LENGTH)
     len = FFSS_MAX_PATH_LENGTH;
@@ -966,7 +990,8 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
 /* Sends a RECURSIVE DIRECTORY LISTING message to a server */
 /*  Server : The Server's structure we are connected to    */
 /*  Path : The path we request a listing                   */
-bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[])
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_REC_DIR_LISTING + FFSS_MAX_PATH_LENGTH+1];
   long int pos;
@@ -977,6 +1002,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_REC_DIR_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
   len = strlen(Path)+1;
   if(len > FFSS_MAX_PATH_LENGTH)
     len = FFSS_MAX_PATH_LENGTH;
@@ -992,7 +1018,8 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock)
+/*  User : User pointer returned in message answer                  */
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOWNLOAD + FFSS_MAX_FILEPATH_LENGTH+1];
   long int pos;
@@ -1030,6 +1057,7 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   }
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DOWNLOAD);
+  pos = FFSS_PackLongField(msg,pos,User);
   len = strlen(Path)+1;
   if(len > FFSS_MAX_FILEPATH_LENGTH)
     len = FFSS_MAX_FILEPATH_LENGTH;
@@ -1095,10 +1123,11 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   SU_FreeCS(Server);
 }
 
-/* FC_SendMessage_DomainListing Function   */
-/* Sends a DOMAIN LIST message to a master */
-/*  Master : The name of my master         */
-bool FC_SendMessage_DomainListing(const char Master[])
+/* FC_SendMessage_DomainListing Function           */
+/* Sends a DOMAIN LIST message to a master         */
+/*  Master : The name of my master                 */
+/*  User : User pointer returned in message answer */
+bool FC_SendMessage_DomainListing(const char Master[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOMAINS_LISTING];
   long int pos;
@@ -1109,6 +1138,7 @@ bool FC_SendMessage_DomainListing(const char Master[])
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DOMAINS_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Domains listing message to %s\n",Master);
@@ -1121,7 +1151,8 @@ bool FC_SendMessage_DomainListing(const char Master[])
 /*  Master : The name of my master                         */
 /*  Domain : The desired domain, or NULL if requesting all */
 /*  Keys   : A String of keywords                          */
-bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Key[])
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Key[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH + FFSS_MAX_DOMAIN_LENGTH+1 + FFSS_MAX_KEYWORDS_LENGTH+1];
   long int len,pos;
@@ -1134,6 +1165,7 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
 
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,ntohs(FC_SI_OUT_UDP->SAddr.sin_port));
 
   Comps = FFSS_COMPRESSION_NONE;
@@ -1164,9 +1196,10 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
   return (resp != SOCKET_ERROR);
 }
 
-/* FC_SendMessage_MasterSearch Function       */
-/* Sends a MASTER SEARCH message to broadcast */
-bool FC_SendMessage_MasterSearch()
+/* FC_SendMessage_MasterSearch Function            */
+/* Sends a MASTER SEARCH message to broadcast      */
+/*  User : User pointer returned in message answer */
+bool FC_SendMessage_MasterSearch(FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_MASTER];
   long int pos;
@@ -1175,6 +1208,7 @@ bool FC_SendMessage_MasterSearch()
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_CLIENT);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
@@ -1187,7 +1221,8 @@ bool FC_SendMessage_MasterSearch()
 /*  Server : The Server's structure we are connected to */
 /*  Path : The path of the requested file               */
 /*  Flags : The opening mode flags                      */
-bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags)
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_OPEN + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
@@ -1197,6 +1232,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_OPEN);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Flags);
 
   if(Path != NULL)
@@ -1240,7 +1276,8 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle)
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length)
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_READ];
   long int pos;
@@ -1250,6 +1287,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Long
     return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_READ);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Handle);
   pos = FFSS_PackLongField(msg,pos,StartPos);
   pos = FFSS_PackField(msg,pos,Length);
@@ -1265,7 +1303,8 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Long
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen)
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen,FFSS_LongField User)
 {
   char *msg;
   long int size,pos;
@@ -1277,6 +1316,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Lon
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_WRITE);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Handle);
   pos = FFSS_PackLongField(msg,pos,StartPos);
 
@@ -1446,7 +1486,8 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
 /*  Buffer : The buffer containing the nb of domains, and the hosts */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression)
+/*  User : User pointer returned in message answer                  */
+bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression,FFSS_LongField User)
 {
   char *msg;
   long int size,pos;
@@ -1461,6 +1502,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_LISTING_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Compression);
   switch(Compression)
   {
@@ -1599,7 +1641,8 @@ bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Desc
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
 /*  Master : The socket of the Master              */
-bool FM_SendMessage_ServerList(SU_SOCKET Master)
+/*  User : User pointer returned in message answer */
+bool FM_SendMessage_ServerList(SU_SOCKET Master,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_DOMAIN_LENGTH+1];
   long int pos;
@@ -1607,6 +1650,7 @@ bool FM_SendMessage_ServerList(SU_SOCKET Master)
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_LISTING);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_COMPRESSION_BZLIB);
 
   msg[pos++] = 0; /* OS is NULL */
@@ -1617,12 +1661,13 @@ bool FM_SendMessage_ServerList(SU_SOCKET Master)
   return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
 
-/* FM_SendMessage_DomainListingAnswer Function   */
-/* Sends a DOMAIN ANSWER message to client       */
-/*  Client : The sin of the client               */
-/*  NbDomains : Nomber of domains                */
-/*  Domains : Array of strings (name of domains) */
-bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[])
+/* FM_SendMessage_DomainListingAnswer Function     */
+/* Sends a DOMAIN ANSWER message to client         */
+/*  Client : The sin of the client                 */
+/*  NbDomains : Nomber of domains                  */
+/*  Domains : Array of strings (name of domains)   */
+/*  User : User pointer returned in message answer */
+bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[],FFSS_LongField User)
 {
   char *msg;
   long int len,size,pos;
@@ -1633,6 +1678,7 @@ bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DOMAINS_LISTING_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,NbDomains);
 
   for(i=0;i<NbDomains;i++)
@@ -1654,7 +1700,8 @@ bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,
 /*  Client : The sin of the client or the server            */
 /*  Server : True if from server                            */
 /*  Domain : The name of my domain                          */
-bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,const char Domain[])
+/*  User : User pointer returned in message answer          */
+bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,const char Domain[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_MASTER_ANSWER + FFSS_MAX_DOMAIN_LENGTH+1];
   long int len,pos;
@@ -1663,6 +1710,7 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
   len = strlen(Domain)+1;
   if(len > FFSS_MAX_DOMAIN_LENGTH)
@@ -1689,7 +1737,8 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
 /*  Buffer : The buffer containing the query, the nb of answers, and the answers */
 /*  BufSize : The size of the buffer                                             */
 /*  Compression : The type of compression to be applied to Buffer                */
-bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression)
+/*  User : User pointer returned in message answer                               */
+bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression,FFSS_LongField User)
 {
   char *msg;
   long int size,pos;
@@ -1704,6 +1753,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_ANSWER);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,Compression);
 
   switch(Compression)
@@ -1753,7 +1803,8 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[])
+/*  User : User pointer returned in message answer       */
+bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[],FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_FW + FFSS_IP_FIELD_SIZE + FFSS_MAX_KEYWORDS_LENGTH+1];
   long int len,pos;
@@ -1761,6 +1812,7 @@ bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_FW);
+  pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,ntohs(Client.sin_port));
   pos = FFSS_PackField(msg,pos,Compression);
   pos = FFSS_PackField(msg,pos,FFSS_IP_TYPE);

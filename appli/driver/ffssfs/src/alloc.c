@@ -159,7 +159,7 @@ PFSD_FCB
 FsdAllocateFcb (
     IN PFSD_VCB             Vcb,
     IN PUNICODE_STRING      FileName,
-    IN struct ffss_inode*  ffss_inode
+    IN struct ffss_inode*   ffss_inode
     )
 {
     PFSD_FCB Fcb;
@@ -276,29 +276,31 @@ FsdAllocateFcb (
     return Fcb;
 }
 
-struct ffss_inode *FsdAllocInode(const char Name[])
+struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 {
   struct ffss_inode *ffss_inode;
 
   ffss_inode = (struct ffss_inode *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode), 'puSR');
 
+  ffss_inode->Type = Type;
+  ffss_inode->Parent = NULL;
   ffss_inode->Inodes = NULL;
   ffss_inode->NbInodes = 0;
   ffss_inode->RefCount = 0;
   ffss_inode->NameLength = strlen(Name)+1;
   ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
   RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
-  KdPrint(("FsdAllocInode : Allocating inode with name : %s\n",ffss_inode->Name));
+  KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name : %s\n",Type,ffss_inode->Name));
 
   return ffss_inode;
 }
 
 /* SuperBlock must be locked (or Lock must be TRUE) */
-struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock)
+struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
 #if DBG
-  if(Lock != true || Lock != false)
-    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignFFSSInode !!!\n"));
+  if(Lock != true && Lock != false)
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignFFSSInode (%d %d %d) !!!\n",Lock,true,false));
 #endif
   if(Lock)
   {
@@ -312,15 +314,15 @@ struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,bool Loc
 }
 
 /* SuperBlock must be locked (or Lock must be TRUE) */
-VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock)
+VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
   int i;
 
   if(ffss_inode == NULL)
     return;
 #if DBG
-  if(Lock != true || Lock != false)
-    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeFFSSInode !!!\n"));
+  if(Lock != true && Lock != false)
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeFFSSInode (%d %d %d) !!!\n",Lock,true,false));
 #endif
   if(Lock)
     LOCK_SUPERBLOCK_RESOURCE;
@@ -342,8 +344,39 @@ VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock)
   }
   if(ffss_inode->Name != NULL)
     FsdFreePool(ffss_inode->Name);
+  if(ffss_inode->Parent != NULL)
+    FsdFreeFFSSInode(ffss_inode->Parent,false);
 
   FsdFreePool(ffss_inode);
+  if(Lock)
+    UNLOCK_SUPERBLOCK_RESOURCE;
+}
+
+/* SuperBlock must be locked (or Lock must be TRUE) */
+VOID FsdFreeSubInodes(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
+{
+  int i;
+
+  if(ffss_inode == NULL)
+    return;
+#if DBG
+  if(Lock != true && Lock != false)
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeSubInodes (%d %d %d) !!!\n",Lock,true,false));
+#endif
+  if(Lock)
+    LOCK_SUPERBLOCK_RESOURCE;
+
+  if(ffss_inode->NbInodes != 0)
+  {
+    for(i=0;i<ffss_inode->NbInodes;i++)
+    {
+      FsdFreeFFSSInode(ffss_inode->Inodes[i],false);
+    }
+    FsdFreePool(ffss_inode->Inodes);
+    ffss_inode->Inodes = NULL;
+    ffss_inode->NbInodes = 0;
+  }
+
   if(Lock)
     UNLOCK_SUPERBLOCK_RESOURCE;
 }
@@ -354,8 +387,8 @@ struct ffss_super_block *FsdAllocSuperBlock(void)
 
   super_block = (struct ffss_super_block *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_super_block), 'puSR');
 
-  super_block->Domains = NULL;
-  super_block->NbDomains = 0;
+  super_block->Root = FsdAssignFFSSInode(FsdAllocInode("",FFSS_INODE_ROOT),false);
+  super_block->Root->Flags = FFSS_FILE_DIRECTORY;
   ExInitializeResourceLite(&(super_block->Resource));
 
   return super_block;
@@ -368,19 +401,8 @@ VOID FsdFreeSuperBlock(IN struct ffss_super_block *ffss_super_block)
   if(ffss_super_block == NULL)
     return;
 
-  LOCK_SUPERBLOCK_RESOURCE;
-  if(ffss_super_block->NbDomains != 0)
-  {
-    for(i=0;i<ffss_super_block->NbDomains;i++)
-    {
-      FsdFreeFFSSInode(ffss_super_block->Domains[i],false);
-    }
-    FsdFreePool(ffss_super_block->Domains);
-    ffss_super_block->Domains = NULL;
-    ffss_super_block->NbDomains = 0;
-  }
-
-  UNLOCK_SUPERBLOCK_RESOURCE;
+  FsdFreeFFSSInode(ffss_super_block->Root,true);
+  ffss_super_block->Root = NULL;
   ExDeleteResourceLite(&ffss_super_block->Resource);
   FsdFreePool(ffss_super_block);
 }

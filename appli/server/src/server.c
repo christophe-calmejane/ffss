@@ -61,7 +61,7 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
     if(((FS_PConn)Ptr->Data)->ts != NULL)
     {
       ((FS_PConn)Ptr->Data)->ts->Remove = true;
-      FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],9);
+      FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],9,((FS_PConn)Ptr->Data)->ts->User);
       SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
       ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
     }
@@ -106,7 +106,7 @@ void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers)
       if(((FS_PConn)Ptr->Data)->ts != NULL)
       {
         ((FS_PConn)Ptr->Data)->ts->Remove = true;
-        FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
+        FS_SendMessage_Error(((FS_PConn)Ptr->Data)->ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0,((FS_PConn)Ptr->Data)->ts->User);
         SU_CLOSE_SOCKET(((FS_PConn)Ptr->Data)->ts->Client->sock);
         ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
       }
@@ -329,7 +329,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
 #ifdef DEBUG
       printf("Share %s is to be removed, %d remaining connections\n",ts->Share->ShareName,SU_ListCount(ts->Share->Conns));
 #endif /* DEBUG */
-      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
+      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0,ts->User);
       FS_RemoveConnectionFromShare(ts->Share,ts,true);
       if(ts->Share->Conns == NULL) /* No more connection, removing share */
         FS_FreeShare(ts->Share);
@@ -343,7 +343,7 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
 #ifdef DEBUG
       printf("This connection has been requested to exit (Share %s)\n",ts->Share->ShareName);
 #endif /* DEBUG */
-      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0);
+      FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0,ts->User);
       FS_RemoveConnectionFromShare(ts->Share,ts,false);
       /* Clean and kill this thread */
       SU_CLOSE_SOCKET(ts->Client->sock);
@@ -382,7 +382,7 @@ void OnEndTCPThread(void)
 }
 
 /* Assumes FS_SemShr is locked */
-bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps)
+bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps,FFSS_LongField User)
 {
   char *buf;
   long int len;
@@ -392,7 +392,7 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
   buf = FS_BuildDirectoryBuffer(Share,Path,&len);
   if(buf == NULL)
   {
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],0);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],0,User);
   }
 #ifdef HAVE_BZLIB
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_BZLIB)
@@ -417,13 +417,13 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
   else
 #endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
-  ans = FS_SendMessage_DirectoryListingAnswer(Client->sock,Path,buf,len,comp);
+  ans = FS_SendMessage_DirectoryListingAnswer(Client->sock,Path,buf,len,comp,User);
   free(buf);
   return ans;
 }
 
 /* Assumes FS_SemShr is locked */
-bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps)
+bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps,FFSS_LongField User)
 {
   char *buf;
   long int len;
@@ -433,7 +433,7 @@ bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,co
   buf = FS_BuildRecursiveDirectoryBuffer(Share,Path,&len);
   if(buf == NULL)
   {
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],1);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],1,User);
   }
 #ifdef HAVE_BZLIB
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_BZLIB)
@@ -458,7 +458,7 @@ bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,co
   else
 #endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
-  ans = FS_SendMessage_RecursiveDirectoryListingAnswer(Client->sock,Path,buf,len,comp);
+  ans = FS_SendMessage_RecursiveDirectoryListingAnswer(Client->sock,Path,buf,len,comp,User);
   free(buf);
   return ans;
 }
@@ -553,7 +553,7 @@ void OnServerSearch(struct sockaddr_in Client)
   SU_SEM_POST(FS_SemPlugin);
 }
 
-void OnSharesListing(struct sockaddr_in Client)
+void OnSharesListing(struct sockaddr_in Client,FFSS_LongField User)
 {
   int nb,i;
   char **Names,**Comments;
@@ -566,7 +566,7 @@ void OnSharesListing(struct sockaddr_in Client)
   if(nb == 0)
   {
     SU_SEM_WAIT(FS_SemGbl);
-    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,NULL,NULL,nb))
+    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,NULL,NULL,nb,User))
       FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     SU_SEM_POST(FS_SemGbl);
   }
@@ -582,7 +582,7 @@ void OnSharesListing(struct sockaddr_in Client)
       Ptr = Ptr->Next;
     }
     SU_SEM_WAIT(FS_SemGbl);
-    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,(const char **)Names,(const char **)Comments,nb))
+    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,(const char **)Names,(const char **)Comments,nb,User))
       FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     SU_SEM_POST(FS_SemGbl);
     free(Names);
@@ -595,7 +595,7 @@ void OnSharesListing(struct sockaddr_in Client)
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnSharesListing != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnSharesListing(Client);
+      ((FS_PPlugin)Ptr->Data)->CB.OnSharesListing(Client,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
@@ -653,7 +653,7 @@ void OnError(FFSS_Field ErrorCode,const char Description[])
   exit(-1);
 }
 
-void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[])
+void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User)
 {
   SU_PList Ptr;
 
@@ -683,7 +683,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer(Master,ProtocolVersion,Domain);
+      ((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer(Master,ProtocolVersion,Domain,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
@@ -702,7 +702,7 @@ void OnBeginTCPThread(SU_PClientSocket Client,void *Info)
   SU_SEM_POST(FS_SemShr);
 }
 
-void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
+void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions,FFSS_LongField User)
 {
   SU_PList Ptr;
   FS_PShare Share;
@@ -724,12 +724,13 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   ts->ShareName = strdup(ShareName);
   ts->Client = Client;
   ts->Comps = Compressions;
+  ts->User = User;
 
   /* If Server if OFF */
   if(FS_MyState == FFSS_STATE_OFF)
   { /* Server is off */
     SU_SEM_POST(FS_SemShr);
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0,User);
     return NULL;
   }
 
@@ -738,7 +739,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   if(Share == NULL)
   { /* Share not found - Sending error message */
     SU_SEM_POST(FS_SemShr);
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0,User);
     return NULL;
   }
 
@@ -746,7 +747,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   if(Share->Disabled)
   { /* Share disabled - Sending error message */
     SU_SEM_POST(FS_SemShr);
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_SHARE_DISABLED,FFSS_ErrorTable[FFSS_ERROR_SHARE_DISABLED],0);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_SHARE_DISABLED,FFSS_ErrorTable[FFSS_ERROR_SHARE_DISABLED],0,User);
     return NULL;
   }
 
@@ -757,7 +758,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
     if(FS_MyGlobal.Conn >= FS_MyGlobal.MaxConn)
     { /* Too many connections */
       SU_SEM_POST(FS_SemShr);
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],FS_MyGlobal.MaxConn);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],FS_MyGlobal.MaxConn,User);
       SU_SEM_POST(FS_SemGbl);
       return NULL;
     }
@@ -771,7 +772,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
     if(SU_ListCount(Share->Conns) >= Share->MaxConnections)
     { /* Too many connections */
       SU_SEM_POST(FS_SemShr);
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],Share->MaxConnections);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],Share->MaxConnections,User);
       return NULL;
     }
   }
@@ -784,7 +785,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
     if((Login[0] == 0) || (Password[0] == 0)) /* Need both login and password - Send error message */
     {
       SU_SEM_POST(FS_SemShr);
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0,User);
       return NULL;
     }
     Ptr = Share->Users;
@@ -797,7 +798,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
     if(Ptr == NULL) /* Login not found in my list - Send error message */
     {
       SU_SEM_POST(FS_SemShr);
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0,User);
       return NULL;
     }
     /* Now check password */
@@ -819,7 +820,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
     { /* Wrong password */
       SU_SEM_POST(FS_SemShr);
       FFSS_PrintDebug(3,"Tadam... wrong password !!\n");
-      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0,User);
       return NULL;
     }
     FFSS_PrintDebug(3,"Ok, user accepted\n");
@@ -828,7 +829,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   if(Share->Private && (Usr == NULL)) /* Share is private, and login/pass info does not match */
   {
     SU_SEM_POST(FS_SemShr);
-    FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0,User);
     return NULL;
   }
 
@@ -839,7 +840,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   SU_SEM_POST(FS_SemShr);
 
   /* Send a OK message */
-  if(!FS_SendMessage_Error(Client->sock,FFSS_ERROR_NO_ERROR,NULL,0))
+  if(!FS_SendMessage_Error(Client->sock,FFSS_ERROR_NO_ERROR,NULL,0,User))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     return NULL;
@@ -850,14 +851,14 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnShareConnection != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnShareConnection(Client,ShareName,Login,Password,Compressions);
+      ((FS_PPlugin)Ptr->Data)->CB.OnShareConnection(Client,ShareName,Login,Password,Compressions,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return ts;
 }
 
-bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
+bool OnDirectoryListing(SU_PClientSocket Client,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PThreadSpecific ts;
   SU_PList Ptr;
@@ -871,7 +872,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
     SU_SEM_POST(FS_SemShr);
     return false;
   }
-  if(!FS_SendDirectoryListing(Client,ts->Share,Path,ts->Comps))
+  if(!FS_SendDirectoryListing(Client,ts->Share,Path,ts->Comps,User))
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
@@ -884,14 +885,14 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing(Client,Path);
+      ((FS_PPlugin)Ptr->Data)->CB.OnDirectoryListing(Client,Path,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
+bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PThreadSpecific ts;
   SU_PList Ptr;
@@ -905,7 +906,7 @@ bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* P
     SU_SEM_POST(FS_SemShr);
     return false;
   }
-  if(!FS_SendRecursiveDirectoryListing(Client,ts->Share,Path,ts->Comps))
+  if(!FS_SendRecursiveDirectoryListing(Client,ts->Share,Path,ts->Comps,User))
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
@@ -918,14 +919,14 @@ bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[]) /* P
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing(Client,Path);
+      ((FS_PPlugin)Ptr->Data)->CB.OnRecursiveDirectoryListing(Client,Path,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port) /* Path IN the share (without share name) */
+bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PThreadSpecific ts;
   char buf[FFSS_MAX_FILEPATH_LENGTH];
@@ -956,7 +957,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
     if(Port != -1) /* XFer mode not supported */
     {
       SU_SEM_POST(FS_SemShr);
-      ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0);
+      ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0,User);
       SU_SEM_POST(FS_SemGbl);
       return ret;
     }
@@ -964,7 +965,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   if(FS_MyState != FFSS_STATE_ON)
   { /* Quiet mode - Sending error message */
     SU_SEM_POST(FS_SemShr);
-    ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET],0);
+    ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET],0,User);
     SU_SEM_POST(FS_SemGbl);
     return ret;
   }
@@ -989,7 +990,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       {
         SU_SEM_POST(FS_SemShr);
         FFSS_PrintDebug(6,"Too many active xfers : %d\n",FS_XFersCount(Conn));
-        ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS],Port);
+        ret = FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS],Port,User);
         SU_SEM_POST(FS_SemGbl);
         return ret;
       }
@@ -1001,7 +1002,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
     if((!Conn->XFerInConn) && (Conn->XFers != NULL)) /* Can't start xfer in socket while there are active 'normal' xfers */
     {
       SU_SEM_POST(FS_SemShr);
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0);
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED],0,User);
     }
     Conn->XFerInConn = true;
     if(Conn->TransferBuffer == NULL)
@@ -1011,7 +1012,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       {
         SU_SEM_POST(FS_SemShr);
         FFSS_PrintDebug(1,"Cannot allocate buffer for xfers\n");
-        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR],FFSS_TRANSFER_READ_BUFFER_SIZE);
+        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_INTERNAL_ERROR,FFSS_ErrorTable[FFSS_ERROR_INTERNAL_ERROR],FFSS_TRANSFER_READ_BUFFER_SIZE,User);
       }
     }
   }
@@ -1019,14 +1020,14 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Couldn't open file for upload : %s (%d)\n",Path,errno);
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],2);
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],2,User);
   }
 #ifdef __unix__
   snprintf(buf,sizeof(buf),"%s%s",ts->Share->Path,Path);
 #else /* !__unix__ */
   snprintf(buf,sizeof(buf),"%s\\%s",ts->Share->Path,(Path[0] == 0)?Path:(Path+1));
 #endif /* __unix__ */
-  if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,(Port == -1),&FT))
+  if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,(Port == -1),User,&FT))
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
@@ -1083,14 +1084,14 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnDownload != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnDownload(Client,Path,StartPos,Port);
+      ((FS_PPlugin)Ptr->Data)->CB.OnDownload(Client,Path,StartPos,Port,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port) /* Path IN the share (without share name) */
+bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port,FFSS_LongField User) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
   FS_PThreadSpecific ts;
@@ -1103,7 +1104,7 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
     return false;
   }
   FFSS_PrintDebug(1,"Received an UPLOAD message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0,User);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1111,14 +1112,14 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnUpload != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnUpload(Client,Path,Size,Port);
+      ((FS_PPlugin)Ptr->Data)->CB.OnUpload(Client,Path,Size,Port,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* Path IN the share (without share name) */
+bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
   FS_PThreadSpecific ts;
@@ -1131,7 +1132,7 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
     return false;
   }
   FFSS_PrintDebug(1,"Received a RENAME message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0,User);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1139,14 +1140,14 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnRename != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnRename(Client,Path,NewPath);
+      ((FS_PPlugin)Ptr->Data)->CB.OnRename(Client,Path,NewPath,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* Path IN the share (without share name) */
+bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
   FS_PThreadSpecific ts;
@@ -1159,7 +1160,7 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
     return false;
   }
   FFSS_PrintDebug(1,"Received a COPY message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0,User);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1167,14 +1168,14 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnCopy != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnCopy(Client,Path,NewPath);
+      ((FS_PPlugin)Ptr->Data)->CB.OnCopy(Client,Path,NewPath,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
+bool OnDelete(SU_PClientSocket Client,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
   FS_PThreadSpecific ts;
@@ -1187,7 +1188,7 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
     return false;
   }
   FFSS_PrintDebug(1,"Received a DELETE message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0,User);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1195,14 +1196,14 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnDelete != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnDelete(Client,Path);
+      ((FS_PPlugin)Ptr->Data)->CB.OnDelete(Client,Path,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
   return true;
 }
 
-bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
+bool OnMkDir(SU_PClientSocket Client,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
   FS_PThreadSpecific ts;
@@ -1215,7 +1216,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
     return false;
   }
   FFSS_PrintDebug(1,"Received a MKDIR message\n");
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0);
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented",0,User);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1223,7 +1224,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnMkDir != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnMkDir(Client,Path);
+      ((FS_PPlugin)Ptr->Data)->CB.OnMkDir(Client,Path,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
@@ -1242,7 +1243,7 @@ void OnIdleTimeout(SU_PClientSocket Client)
     SU_SEM_POST(FS_SemShr);
     return;
   }
-  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT],(FFSS_LongField)(int)Client->User); /* User = Idle time out value */
+  FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT],(FFSS_LongField)(int)Client->User,ts->User); /* User = Idle time out value */
   /* OnEndThread will be called just after returning this function */
   SU_SEM_POST(FS_SemShr);
 
@@ -1373,7 +1374,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 }
 
 /* Streaming callbacks */
-void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Path IN the share (without share name) */
+void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PConn Conn;
   FS_PThreadSpecific ts;
@@ -1393,7 +1394,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   if(FS_MyState != FFSS_STATE_ON)
   { /* Quiet mode - Sending error message */
     SU_SEM_POST(FS_SemShr);
-    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_SERVER_IS_QUIET,0,0);
+    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_SERVER_IS_QUIET,0,0,User);
     return;
   }
 
@@ -1403,7 +1404,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
     if(!ts->Writeable)
     {
       SU_SEM_POST(FS_SemShr);
-      FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_ACCESS_DENIED,0,0);
+      FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_ACCESS_DENIED,0,0,User);
       return;
     }
   }
@@ -1419,7 +1420,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Couldn't open file for streaming (CaseFilePath) : %s (%d)\n",Path,errno);
-    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_FILE_NOT_FOUND,0,0);
+    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_FILE_NOT_FOUND,0,0,User);
     return;
   }
   snprintf(FilePath,sizeof(FilePath),"%s%s",ts->Share->Path,Path);
@@ -1428,7 +1429,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   {
     SU_SEM_POST(FS_SemShr);
     FFSS_PrintDebug(1,"Couldn't open file for streaming : %s (%d)\n",FilePath,errno);
-    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_FILE_NOT_FOUND,0,0);
+    FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_FILE_NOT_FOUND,0,0,User);
     return;
   }
   FS = (FS_PStreaming) malloc(sizeof(FS_TStreaming));
@@ -1441,7 +1442,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   rewind(FS->fp);
   if(FS_CurrentStrmTag == 0)
     FS_CurrentStrmTag++;
-  FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_NO_ERROR,FS->Handle,FS->fsize);
+  FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_NO_ERROR,FS->Handle,FS->fsize,User);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1459,7 +1460,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnStrmOpen != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnStrmOpen(Client,Flags,Path);
+      ((FS_PPlugin)Ptr->Data)->CB.OnStrmOpen(Client,Flags,Path,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
@@ -1512,7 +1513,7 @@ void OnStrmClose(SU_PClientSocket Client,FFSS_Field Handle)
   }
 }
 
-void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length)
+void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length,FFSS_LongField User)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1558,7 +1559,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
 #ifdef DEBUG
         printf("OnStrmRead  : EOF\n");
 #endif /* DEBUG */
-        FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0);
+        FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0,User);
       }
       else
       {
@@ -1569,7 +1570,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
       return;
     }
     FS->Position += res;
-    FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,res);
+    FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,res,User);
     SU_SEM_POST(FS_SemShr);
 
     SU_SEM_WAIT(FS_SemPlugin);
@@ -1577,7 +1578,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
     while(Ptr != NULL)
     {
       if(((FS_PPlugin)Ptr->Data)->CB.OnStrmRead != NULL)
-        ((FS_PPlugin)Ptr->Data)->CB.OnStrmRead(Client,Handle,StartPos,Length);
+        ((FS_PPlugin)Ptr->Data)->CB.OnStrmRead(Client,Handle,StartPos,Length,User);
       Ptr = Ptr->Next;
     }
     SU_SEM_POST(FS_SemPlugin);
@@ -1589,7 +1590,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
   }
 }
 
-void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize)
+void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize,FFSS_LongField User)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1620,7 +1621,7 @@ void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartP
     while(Ptr != NULL)
     {
       if(((FS_PPlugin)Ptr->Data)->CB.OnStrmWrite != NULL)
-        ((FS_PPlugin)Ptr->Data)->CB.OnStrmWrite(Client,Handle,StartPos,Bloc,BlocSize);
+        ((FS_PPlugin)Ptr->Data)->CB.OnStrmWrite(Client,Handle,StartPos,Bloc,BlocSize,User);
       Ptr = Ptr->Next;
     }
     SU_SEM_POST(FS_SemPlugin);

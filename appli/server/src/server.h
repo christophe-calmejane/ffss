@@ -114,6 +114,7 @@ typedef struct
   bool Writeable;
   FS_PShare Share;                 /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL SHARE */
   SU_PClientSocket Client;         /* SU_PClientSocket structure of the share connection */ /* Do NOT free this, only a pointer !! */
+  FFSS_LongField User;             /* User pointer passed in OnShareConnection message */
 
   /* FFSS variables */
   char *ShareName;                 /* NULL if FTP connection */

@@ -18,6 +18,10 @@
 #include "ffss_fs.h"*/
 #include <ffss_tdi.h>
 
+/* ***************************** TO DO ***************************** *
+   - Tester un FileOpen sur un path complet (existant) sans avoir scanner avec le domain/server/share -> Devrait pas trouver le fichier (le domain ... server ... et/ou share)
+ * ***************************************************************** */
+
 /* ********************************************************************** */
 /* **************************** GLOBALS ********************************* */
 /* ********************************************************************** */
@@ -33,25 +37,72 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
   struct ffss_inode *Inode;
 
   LOCK_SUPERBLOCK_RESOURCE;
-  if(FFSS_SuperBlock->NbDomains != 0)
+  if(FFSS_SuperBlock->Root->NbInodes != 0)
   {
-    for(i=0;i<FFSS_SuperBlock->NbDomains;i++)
+    for(i=0;i<FFSS_SuperBlock->Root->NbInodes;i++)
     {
-      FsdFreeFFSSInode(FFSS_SuperBlock->Domains[i],false);
+      FsdFreeFFSSInode(FFSS_SuperBlock->Root->Inodes[i],false);
     }
-    //FsdFreePool(FFSS_SuperBlock->Domains);
-    FFSS_SuperBlock->Domains = NULL;
-    FFSS_SuperBlock->NbDomains = 0;
+    FsdFreePool(FFSS_SuperBlock->Root->Inodes);
+    FFSS_SuperBlock->Root->Inodes = NULL;
+    FFSS_SuperBlock->Root->NbInodes = 0;
   }
 
   if(NbDomains != 0)
   {
-    FFSS_SuperBlock->Domains = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'puSR');
+    FFSS_SuperBlock->Root->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'nuSD');
     for(i=0;i<NbDomains;i++)
     {
-      FFSS_SuperBlock->Domains[i] = FsdAssignFFSSInode(FsdAllocInode(Domains[i]),false);
+      Inode = FsdAllocInode(Domains[i],FFSS_INODE_DOMAIN);
+      Inode->Flags = FFSS_FILE_DIRECTORY;
+      Inode->Parent = FsdAssignFFSSInode(FFSS_SuperBlock->Root,false);
+      FFSS_SuperBlock->Root->Inodes[i] = FsdAssignFFSSInode(Inode,false);
     }
-    FFSS_SuperBlock->NbDomains = NbDomains;
+    FFSS_SuperBlock->Root->NbInodes = NbDomains;
+  }
+  UNLOCK_SUPERBLOCK_RESOURCE;
+}
+
+  /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
+  /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
+void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList) /* SU_PList of FM_PHost */
+{
+  FM_PHost Host;
+  SU_PList Ptr;
+  struct ffss_inode *Inode,*domain;
+  int i,count = 0;
+
+  LOCK_SUPERBLOCK_RESOURCE;
+  domain = FsdGetInodeFromDomain((char *)Domain);
+  if(domain == NULL)
+  {
+    /* Free IPs */
+    KdPrint(("OnServerListingAnswer : WARNING : Domain %s does not exists !!!!!\n",Domain));
+    /* TO DO -> Creer le domain, et l'ajouter a la liste des domaines du root */
+    UNLOCK_SUPERBLOCK_RESOURCE;
+    return;
+  }
+  FsdFreeSubInodes(domain,false);
+  if(NbHost != 0)
+  {
+    domain->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbHost, 'nuSH');
+    Ptr = HostList;
+    for(i=0;i<NbHost;i++)
+    {
+      Host = (FM_PHost) Ptr->Data;
+      KdPrint(("OnServerListingAnswer : Got server %s (State = %d)\n",Host->Name,Host->State));
+      if(Host->State != FFSS_STATE_OFF)
+      {
+        Inode = FsdAllocInode(Host->Name,FFSS_INODE_SERVER);
+        Inode->Flags = FFSS_FILE_DIRECTORY;
+        //--- Host->IP
+        Inode->Parent = FsdAssignFFSSInode(domain,false);
+        domain->Inodes[i] = FsdAssignFFSSInode(Inode,false);
+        count++;
+      }
+      Ptr = Ptr->Next;
+    }
+    domain->NbInodes = count;
   }
   UNLOCK_SUPERBLOCK_RESOURCE;
 }
@@ -141,8 +192,8 @@ FfssUDP::FfssUDP() : KDatagramSocket()
   Sem->SetTimer(Timer);
   /* UDP callbacks */
   FFSS_CB.CCB.OnDomainListingAnswer = OnDomainListingAnswer;
-  /*FFSS_CB.CCB.OnServerListingAnswer = OnServerListingAnswer;
-  FFSS_CB.CCB.OnSharesListing = OnSharesListing;*/
+  FFSS_CB.CCB.OnServerListingAnswer = OnServerListingAnswer;
+  /*FFSS_CB.CCB.OnSharesListing = OnSharesListing;*/
   /* TCP callbacks */
   /*FFSS_CB.CCB.OnError = OnError;
   FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;*/

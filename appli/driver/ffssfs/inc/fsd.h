@@ -360,7 +360,7 @@ PFSD_FCB
 FsdAllocateFcb (
     IN PFSD_VCB             Vcb,
     IN PUNICODE_STRING      FileName,
-    IN struct ffss_inode*  ffss_inode
+    IN struct ffss_inode*   ffss_inode
     );
 
 struct ffss_super_block *FsdAllocSuperBlock(void);
@@ -519,10 +519,9 @@ FsdLookupFcbByFileName (
     IN PUNICODE_STRING  FullFileName
     );
 
-struct ffss_inode *FsdGetInodeFromPath(
-  IN PUNICODE_STRING FullFileName,
-  OUT NTSTATUS *Status
-  );
+struct ffss_inode *FsdGetInodeByIndex(IN PFSD_FCB Fcb,IN ULONG FileIndex,OUT NTSTATUS *Status);
+
+struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTATUS *Status);
 
 //
 // Function prototypes from debug.c

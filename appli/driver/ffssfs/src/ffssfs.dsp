@@ -232,6 +232,10 @@ SOURCE=..\inc\border.h
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\..\..\libffss-1.0.0\src\ffss.h"
+# End Source File
+# Begin Source File
+
 SOURCE=..\inc\ffss_fs.h
 # End Source File
 # Begin Source File

@@ -91,6 +91,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   char **answers,**ips;
   long int pos;
   FFSS_Field val,val2,val3;
+  FFSS_LongField lval;
   FFSS_Field i,j,state,type_ip,type_ip2;
   char IP[512], IP2[512];
   FM_PHost Hst;
@@ -172,6 +173,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_SHARES_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
       if((type_ip == 0) || (IP[0] == 0))
@@ -184,7 +186,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a shares listing message, but server has no shares\n");
         if(FFSS_CB.CCB.OnSharesListing != NULL)
-          FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0);
+          FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a shares listing message (%d shares)\n",val);
@@ -211,6 +213,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_SERVER_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -295,7 +298,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         if(do_it)
         {
           if(FFSS_CB.CCB.OnServerListingAnswer != NULL)
-            FFSS_CB.CCB.OnServerListingAnswer(str,val2,HostList);
+            FFSS_CB.CCB.OnServerListingAnswer(str,val2,HostList,lval);
         }
         SU_FreeListElem(HostList);
       }
@@ -304,12 +307,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
         FFSS_PrintDebug(3,"Received a domains listing answer, but master has no domains\n");
         if (FFSS_CB.CCB.OnDomainListingAnswer != NULL)
-          FFSS_CB.CCB.OnDomainListingAnswer(NULL,0);
+          FFSS_CB.CCB.OnDomainListingAnswer(NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a domains listing answer (%d domains)\n",val);
@@ -326,11 +330,12 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         Names[i] = str;
       }
       if(FFSS_CB.CCB.OnDomainListingAnswer != NULL)
-        FFSS_CB.CCB.OnDomainListingAnswer((const char **)Names,val);
+        FFSS_CB.CCB.OnDomainListingAnswer((const char **)Names,val,lval);
       free (Names);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -339,10 +344,11 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         break;
       }
       if(FFSS_CB.CCB.OnMasterSearchAnswer != NULL)
-        FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str);
+        FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str,lval);
       break;
     case FFSS_MESSAGE_SEARCH_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -394,7 +400,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0);
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
@@ -411,7 +417,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         {
           FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0,lval);
           continue;
         }
         answers = (char **) malloc(val2*sizeof(char *));
@@ -433,7 +439,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         if(!error)
         {
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2,lval);
         }
         free(ips);
         free(answers);

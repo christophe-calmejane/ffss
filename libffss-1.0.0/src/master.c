@@ -13,6 +13,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   char *str,*str2,*str3;
   long int pos;
   FFSS_Field val,val2,val3,val4,val5;
+  FFSS_LongField lval;
   FFSS_Field state,type_ip;
   char IP[512];
   bool error;
@@ -46,6 +47,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       case FFSS_MESSAGE_SERVER_LISTING :
         context;
         FFSS_PrintDebug(3,"Received a server listing message from client\n");
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -55,7 +57,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           break;
         }
         if(FFSS_CB.MCB.OnServerListing != NULL)
-          FFSS_CB.MCB.OnServerListing(Client,str,str2,val);
+          FFSS_CB.MCB.OnServerListing(Client,str,str2,val,lval);
         break;
     case FFSS_MESSAGE_CLIENT_SERVER_FAILED :
       context;
@@ -85,12 +87,14 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
     case FFSS_MESSAGE_DOMAINS_LISTING :
       context;
       FFSS_PrintDebug(3,"Received a domains listing message from client\n");
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       if(FFSS_CB.MCB.OnDomainListing != NULL)
-        FFSS_CB.MCB.OnDomainListing(Client);
+        FFSS_CB.MCB.OnDomainListing(Client,lval);
       break;
     case FFSS_MESSAGE_SEARCH :
       context;
       FFSS_PrintDebug(3,"Received a friandise search message from client\n");
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -101,11 +105,12 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         break;
       }
       if(FFSS_CB.MCB.OnSearch != NULL)
-        FFSS_CB.MCB.OnSearch(Client,val,str,str2,val2);
+        FFSS_CB.MCB.OnSearch(Client,val,str,str2,val2,lval);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER :
       context;
       FFSS_PrintDebug(3,"Received a master search message from client or server\n");
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
@@ -113,7 +118,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         break;
       }
       if(FFSS_CB.MCB.OnMasterSearch != NULL)
-        FFSS_CB.MCB.OnMasterSearch(Client,val == FFSS_THREAD_SERVER);
+        FFSS_CB.MCB.OnMasterSearch(Client,val == FFSS_THREAD_SERVER,lval);
       break;
     case FFSS_MESSAGE_INDEX_ANSWER :
       context;
@@ -150,6 +155,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
   long int pos;
   char *str,*str2,*str3,*str4;
   FFSS_Field i,val,val2;
+  FFSS_LongField lval;
   bool ret_val;
   long int u_pos,u_Len;
   char *u_Buf;
@@ -262,6 +268,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
       case FFSS_MESSAGE_SERVER_LISTING :
         context;
         FFSS_PrintDebug(3,"Received a server listing message from master\n");
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -271,11 +278,12 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.MCB.OnServerListingMaster != NULL)
-          FFSS_CB.MCB.OnServerListingMaster(Master,str,str2,val);
+          FFSS_CB.MCB.OnServerListingMaster(Master,str,str2,val,lval);
         break;
       case FFSS_MESSAGE_SEARCH_FW :
         context;
         FFSS_PrintDebug(3,"Received a forwarded friandise search message from master\n");
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -292,7 +300,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.MCB.OnSearchForward != NULL)
-          FFSS_CB.MCB.OnSearchForward(Master,IP,val,str,val2);
+          FFSS_CB.MCB.OnSearchForward(Master,IP,val,str,val2,lval);
         break;
       default :
         FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),Type);

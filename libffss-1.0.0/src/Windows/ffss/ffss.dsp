@@ -64,7 +64,7 @@ LIB32=xilink6.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "DEBUG" /D "_WIN32" /D "FFSS_CONTEXT" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /i "../../../../misc/windows/lib" /d "_DEBUG"
 BSC32=bscmake.exe
@@ -146,6 +146,18 @@ SOURCE=..\..\..\..\misc\windows\lib\libbz2.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\misc\windows\lib\libz.lib
+# End Source File
+# End Group
+# Begin Group "docs"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE="..\..\..\..\doc\protocol-en.txt"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\..\..\doc\protocol-fr.txt"
 # End Source File
 # End Group
 # End Target

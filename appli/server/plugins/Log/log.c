@@ -9,7 +9,7 @@
 */
 
 #define LOG_NAME      "Log Plugin"
-#define LOG_VERSION   "0.3"
+#define LOG_VERSION   "0.4"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define LOG_DESCRIPTION "Logs all successful connections and download requests."
 #define LOG_FILE_PREFIX "FS_Log"
@@ -120,7 +120,7 @@ void WriteLog(char *Txt,...)
 }
 
 /* Successfully connected to the share */
-void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
+void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions,FFSS_LongField User)
 {
   if(!L_Gbl.Log_Conn)
     return NULL;
@@ -132,7 +132,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
 }
 
 /* Download successfully started */
-bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port)
+bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User)
 {
   if(!L_Gbl.Log_Dwl)
     return true;

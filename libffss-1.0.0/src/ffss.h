@@ -83,8 +83,8 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOL_VERSION                  0x0010005
-#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010005
+#define FFSS_PROTOCOL_VERSION                  0x0010006
+#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010006
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -216,52 +216,52 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_INDEX_REQUEST              3
 #define FFSS_MESSAGESIZE_INDEX_ANSWER               7
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_2             5
-#define FFSS_MESSAGESIZE_SERVER_LISTING             3
-#define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER      3
+#define FFSS_MESSAGESIZE_SERVER_LISTING             5
+#define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER      5
 #define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_2    1
 #define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_3    2
 #define FFSS_MESSAGESIZE_CLIENT_SERVER_FAILED       3
 #define FFSS_MESSAGESIZE_PING                       2
 #define FFSS_MESSAGESIZE_PONG                       3
 #define FFSS_MESSAGESIZE_SERVER_SEARCH              2
-#define FFSS_MESSAGESIZE_SHARES_LISTING             2
-#define FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER      4
-#define FFSS_MESSAGESIZE_SHARE_CONNECTION           4
-#define FFSS_MESSAGESIZE_DIRECTORY_LISTING          2
-#define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER   4
+#define FFSS_MESSAGESIZE_SHARES_LISTING             4
+#define FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER      6
+#define FFSS_MESSAGESIZE_SHARE_CONNECTION           6
+#define FFSS_MESSAGESIZE_DIRECTORY_LISTING          4
+#define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER   6
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER_2 3
-#define FFSS_MESSAGESIZE_DOWNLOAD                   (3+1*2)
-#define FFSS_MESSAGESIZE_UPLOAD                     (3+1*2)
-#define FFSS_MESSAGESIZE_MOVE                       2
-#define FFSS_MESSAGESIZE_COPY                       2
-#define FFSS_MESSAGESIZE_DELETE                     2
-#define FFSS_MESSAGESIZE_MKDIR                      2
-#define FFSS_MESSAGESIZE_REC_DIR_LISTING            2
-#define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER     4
+#define FFSS_MESSAGESIZE_DOWNLOAD                   (3+2*2)
+#define FFSS_MESSAGESIZE_UPLOAD                     (3+2*2)
+#define FFSS_MESSAGESIZE_MOVE                       4
+#define FFSS_MESSAGESIZE_COPY                       4
+#define FFSS_MESSAGESIZE_DELETE                     4
+#define FFSS_MESSAGESIZE_MKDIR                      4
+#define FFSS_MESSAGESIZE_REC_DIR_LISTING            4
+#define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER     6
 #define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER_2   3
-#define FFSS_MESSAGESIZE_DOMAINS_LISTING            2
-#define FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER     3
-#define FFSS_MESSAGESIZE_SEARCH                     4
-#define FFSS_MESSAGESIZE_SEARCH_ANSWER              3
-#define FFSS_MESSAGESIZE_SEARCH_FW                  5
-#define FFSS_MESSAGESIZE_SEARCH_MASTER              3
-#define FFSS_MESSAGESIZE_SEARCH_MASTER_ANSWER       3
+#define FFSS_MESSAGESIZE_DOMAINS_LISTING            4
+#define FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER     5
+#define FFSS_MESSAGESIZE_SEARCH                     6
+#define FFSS_MESSAGESIZE_SEARCH_ANSWER              5
+#define FFSS_MESSAGESIZE_SEARCH_FW                  7
+#define FFSS_MESSAGESIZE_SEARCH_MASTER              5
+#define FFSS_MESSAGESIZE_SEARCH_MASTER_ANSWER       5
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA         7
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA_2       5
 #define FFSS_MESSAGESIZE_MASTER_CONNECTION          3
-#define FFSS_MESSAGESIZE_STREAMING_OPEN             3
-#define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      (4+1*2)
+#define FFSS_MESSAGESIZE_STREAMING_OPEN             5
+#define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      (4+2*2)
 #define FFSS_MESSAGESIZE_STREAMING_CLOSE            3
-#define FFSS_MESSAGESIZE_STREAMING_READ             (4+1*2)
-#define FFSS_MESSAGESIZE_STREAMING_READ_ANSWER      3
-#define FFSS_MESSAGESIZE_STREAMING_WRITE            (3+1*2)
-#define FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER     4
+#define FFSS_MESSAGESIZE_STREAMING_READ             (4+2*2)
+#define FFSS_MESSAGESIZE_STREAMING_READ_ANSWER      5
+#define FFSS_MESSAGESIZE_STREAMING_WRITE            (3+2*2)
+#define FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER     6
 #define FFSS_MESSAGESIZE_STREAMING_SEEK             (4+1*2)
 #define FFSS_MESSAGESIZE_INIT_XFER                  3
 #define FFSS_MESSAGESIZE_CANCEL_XFER                3
 #define FFSS_MESSAGESIZE_DATA                       3
 #define FFSS_MESSAGESIZE_DISCONNECT                 2
-#define FFSS_MESSAGESIZE_ERROR                      5
+#define FFSS_MESSAGESIZE_ERROR                      7
 
 #define FFSS_THREAD_SERVER 1
 #define FFSS_THREAD_CLIENT 2
@@ -443,22 +443,22 @@ typedef struct
   void (*OnPing)(struct sockaddr_in Master);
   void (*OnStateAnswer)(const char Domain[]);
   void (*OnServerSearch)(struct sockaddr_in Client);
-  void (*OnSharesListing)(struct sockaddr_in Client);
+  void (*OnSharesListing)(struct sockaddr_in Client,FFSS_LongField User);
   void (*OnIndexRequest)(struct sockaddr_in Master,FFSS_Field Port);
   void (*OnError)(FFSS_Field ErrorCode,const char Description[]);
-  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
+  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User);
 
   /* TCP callbacks */
-  void *(*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
+  void *(*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions,FFSS_LongField User);
   void (*OnBeginTCPThread)(SU_PClientSocket Client,void *Info); /* Info is the (void *) returned by OnShareConnection */
-  bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
-  bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
-  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port); /* Path IN the share (without share name) */
-  bool (*OnUpload)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port); /* Path IN the share (without share name) */
-  bool (*OnRename)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
-  bool (*OnCopy)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
-  bool (*OnDelete)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
-  bool (*OnMkDir)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
+  bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnUpload)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port,FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnRename)(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnCopy)(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnDelete)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnMkDir)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
   void (*OnEndTCPThread)(void); /* Last callback raised before ending thread and freeing Client struct */
   bool (*OnDisconnect)(SU_PClientSocket Client);
   int (*OnSelect)(void); /* 0=Do timed-out select ; 1=don't do timed-out select, but sleep ; 2=don't do timed-out select, and continue */
@@ -467,10 +467,10 @@ typedef struct
   void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download);
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   void (*OnCancelXFer)(SU_PClientSocket Server,FFSS_Field XFerTag);
-  void (*OnStrmOpen)(SU_PClientSocket Client,long int Flags,const char Path[]); /* Path IN the share (without share name) */
+  void (*OnStrmOpen)(SU_PClientSocket Client,long int Flags,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
   void (*OnStrmClose)(SU_PClientSocket Client,FFSS_Field Handle);
-  void (*OnStrmRead)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length);
-  void (*OnStrmWrite)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize);
+  void (*OnStrmRead)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length,FFSS_LongField User);
+  void (*OnStrmWrite)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize,FFSS_LongField User);
   void (*OnStrmSeek)(SU_PClientSocket Client,FFSS_Field Handle,long int Flags,FFSS_LongField Pos);
 
   /* FTP callbacks */
@@ -494,23 +494,23 @@ typedef struct
 {
   /* UDP callbacks */
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
-  void (*OnSharesListing)(const char IP[],const char **Names,const char **Comments,int NbShares);
+  void (*OnSharesListing)(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User);
   /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
   /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
-  void (*OnServerListingAnswer)(const char Domain[],int NbHost,SU_PList HostList); /* SU_PList of FM_PHost */
+  void (*OnServerListingAnswer)(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User); /* SU_PList of FM_PHost */
   void (*OnEndServerListingAnswer)(void);
-  void (*OnDomainListingAnswer)(const char **Domains,int NbDomains); /* First domain is assumed to be domain from the answering master */
-  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
+  void (*OnDomainListingAnswer)(const char **Domains,int NbDomains,FFSS_LongField User); /* First domain is assumed to be domain from the answering master */
+  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User);
   /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
-  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
+  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User);
   void (*OnUDPError)(int ErrNum);
   void (*OnMasterError)(int Code,const char Descr[]);
 
   /* TCP callbacks */
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
-  bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value);
-  bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
-  bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
+  bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
+  bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
+  bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
   void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
   void (*OnIdleTimeout)(SU_PClientSocket Server);
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
@@ -518,9 +518,9 @@ typedef struct
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag); /* Returns PTransfer from RequestedFileName */
   FFSS_PTransfer (*OnData)(SU_PClientSocket Server,FFSS_Field XFerTag); /* Returns PTransfer from XFerTag */
-  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize);
-  void (*OnStrmReadAnswer)(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize);
-  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,FFSS_Field Handle,int Code);
+  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
+  void (*OnStrmReadAnswer)(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User);
+  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,FFSS_Field Handle,int Code,FFSS_LongField User);
 
   /* Fatal error */
   void (*OnFatalError)(void);
@@ -530,12 +530,12 @@ typedef struct
 {
   /* UDP callbacks */
   void (*OnState)(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[]);
-  void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions);
+  void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User);
   void (*OnClientServerFailed)(const char IP[]);
   void (*OnPong)(struct sockaddr_in Server,FFSS_Field State);
-  void (*OnDomainListing)(struct sockaddr_in Client);
-  void (*OnSearch)(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions);
-  void (*OnMasterSearch)(struct sockaddr_in Client,bool Server);
+  void (*OnDomainListing)(struct sockaddr_in Client,FFSS_LongField User);
+  void (*OnSearch)(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions,FFSS_LongField User);
+  void (*OnMasterSearch)(struct sockaddr_in Client,bool Server,FFSS_LongField User);
   void (*OnIndexAnswer)(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port);
   void (*OnIndexAnswerSamba)(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port);
 
@@ -543,8 +543,8 @@ typedef struct
   void (*OnMasterConnected)(SU_PClientSocket Master);
   void (*OnMasterDisconnected)(SU_PClientSocket Master);
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
-  void (*OnServerListingMaster)(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions);
-  void (*OnSearchForward)(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions);
+  void (*OnServerListingMaster)(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User);
+  void (*OnSearchForward)(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions,FFSS_LongField User);
 } FFSS_TMasterCallbacks, *FFSS_PMasterCallbacks;
 
 typedef struct
@@ -677,12 +677,12 @@ char *FFSS_GetOS(void);
 /* ************************************************ */
 
 /* If FT_out is NULL, not filled */
-bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
+bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
 
 /* RemotePath in the share */
 /* If FT_out is NULL, not filled */
 /* If LocalPath is NULL, stdout is used for local writing */
-bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
+bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
 
 
 /* ************************************************ */
@@ -715,7 +715,8 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
 /*  ShareNames : A tab of the share names of my server       */
 /*  ShareComments : A tab of the share comments of my server */
 /*  NbShares : The number of shares of my server             */
-bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[],const char **ShareNames,const char **ShareComments,int NbShares);
+/*  User : User pointer returned in message answer           */
+bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[],const char **ShareNames,const char **ShareComments,int NbShares,FFSS_LongField User);
 
 /* FS_SendMessage_Pong Function     */
 /* Sends a PONG message to a master */
@@ -723,13 +724,14 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
 /*  State : The state of my server  */
 bool FS_SendMessage_Pong(struct sockaddr_in Master,int State);
 
-/* FS_SendMessage_Error Function                */
-/* Sends an ERROR message to a client           */
-/*  Client : The socket of the client           */
-/*  Code : The error code to send               */
-/*  Descr : The description of the error code   */
-/*  Value : Extra value depending on error code */
-bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value);
+/* FS_SendMessage_Error Function                   */
+/* Sends an ERROR message to a client              */
+/*  Client : The socket of the client              */
+/*  Code : The error code to send                  */
+/*  Descr : The description of the error code      */
+/*  Value : Extra value depending on error code    */
+/*  User : User pointer returned in message answer */
+bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
 
 /* FS_SendMessage_DirectoryListingAnswer Function                     */
 /* Sends a DIRECTORY LISTING ANSWER message to a client               */
@@ -738,7 +740,8 @@ bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FF
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
+/*  User : User pointer returned in message answer                    */
+bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression,FFSS_LongField User);
 
 /* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
 /* Sends a RECURSIVE DIRECTORY LISTING ANSWER message to a client     */
@@ -747,7 +750,8 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
+/*  User : User pointer returned in message answer                    */
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression,FFSS_LongField User);
 
 /* FS_SendMessage_InitXFer Function                        */
 /* Sends an INIT XFER message to a client                  */
@@ -756,9 +760,10 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
 /*  FileName : The name of the requested file              */
 bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName[]);
 
-/* FS_SendMessage_MasterSearch Function      */
-/* Sends a MASTER SEARCH message to broadcast */
-bool FS_SendMessage_MasterSearch();
+/* FS_SendMessage_MasterSearch Function            */
+/* Sends a MASTER SEARCH message to broadcast      */
+/*  User : User pointer returned in message answer */
+bool FS_SendMessage_MasterSearch(FFSS_LongField User);
 
 /* FS_SendMessage_IndexAnswer Function                             */
 /* Sends an INDEX ANSWER message to someone                        */
@@ -776,7 +781,8 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize);
+/*  User : User pointer returned in message answer    */
+bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
 
 /* FS_SendMessage_StrmReadAnswer Function             */
 /* Sends an STREAMING READ answer message to a client */
@@ -784,14 +790,16 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
-bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen);
+/*  User : User pointer returned in message answer    */
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen,FFSS_LongField User);
 
 /* FS_SendMessage_StrmWriteAnswer Function             */
 /* Sends an STREAMING WRITE answer message to a client */
 /*  Client : The socket of the client                  */
 /*  Handle : The handle of the file                    */
 /*  Code : The error code to send                      */
-bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code);
+/*  User : User pointer returned in message answer     */
+bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code,FFSS_LongField User);
 
 #endif /* !FFSS_DRIVER */
 /* ************************************************ */
@@ -805,14 +813,16 @@ bool FC_SendMessage_ServerSearch(void);
 /* FC_SendMessage_SharesListing Function                       */
 /* Sends a SHARES LISTING message to a server                  */
 /*  Server : The name of the server we want the shares listing */
-bool FC_SendMessage_SharesListing(const char Server[]);
+/*  User : User pointer returned in message answer             */
+bool FC_SendMessage_SharesListing(const char Server[],FFSS_LongField User);
 
 /* FC_SendMessage_ServerList Function                      */
 /* Sends a SERVER LIST message to a master                 */
 /*  Master : The name of my master, or NULL if none        */
 /*  OS : The desired OS, or NULL if requesting all         */
 /*  Domain : The desired domain, or NULL if requesting all */
-bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Domain[]);
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Domain[],FFSS_LongField User);
 
 /* FC_SendMessage_ShareConnect Function                  */
 /* Sends a SHARE CONNECTION message to a server          */
@@ -820,19 +830,22 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
 /*  ShareName : The Share Name we wish to connect to     */
 /*  Login : The Login we may use (or NULL if none)       */
 /*  Password : The Password we may use (or NULL if none) */
-SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char ShareName[],const char Login[],const char Password[]);
+/*  User : User pointer returned in message answer       */
+SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char ShareName[],const char Login[],const char Password[],FFSS_LongField User);
 
 /* FC_SendMessage_DirectoryListing Function             */
 /* Sends a DIRECTORY LISTING message to a server        */
 /*  Server : The Server's structure we are connected to */
 /*  Path : The path we request a listing                */
-bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[]);
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[],FFSS_LongField User);
 
 /* FC_SendMessage_RecursiveDirectoryListing Function       */
 /* Sends a RECURSIVE DIRECTORY LISTING message to a server */
 /*  Server : The Server's structure we are connected to    */
 /*  Path : The path we request a listing                   */
-bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[]);
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[],FFSS_LongField User);
 
 /* FC_SendMessage_Download Function                                 */
 /* Sends a DOWNLOAD message to a server                             */
@@ -840,7 +853,8 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock);
+/*  User : User pointer returned in message answer                  */
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock,FFSS_LongField User);
 
 /* FC_SendMessage_Disconnect Function                   */
 /* Sends an DISCONNECT message to a server              */
@@ -853,28 +867,32 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server);
 /*  XFerTag : The tag of the xfer we want to cancel     */
 void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag);
 
-/* FC_SendMessage_DomainListing Function   */
-/* Sends a DOMAIN LIST message to a master */
-/*  Master : The name of my master         */
-bool FC_SendMessage_DomainListing(const char Master[]);
+/* FC_SendMessage_DomainListing Function           */
+/* Sends a DOMAIN LIST message to a master         */
+/*  Master : The name of my master                 */
+/*  User : User pointer returned in message answer */
+bool FC_SendMessage_DomainListing(const char Master[],FFSS_LongField User);
 
 /* FC_SendMessage_Search Function                          */
 /* Sends a SEARCH message to a master                      */
 /*  Master : The name of my master                         */
 /*  Domain : The desired domain, or NULL if requesting all */
 /*  Keys   : A String of keywords                          */
-bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Key[]);
+/*  User : User pointer returned in message answer         */
+bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Key[],FFSS_LongField User);
 
 /* FC_SendMessage_MasterSearch Function       */
 /* Sends a MASTER SEARCH message to broadcast */
-bool FC_SendMessage_MasterSearch();
+/*  User : User pointer returned in message answer */
+bool FC_SendMessage_MasterSearch(FFSS_LongField User);
 
 /* FC_SendMessage_StrmOpen Function                     */
 /* Sends an STREAMING OPEN message to a server          */
 /*  Server : The Server's structure we are connected to */
 /*  Path : The path of the requested file               */
 /*  Flags : The opening mode flags                      */
-bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags);
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags,FFSS_LongField User);
 
 /* FC_SendMessage_StrmClose Function                     */
 /* Sends an STREAMING CLOSE message to a server          */
@@ -888,7 +906,8 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle);
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length);
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length,FFSS_LongField User);
 
 /* FC_SendMessage_StrmWrite Function                    */
 /* Sends an STREAMING WRITE message to a server         */
@@ -897,7 +916,8 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Long
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen);
+/*  User : User pointer returned in message answer      */
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen,FFSS_LongField User);
 
 /* FC_SendMessage_StrmSeek Function                     */
 /* Sends an STREAMING SEEK message to a server          */
@@ -942,7 +962,8 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
 /*  Buffer : The buffer containing the nb of domains, and the hosts */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression);
+/*  User : User pointer returned in message answer                  */
+bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression,FFSS_LongField User);
 
 /* FM_SendMessage_Error Function              */
 /* Sends an ERROR message to a server         */
@@ -968,21 +989,24 @@ bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Desc
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
 /*  Master : The socket of the Master              */
-bool FM_SendMessage_ServerList(SU_SOCKET Master);
+/*  User : User pointer returned in message answer */
+bool FM_SendMessage_ServerList(SU_SOCKET Master,FFSS_LongField User);
 
-/* FM_SendMessage_DomainListingAnswer Function   */
-/* Sends a DOMAIN ANSWER message to client       */
-/*  Client : The sin of the client               */
-/*  NbDomains : Nomber of domains                */
-/*  Domains : Array of strings (name of domains) */
-bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[]);
+/* FM_SendMessage_DomainListingAnswer Function     */
+/* Sends a DOMAIN ANSWER message to client         */
+/*  Client : The sin of the client                 */
+/*  NbDomains : Nomber of domains                  */
+/*  Domains : Array of strings (name of domains)   */
+/*  User : User pointer returned in message answer */
+bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[],FFSS_LongField User);
 
 /* FM_SendMessage_MasterSearchAnswer Function               */
 /* Sends a MASTER SEARCH ANSWER message to client or server */
 /*  Client : The sin of the client or the server            */
 /*  Server : True if from server                            */
 /*  Domain : The name of my domain                          */
-bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,const char Domain[]);
+/*  User : User pointer returned in message answer          */
+bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,const char Domain[],FFSS_LongField User);
 
 /* FM_SendMessage_SearchAnswer Function                                          */
 /* Sends a SEARCH ANSWER message to client                                       */
@@ -990,7 +1014,8 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
 /*  Buffer : The buffer containing the query, the nb of answers, and the answers */
 /*  BufSize : The size of the buffer                                             */
 /*  Compression : The type of compression to be applied to Buffer                */
-bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression);
+/*  User : User pointer returned in message answer                               */
+bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,long int BufSize,int Compression,FFSS_LongField User);
 
 /* FM_SendMessage_SearchForward Function                 */
 /* Sends a SEARCH message to a foreign master            */
@@ -998,7 +1023,8 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[]);
+/*  User : User pointer returned in message answer       */
+bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[],FFSS_LongField User);
 
 
 #endif /* !FFSS_DRIVER */

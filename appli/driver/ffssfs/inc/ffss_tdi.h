@@ -17,8 +17,8 @@
 #ifndef _FFSS_TDI_H_
 #define _FFSS_TDI_H_
 
-#define FFSS_MASTER_IP "172.17.64.3"
-//#define FFSS_MASTER_IP "192.168.223.1"
+//#define FFSS_MASTER_IP "172.17.64.3"
+#define FFSS_MASTER_IP "192.168.223.1"
 
 #ifdef __cplusplus
 
@@ -144,18 +144,27 @@ VOID FsdFreePool (IN PVOID p);
 struct ffss_super_block {
   ERESOURCE Resource; /* Synchronisation resource */
 
-  struct ffss_inode **Domains;
-  unsigned long int NbDomains;
+  struct ffss_inode *Root; /* Root inode = Domains */
 };
+
+#define FFSS_INODE_ROOT      1
+#define FFSS_INODE_DOMAIN    2
+#define FFSS_INODE_SERVER    3
+#define FFSS_INODE_DIRECTORY 4
+#define FFSS_INODE_FILE      5
+
 struct ffss_inode {
-    char  *Name;
-	unsigned long int NameLength;
-    unsigned long int Flags;
-    unsigned __int64 Size;
-    unsigned long int Stamp;
-	unsigned long int RefCount;
-    struct ffss_inode **Inodes; /* Tab of sub inodes */
-    unsigned long int NbInodes; /* Number of sub inodes */
+  unsigned long int Type;
+  char  *Name;
+  unsigned long int NameLength;
+  unsigned long int Flags;
+  unsigned __int64  Size;
+  unsigned long int Stamp;
+  unsigned long int RefCount;
+  struct ffss_inode **Inodes; /* Tab of sub inodes */
+  unsigned long int NbInodes; /* Number of sub inodes */
+
+  struct ffss_inode *Parent;
 };
 
 extern struct ffss_super_block *FFSS_SuperBlock;
@@ -163,10 +172,18 @@ extern struct ffss_super_block *FFSS_SuperBlock;
 #define LOCK_SUPERBLOCK_RESOURCE ExAcquireResourceExclusiveLite(&FFSS_SuperBlock->Resource,TRUE)
 #define UNLOCK_SUPERBLOCK_RESOURCE ExReleaseResourceForThreadLite(&FFSS_SuperBlock->Resource,ExGetCurrentResourceThread())
 
-struct ffss_inode *FsdAllocInode(const char Name[]);
-struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock);
-VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,bool Lock);
+struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type);
+struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock);
+VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock);
+VOID FsdFreeSubInodes(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock);
 
+void FsdRescanInode(IN struct ffss_inode* Inode);
+/* Returned inode must be freed */
+struct ffss_inode *FsdGetInodeFromDomain(IN char *domain);
+/* Returned inode must be freed */
+struct ffss_inode *FsdGetInodeFromServer(IN char *server,IN struct ffss_inode *Domain);
+/* Returned inode must be freed */
+struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Domain,IN struct ffss_inode *Server);
 
 NTSTATUS TDI_Init();
 

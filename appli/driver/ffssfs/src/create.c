@@ -145,10 +145,7 @@ FsdCreateFile (
         
         VcbResourceAcquired = TRUE;
         
-        Fcb = FsdLookupFcbByFileName(
-            Vcb,
-            &IrpSp->FileObject->FileName
-            );
+        Fcb = FsdLookupFcbByFileName(Vcb,&IrpSp->FileObject->FileName);
         
         if (!Fcb)
         {
@@ -265,6 +262,8 @@ FsdLookupFcbByFileName (
 {
     PLIST_ENTRY ListEntry;
     PFSD_FCB    Fcb;
+    NTSTATUS    Status = STATUS_UNSUCCESSFUL;
+    struct ffss_inode*  Inode = NULL,*Inode2;
 
     ListEntry = Vcb->FcbList.Flink;
 
@@ -278,11 +277,21 @@ FsdLookupFcbByFileName (
             FALSE
             ))
         {
-            KdPrint((
-                DRIVER_NAME ": Found an allocated FCB for \"%s\"\n",
-                Fcb->AnsiFileName.Buffer
-                ));
-
+            KdPrint((DRIVER_NAME ": Found an allocated FCB for \"%s\"\n",Fcb->AnsiFileName.Buffer));
+            
+            Inode = FsdGetInodeFromPath(FullFileName,&Status);
+            if(NT_SUCCESS(Status))
+            {
+              if(Inode != Fcb->ffss_inode)
+              {
+                Inode2 = Fcb->ffss_inode;
+                Fcb->ffss_inode = Inode;
+                FsdFreeFFSSInode(Inode2,true);
+                Inode = Inode2;
+                KdPrint(("FsdLookupFcbByFileName : Inode changed... updating Fcb->ffss_inode !\n"));
+              }
+            }
+            FsdFreeFFSSInode(Inode,true); /* Release Inode returned by FsdGetInodeFromPath (or old Fcb Inode) */
             return Fcb;
         }
 
@@ -292,6 +301,61 @@ FsdLookupFcbByFileName (
     return NULL;
 }
 
+void FsdRescanInode(IN struct ffss_inode* Inode)
+{
+  if(Inode == NULL)
+    return;
+  switch(Inode->Type)
+  {
+    case FFSS_INODE_ROOT :
+      KdPrint(("FsdRescanInode : Rescaning ROOT inode\n"));
+      FC_SendMessage_DomainListing(FFSS_MASTER_IP);
+      break;
+    case FFSS_INODE_DOMAIN :
+      KdPrint(("FsdRescanInode : Rescaning DOMAIN %s inode\n",Inode->Name));
+      FC_SendMessage_ServerList(FFSS_MASTER_IP,NULL,Inode->Name);
+      break;
+    case FFSS_INODE_SERVER :
+      KdPrint(("FsdRescanInode : Rescaning SERVER %s inode\n",Inode->Name));
+      break;
+    case FFSS_INODE_DIRECTORY :
+      KdPrint(("FsdRescanInode : Rescaning DIRECTORY %s inode\n",Inode->Name));
+      break;
+    case FFSS_INODE_FILE :
+      KdPrint(("FsdRescanInode : Rescan in meaningless for FILE inodes !!\n"));
+      break;
+  }
+}
+
+/* Returned inode must be freed */
+struct ffss_inode *FsdGetInodeByIndex(IN PFSD_FCB Fcb,IN ULONG FileIndex,OUT NTSTATUS *Status)
+{
+  *Status = STATUS_INVALID_PARAMETER;
+#if DBG
+  if(Fcb == NULL)
+  {
+    KdPrint(("FsdGetInodeByIndex : Fcb = NULL\n"));
+    return NULL;
+  }
+  if(Fcb->ffss_inode == NULL)
+  {
+    KdPrint(("FsdGetInodeByIndex : ffss_inode = NULL\n"));
+    return NULL;
+  }
+#endif
+  if((Fcb == NULL) || (Fcb->ffss_inode == NULL))
+    return NULL;
+  if((Fcb->ffss_inode->NbInodes == 0) || (FileIndex >= Fcb->ffss_inode->NbInodes))
+  {
+    FsdRescanInode(Fcb->ffss_inode);
+    if((Fcb->ffss_inode->NbInodes == 0) || (FileIndex >= Fcb->ffss_inode->NbInodes)) /* Still not ok */
+      return NULL;
+  }
+  *Status = STATUS_SUCCESS;
+  KdPrint(("FsdGetInodeByIndex : Found inode for FileIndex %d\n",FileIndex));
+  return FsdAssignFFSSInode(Fcb->ffss_inode->Inodes[FileIndex],true);
+}
+
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
 {
@@ -299,7 +363,7 @@ struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
   struct ffss_inode *Inode;
 
   LOCK_SUPERBLOCK_RESOURCE;
-  if(FFSS_SuperBlock->Domains == NULL)
+  if(FFSS_SuperBlock->Root->Inodes == NULL)
   {
     UNLOCK_SUPERBLOCK_RESOURCE;
     KdPrint(("FsdGetInodeFromDomain : No domains... requesting domains list\n"));
@@ -308,12 +372,12 @@ struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
   }
   KdPrint(("FsdGetInodeFromDomain : Looking for %s in domains list\n",domain));
 
-  for(i=0;i<FFSS_SuperBlock->NbDomains;i++)
+  for(i=0;i<FFSS_SuperBlock->Root->NbInodes;i++)
   {
-    if(FFSS_strcasecmp(domain,FFSS_SuperBlock->Domains[i]->Name))
+    if(FFSS_strcasecmp(domain,FFSS_SuperBlock->Root->Inodes[i]->Name))
     {
       KdPrint(("FsdGetInodeFromDomain : Inode found\n"));
-      Inode = FsdAssignFFSSInode(FFSS_SuperBlock->Domains[i],false);
+      Inode = FsdAssignFFSSInode(FFSS_SuperBlock->Root->Inodes[i],false);
       UNLOCK_SUPERBLOCK_RESOURCE;
       return Inode;
     }
@@ -327,12 +391,39 @@ struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromServer(IN char *server,IN struct ffss_inode *Domain)
 {
+  int i;
+  struct ffss_inode *Inode;
+
+  LOCK_SUPERBLOCK_RESOURCE;
+  if(Domain->Inodes == NULL)
+  {
+    UNLOCK_SUPERBLOCK_RESOURCE;
+    KdPrint(("FsdGetInodeFromServer : No servers... requesting servers list for %s\n",Domain->Name));
+    FC_SendMessage_ServerList(FFSS_MASTER_IP,NULL,Domain->Name);
+    LOCK_SUPERBLOCK_RESOURCE;
+  }
+  KdPrint(("FsdGetInodeFromServer : Looking for %s in servers list for domain %s\n",server,Domain->Name));
+
+  for(i=0;i<Domain->NbInodes;i++)
+  {
+    if(FFSS_strcasecmp(server,Domain->Inodes[i]->Name))
+    {
+      KdPrint(("FsdGetInodeFromServer : Inode found\n"));
+      Inode = FsdAssignFFSSInode(Domain->Inodes[i],false);
+      UNLOCK_SUPERBLOCK_RESOURCE;
+      return Inode;
+    }
+  }
+
+  UNLOCK_SUPERBLOCK_RESOURCE;
+  KdPrint(("FsdGetInodeFromServer : Inode not found for server %s\n",server));
   return NULL;
 }
 
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Domain,IN struct ffss_inode *Server)
 {
+  KdPrint(("FsdGetInodeFromShare : Searching share %s in server %s in domain %s\n",share,Server->Name,Domain->Name));
   return NULL;
 }
 
@@ -356,7 +447,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   if(Buf[1] == 0) /* Root of FileSystem */
   {
     *Status = STATUS_SUCCESS;
-    return NULL;
+    return FsdAssignFFSSInode(FFSS_SuperBlock->Root,true);
   }
 
   /* Start of path parsing */
@@ -372,8 +463,9 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   {
     return NULL;
   }
-  if(p == NULL) /* End of parse */
+  if((p == NULL) || (p[1] == 0)) /* End of parse */
   {
+    KdPrint(("end of parse (domain)\n"));
     *Status = STATUS_SUCCESS;
     return Domain; /* Already assigned */
   }
@@ -390,8 +482,9 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     FsdFreeFFSSInode(Domain,true);
     return NULL;
   }
-  if(p == NULL) /* End of parse */
+  if((p == NULL) || (p[1] == 0)) /* End of parse */
   {
+    KdPrint(("end of parse (server)\n"));
     *Status = STATUS_SUCCESS;
     FsdFreeFFSSInode(Domain,true);
     return Server; /* Already assigned */
@@ -410,8 +503,9 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     FsdFreeFFSSInode(Server,true);
     return NULL;
   }
-  if(p == NULL) /* End of parse */
+  if((p == NULL) || (p[1] == 0)) /* End of parse */
   {
+    KdPrint(("end of parse (share)\n"));
     *Status = STATUS_SUCCESS;
     FsdFreeFFSSInode(Domain,true);
     FsdFreeFFSSInode(Server,true);

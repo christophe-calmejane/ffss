@@ -16,6 +16,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   char **answers,**ips;
   long int pos;
   FFSS_Field val,val2,val3;
+  FFSS_LongField lval;
   FFSS_Field i,j,state,type_ip,type_ip2;
   char IP[512], IP2[512];
   FM_PHost Hst;
@@ -97,6 +98,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_SHARES_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
       if((type_ip == 0) || (IP[0] == 0))
@@ -109,7 +111,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a shares listing message, but server has no shares\n");
         if(FFSS_CB.CCB.OnSharesListing != NULL)
-          FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0);
+          FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a shares listing message (%d shares)\n",val);
@@ -130,12 +132,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         Comments[i] = str2;
       }
       if(FFSS_CB.CCB.OnSharesListing != NULL)
-        FFSS_CB.CCB.OnSharesListing (IP,(const char **)Names,(const char **)Comments,val);
+        FFSS_CB.CCB.OnSharesListing (IP,(const char **)Names,(const char **)Comments,val,lval);
       free(Names);
       free(Comments);
       break;
     case FFSS_MESSAGE_SERVER_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -220,7 +223,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         if(do_it)
         {
           if(FFSS_CB.CCB.OnServerListingAnswer != NULL)
-            FFSS_CB.CCB.OnServerListingAnswer(str,val2,HostList);
+            FFSS_CB.CCB.OnServerListingAnswer(str,val2,HostList,lval);
         }
         SU_FreeListElem(HostList);
       }
@@ -229,12 +232,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
         FFSS_PrintDebug(3,"Received a domains listing answer, but master has no domains\n");
         if (FFSS_CB.CCB.OnDomainListingAnswer != NULL)
-          FFSS_CB.CCB.OnDomainListingAnswer(NULL,0);
+          FFSS_CB.CCB.OnDomainListingAnswer(NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a domains listing answer (%d domains)\n",val);
@@ -251,11 +255,12 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         Names[i] = str;
       }
       if(FFSS_CB.CCB.OnDomainListingAnswer != NULL)
-        FFSS_CB.CCB.OnDomainListingAnswer((const char **)Names,val);
+        FFSS_CB.CCB.OnDomainListingAnswer((const char **)Names,val,lval);
       free (Names);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -264,10 +269,11 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         break;
       }
       if(FFSS_CB.CCB.OnMasterSearchAnswer != NULL)
-        FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str);
+        FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str,lval);
       break;
     case FFSS_MESSAGE_SEARCH_ANSWER :
       context;
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -319,7 +325,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0);
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
@@ -336,7 +342,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         {
           FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0,lval);
           continue;
         }
         answers = (char **) malloc(val2*sizeof(char *));
@@ -358,7 +364,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         if(!error)
         {
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2,lval);
         }
         free(ips);
         free(answers);
@@ -389,7 +395,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   unsigned int Type,i;
   long int pos;
   FFSS_Field val,val2,val4;
-  FFSS_LongField lval;
+  FFSS_LongField lval,lval2;
   char *str,*str2;
   SU_PList Ptr;
   FC_PEntry Ent;
@@ -410,6 +416,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   {
     case FFSS_MESSAGE_ERROR :
       context;
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -421,10 +428,11 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a server error message (%d:%s:%ld)\n",val,str,lval);
       if(FFSS_CB.CCB.OnError != NULL)
-        ret_val = FFSS_CB.CCB.OnError(Server,val,str,lval);
+        ret_val = FFSS_CB.CCB.OnError(Server,val,str,lval,lval2);
       break;
     case FFSS_MESSAGE_DIRECTORY_LISTING_ANSWER :
       context;
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -497,11 +505,12 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a directory listing answer (%d entries)\n",val);
       if(FFSS_CB.CCB.OnDirectoryListingAnswer != NULL)
-        ret_val = FFSS_CB.CCB.OnDirectoryListingAnswer(Server,str,val,Ptr);
+        ret_val = FFSS_CB.CCB.OnDirectoryListingAnswer(Server,str,val,Ptr,lval2);
       SU_FreeListElem(Ptr);
       break;
     case FFSS_MESSAGE_REC_DIR_LISTING_ANSWER :
       context;
+      lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -574,7 +583,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a recursive directory listing answer (%d entries)\n",val);
       if(FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer != NULL)
-        ret_val = FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer(Server,str,val,Ptr);
+        ret_val = FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer(Server,str,val,Ptr,lval2);
       SU_FreeListElem(Ptr);
       break;
     case FFSS_MESSAGE_INIT_XFER :
@@ -615,6 +624,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_STREAMING_OPEN_ANSWER :
       context;
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -627,10 +637,11 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a streaming open answer message (%d)\n",val);
       if(FFSS_CB.CCB.OnStrmOpenAnswer != NULL)
-        FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval);
+        FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval,lval2);
       break;
     case FFSS_MESSAGE_STREAMING_READ_ANSWER :
       context;
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       Length = Len-FFSS_MESSAGESIZE_STREAMING_READ_ANSWER*sizeof(FFSS_Field);
       if((val == 0) || (Length < 0))
@@ -641,10 +652,11 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a streaming read answer message (%d bytes)\n",Length);
       if(FFSS_CB.CCB.OnStrmReadAnswer != NULL)
-        FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length);
+        FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length,lval2);
       break;
     case FFSS_MESSAGE_STREAMING_WRITE_ANSWER :
       context;
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (val2 == 0))
@@ -655,11 +667,11 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a streaming write answer message\n");
       if(FFSS_CB.CCB.OnStrmWriteAnswer != NULL)
-        FFSS_CB.CCB.OnStrmWriteAnswer(Server,val,val2);
+        FFSS_CB.CCB.OnStrmWriteAnswer(Server,val,val2,lval2);
       break;
     default:
       if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0);
+        FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
       FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),Type);
       ret_val = false;
   }
@@ -721,7 +733,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     {
       FFSS_PrintDebug(1,"Error on TCP port of the client (SOCKET_ERROR : %d)\n",errno);
       if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR],0);
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR],0,0);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);
@@ -745,7 +757,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       {
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
         if(FFSS_CB.CCB.OnError != NULL)
-          FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0);
+          FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
         SU_FreeCS(Client);
         if(FFSS_CB.CCB.OnEndTCPThread != NULL)
           FFSS_CB.CCB.OnEndTCPThread(Client);
