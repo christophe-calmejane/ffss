@@ -467,7 +467,7 @@ void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStart
   FFSS_Field Size,Pos;
   void *ret;
 
-  Buf[0] = FS_OPCODE_PL_CONFIGURE;
+  Buf[0] = FS_OPCODE_PL_LOAD;
   Size = 1;
   SU_strcpy(Buf+Size,Path,sizeof(Buf)-Size);
   Size += strlen(Path) + 1;
