@@ -44,14 +44,41 @@ int L_day = 0;
 #ifdef _WIN32
 HWND L_hwnd;
 HINSTANCE L_hInstance;
+void ThreadFunc(void *info);
 #endif /* _WIN32 */
+
+bool L_OpenLogFile(void)
+{
+  struct tm *TM;
+  time_t Tim;
+  char S[1024];
+
+  if(L_fp != NULL)
+  {
+    SU_CloseLogFile(L_fp);
+    L_fp = NULL;
+  }
+  Tim = time(NULL);
+  TM = localtime(&Tim);
+  snprintf(S,sizeof(S),"%s/%s-%d-%.2d-%.2d.log",L_Gbl.Path,LOG_FILE_PREFIX,TM->tm_year+1900,TM->tm_mon+1,TM->tm_mday);
+  L_day = TM->tm_mday;
+  L_fp = SU_OpenLogFile(S);
+  if(L_fp == NULL)
+    return false;
+  return true;
+}
 
 void LoadConfig()
 {
 #ifdef _WIN32
   char Path[1024];
 
-  SU_RB_GetStrValue(LOG_PLUGIN_REG_KEY "\\LogsPath",Path,sizeof(Path),".");
+  SU_RB_GetStrValue(LOG_PLUGIN_REG_KEY "\\LogsPath",Path,sizeof(Path),"");
+  if(Path[0] == 0) /* First launch time */
+  {
+    ThreadFunc(NULL);
+    return;
+  }
   L_Gbl.Path = strdup(Path);
   L_Gbl.Log_Conn = SU_RB_GetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Conn",1) == 1;
   L_Gbl.Log_Dwl = SU_RB_GetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Dwl",1) == 1;
@@ -78,10 +105,7 @@ void WriteLog(char *Txt,...)
   TM = localtime(&Tim);
   if(TM->tm_mday != L_day)
   {
-    SU_CloseLogFile(L_fp);
-    snprintf(Str,sizeof(Str),"%s/%s-%d-%.2d-%.2d.log",L_Gbl.Path,LOG_FILE_PREFIX,TM->tm_year+1900,TM->tm_mon+1,TM->tm_mday);
-    L_day = TM->tm_mday;
-    L_fp = SU_OpenLogFile(Str);
+    L_OpenLogFile();
   }
   va_start(argptr,Txt);
   snprintf(Str,sizeof(Str),"[%.2d:%.2d:%.2d] ",TM->tm_hour,TM->tm_min,TM->tm_sec);
@@ -119,7 +143,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
 }
 
 #ifdef _WIN32
-char *GetDirectoryPath(HWND hwnd,char *Buf)
+char *GetDirectoryPath(HWND hwnd,char *Buf,char *DisplayName)
 {
   LPITEMIDLIST pidlRoot = NULL;
   LPITEMIDLIST pidlSelected = NULL;
@@ -127,7 +151,7 @@ char *GetDirectoryPath(HWND hwnd,char *Buf)
 
   bi.hwndOwner = hwnd;
   bi.pidlRoot = NULL;
-  bi.pszDisplayName = "Choose a folder to store log files";
+  bi.pszDisplayName = DisplayName;
   bi.lpszTitle = "Choose a folder to store log files";
   bi.ulFlags = 0;
   bi.lpfn = NULL;
@@ -146,15 +170,22 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       switch(LOWORD(wParam))
       {
         HWND dlg;
-        char buf[1024];
+        char buf[1024],name[MAX_PATH];
 
         case IDOK:
           L_Gbl.Log_Conn = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK1)) == BST_CHECKED;
           L_Gbl.Log_Dwl = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK2)) == BST_CHECKED;
           dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
           GetWindowText(dlg,buf,sizeof(buf));
+          if(buf[0] == 0)
+          {
+            MessageBox(hwnd,"You must set a path to store log files\nSet it to \".\" if you want to store them in server's directory","Log Plugin Info",MB_OK);
+            return TRUE;
+          }
           if(L_Gbl.Path != NULL)
             free(L_Gbl.Path);
+          if(buf[3] == 0) /* "c:\" for example */
+            buf[2] = 0; /* Remove trailing '\' */
           L_Gbl.Path = strdup(buf);
           /* Store config now */
           StoreConfig();
@@ -164,7 +195,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           return TRUE;
         case IDC_BUTTON1:
           dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
-          SetWindowText(dlg,GetDirectoryPath(hwnd,buf));
+          SetWindowText(dlg,GetDirectoryPath(hwnd,buf,name));
           return TRUE;
       }
       break;
@@ -175,7 +206,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       PostQuitMessage(0);
       return TRUE;
   }
-  return DefWindowProc(hwnd, message, wParam, lParam);
+  return FALSE;
 }
 
 void ThreadFunc(void *info)
@@ -216,10 +247,6 @@ FS_PLUGIN_EXPORT bool Plugin_Configure(void)
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
 FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
 {
-  struct tm *TM;
-  time_t Tim;
-  char S[1024];
-
   /* Get pointer to plugin query function */
   PluginQueryFunc = QueryFunc;
 #ifdef _WIN32
@@ -246,19 +273,13 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   LoadConfig();
 
   /* Open log file */
-  Tim = time(NULL);
-  TM = localtime(&Tim);
-  snprintf(S,sizeof(S),"%s/%s-%d-%.2d-%.2d.log",L_Gbl.Path,LOG_FILE_PREFIX,TM->tm_year+1900,TM->tm_mon+1,TM->tm_mday);
-  L_day = TM->tm_mday;
-  L_fp = SU_OpenLogFile(S);
-  if(L_fp == NULL)
+  if(!L_OpenLogFile())
     return NULL;
 
   /* And finaly returning the FS_PPlugin structure to the server.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.
   */
-  Plugin_Configure();
   return Pl;
 }
 

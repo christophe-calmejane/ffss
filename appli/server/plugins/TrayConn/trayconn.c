@@ -10,9 +10,9 @@
 */
 
 #define TRAYCONN_NAME      "Tray Conn Plugin"
-#define TRAYCONN_VERSION   "0.1"
+#define TRAYCONN_VERSION   "0.4"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
-#define TRAYCONN_DESCRIPTION "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, and set the server into quiet mode."
+#define TRAYCONN_DESCRIPTION "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, set the server into quiet mode, and shutdown it."
 
 #define MANAGER_PATH_REG_KEY "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\ManagerPath"
 #define TIMER_DELAY 5*1000 /* Every 5 sec */
@@ -239,6 +239,10 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
           SetForegroundWindow(hwnd);
           switch (TrackPopupMenu(hpopup,TPM_RETURNCMD | TPM_RIGHTBUTTON,pt.x, pt.y,0,hwnd,NULL))
           {
+            case IDM_QUIT:
+              if(MessageBox(hwnd,"You are requesting FFSS Server to shut down.\n                     Are you sure ??","Tray Conn Plugin Info",MB_YESNO | MB_DEFBUTTON2 |MB_ICONEXCLAMATION) == IDYES)
+                PluginQueryFunc(FSPQ_SHUTDOWN);
+              break;
             case IDM_EJECT:
               PluginQueryFunc(FSPQ_EJECT_ALL); /* Eject everybody */
               SetNewIcon(DrawBitmap());

@@ -56,6 +56,8 @@ IDR_MENU1 MENU DISCARDABLE
 BEGIN
     POPUP "Non Visible"
     BEGIN
+        MENUITEM "&Shutdown server",            IDM_QUIT
+        MENUITEM SEPARATOR
         MENUITEM "&Eject everybody",            IDM_EJECT
         MENUITEM "&Quiet",                      IDM_SILENT, CHECKED
     END
