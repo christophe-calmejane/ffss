@@ -1288,12 +1288,21 @@ void FCA_printlog(char *msg, ...)
 {
 		/* printf for logs */
 	va_list argptr;
+	char strtxt[1008];
+	char strIP[16]="";
 	char str[1024];
 
+	if(!FCA_VAR_IS_ON(FCA_log))
+		return;
+#ifdef CGI
+	snprintf(strIP, "(%s) ", getenv("REMOTE_ADDR");
+#endif
 	va_start(argptr,msg);
-	vsnprintf(str, 1023, msg, argptr);
+	vsnprintf(strtxt, 1023, msg, argptr);
 	va_end(argptr);
-	
+
+	snprintf(str, "%s%s", strIP, strtxt);
+
 	SU_WriteToLogFile(FCA_logf, str);
 }
 
