@@ -17,7 +17,7 @@
 #endif
 
 #define FCA_NAME	"ffss-client"
-#define FCA_VERSION	"0.5-pre12"
+#define FCA_VERSION	"0.5-pre13"
 #define FCA_AUTHOR	"bennyben"
 
 #define FCA_MAX_CMD		10

@@ -42,6 +42,8 @@
 #define FCA_ALIAS_CMD		"alias"
 #define FCA_UALIAS_CMD		"unalias"
 
+#define FCA_VERSION_CMD		"version"
+
 #define FCA_EXIT_CMD		"exit"
 	/* argument types */
 #define FCA_ALL_ARG		1
@@ -85,6 +87,7 @@ bool FCA_close_cmd(char *args	);
 bool FCA_find_cmd (char *args	);
 bool FCA_set_cmd  (char *args	);
 bool FCA_exit_cmd (char *args	);
+bool FCA_version_cmd(char *args	);
 
 #ifdef ALIASES
 bool FCA_alias_cmd(char *args);

@@ -68,6 +68,8 @@ const FCA_Tcommand FCA_COMMANDS[]=
 	    	"close",	"disconnects",		"close current connection and return to / directory"},
 	{FCA_FIND_CMD,	FCA_find_cmd,		0,
 	    	"find <key>",	"look for a file",	"look for a file/dir in the current domain, or all on /"},
+	{FCA_VERSION_CMD, FCA_version_cmd,	0,
+		"version",	"show version",		"show the version of the current client"},
 	{FCA_EXIT_CMD,	FCA_exit_cmd,		0,
 	    	"exit",		"quits",		"exits this program"},
 	{FCA_SET_CMD,	FCA_set_cmd,		FCA_VAR_ARG,
@@ -895,6 +897,13 @@ bool FCA_exit_cmd(char *args)
 	FCA_exit(1);
 	return false;
 }
+
+bool FCA_version_cmd(char *args)
+{
+	FCA_print_version();
+	return false;
+}
+
 
 #ifdef BENCHMARK
 void FCA_find_bench(const char *file)
