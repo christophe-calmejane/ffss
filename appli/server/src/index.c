@@ -167,6 +167,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Time = FS_ConvertTime(ent.ftCreationTime);
       if(Share->NoChksum == false)
       {
+        snprintf(name,sizeof(name),"%s\\%s",Path,ent.cFileName);
         fp = fopen(name,"rb");
         if(fp != NULL)
         {
