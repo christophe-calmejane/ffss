@@ -604,3 +604,62 @@ int FFSS_GetFFSSOptions(void)
 #endif /* DISABLE_CHECKSUM */
   return Flags;
 }
+
+#if defined(_WIN32) | defined(__CYGWIN32__)
+char FFSS_WinServerVersion[20] = {0,};
+#endif /* _WIN32 | __CYGWIN32__ */
+
+char *FFSS_GetOS(void)
+{
+#ifdef _WIN32
+  if(FFSS_WinServerVersion[0] == 0)
+  {
+    DWORD dwVersion = GetVersion();
+    if(dwVersion < 0x80000000) /* Windows NT/2K/XP */
+    {
+      DWORD dwWindowsMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
+      DWORD dwWindowsMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
+      if(dwWindowsMajorVersion < 4) /* Win32s */
+        SU_strcpy(FFSS_WinServerVersion,"Win32s",sizeof(FFSS_WinServerVersion));
+      else if(dwWindowsMajorVersion == 4) /* Windows NT 4 */
+        SU_strcpy(FFSS_WinServerVersion,"WinNT",sizeof(FFSS_WinServerVersion));
+      else /* 2K/XP */
+      {
+        if(dwWindowsMinorVersion == 0)
+          SU_strcpy(FFSS_WinServerVersion,"Win2k",sizeof(FFSS_WinServerVersion));
+        else
+          SU_strcpy(FFSS_WinServerVersion,"WinXP",sizeof(FFSS_WinServerVersion));
+      }
+    }
+    else /* Windows 9x */
+      SU_strcpy(FFSS_WinServerVersion,"Win9x",sizeof(FFSS_WinServerVersion));
+  }
+  return FFSS_WinServerVersion;
+#elif __CYGWIN32__
+  if(FFSS_WinServerVersion[0] == 0)
+  {
+    DWORD dwVersion = GetVersion();
+    if(dwVersion < 0x80000000) /* Windows NT/2K/XP */
+    {
+      DWORD dwWindowsMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
+      DWORD dwWindowsMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
+      if(dwWindowsMajorVersion < 4) /* Win32s */
+        SU_strcpy(FFSS_WinServerVersion,"Cyg-Win32s",sizeof(FFSS_WinServerVersion));
+      else if(dwWindowsMajorVersion == 4) /* Windows NT 4 */
+        SU_strcpy(FFSS_WinServerVersion,"Cyg-WinNT",sizeof(FFSS_WinServerVersion));
+      else /* 2K/XP */
+      {
+        if(dwWindowsMinorVersion == 0)
+          SU_strcpy(FFSS_WinServerVersion,"Cyg-Win2k",sizeof(FFSS_WinServerVersion));
+        else
+          SU_strcpy(FFSS_WinServerVersion,"Cyg-WinXP",sizeof(FFSS_WinServerVersion));
+      }
+    }
+    else /* Windows 9x */
+      SU_strcpy(FFSS_WinServerVersion,"Cyg-Win9x",sizeof(FFSS_WinServerVersion));
+  }
+  return FFSS_WinServerVersion;
+#else /* !_WIN32 & !__CYGWIN32__ */
+  return FFSS_SERVER_OS;
+#endif /* _WIN32 */
+}

@@ -3,10 +3,15 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 22th 2002
+                  Last Update : May, 28th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+May, 28th 2002:
+  - Cleaned message.c, and prepared for security (crypted) connections
+  - Fixed error in server.c (used OnError callback in tcp thread... no no no !)
+  - Fixed compilation issue with c++ code
 
 May, 22th 2002:
   - Added a new message in protocol : RecursiveDirectoryListing

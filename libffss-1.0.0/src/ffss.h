@@ -1,6 +1,13 @@
 #ifndef __FFSS_H__
 #define __FFSS_H__
 
+/* Undefine c++ bool type (unsigned char ?)
+   Use SU_BOOL type in your appli, every time you use a ffss prototype
+ */
+#ifdef __cplusplus
+#define bool SU_BOOL
+#endif /* __cplusplus */
+
 /* Define the target OS */
 #ifdef __linux__
 #define FFSS_SERVER_OS "Linux"
@@ -15,11 +22,13 @@
 #define __BSD__
 #elif _WIN32
 #define FFSS_SERVER_OS "Win32"
+extern char FFSS_WinServerVersion[20];
 #elif __MACH__
 #define FFSS_SERVER_OS "MacOS"
 #define __unix__
 #elif __CYGWIN32__
 #define FFSS_SERVER_OS "CygWin"
+extern char FFSS_WinServerVersion[20];
 #elif __sun__
 #define FFSS_SERVER_OS "SunOS"
 #else
@@ -618,6 +627,12 @@ unsigned char FFSS_GetFileTags(const char *FileName);  /* <-- Full name of the f
 unsigned char FFSS_GetWordTags(const char *Word);  /* <-- word to check for extension */
 
 
+/*
+ * FFSS_GetOS
+ *   Returns the tags of a word
+ */
+char *FFSS_GetOS(void);
+
 /* ************************************************ */
 /*              FFSS TRANSFER FUNCTIONS             */
 /* ************************************************ */
@@ -1004,6 +1019,7 @@ extern bool N_SyslogOn;
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 extern SU_PServerInfo FC_SI_OUT_UDP;
 extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP,FM_SI_TCP;
+extern SU_THREAD_HANDLE FFSS_MainThread;
 #ifdef _WIN32
 extern FILE *FFSS_LogFile;
 #endif /* _WIN32 */
@@ -1035,6 +1051,8 @@ void *FFSS_malloc(size_t size);
 
 #ifdef __cplusplus
 }
+/* Redefine c++ bool type */
+#undef bool
 #endif /* __cplusplus */
 
 #endif /* !__FFSS_H__ */

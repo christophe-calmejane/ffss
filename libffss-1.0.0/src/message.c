@@ -4,6 +4,35 @@
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 
 /* ************************************ */
+/*        GENERAL SENDING FUNCTIONS     */
+/* ************************************ */
+bool FFSS_SendTcpPacket(int Client,char *msg,long int len,bool FreeMsg)
+{
+  long int resp,retval;
+  fd_set rfds;
+  struct timeval tv;
+
+  FD_ZERO(&rfds);
+  FD_SET(Client,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Client+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending message timed out !\n");
+    if(FreeMsg)
+      free(msg);
+    return false;
+  }
+  /* TODO : Cryptage du message ici... sauf premier champ (taille) !! */
+  /* Faut juste trouver comment faire le switch/case suivant le type actuel de cryptage */
+  resp = send(Client,msg,len,SU_MSG_NOSIGNAL);
+  if(FreeMsg)
+    free(msg);
+  return (resp == len);
+}
+
+/* ************************************ */
 /*             SERVER MESSAGES          */
 /* ************************************ */
 
@@ -166,10 +195,6 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -187,18 +212,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Error message (%d:%s) to client\n",Code,Descr);
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Error message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
 /* FS_SendMessage_DirectoryListingAnswer Function                     */
@@ -212,10 +226,6 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
 {
   char *msg;
   long int len,size,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
   long int CompSize;
 
   context;
@@ -269,20 +279,7 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Directory listing answer message (\"%s\") to client\n",Path);
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    free(msg);
-    FFSS_PrintDebug(3,"Sending Directory listing message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  free(msg);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 /* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
@@ -296,10 +293,6 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[]
 {
   char *msg;
   long int len,size,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
   long int CompSize;
 
   context;
@@ -353,20 +346,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[]
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Recursive Directory listing answer message (\"%s\") to client\n",Path);
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    free(msg);
-    FFSS_PrintDebug(3,"Sending Recursive Directory listing message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  free(msg);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 /* FS_SendMessage_InitXFer Function                        */
@@ -378,10 +358,6 @@ bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_INIT_XFER + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -399,18 +375,7 @@ bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[])
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Init XFer message (%d:%s) to client\n",Tag,FileName);
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Error message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 /* FS_SendMessage_MasterSearch Function      */
@@ -664,10 +629,6 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -688,18 +649,7 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
   pos = FFSS_PackLongField(msg,pos,FileSize);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming OPEN answer message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming OPEN answer message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 /* FS_SendMessage_StrmReadAnswer Function             */
@@ -712,10 +662,6 @@ bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int
 {
   char *msg;
   long int size,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_READ_ANSWER + BlocLen;
@@ -728,20 +674,7 @@ bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming READ answer message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    free(msg);
-    FFSS_PrintDebug(3,"Sending Streaming READ answer message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  free(msg);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 /* FS_SendMessage_StrmWriteAnswer Function             */
@@ -753,10 +686,6 @@ bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -765,18 +694,7 @@ bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code)
   pos = FFSS_PackField(msg,pos,Code);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming WRITE answer message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Client,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Client+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming WRITE answer message timed out !\n");
-    return false;
-  }
-  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Client,msg,pos,true);
 }
 
 
@@ -883,11 +801,8 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARE_CONNECTION + FFSS_MAX_SHARENAME_LENGTH+1 + FFSS_MAX_LOGIN_LENGTH+1 + FFSS_MAX_PASSWORD_LENGTH+1];
   long int len,pos;
-  int resp;
+  bool resp;
   SU_PClientSocket CS;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
   long int Comps;
 #ifndef DRIVER
   SU_THREAD_HANDLE Thread;
@@ -938,20 +853,8 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
     msg[pos++] = 0;
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Share connection message to %s\n",Server);
-  FD_ZERO(&rfds);
-  FD_SET(CS->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(CS->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    SU_CLOSE_SOCKET(CS->sock);
-    free(CS);
-    FFSS_PrintDebug(3,"Sending Share connection message timed out !\n");
-    return NULL;
-  }
-  resp = send(CS->sock,msg,pos,SU_MSG_NOSIGNAL);
-  if(resp != pos)
+  resp = FFSS_SendTcpPacket(CS->sock,msg,pos,false);
+  if(!resp)
   {
     SU_CLOSE_SOCKET(CS->sock);
     free(CS);
@@ -971,10 +874,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DIRECTORY_LISTING + FFSS_MAX_PATH_LENGTH+1];
   long int pos;
-  int resp,len;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
+  int len;
 
   context;
   if(Server == NULL)
@@ -987,18 +887,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Directory Listing message to server for %s\n",Path);
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Directory listing message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_RecursiveDirectoryListing Function       */
@@ -1009,10 +898,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_REC_DIR_LISTING + FFSS_MAX_PATH_LENGTH+1];
   long int pos;
-  int resp,len;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
+  int len;
 
   context;
   if(Server == NULL)
@@ -1025,18 +911,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Recursive Directory Listing message to server for %s\n",Path);
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Recursive Directory listing message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_Download Function                                 */
@@ -1052,9 +927,6 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   int resp,len;
   int sock=0;
   struct sockaddr_in SAddr;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1097,20 +969,8 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
     pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Download message to server for %s starting at %ld\n",Path,StartingPos);
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    if(!UseConnSock)
-      SU_CLOSE_SOCKET(sock);
-    FFSS_PrintDebug(3,"Sending Download message timed out !\n");
-    return SOCKET_ERROR;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  if(resp == SOCKET_ERROR)
+  resp = FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  if(!resp)
   {
     if(!UseConnSock)
       SU_CLOSE_SOCKET(sock);
@@ -1129,9 +989,6 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DISCONNECT];
   long int pos;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1141,16 +998,7 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Disconnect message to server\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-    FFSS_PrintDebug(3,"Sending Disconnect message timed out !\n");
-  else
-    send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return;
+  FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_CancelXFer Function                   */
@@ -1161,9 +1009,6 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_CANCEL_XFER];
   long int pos;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1174,17 +1019,8 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending cancel xfer message to server\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-    FFSS_PrintDebug(3,"Sending cancel xfer message timed out !\n");
-  else
-    send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
+  FFSS_SendTcpPacket(Server->sock,msg,pos,false);
   SU_FreeCS(Server);
-  return;
 }
 
 /* FC_SendMessage_DomainListing Function   */
@@ -1283,10 +1119,6 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_OPEN + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1307,18 +1139,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming OPEN message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming OPEN message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_StrmClose Function                     */
@@ -1329,10 +1150,6 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_CLOSE];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1342,18 +1159,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
   pos = FFSS_PackField(msg,pos,Handle);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming CLOSE message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming CLOSE message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_StrmRead Function                     */
@@ -1366,10 +1172,6 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongFi
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_READ];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1381,18 +1183,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongFi
   pos = FFSS_PackField(msg,pos,Length);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming READ message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming READ message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 /* FC_SendMessage_StrmWrite Function                    */
@@ -1406,10 +1197,6 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongF
 {
   char *msg;
   long int size,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1426,20 +1213,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongF
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming WRITE message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    free(msg);
-    FFSS_PrintDebug(3,"Sending Streaming WRITE message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  free(msg);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,true);
 }
 
 /* FC_SendMessage_StrmSeek Function                     */
@@ -1452,10 +1226,6 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,F
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_SEEK];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if(Server == NULL)
@@ -1468,18 +1238,7 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,F
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");
-  FD_ZERO(&rfds);
-  FD_SET(Server->sock,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Streaming SEEK message timed out !\n");
-    return false;
-  }
-  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp != SOCKET_ERROR);
+  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
 }
 
 
@@ -1520,10 +1279,6 @@ bool FM_SendMessage_MasterConnection(int Master)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_MASTER_CONNECTION];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -1532,18 +1287,7 @@ bool FM_SendMessage_MasterConnection(int Master)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Master connection message to master\n");
-  FD_ZERO(&rfds);
-  FD_SET(Master,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Master+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Master connection message timed out !\n");
-    return false;
-  }
-  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
 
 /* FM_SendMessage_Ping Function    */
@@ -1573,11 +1317,7 @@ bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSi
 {
   char *msg;
   long int size,pos;
-  int resp;
   long int CompSize;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   if((Buffer == NULL) || (BufSize == 0))
@@ -1624,19 +1364,7 @@ bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSi
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending New States message to master\n");
-  FD_ZERO(&rfds);
-  FD_SET(Master,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Master+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending New states message timed out !\n");
-    return false;
-  }
-  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
-  free(msg);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Master,msg,pos,true);
 }
 
 /* FM_SendMessage_ServerListing Function                            */
@@ -1775,10 +1503,6 @@ bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -1796,18 +1520,7 @@ bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Error message (%d:%s) to master\n",Code,Descr);
-  FD_ZERO(&rfds);
-  FD_SET(Master,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Master+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Error message timed out !\n");
-    return false;
-  }
-  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
 
 /* FM_SendMessage_ServerList Function              */
@@ -1817,10 +1530,6 @@ bool FM_SendMessage_ServerList(int Master)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_DOMAIN_LENGTH+1];
   long int pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -1832,18 +1541,7 @@ bool FM_SendMessage_ServerList(int Master)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Server listing message to master\n");
-  FD_ZERO(&rfds);
-  FD_SET(Master,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Master+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Server listing message timed out !\n");
-    return false;
-  }
-  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
 
 /* FM_SendMessage_DomainListingAnswer Function   */
@@ -1986,10 +1684,6 @@ bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compr
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_FW + FFSS_IP_FIELD_SIZE + FFSS_MAX_KEYWORDS_LENGTH+1];
   long int len,pos;
-  int resp;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
 
   context;
   pos = sizeof(FFSS_Field);
@@ -2005,16 +1699,5 @@ bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compr
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Search Forward message to master - Reply to %s:%d\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
-  FD_ZERO(&rfds);
-  FD_SET(Master,&rfds);
-  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
-  tv.tv_usec = 0;
-  retval = select(Master+1,NULL,&rfds,NULL,&tv);
-  if(!retval)
-  {
-    FFSS_PrintDebug(3,"Sending Search forward message timed out !\n");
-    return false;
-  }
-  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
-  return (resp == pos);
+  return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
