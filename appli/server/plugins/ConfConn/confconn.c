@@ -10,11 +10,10 @@
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define CONFCONN_DESCRIPTION "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"
+#define CONFCONN_CONFIG_FILE "ConfConn.conf"
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
-#include "ConfConn\\resource.h"
-#include "commctrl.h"
 #undef malloc
 #undef strdup
 
@@ -31,9 +30,12 @@ SU_PList CC_Confs = NULL; /* CC_PConf */
 FSP_TInfos CC_Infos;
 bool CC_AddConf(const char IP[],const char Login[],const char Pwd[]);
 bool CC_DelConf(const char IP[],const char Login[]);
+bool CC_Crypted = false;
 
 SU_THREAD_HANDLE CC_Thr;
 #ifdef _WIN32
+#include "ConfConn\\resource.h"
+#include "commctrl.h"
 HWND CC_hwnd = NULL;
 HINSTANCE CC_hInstance;
 void ThreadFunc(void *info);
@@ -43,7 +45,7 @@ void ThreadFunc(void *info);
 /* OS dependant section */
 /* ******************** */
 #ifdef _WIN32
-void CC_LoadConfig()
+bool CC_LoadConfig()
 {
   char IP[100];
   char Buf[100];
@@ -55,7 +57,7 @@ void CC_LoadConfig()
 
   key = SU_RB_OpenKeys(CONFCONN_PLUGIN_REG_KEY,KEY_READ);
   if(key == NULL)
-    return;
+    return true;
   while(ret != ERROR_NO_MORE_ITEMS)
   {
     len = sizeof(IP);
@@ -72,6 +74,7 @@ void CC_LoadConfig()
     }
     idx++;
   }
+  return true;
 }
 void CC_SaveConfig()
 {
@@ -279,8 +282,64 @@ FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
 }
 
 #else /* !_WIN32 */
-void CC_LoadConfig()
+bool CC_LoadConfig()
 {
+  FILE *fp;
+  char Name[512],Value[1024];
+  char *ptr,*IP,*Login,*Pwd;
+
+  fp = fopen(CONFCONN_CONFIG_FILE,"rt");
+  if(fp == NULL)
+  {
+    FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Cannot open config file %s",CONFCONN_CONFIG_FILE);
+    return false;
+  }
+
+  while(SU_ParseConfig(fp,Name,sizeof(Name),Value,sizeof(Value)))
+  {
+    if(strcasecmp(Name,"Crypt") == 0)
+    {
+#ifndef USE_CRYPT
+      FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Plugin not compiled with Crypt support... password will NOT be crypted");
+#endif /* !USE_CRYPT */
+      CC_Crypted = true;
+    }
+    else if(strcasecmp(Name,"Access") == 0)
+    {
+      ptr = SU_strparse(Value,':');
+      if((ptr == NULL) || (ptr[0] == 0))
+      {
+        FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Error with line %s (Missing IP)",Value);
+        fclose(fp);
+        return false;
+      }
+      IP = ptr;
+      ptr = SU_strparse(NULL,':');
+      if((ptr == NULL) || (ptr[0] == 0))
+      {
+        FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Error with line %s (Missing Login)",Value);
+        fclose(fp);
+        return false;
+      }
+      Login = strdup(ptr);
+      ptr = SU_strparse(NULL,':');
+      if((ptr == NULL) || (ptr[0] == 0))
+      {
+        FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Error with line %s (Missing Password)",Value);
+        fclose(fp);
+        return false;
+      }
+      Pwd = strdup(ptr);
+      CC_AddConf(IP,Login,Pwd);
+    }
+    else
+    {
+      FFSS_PrintSyslog(LOG_ERR,"ConfConn plugin load error : Unknown option in config file : %s %s",Name,Value);
+    }
+  }
+  fclose(fp);
+
+  return true;
 }
 void CC_SaveConfig()
 {
@@ -290,6 +349,30 @@ void CC_SaveConfig()
 /* ********************** */
 /* OS independant section */
 /* ********************** */
+void CC_CryptPasswd(const char Passwd[],char Crypted[],int len)
+{
+  char Key[3];
+  char *s;
+
+  if(strlen(Passwd) < 3)
+  {
+    Key[0] = 'C'; Key[1] = 'C'; Key[2] = 0;
+  }
+  else
+  {
+    Key[0] = Passwd[0]; Key[1] = Passwd[1]; Key[2] = 0;
+  }
+#ifdef USE_CRYPT
+  s = crypt(Passwd,Key);
+#else
+  s = Passwd;
+#endif
+  if(s != NULL)
+    SU_strcpy(Crypted,s,len);
+  else
+    Crypted[0] = 0;
+}
+
 CC_PConf CC_SearchConf(const char IP[],const char Login[])
 {
   CC_PConf Conf;
@@ -420,6 +503,9 @@ bool OnCheckConfConn(SU_PClientSocket Client)
     return false;
   Pwd[Length] = 0;
 
+  if(CC_Crypted) /* Crypted password */
+    CC_CryptPasswd(Pwd,Pwd,sizeof(Pwd));
+
   /* Now check login/pwd */
   if((strcmp(Login,Conf->Login) != 0) || (strcmp(Pwd,Conf->Pwd) != 0))
     return false;
@@ -449,7 +535,11 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info)
   /* Setting our callbacks */
   Pl->OnCheckConfConn = OnCheckConfConn;
 
-  CC_LoadConfig();
+  if(!CC_LoadConfig())
+  {
+    free(Pl);
+    return NULL;
+  }
   /* And finaly returning the FS_PPlugin structure to the server.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.

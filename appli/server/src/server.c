@@ -806,7 +806,7 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
 #ifdef USE_CRYPT
     if(strlen(Password) < 3)
     {
-      Key[0] = 'B'; Key[1] = 'N'; Key[2] = 0;
+      Key[0] = 'F'; Key[1] = 'S'; Key[2] = 0;
     }
     else
     {
@@ -2717,7 +2717,8 @@ void handint(int sig)
     memset(&FFSS_CB.SCB,0,sizeof(FFSS_CB.SCB));
     /* Shutting down server */
     FS_ShutDown();
-    exit(0);
+    FFSS_PrintDebug(1,"exiting\n");
+    _exit(0);
   }
   else
     FFSS_PrintSyslog(LOG_WARNING,"Signal handler in %d (%d) : Server is being shut down... please wait\n",getpid(),sig);

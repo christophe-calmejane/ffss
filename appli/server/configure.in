@@ -134,6 +134,9 @@ fi
 LIBS="$LIBS $ffss_libs $O_CRYPT_LIB"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
+AC_SUBST(O_CRYPT_LIB)
+AC_SUBST(ffss_libs)
+
 AC_OUTPUT([
 Makefile
 src/Makefile

@@ -2069,6 +2069,9 @@ fi
 LIBS="$LIBS $ffss_libs $O_CRYPT_LIB"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
+
+
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -2231,6 +2234,8 @@ s%@LEX@%$LEX%g
 s%@LEXLIB@%$LEXLIB%g
 s%@CPP@%$CPP%g
 s%@LEX_OUTPUT_ROOT@%$LEX_OUTPUT_ROOT%g
+s%@O_CRYPT_LIB@%$O_CRYPT_LIB%g
+s%@ffss_libs@%$ffss_libs%g
 
 CEOF
 EOF

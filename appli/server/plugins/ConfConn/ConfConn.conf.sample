@@ -1,0 +1,19 @@
+## This is the default config file for the ConfConn plugin ##
+# ConfConn tries to load a file named ConfConn.conf in the current directory #
+
+## 'Crypt' line
+## Define this line if you want the password to be crypted
+#Crypt
+
+
+## 'Access' line
+## Each Access line defines a triplet for remote access <IP>:<Login>:<Password>
+
+#For a non crypted password (if Crypt is not defined)
+#Access 172.17.64.135:kiki:toto
+
+#For a crypted password (if Crypt is defined)
+#Access 172.17.64.135:kiki:tok.SOnXr50ss
+
+
+## End Of file ##

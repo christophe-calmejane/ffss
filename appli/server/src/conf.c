@@ -752,12 +752,13 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
       SU_SLEEP(1);
       continue;
     }
-    FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s)\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!FS_CheckConfConn(Client))
     { /* rejecting */
       SU_FreeCS(Client);
       continue;
     }
+    FFSS_PrintDebug(6,"Connection accepted ... creating new thread\n");
     if(!SU_CreateThread(&ClientThr,FS_ClientConf,(void *)Client,true))
     {
       FFSS_PrintDebug(1,"Error creating conf Client thread\n");

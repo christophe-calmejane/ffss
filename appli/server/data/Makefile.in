@@ -58,9 +58,11 @@ POST_UNINSTALL = :
 CC = @CC@
 LEX = @LEX@
 MAKEINFO = @MAKEINFO@
+O_CRYPT_LIB = @O_CRYPT_LIB@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 YACC = @YACC@
+ffss_libs = @ffss_libs@
 
 pkgdatadir = $(datadir)/ffss
 

@@ -58,9 +58,11 @@ POST_UNINSTALL = :
 CC = @CC@
 LEX = @LEX@
 MAKEINFO = @MAKEINFO@
+O_CRYPT_LIB = @O_CRYPT_LIB@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 YACC = @YACC@
+ffss_libs = @ffss_libs@
 
 pkgdatadir = $(datadir)/@PACKAGE@/plugins
 
@@ -310,7 +312,7 @@ distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
 confconn.so: confconn.c
-	$(COMPILE) -shared -Wl,-soname,confconn.so -o confconn.so confconn.c
+	$(COMPILE) -shared -Wl,-soname,confconn.so -o confconn.so confconn.c @ffss_libs@ @O_CRYPT_LIB@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
