@@ -84,7 +84,6 @@ void FM_SetHostStateInIndex(const char Host[],FFSS_Field State)
   {
     if(SU_strcasecmp(Host,FM_Controler.Hosts[i]->Name))
     {
-      printf("SetStateInIndex : %d\n",State);
       FM_Controler.Hosts[i]->State = State;
       return;
     }
