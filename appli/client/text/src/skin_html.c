@@ -500,9 +500,10 @@ bool FCA_html_pre_path(const char *domain, const char *path, long int state, boo
 				FCA_sep_link(all, dom, isDir);
 			if(all)
 				free(all);
+			return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 void FCA_html_post_path(bool isName)
@@ -646,7 +647,6 @@ void FCA_sep_link(char *path, char *prefx, bool isDir)
 	char *p, *begin=path;
 	char p2[FFSS_MAX_FILEPATH_LENGTH];
 	
-printf ("<!-- path=%s prefx=%s isDir=%d -->\n", path, prefx, isDir);
 	p=strchr(path, '/');
 	if(p==path)
 		p=strchr(path+1, '/');

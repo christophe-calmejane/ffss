@@ -511,9 +511,10 @@ bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, b
 				FCA_sep_link(all, dom, isDir);
 			if(all)
 				free(all);
+			return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 void FCA_htmlfl_post_path(bool isName)
