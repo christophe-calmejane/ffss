@@ -35,9 +35,9 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
   memset(Pl,0,sizeof(FS_TPlugin));
 
   /* Setting plugin infos */
-  Pl->Name = strdup(CONFCONN_NAME);
-  Pl->Author = strdup(CONFCONN_COPYRIGHT);
-  Pl->Version = strdup(CONFCONN_VERSION);
+  Pl->Name = CONFCONN_NAME;
+  Pl->Author = CONFCONN_COPYRIGHT;
+  Pl->Version = CONFCONN_VERSION;
 
   /* Setting our callbacks */
   Pl->OnCheckConfConn = OnCheckConfConn;
@@ -52,6 +52,6 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
 /* This is the UnInit fonction (Name it CAREFULLY) called on each UnLoadPlugin call */
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
-  /* Nothing to do, as Pl->Name is freed after */
+  /* Nothing to do, as Pl->Path is freed before, and other fields are static */
 }
 
