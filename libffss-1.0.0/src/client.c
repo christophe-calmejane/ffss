@@ -839,6 +839,11 @@ bool FC_Init(void)
     FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
     return false;
   }
+  if(!FFSS_QoS_Init(0))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS QoS engine\n");
+    return false;
+  }
   FC_SI_OUT_UDP = SU_CreateServer(0,SOCK_DGRAM,false);
   if(FC_SI_OUT_UDP == NULL)
   {

@@ -611,6 +611,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   char *Buf;
   unsigned long int BufSize;
   FFSS_LongField UserInfo;
+  FFSS_PQosConn Qos;
 
   SU_ThreadBlockSigs();
   Client = Tmp->Client;
@@ -626,6 +627,24 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     SU_FreeCS(Client);
     SU_END_THREAD(NULL);
   }
+
+  /* Qos allocation */
+  if(Client->sock < FFSS_MAX_SOCKETS)
+  {
+    Qos = (FFSS_PQosConn) malloc(sizeof(FFSS_TQosConn));
+    if(Qos != NULL)
+    {
+      memset(Qos,0,sizeof(FFSS_TQosConn));
+      SU_GetTicks(&Qos->st);
+      Qos->IP = INADDR_GET_IP(Client->SAddr.sin_addr);
+
+      if(FFSS_QosConns[Client->sock] != NULL)
+        free(FFSS_QosConns[Client->sock]);
+      FFSS_QosConns[Client->sock] = Qos;
+    }
+  }
+  else
+    FFSS_PrintSyslog(LOG_ERR,"######## Socket %d greater than %d ########\n",Client,FFSS_MAX_SOCKETS);
 
   if(FFSS_CB.SCB.OnBeginTCPThread != NULL)
     FFSS_CB.SCB.OnBeginTCPThread(Client,Info);
@@ -663,6 +682,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
         FFSS_PrintDebug(1,"Error on TCP port of the server (TIME OUT)\n");
         if(FFSS_CB.SCB.OnEndTCPThread != NULL)
           FFSS_CB.SCB.OnEndTCPThread();
+        /* Reset throughput */
+        if(Qos != NULL)
+        {
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+        }
         SU_FreeCS(Client);
         free(Buf);
         SU_END_THREAD(NULL);
@@ -674,6 +699,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       FFSS_PrintSyslog(LOG_INFO,"WARNING : Server's buffer too short for this message (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
+      /* Reset throughput */
+      if(Qos != NULL)
+      {
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      }
       SU_FreeCS(Client);
       free(Buf);
       SU_END_THREAD(NULL);
@@ -684,6 +715,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       FFSS_PrintDebug(1,"Error on TCP port of the server (SOCKET_ERROR : %d)\n",errno);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
+      /* Reset throughput */
+      if(Qos != NULL)
+      {
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      }
       SU_FreeCS(Client);
       free(Buf);
       SU_END_THREAD(NULL);
@@ -692,6 +729,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     {
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
+      /* Reset throughput */
+      if(Qos != NULL)
+      {
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+        FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      }
       SU_FreeCS(Client);
       free(Buf);
       SU_END_THREAD(NULL);
@@ -706,6 +749,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
         if(FFSS_CB.SCB.OnEndTCPThread != NULL)
           FFSS_CB.SCB.OnEndTCPThread();
+        /* Reset throughput */
+        if(Qos != NULL)
+        {
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+        }
         SU_FreeCS(Client);
         free(Buf);
         SU_END_THREAD(NULL);
@@ -723,6 +772,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
         {
           if(FFSS_CB.SCB.OnEndTCPThread != NULL)
             FFSS_CB.SCB.OnEndTCPThread();
+          /* Reset throughput */
+          if(Qos != NULL)
+          {
+            FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+            FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,0-Qos->prev_thrpt,FFSS_QOS_CHECK_DELAY);
+          }
           SU_FreeCS(Client);
           free(Buf);
           SU_END_THREAD(NULL);
@@ -1084,6 +1139,11 @@ bool FS_Init(int ServerPort,bool FTP)
   if(!FFSS_Filter_Init(FFSS_THREAD_SERVER))
   {
     FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
+    return false;
+  }
+  if(!FFSS_QoS_Init(0))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS QoS engine\n");
     return false;
   }
   FS_SI_UDP = SU_CreateServer(ServerPort,SOCK_DGRAM,false);

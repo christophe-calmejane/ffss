@@ -366,17 +366,28 @@ extern char FFSS_WinServerVersion[20];
 
 /* Filter defines */
   /* Server */
-#define FFSS_FILTER_CHAINS_SERVER_UDP_PACKET          0
-#define FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION      1
-#define FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION  2
+#define FFSS_FILTER_CHAINS_SERVER_UDP_PACKET            0
+#define FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION        1
+#define FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION    2
   /* Client */
-#define FFSS_FILTER_CHAINS_CLIENT_UDP_PACKET      0
+#define FFSS_FILTER_CHAINS_CLIENT_UDP_PACKET            0
   /* Master */
 #define FFSS_FILTER_CHAINS_MASTER_UDP_PACKET            0
 #define FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER 1
   /* Actions */
 #define FFSS_FILTER_ACTION_ACCEPT   1
 #define FFSS_FILTER_ACTION_REJECT   2
+
+/* QoS defines */
+#define FFSS_QOS_CHECK_DELAY 50
+  /* Chains */
+#define FFSS_QOS_CHAINS_TRAFFIC_UPLOAD   0
+#define FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD 1
+#define FFSS_QOS_CHAINS_TRAFFIC_GLOBAL   2
+  /* Criteria */
+#define FFSS_QOS_CRITERIA_BYTES_PER_MSEC     1
+#define FFSS_QOS_CRITERIA_BANDWIDTH_PER_CENT 2
+
 
 #define CRLF "\xD\xA"
 #define FFSS_SUPER_MAGIC 0xFF55
@@ -390,6 +401,7 @@ typedef unsigned long long FFSS_LongField;
 #else /* !__unix__ */
 typedef __int64 FFSS_LongField;
 #endif /* __unix__ */
+typedef unsigned short int FFSS_THREAD_TYPE;
 
 typedef struct
 {
@@ -424,19 +436,20 @@ typedef struct
 
 typedef struct
 {
-  SU_SOCKET sock;             /* Opened socket for file transfer */
-  int  Port;                  /* Port sock is listening to (download) */
-  FILE *fp;                   /* Opened file for reading/writing */
-  char *FileName;             /* Remote file name */ /* NULL on server side */
-  char *LocalPath;            /* Local path of file used for fopen */
-  FFSS_LongField StartingPos; /* Reading/Writing starting pos in the file */
-  FFSS_LongField FileSize;    /* Size of the file */
-  FFSS_LongField XFerPos;     /* Current xfer pos */
-  int  ThreadType;            /* Type of the thread (SERVER / CLIENT) */
-  SU_PClientSocket Client;    /* SU_PClientSocket structure of the share connection we transfer from */ /* Do NOT free this, only a pointer !! */
-  bool Cancel;                /* If the transfer is to be canceled */
-  void *User;                 /* User information */
-  FFSS_TXFerInfo XI;          /* XFer info for xfer using connection socket */
+  SU_SOCKET sock;               /* Opened socket for file transfer */
+  int  Port;                    /* Port sock is listening to (download) */
+  FILE *fp;                     /* Opened file for reading/writing */
+  char *FileName;               /* Remote file name */ /* NULL on server side */
+  char *LocalPath;              /* Local path of file used for fopen */
+  FFSS_LongField StartingPos;   /* Reading/Writing starting pos in the file */
+  FFSS_LongField FileSize;      /* Size of the file */
+  FFSS_LongField XFerPos;       /* Current xfer pos */
+  FFSS_THREAD_TYPE ThreadType;  /* Type of the thread (SERVER / CLIENT) */
+  SU_PClientSocket Client;      /* SU_PClientSocket structure of the share connection we transfer from */ /* Do NOT free this, only a pointer !! */
+  bool Cancel;                  /* If the transfer is to be canceled */
+  void *User;                   /* User information */
+  FFSS_TXFerInfo XI;            /* XFer info for xfer using connection socket */
+  unsigned long int Throughput; /* Throughput in bytes/sec */
 } FFSS_TTransfer, *FFSS_PTransfer;
 #endif /* !FFSS_DRIVER */
 
@@ -1081,7 +1094,7 @@ int FFSS_GetFFSSOptions(void);
 
 
 /* ************************************************************************* */
-/* FILTER.H                                                                  */
+/* FILTER                                                                    */
 /* ************************************************************************* */
 #ifdef _WIN32
 #define INADDR_GET_IP(x) x.S_un.S_addr
@@ -1091,8 +1104,8 @@ int FFSS_GetFFSSOptions(void);
 typedef unsigned int FFSS_FILTER_CHAIN;
 typedef unsigned int FFSS_FILTER_ACTION;
 /* Do NOT call any Filter function within the callback, or it will result as a dead lock */
-typedef void (*FFSS_CHAINS_ENUM_CB)(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILTER_ACTION Default); /* Strings are temporary buffers... copy them */
-typedef void (*FFSS_RULES_ENUM_CB)(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]); /* Strings are temporary buffers... copy them */
+typedef void (*FFSS_FILTER_CHAINS_ENUM_CB)(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILTER_ACTION Default); /* Strings are temporary buffers... copy them */
+typedef void (*FFSS_FILTER_RULES_ENUM_CB)(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]); /* Strings are temporary buffers... copy them */
 bool FFSS_Filter_AddRuleToChain_Head(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
 bool FFSS_Filter_AddRuleToChain_Tail(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
 bool FFSS_Filter_AddRuleToChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
@@ -1103,10 +1116,10 @@ bool FFSS_Filter_DelRuleFromChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[]
 bool FFSS_Filter_ClearChain(FFSS_FILTER_CHAIN Chain);
 bool FFSS_Filter_GetRuleOfChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_FILTER_ACTION *Action,char **Name); /* You must free returned strings */
 bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_FILTER_ACTION *Action); /* You must free returned strings */
-bool FFSS_Filter_EnumChains(FFSS_CHAINS_ENUM_CB EnumCB);
-bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB);
+bool FFSS_Filter_EnumChains(FFSS_FILTER_CHAINS_ENUM_CB EnumCB);
+bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_RULES_ENUM_CB EnumCB);
 FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(unsigned int Chain,unsigned long IP);
-bool FFSS_Filter_Init(int Type);
+bool FFSS_Filter_Init(FFSS_THREAD_TYPE ThreadType);
 
 typedef struct
 {
@@ -1121,10 +1134,50 @@ typedef struct
   bool (*ClearChain)(FFSS_FILTER_CHAIN Chain);
   bool (*GetRuleOfChain_Pos)(FFSS_FILTER_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_FILTER_ACTION *Action,char **Name); /* You must free returned strings */
   bool (*GetRuleOfChain_Name)(FFSS_FILTER_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_FILTER_ACTION *Action); /* You must free returned strings */
-  bool (*EnumChains)(FFSS_CHAINS_ENUM_CB EnumCB);
-  bool (*EnumRulesOfChain)(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB);
+  bool (*EnumChains)(FFSS_FILTER_CHAINS_ENUM_CB EnumCB);
+  bool (*EnumRulesOfChain)(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_RULES_ENUM_CB EnumCB);
 } FFSS_Filter_TApi, *FFSS_Filter_PApi;
 extern FFSS_Filter_TApi FFSS_Filter_Api;
+
+
+/* ************************************************************************* */
+/* QOS                                                                       */
+/* ************************************************************************* */
+typedef unsigned int FFSS_QOS_CHAIN;
+typedef unsigned int FFSS_QOS_CRITERIA;
+typedef unsigned int FFSS_QOS_VALUE;
+/* Do NOT call any QoS function within the callback, or it will result as a dead lock */
+typedef void (*FFSS_QOS_CHAINS_ENUM_CB)(FFSS_QOS_CHAIN Chain,const char Name[]); /* Strings are temporary buffers... copy them */
+typedef void (*FFSS_QOS_RULES_ENUM_CB)(const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]); /* Strings are temporary buffers... copy them */
+bool FFSS_QoS_AddRuleToChain_Head(FFSS_QOS_CHAIN Chain,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+bool FFSS_QoS_AddRuleToChain_Tail(FFSS_QOS_CHAIN Chain,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+bool FFSS_QoS_AddRuleToChain_Pos(FFSS_QOS_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+bool FFSS_QoS_DelRuleFromChain_Pos(FFSS_QOS_CHAIN Chain,unsigned int Pos);
+bool FFSS_QoS_DelRuleFromChain_Name(FFSS_QOS_CHAIN Chain,const char Name[]);
+bool FFSS_QoS_ClearChain(FFSS_QOS_CHAIN Chain);
+bool FFSS_QoS_GetRuleOfChain_Pos(FFSS_QOS_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_QOS_CRITERIA *Criteria,FFSS_QOS_VALUE *Value,char **Name); /* You must free returned strings */
+bool FFSS_QoS_GetRuleOfChain_Name(FFSS_QOS_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_QOS_CRITERIA *Criteria,FFSS_QOS_VALUE *Value); /* You must free returned strings */
+bool FFSS_QoS_EnumChains(FFSS_QOS_CHAINS_ENUM_CB EnumCB);
+bool FFSS_QoS_EnumRulesOfChain(FFSS_QOS_CHAIN Chain,FFSS_QOS_RULES_ENUM_CB EnumCB);
+unsigned long int FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain,unsigned long IP,signed long int ThroughputDelta,unsigned long int TimeDelta);
+bool FFSS_QoS_Init(FFSS_LongField BandWidth); /* Bytes/msec */
+
+typedef struct
+{
+  bool Initialized;
+  FFSS_LongField BandWidth; /* Bytes/msec */
+  bool (*AddRuleToChain_Head)(FFSS_QOS_CHAIN Chain,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+  bool (*AddRuleToChain_Tail)(FFSS_QOS_CHAIN Chain,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+  bool (*AddRuleToChain_Pos)(FFSS_QOS_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[]);
+  bool (*DelRuleFromChain_Pos)(FFSS_QOS_CHAIN Chain,unsigned int Pos);
+  bool (*DelRuleFromChain_Name)(FFSS_QOS_CHAIN Chain,const char Name[]);
+  bool (*ClearChain)(FFSS_QOS_CHAIN Chain);
+  bool (*GetRuleOfChain_Pos)(FFSS_QOS_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_QOS_CRITERIA *Criteria,FFSS_QOS_VALUE *Value,char **Name); /* You must free returned strings */
+  bool (*GetRuleOfChain_Name)(FFSS_QOS_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_QOS_CRITERIA *Criteria,FFSS_QOS_VALUE *Value); /* You must free returned strings */
+  bool (*EnumChains)(FFSS_QOS_CHAINS_ENUM_CB EnumCB);
+  bool (*EnumRulesOfChain)(FFSS_QOS_CHAIN Chain,FFSS_QOS_RULES_ENUM_CB EnumCB);
+} FFSS_QoS_TApi, *FFSS_QoS_PApi;
+extern FFSS_QoS_TApi FFSS_QoS_Api;
 
 
 /* ************************************************************************* */

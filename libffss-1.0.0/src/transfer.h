@@ -3,5 +3,6 @@
 
 SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info);
 SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info);
+extern SU_CPUSPEED FFSS_CpuSpeed;
 
 #endif /* !__FFSS_TRANSFER_H__ */

@@ -87,7 +87,7 @@ bool FFSS_Filter_CreateChain(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILT
   return true;
 }
 
-bool FFSS_Filter_Init(int Type)
+bool FFSS_Filter_Init(FFSS_THREAD_TYPE ThreadType)
 {
   if(FFSS_Filter_Created)
     return true;
@@ -95,7 +95,7 @@ bool FFSS_Filter_Init(int Type)
   /* Create semaphore */
   if(!SU_CreateSem(&FFSS_SemFilter,1,1,"FFSSFilterSem"))
     return false;
-  switch(Type)
+  switch(ThreadType)
   {
     case FFSS_THREAD_SERVER :
       FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_SERVER_UDP_PACKET,"UDP Packet",FFSS_FILTER_ACTION_ACCEPT);
@@ -331,7 +331,7 @@ bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],c
   return false;
 }
 
-bool FFSS_Filter_EnumChains(FFSS_CHAINS_ENUM_CB EnumCB)
+bool FFSS_Filter_EnumChains(FFSS_FILTER_CHAINS_ENUM_CB EnumCB)
 {
   int i;
 
@@ -348,7 +348,7 @@ bool FFSS_Filter_EnumChains(FFSS_CHAINS_ENUM_CB EnumCB)
   return true;
 }
 
-bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB)
+bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_RULES_ENUM_CB EnumCB)
 {
   SU_PList Ptr;
   FFSS_PRule Rule;

@@ -1,6 +1,8 @@
 #ifndef FFSS_DRIVER
 #include "ffss.h"
 #include "utils.h"
+#include "transfer.h"
+#include "common.h"
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 #endif /* !FFSS_DRIVER */
 
@@ -8,7 +10,6 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 /*        GENERAL SENDING FUNCTIONS     */
 /* ************************************ */
 #ifdef FFSS_DRIVER
-/* Comment from "FC_SendMessage_Download" to "FC_SendMessage_CancelXFer" and from "FC_SendMessage_Search" to "FC_SendMessage_StrmSeek" */
 #include <ffss_tdi.h>
 #define bool SU_BOOL
 #define FFSS_SendBroadcast(a,b,c,d) FFSS_SendUDPBcast(b,c,d)
@@ -56,6 +57,10 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
   int resp,retval;
   fd_set rfds;
   struct timeval tv;
+  FFSS_PQosConn Qos;
+  SU_TICKS et;
+  unsigned long int tim;
+  unsigned long int thrpt,sleep_val,sleep_val2;
 
   context;
   FD_ZERO(&rfds);
@@ -70,6 +75,36 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
       free(msg);
     return false;
   }
+  /* Check QoS */
+  if(Client < FFSS_MAX_SOCKETS)
+  {
+    Qos = FFSS_QosConns[Client];
+    if(Qos != NULL)
+    {
+      SU_GetTicks(&et);
+      Qos->bytes += len;
+      tim = SU_ElapsedTime(Qos->st,et,FFSS_CpuSpeed);
+      if(tim >= FFSS_QOS_CHECK_DELAY)
+      {
+        thrpt = Qos->bytes / tim;
+        sleep_val = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,thrpt-Qos->prev_thrpt,tim);
+        sleep_val2 = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,thrpt-Qos->prev_thrpt,tim);
+        Qos->prev_thrpt = thrpt;
+        /* Reset counters */
+        SU_GetTicks(&Qos->st);
+        Qos->bytes = 0;
+        /* Execute the sleep */
+        if(sleep_val || sleep_val2)
+        {
+          if(sleep_val > sleep_val2)
+            SU_USLEEP(sleep_val);
+          else
+            SU_USLEEP(sleep_val2);
+        }
+      }
+    }
+  }
+
   /* TODO : Cryptage du message ici... sauf premier champ (taille) !! */
   /* Faut juste trouver comment faire le switch/case suivant le type actuel de cryptage */
   resp = send(Client,msg,len,SU_MSG_NOSIGNAL);

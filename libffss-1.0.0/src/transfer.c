@@ -1,6 +1,7 @@
 #include "ffss.h"
 #include "utils.h"
 #include "common.h"
+#include "transfer.h"
 
 char *FFSS_TransferErrorTable[]={"","Transfer buffer allocation failed","Timed out","Send error","EOF from remote host","Error reading file","Error accepting connection","Error opening file","Recv error","Local write error. Disk full ?","Received file bigger than specified","Checksum check failed","Transfer canceled"};
 long int FFSS_TransferBufferSize = FFSS_TRANSFER_BUFFER_SIZE;
@@ -30,6 +31,11 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   int retval,res,len;
   char *RBuf;
   time_t t1,t2;
+  SU_TICKS st,et;
+  unsigned long int tim;
+  unsigned long int bytes;
+  unsigned long int prev_thrpt,sleep_val,sleep_val2;
+  unsigned long IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
 
   SU_ThreadBlockSigs();
   fseek(FT->fp,0,SEEK_END);
@@ -126,7 +132,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     SU_END_THREAD(NULL);
   }
 
-  while(total < fsize)
+  SU_GetTicks(&st);
+  bytes = 0;
+  prev_thrpt = 0;
+  while(total < fsize) /* Main loop */
   {
     if(FT->Cancel)
     {
@@ -140,6 +149,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
         if(FFSS_CB.CCB.OnTransferFailed != NULL)
           FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_CANCELED,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_CANCELED],false);
       }
+      /* Reset throughput */
+      FT->Throughput = 0;
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
       FFSS_FreeTransfer(FT);
       SU_END_THREAD(NULL);
     }
@@ -160,6 +173,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
         if(FFSS_CB.CCB.OnTransferFailed != NULL)
           FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_READ_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_READ_FILE],false);
       }
+      /* Reset throughput */
+      FT->Throughput = 0;
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
       FFSS_FreeTransfer(FT);
       free(RBuf);
       SU_END_THREAD(NULL);
@@ -173,7 +190,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       else
         len = rlen - rpos;
       res = 0;
-      while(res != len)
+      while(res != len) /* Inner loop - Send read buffer */
       {
         FD_ZERO(&rfds);
         FD_SET(FT->sock,&rfds);
@@ -193,6 +210,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
             if(FFSS_CB.CCB.OnTransferFailed != NULL)
               FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_TIMEOUT,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_TIMEOUT],false);
           }
+          /* Reset throughput */
+          FT->Throughput = 0;
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
           FFSS_FreeTransfer(FT);
           free(RBuf);
           SU_END_THREAD(NULL);
@@ -211,11 +232,15 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
             if(FFSS_CB.CCB.OnTransferFailed != NULL)
               FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_SEND,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_SEND],false);
           }
+          /* Reset throughput */
+          FT->Throughput = 0;
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+          FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
           FFSS_FreeTransfer(FT);
           free(RBuf);
           SU_END_THREAD(NULL);
         }
-      }
+      } /* while(res != len) */
       FT->XFerPos += len;
       if(FT->ThreadType == FFSS_THREAD_SERVER)
       {
@@ -228,9 +253,42 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
           FFSS_CB.CCB.OnTransferActive(FT,len,false);
       }
       rpos += len;
-    }
+
+      /* QoS Check */
+      SU_GetTicks(&et);
+      bytes += len;
+      tim = SU_ElapsedTime(st,et,FFSS_CpuSpeed);
+      if(tim >= FFSS_QOS_CHECK_DELAY)
+      {
+        FT->Throughput = bytes / tim;
+        sleep_val = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,tim);
+        sleep_val2 = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,tim);
+        prev_thrpt = FT->Throughput;
+        /* Reset counters */
+        SU_GetTicks(&st);
+        bytes = 0;
+        /* Execute the sleep */
+        if(sleep_val || sleep_val2)
+        {
+          if(sleep_val > sleep_val2)
+            SU_USLEEP(sleep_val);
+          else
+            SU_USLEEP(sleep_val2);
+        }
+      }
+    } /* while(rpos < rlen) */
     total += rlen;
-  }
+  } /* while(total < fsize) */
+
+  /* Update one last time the throughput (for small files) */
+  SU_GetTicks(&et);
+  tim = SU_ElapsedTime(st,et,FFSS_CpuSpeed);
+  if(tim == 0) /* avoid divide error */
+    tim = 1;
+  FT->Throughput = bytes / tim;
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,tim);
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,tim);
+  prev_thrpt = FT->Throughput;
 
   /* Send Checksum */
   FD_ZERO(&rfds);
@@ -251,6 +309,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       if(FFSS_CB.CCB.OnTransferFailed != NULL)
         FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_TIMEOUT,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_TIMEOUT],false);
     }
+    /* Reset throughput */
+    FT->Throughput = 0;
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
     FFSS_FreeTransfer(FT);
     free(RBuf);
     SU_END_THREAD(NULL);
@@ -272,6 +334,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       if(FFSS_CB.CCB.OnTransferFailed != NULL)
         FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_SEND,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_SEND],false);
     }
+    /* Reset throughput */
+    FT->Throughput = 0;
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
     FFSS_FreeTransfer(FT);
     free(RBuf);
     SU_END_THREAD(NULL);
@@ -289,6 +355,10 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       if(FFSS_CB.CCB.OnTransferFailed != NULL)
         FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_EOF,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_EOF],false);
     }
+    /* Reset throughput */
+    FT->Throughput = 0;
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+    FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
     FFSS_FreeTransfer(FT);
     free(RBuf);
     SU_END_THREAD(NULL);
@@ -308,6 +378,12 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   if(t1 == t2)
     t2 = t1+1;
   FFSS_PrintDebug(1,"Successfully uploaded the file %s in %d sec (%.2f ko/s) (%ld)\n",FT->LocalPath,((int)(t2-t1)),fsize/1024.0/(t2-t1),SU_THREAD_SELF);
+
+  /* Reset throughput */
+  FT->Throughput = 0;
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+
   FFSS_FreeTransfer(FT);
   free(RBuf);
   SU_END_THREAD(NULL);
@@ -329,6 +405,11 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   FFSS_Field ChkSum,Checksum;
   bool error = false;
   time_t t1,t2;
+  SU_TICKS st,et;
+  unsigned long int tim;
+  unsigned long int bytes;
+  unsigned long int prev_thrpt,sleep_val,sleep_val2;
+  unsigned long IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
 
   SU_ThreadBlockSigs();
   context;
@@ -472,7 +553,10 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     FT->FileSize = Size;
   }
 
-  while(!error)
+  SU_GetTicks(&st);
+  bytes = 0;
+  prev_thrpt = 0;
+  while(!error) /* Main loop */
   {
     context;
     if(FT->Cancel)
@@ -487,6 +571,10 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
         if(FFSS_CB.CCB.OnTransferFailed != NULL)
           FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_CANCELED,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_CANCELED],true);
       }
+      /* Reset throughput */
+      FT->Throughput = 0;
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+      FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
       FFSS_FreeTransfer(FT);
       SU_END_THREAD(NULL);
     }
@@ -599,6 +687,29 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
           }
           Checksum = FFSS_ComputeChecksum(Checksum,Buf,res);
           FT->XFerPos += res;
+
+          /* QoS Check */
+          SU_GetTicks(&et);
+          bytes += len;
+          tim = SU_ElapsedTime(st,et,FFSS_CpuSpeed);
+          if(tim >= FFSS_QOS_CHECK_DELAY)
+          {
+            FT->Throughput = bytes / tim;
+            sleep_val = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,IP,FT->Throughput-prev_thrpt,tim);
+            sleep_val2 = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,tim);
+            prev_thrpt = FT->Throughput;
+            /* Reset counters */
+            SU_GetTicks(&st);
+            bytes = 0;
+            /* Execute the sleep */
+            if(sleep_val || sleep_val2)
+            {
+              if(sleep_val > sleep_val2)
+                SU_USLEEP(sleep_val);
+              else
+                SU_USLEEP(sleep_val2);
+            }
+          }
         }
         if(!error)
         {
@@ -664,10 +775,16 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
             }
             error = true;
           }
-        }
-      }
-    }
-  }
+        } /* if(!error) */
+      } /* if(!error) */
+    } /* if(!error) */
+  } /* while(!error) */
+
+  /* Reset throughput */
+  FT->Throughput = 0;
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+  FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
+
   FFSS_FreeTransfer(FT);
   if(!error)
   {

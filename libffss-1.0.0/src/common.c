@@ -12,6 +12,7 @@ struct sockaddr_in FFSS_CurrentSIN;
 time_t FFSS_When;
 bool FFSS_ShuttingDown = false;
 
+
 SU_THREAD_ROUTINE(F_ThreadUDP,User)
 {
   struct sockaddr_in Client;
