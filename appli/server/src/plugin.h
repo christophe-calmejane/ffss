@@ -14,6 +14,8 @@
 #define FSPQ_SET_STATE        21
 #define FSPQ_EJECT_ALL        22
 
+#define FSPQ_SHUTDOWN         30
+
 void *FS_PluginQuery(int Type,...);
 
 /* Structure returned by Plugin_QueryInfos call */

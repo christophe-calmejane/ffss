@@ -45,6 +45,12 @@ void *FS_PluginQuery(int Type,...)
     case FSPQ_EJECT_ALL :
       FS_EjectAll(true);
       break;
+
+    case FSPQ_SHUTDOWN :
+      FS_ShutDown();
+      exit(0);
+      //SU_TermThread(FFSS_MainThread);
+      break;
   }
   va_end(ap);
   return ret;

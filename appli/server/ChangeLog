@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 6th 2002
+                  Last Update : June, 7th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+June, 7th 2002:
+  - Added SHUTDOWN command in plugin interface
 
 June, 6th 2002:
   - Changed connection code using new lib feature : thread is created only if OnShareConnection returned something
