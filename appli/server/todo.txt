@@ -1,13 +1,5 @@
 TO DO :
  - Implementer le debit max par partage (fichier de conf / server.h)
-   Ensuite lors d un download, a chaque paquet envoye, on met a jour une variable globale du partage
-   Cette var globale peux soit etre dans la structure du share (mais donc une sem par share, bof...)
-                          soit etre dans une struct globale qui contient le pointeur du FS_PShare et un longint associe
-   On fait donc un 'var_global += ma_diff'
-     avec ma_diff etant la diff entre le debit precedent (donc garder la derniere val de debit qui a servi a calculer la diff envoyee a globale) et le courant
-     Ainsi au debut, ca vaut 0, donc on ajoute xx le debit du premier paquet
-     Au fur et a mesure, on ajoute ou retrait la diff de debit
-     A la fin, on retire la val du debit precedent (-0) et ca roule :)
 
  - FTP : si File_year != Current_year, envoye le year au lieu de l heure !
 
@@ -26,3 +18,5 @@ TO DO :
  - Si pas de master defini lors du Startup, creer un thread 'timer' qui simule les pings du master
 
  - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)
+
+ - Throttle de connexions (dans un plugin, dans le checkconnection) (stocke les ip, avec derniere heure de connection et nombre de connexions)

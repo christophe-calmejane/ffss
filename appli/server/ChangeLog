@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 9th 2002
+                  Last Update : August, 20th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+August, 20th 2002:
+  - Added support for QoS
 
 August, 9th 2002:
   - Added a new plugin callback, to check if a share is to be indexed or not
