@@ -95,15 +95,15 @@ void WriteLog(char *Txt,...)
 }
 
 /* Successfully connected to the share */
-bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
+void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
 {
   if(!L_Gbl.Log_Conn)
-    return true;
+    return NULL;
   if((Login == NULL) || (Login[0] == 0))
     WriteLog("Share Connection from %s (%s) : %s {id:%u}\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)),ShareName,SU_THREAD_SELF);
   else
     WriteLog("Share Connection from %s (%s) : %s using login %s {id:%u}\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)),ShareName,Login,SU_THREAD_SELF);
-  return true;
+  return NULL;
 }
 
 /* Download successfully started */
