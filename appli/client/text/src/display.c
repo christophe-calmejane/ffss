@@ -45,7 +45,7 @@ bool FCA_question(const char *question)
 
 void FCA_print_state(long int State,const char *IP,const char *Domain,const char *Name,const char *OS,const char *Comment,const char *MasterIP)
 {
-	const char *States[]={"","on","off","quiet"};
+	const char *States[]={"","on","off","", "quiet"};
 	char tmp[128], tmp2[128];
 
 	FM_PHost Server, S;
@@ -301,7 +301,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 	FC_PEntry Es;
 	FCA_PServs servs;
 	FM_PHost H, Server;
-	const char *States[]={"","on","off","quiet"};
+	const char *States[]={"","on","off","", "quiet"};
 	int nbqu, nboff, nbdisp=0;
 	char tmp[128], tmp2[128];
 
