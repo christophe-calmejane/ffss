@@ -77,7 +77,7 @@ void FCA_init()
 	FCA_args.cfg_file=FCA_CONFIG_FILES[0];
 	SU_strcpy(FCA_pwd, "/$", sizeof(FCA_pwd));
 	    	/* to use same functions, pwd is like //... */
-	FCA_ignore_term();
+	FCA_ignore_usr1();
 	FCA_err_stream=stderr;
 	FCA_exiting=false;
 	FCA_conSh[0]='\0';
@@ -269,7 +269,7 @@ void FCA_uninit()
 	FCA_ShDisconnect();	/* disconnects if connected */
 	if( !FC_UnInit() && !FCA_quiet)	/* cannot call FCA_crash... */
 		printf("FATAL ERROR: cannot shutdown FFSS library !\n");
-	FCA_restore_term();
+	FCA_restore_usr1();
 
 	if(!FCA_quiet)
 		FCA_prog_end();

@@ -95,8 +95,8 @@ void *FCA_sem_timer();
 #endif
 void FCA_sem_post();
 
-void FCA_ignore_term();
-void FCA_restore_term();
+void FCA_ignore_usr1();
+void FCA_restore_usr1();
 
 char **FCA_completion(char *text, int start, int end);
 char *FCA_cmd_gen(char *text, int state);

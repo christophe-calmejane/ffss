@@ -96,7 +96,7 @@ void FCA_read_file(FILE *fp, char *filename)
 	FCA_reading_file=true;
 	FCA_command=malloc(FCA_CMD_MAX*sizeof(char));
 	while( SU_ReadLine(fp, FCA_command, FCA_CMD_MAX) ) {
-		FFSS_PrintDebug(5, "(client) readen: '%s'\n", FCA_command);
+		FFSS_PrintDebug(5, "(client) read: '%s'\n", FCA_command);
 		snprintf(FCA_file_status,FCA_MAX_FILE_STATUS,"file %s, line %d", filename, ic++);
 		FCA_interpret_cmd();
 		if(FCA_command)

@@ -170,7 +170,7 @@ void FCA_interpret_cmd()
 		}
 			/* the last one */
 		FCA_interpret_cmd();
-			/* ok, we've readen all the string */
+			/* ok, we've read all the string */
 		FCA_command=pdeb;
 		return;
 	}
@@ -581,11 +581,16 @@ bool FCA_get_func(char *rmFile, bool toDisk)
 	}
 	serv=FCA_get_server(dom, machine);
 	if(serv==NULL) {
-		FCA_print_cmd_err("invalid server");
-		return false;
+		if( SU_strcasecmp(domain, "None") ) {
+			FCA_print_cmd_err("invalid server");
+			return false;
+		}
 	}
 		/* resolve */
-	IP=( (FM_PHost)(serv->Data) )->IP;
+	if(serv)
+		IP=( (FM_PHost)(serv->Data) )->IP;
+	else
+		IP=machine;
 	if( !isShareValid(IP, share) ) {
 		FCA_print_cmd_err("cannot connect to this share");
 		return false;

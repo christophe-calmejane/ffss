@@ -388,12 +388,12 @@ void *FCA_sem_timer()
 		return 0;
 #endif
 	}
-		/* we mustn't ignore the TERM signal */
-	FCA_restore_term();
+		/* we mustn't ignore the SIG_USE1 signal */
+	FCA_restore_usr1();
 	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_SEM_TIMEOUT);
 	sleep(FCA_SEM_TIMEOUT);
-		/* now we must ignore TERM signals */
-	FCA_ignore_term();
+		/* now we must ignore SIG_USR1 */
+	FCA_ignore_usr1();
 
 	if(FCA_sem_locked) {
 		FCA_sem_timeout=true;
@@ -424,12 +424,12 @@ void FCA_sem_post()
 	else {
 			/* kill timer thread */
 		if(FCA_wait_threading) {
-/*
-printf("paf SIGTERM...\n");
-			pthread_kill(*FCA_wait_thread, SIGTERM);
+
+printf("paf SIG_USR1...\n");
+			pthread_kill(*FCA_wait_thread, SIGUSR1);
 			free(FCA_wait_thread);
 printf("ahah t mort\n");
-*/
+
 			FCA_wait_threading=false;
 		}
 
@@ -439,22 +439,22 @@ printf("ahah t mort\n");
 	}
 }
 
-void FCA_ignore_term()
+void FCA_ignore_usr1()
 {
 	sigset_t mask;
 	
 	sigemptyset(&mask);
-		/* ignore only TERM signal */
-	sigaddset(&mask, SIGTERM);
+		/* ignore only SIG_USR1 */
+	sigaddset(&mask, SIGUSR1);
 	pthread_sigmask(SIG_BLOCK,&mask,NULL);
 }
 
-void FCA_restore_term()
+void FCA_restore_usr1()
 {
 	sigset_t mask;
 	
 	sigemptyset(&mask);
-	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGUSR1);
 	pthread_sigmask(SIG_UNBLOCK,&mask,NULL);
 }
 
