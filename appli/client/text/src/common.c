@@ -185,6 +185,7 @@ void FCA_list_domains()
 			FCA_sem_wait();
 		if(FCA_UDP_errno)
 			FCA_print_domains(NULL,0);
+		FFSS_PrintDebug(1, "(client) domains listed\n");
 	}
 	FCA_posted=false;
 }
@@ -306,7 +307,11 @@ bool isDirValid(char *path, char *dir)
 	/* thread manipulation */
 void FCA_sem_init()
 {
+	/*
+	sem_init(&FCA_prmptSem,0,0);	
+	*/
 	SU_CreateSem(&FCA_prmptSem, 0, 0, "promptsem");
+	
 	FCA_sem_locked=false;
 	FCA_wait_threading=false;
 }
@@ -355,6 +360,7 @@ void FCA_sem_wait()
 				FFSS_PrintDebug(1, "(client) timer thread created and detached\n");
 			FFSS_PrintDebug(1, "(client) timer launched, waiting...\n");
 			SU_SEM_WAIT(FCA_prmptSem);
+			FFSS_PrintDebug(1, "(client) sem_wait unlocked.\n");
 		}
 	}
 }

@@ -19,14 +19,15 @@ FFSS_PREFIX=/usr/local/bin
 AC_PROG_CC
 AC_ISC_POSIX
 
-
+	dnl adds -D_REENTRANT to any compilation command
 CFLAGS="$CFLAGS -D_REENTRANT"
+	dnl with gcc, it's good to have -Wall
 if test "$GCC" = "yes"
 then
 	CFLAGS="$CFLAGS -Wall"
 fi
 
-
+	dnl option to configure: --enable-debug, adds a -DDEBUG or not
 AC_ARG_ENABLE(debug,
 	[  --enable-debug	  Enables debug option (default=no)],
 	[case "${enableval}" in
@@ -38,6 +39,7 @@ AC_ARG_ENABLE(debug,
 		CFLAGS="$CFLAGS -DDEBUG"
 	fi
 
+	dnl option to configure: --enable-malloc_trace, adds a -DSU_MALLOC_TRACE or not
 AC_ARG_ENABLE(malloc_trace,
 	[  --enable-malloc_trace   Enables malloc trace debug info (default=no)],
 	[case "${enableval}" in
@@ -49,7 +51,7 @@ AC_ARG_ENABLE(malloc_trace,
 	  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
 	fi
 
-
+	dnl option to configure: --enable-cgi, adds a -DCGI or not
 AC_ARG_ENABLE(cgi,
 	[  --enable-cgi		  Enables CGI mode (default=no)],
 	[case "${enableval}" in
@@ -61,7 +63,7 @@ AC_ARG_ENABLE(cgi,
 		CFLAGS="$CFLAGS -DCGI"
 	fi
 
-
+	dnl option to configure: --enable-cgi-downloads, adds a -DCGI_DOWNLOADS or not
 AC_ARG_ENABLE(cgi-downloads,
 	[  --enable-cgi-downloads  Enables downloads via the CGI interface (default=no)],
 	[case "${enableval}" in
@@ -77,7 +79,7 @@ AC_ARG_ENABLE(cgi-downloads,
 	fi
 
 
-
+	dnl option to configure: --enable-aliases, adds a -DALIASES or not
 AC_ARG_ENABLE(aliases,
 	[  --enable-aliases	  Enables aliases (default=yes)],
 	[case "${enableval}" in
@@ -89,7 +91,7 @@ AC_ARG_ENABLE(aliases,
 		CFLAGS="$CFLAGS -DALIASES"
 	fi
 	
-
+	dnl option to configure: --enable-local-commands, adds a -DLOCAL_CMDS
 AC_ARG_ENABLE(local-commands,
 	[  --enable-local-commands Enables local commands (!<command> and !) (default=yes)],
 	[case "${enableval}" in
@@ -102,6 +104,7 @@ AC_ARG_ENABLE(local-commands,
 	fi
 
 
+	dnl option to configure: --with-ffss=<path to ffss-config>, to specify FFSS's lirarby location
 AC_ARG_WITH(ffss,
  [  --with-ffss=DIR	  Bin path to uninstalled copy of libffss (default /usr/local/bin)])
 echo -n "checking for ffss-config... "
@@ -143,21 +146,21 @@ CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
 
 
-	dnl for readline we need termcap
+	dnl for readline we need termcap, check for tputs function in -ltermcap
 AC_CHECK_LIB(termcap, tputs, FFSS_TERMCAP_LIB="-ltermcap")
 if test ! "$FFSS_TERMCAP_LIB"; then
  	AC_MSG_ERROR([Cannot find termcap functions, please compile libtermcap or install libtermcap-dev or -devel package])
 fi
 LIBS="$LIBS -ltermcap"
 
-	dnl Checks for readline.
+	dnl Checks for readline, check for readline function in -lreadline
 AC_CHECK_LIB(readline, readline, FFSS_READLINE_LIB="-lreadline")
 if test ! "$FFSS_READLINE_LIB"; then
 	AC_MSG_ERROR([Cannot find readline functions, please compile libreadline or install libreadline-dev or -devel package])
 fi
 LIBS="$LIBS -lreadline"
 
-	dnl we need libcgi for CGI
+	dnl we need libcgi for CGI, not for the moment
 dnl if test "$cgi" = "true"; then
 dnl 	AC_CHECK_LIB(cgi, cgi_init, FFSS_CGI_LIB="-lcgi")
 dnl 	if test ! "$FFSS_CGI_LIB"; then
@@ -168,6 +171,7 @@ dnl 	LIBS="$LIBS -L/usr/lib -lcgi"
 dnl fi
 
 
+	dnl we need perhaps this after
 dnl AC_SUBST(FFSS_PTHREAD_LIB)
 dnl AC_SUBST(FFSS_READLINE_LIB)
 dnl AC_SUBST(FFSS_TERMCAP_LIB)
@@ -186,12 +190,11 @@ AC_CHECK_HEADERS(unistd.h signal.h semaphore.h)
 	dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
-
 	dnl Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS(strdup strstr strcasecmp sem_init sem_wait sem_post signal)
 
-
+	dnl generated Makefiles
 AC_OUTPUT([
 	Makefile
 	src/Makefile

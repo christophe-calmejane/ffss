@@ -58,7 +58,7 @@ const FCA_TCGI_arg FCA_CGI_ARGS[]={
 */
 	{"prefix",	FCA_html_prefix,	FCA_VAR_MAX,		-1	},
 	{"img_prefix",	FCA_html_img_prefix,	FCA_VAR_MAX,		-1	},
-	{"firstarg",	FCA_html_firstarg,	FCA_VAR_MAX,		9	},
+	{"firstarg",	FCA_html_firstarg,	FCA_VAR_MAX,		FCA_skin_env_index+2},
 	{"skin",	FCA_skin_name,		FCA_VAR_MAX,		-1	},
 	{"dir",		FCA_dir_to_list,	FFSS_MAX_PATH_LENGTH,	-1	},
 	{"s",		FCA_search,		FFSS_MAX_KEYWORDS_LENGTH,-1	},
