@@ -3,9 +3,16 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : January, 15th 2002
+                  Last Update : January, 20th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+January, 20th 2002:
+  - Added more syslog info
+  - Added exit() when receiving fatal error message from master
+
+January, 19th 2002:
+  - Updated server for new FFSS_LongField type for file and dir sizes
 
 January, 15th 2002:
   - Added few retries when OnDownload fail because of TooManyActiveTransfers

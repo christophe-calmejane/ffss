@@ -48,12 +48,15 @@ on_rescan_clicked                      (GtkButton       *button,
       gtk_clist_get_text(clist,(gint)items->data,0,&domain);
     }
   }
-  /* Sending server request message to broadcast */
-#ifdef HAVE_MASTER
-  FC_SendMessage_ServerList(CLT_MASTER,NULL,domain);
-#else
-  FC_SendMessage_ServerSearch();
-#endif
+  if(MyMaster != NULL)
+  {
+    if(FC_SendMessage_DomainListing(MyMaster))
+      FC_SendMessage_ServerList(MyMaster,NULL,domain);
+    else
+      FC_SendMessage_ServerSearch();
+  }
+  else
+    FC_SendMessage_ServerSearch();
 }
 
 

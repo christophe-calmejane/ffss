@@ -33,6 +33,7 @@ bool FS_LoadConfig(const char FileName[])
   char GBL_Comment[FFSS_MAX_SERVERCOMMENT_LENGTH+1];
   char GBL_Master[1024];
 
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "ProcessId",GetCurrentProcessId());
   N_DebugLevel = 6;
   FS_MyGlobal.ConfSock = true;
   FFSS_PrintDebug(5,"Loading config from registry\n");

@@ -812,7 +812,7 @@ bool FMI_LoadSuffixTree_rec(FILE *fp,FM_PSTNode Root)
     Root->STLeafs = (FM_TSTLeaf *) malloc(Root->NbLeafs*sizeof(FM_TSTLeaf));
     if(Root->STLeafs == NULL)
     {
-      printf("Load Suffix Tree : Not enough memory\n");
+      FFSS_PrintSyslog(LOG_ERR,"Load Suffix Tree : Not enough memory\n");
       return false;
     }
     for(i=0;i<Root->NbLeafs;i++)
@@ -824,7 +824,7 @@ bool FMI_LoadSuffixTree_rec(FILE *fp,FM_PSTNode Root)
         Root->STLeafs[i].NumFiles = (int *) malloc(Root->STLeafs[i].NbFiles*sizeof(int));
         if(Root->STLeafs[i].NumFiles == NULL)
         {
-          printf("Load Suffix Tree : Not enough memory\n");
+          FFSS_PrintSyslog(LOG_ERR,"Load Suffix Tree : Not enough memory\n");
           return false;
         }
         fread(Root->STLeafs[i].NumFiles,Root->STLeafs[i].NbFiles*sizeof(int),1,fp);
@@ -837,7 +837,7 @@ bool FMI_LoadSuffixTree_rec(FILE *fp,FM_PSTNode Root)
     Root->STNodes = (FM_TSTNode *) malloc(Root->NbNodes*sizeof(FM_TSTNode));
     if(Root->STNodes == NULL)
     {
-      printf("Load Suffix Tree : Not enough memory\n");
+      FFSS_PrintSyslog(LOG_ERR,"Load Suffix Tree : Not enough memory\n");
       return false;
     }
     for(i=0;i<Root->NbNodes;i++)
@@ -860,7 +860,7 @@ bool FMI_LoadSuffixTree(FILE *fp)
   {
     if(fread(&used,sizeof(used),1,fp) == 0)
     {
-      printf("Load Suffix Tree : Corrupted file : Not enough elements in hash table : %d\n",i);
+      FFSS_PrintSyslog(LOG_ERR,"Load Suffix Tree : Corrupted file : Not enough elements in hash table : %d\n",i);
       return false;
     }
     if(used)
@@ -868,7 +868,7 @@ bool FMI_LoadSuffixTree(FILE *fp)
       Root = (FM_PSTNode) malloc(sizeof(FM_TSTNode));
       if(Root == NULL)
       {
-        printf("Load Suffix Tree : Not enough memory\n");
+        FFSS_PrintSyslog(LOG_ERR,"Load Suffix Tree : Not enough memory\n");
         return false;
       }
       memset(Root,0,sizeof(FM_TSTNode));
@@ -901,7 +901,7 @@ bool FMI_LoadFileTrees(FILE *fp)
     FM_Controler.Hosts = (FM_PFTControler *) malloc(sizeof(FM_PFTControler)*FM_Controler.NbHosts);
     if(FM_Controler.Hosts == NULL)
     {
-      printf("Load File Trees : Not enough memory\n");
+      FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
       return false;
     }
     memset(FM_Controler.Hosts,0,sizeof(FM_PFTControler)*FM_Controler.NbHosts);
@@ -910,7 +910,7 @@ bool FMI_LoadFileTrees(FILE *fp)
       FM_Controler.Hosts[i] = (FM_PFTControler) malloc(sizeof(FM_TFTControler));
       if(FM_Controler.Hosts[i] == NULL)
       {
-        printf("Load File Trees : Not enough memory\n");
+        FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
         return false;
       }
       memset(FM_Controler.Hosts[i],0,sizeof(FM_TFTControler));
@@ -918,7 +918,7 @@ bool FMI_LoadFileTrees(FILE *fp)
       FM_Controler.Hosts[i]->Name = (char *) malloc(Length);
       if(FM_Controler.Hosts[i]->Name == NULL)
       {
-        printf("Load File Trees : Not enough memory\n");
+        FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
         return false;
       }
       fread(FM_Controler.Hosts[i]->Name,Length,1,fp);
@@ -926,7 +926,7 @@ bool FMI_LoadFileTrees(FILE *fp)
       FM_Controler.Hosts[i]->FileTree = (char *) malloc(FM_Controler.Hosts[i]->FileTreeLength);
       if(FM_Controler.Hosts[i]->FileTree == NULL)
       {
-        printf("Load File Trees : Not enough memory\n");
+        FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
         return false;
       }
       fread(FM_Controler.Hosts[i]->FileTree,FM_Controler.Hosts[i]->FileTreeLength,1,fp);
@@ -936,7 +936,7 @@ bool FMI_LoadFileTrees(FILE *fp)
         FM_Controler.Hosts[i]->FTNodes = (FM_TFTNode *) malloc(sizeof(FM_TFTNode)*FM_Controler.Hosts[i]->NbNodes);
         if(FM_Controler.Hosts[i]->FTNodes == NULL)
         {
-          printf("Load File Trees : Not enough memory\n");
+          FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
           return false;
         }
         memset(FM_Controler.Hosts[i]->FTNodes,0,sizeof(FM_TFTNode)*FM_Controler.Hosts[i]->NbNodes);
@@ -981,7 +981,7 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
 #endif /* __unix__ */
     if(!res)
     {
-      printf("Error loading index file '%s'. Please remove it and re-run master\n",FileName);
+      FFSS_PrintSyslog(LOG_ERR,"Error loading index file '%s'. Please remove it and re-run master\n",FileName);
       abort();
     }
     fclose(fp);

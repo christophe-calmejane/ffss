@@ -261,6 +261,9 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Share->Private = (bool)atoi(s_pr);
         Share->MaxConnections = atoi(s_m);
         /* Users .... */
+#ifdef _WIN32
+        FS_SaveConfig(NULL);
+#endif
         SU_SEM_POST(FS_SemShr);
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -312,6 +315,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        /* Sending login message to my master */
+        FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_SERVER_OS,FS_MyGlobal.Comment,FFSS_STATE_ON);
+        /* Sending index message to my master */
+        FS_SendIndex(FS_MyGlobal.Master,FFSS_MASTER_PORT_S);
         break;
       case FS_OPCODE_SETSTATE :
         FS_MyState = buf[1];

@@ -5,7 +5,26 @@
 /* UDP callbacks */
 void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
+  char *States[]={"","ON","OFF","QUIET"};
+  GtkCList *clist;
+  gchar *strings[6];
+
   printf("Received a new state (%ld) from %s (%s-%s-%s-%s) using master %s\n",State,IP,Domain,Name,OS,Comment,MasterIP);
+  gdk_threads_enter();
+  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
+/*  if(clist != NULL)
+    gtk_clist_freeze(clist);*/
+  if(clist != NULL)
+  {
+    strings[0] = (gchar *)Name;
+    strings[1] = (gchar *)Comment;
+    strings[2] = (gchar *)States[State];
+    strings[3] = (gchar *)IP;
+    strings[4] = (gchar *)OS;
+    strings[5] = (gchar *)Domain;
+    gtk_clist_append(clist,strings);
+  }
+  gdk_threads_leave();
 }
 
 void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
@@ -106,6 +125,7 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
 void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
 {
   printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),MasterVersion,Domain);
+  MyMaster = strdup(inet_ntoa(Master.sin_addr));
   if(FC_SendMessage_DomainListing(inet_ntoa(Master.sin_addr)))
     FC_SendMessage_ServerList(inet_ntoa(Master.sin_addr),NULL,NULL);
   else

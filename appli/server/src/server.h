@@ -35,7 +35,7 @@
 #define FS_ON_DOWNLOAD_MAX_RETRIES 5
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 
-#define FFSS_SERVER_VERSION "1.0-pre71"
+#define FFSS_SERVER_VERSION "1.0-pre72"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"

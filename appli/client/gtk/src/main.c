@@ -18,6 +18,7 @@ GtkCList *clist_dwl,*clist_fail;
 
 G_LOCK_DEFINE(gbl_conns_lock);
 GList *gbl_conns = NULL;
+char *MyMaster = NULL;
 
 int main (int argc, char *argv[])
 {
@@ -69,16 +70,24 @@ int main (int argc, char *argv[])
 //  FFSS_CB.CCB.OnData = OnData;
   if(!FC_Init())
     return -1;
-  /* Sending server request message to broadcast */
+
 #ifdef HAVE_MASTER
-  if(FC_SendMessage_DomainListing(CLT_MASTER))
-    FC_SendMessage_ServerList(CLT_MASTER,NULL,NULL);
+  MyMaster = strdup(CLT_MASTER);
+#endif /* HAVE_MASTER */
+  if(MyMaster != NULL)
+  {
+    if(FC_SendMessage_DomainListing(MyMaster))
+      FC_SendMessage_ServerList(MyMaster,NULL,NULL);
+    else
+      FC_SendMessage_ServerSearch();
+  }
   else
-    FC_SendMessage_ServerSearch();
-#else
-  FC_SendMessage_MasterSearch();
-  //FC_SendMessage_ServerSearch();
-#endif
+  {
+    FC_SendMessage_MasterSearch();
+    SU_SLEEP(4);
+    if(MyMaster == NULL)
+      FC_SendMessage_ServerSearch();
+  }
 
   gdk_threads_enter();
   gtk_main();

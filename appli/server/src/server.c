@@ -470,7 +470,7 @@ void OnError(long int ErrorCode,const char Description[])
 {
   SU_PList Ptr;
 
-  FFSS_PrintDebug(1,"Server received an error message : (%ld) %s\n",ErrorCode,Description);
+  FFSS_PrintSyslog(LOG_ERR,"Server received an error message : (%ld) %s\n",ErrorCode,Description);
   if(ErrorCode == FFSS_ERROR_RESEND_LAST_UDP) /* Ignore right now */
     return;
   if(ErrorCode == FFSS_ERROR_BUFFER_OVERFLOW) /* Ignore */
@@ -485,6 +485,7 @@ void OnError(long int ErrorCode,const char Description[])
   }
 
   FS_UnInit();
+  exit(-1);
 }
 
 void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[])
@@ -496,16 +497,16 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
   FS_SendMessage_Pong(Master,FS_MyState);
   if(FS_MyGlobal.Master == NULL)
   {
-    if((ProtocolVersion <= FFSS_PROTOCOLE_VERSION) && (ProtocolVersion >= FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
+    if((ProtocolVersion <= FFSS_PROTOCOL_VERSION) && (ProtocolVersion >= FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE))
     {
       FS_MyGlobal.MasterIP = inet_ntoa(Master.sin_addr);
       FS_MyGlobal.Master = SU_NameOfPort(FS_MyGlobal.MasterIP);
     }
     else
     {
-      if(ProtocolVersion > FFSS_PROTOCOLE_VERSION)
+      if(ProtocolVersion > FFSS_PROTOCOL_VERSION)
         FFSS_PrintSyslog(LOG_WARNING,"Master %s uses a superior FFSS protocol version (%x), maybe you should upgrade your server\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
-      if(ProtocolVersion < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE)
+      if(ProtocolVersion < FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE)
         FFSS_PrintSyslog(LOG_WARNING,"Master %s uses an inferior FFSS protocol version (%x), maybe you should contact ffss-master administrator for upgrade\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
     }
   }
@@ -2154,9 +2155,7 @@ void handint(int sig)
   if(!done)
   {
     done = true;
-#ifdef DEBUG
-    printf("Received a %d signal in %d\n",sig,getpid());
-#endif
+    FFSS_PrintSyslog(LOG_ERR,"Received a %d signal in %d\n",sig,getpid());
     /* Shutting down server */
     FS_ShutDown();
     exit(0);

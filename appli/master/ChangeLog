@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : September, 19th 2001
+                  Last Update : January, 20th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+January, 20th 2002:
+  - Added more syslog messages
 
 September, 29th 2001:
   - Added a debug purpose function to compute number of strings in index

@@ -27,6 +27,8 @@
 #define CLT_MASTER "ffss"
 #endif
 
+extern char *MyMaster;
+
 typedef struct
 {
   GtkWidget *wnd;           /* Window managing this connection     */
