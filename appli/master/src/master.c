@@ -332,8 +332,10 @@ void OnPong(struct sockaddr_in Server,FFSS_Field State)
   if(Hst != NULL)
   {
     if(State != Hst->State)
+    {
+      Hst->State = State;
       FM_AddStateToMyQueue(&FM_MyDomain,Hst);
-    Hst->State = State;
+    }
     Hst->LastPong = time(NULL);
     Hst->OffSince = 0;
   }

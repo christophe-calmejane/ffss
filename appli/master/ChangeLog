@@ -9,6 +9,8 @@ VIRER LE -PREx DE MASTER.H
 
 June, 2nd 2002:
   - Fixed a bug in index thread... always getting a 0.0.0.0 ip
+  - Fixed wrong STATE update in search index
+  - Added host IP in index dump (or it is lost when master restarts). Added VersionNumber in index dump
 
 May, 30th 2002:
   - Changed SearchAnswer protocol : Added IP of the server in each answer

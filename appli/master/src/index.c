@@ -754,6 +754,9 @@ bool FMI_StoreFileTrees(FILE *fp)
     Length = strlen(FM_Controler.Hosts[i]->Name) + 1;
     fwrite(&Length,sizeof(Length),1,fp);
     fwrite(FM_Controler.Hosts[i]->Name,Length,1,fp);
+    Length = strlen(FM_Controler.Hosts[i]->IP) + 1;
+    fwrite(&Length,sizeof(Length),1,fp);
+    fwrite(FM_Controler.Hosts[i]->IP,Length,1,fp);
     fwrite(&FM_Controler.Hosts[i]->FileTreeLength,sizeof(FM_Controler.Hosts[i]->FileTreeLength),1,fp);
     fwrite(FM_Controler.Hosts[i]->FileTree,FM_Controler.Hosts[i]->FileTreeLength,1,fp);
     fwrite(&FM_Controler.Hosts[i]->NbNodes,sizeof(FM_Controler.Hosts[i]->NbNodes),1,fp);
@@ -770,6 +773,7 @@ bool FMI_StoreFileTrees(FILE *fp)
 bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index to */
 {
   FILE *fp;
+  FFSS_Field Version;
 
   FFSS_PrintDebug(1,"Dumping index to disk... (%s)\n",FileName);
   fp = fopen(FileName,"wb");
@@ -778,6 +782,8 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
 
   context;
   SU_SEM_WAIT(FM_MySem5);
+  Version = FM_INDEX_VERSION;
+  fwrite(&Version,sizeof(Version),1,fp);
   FMI_StoreFileTrees(fp);
   FMI_StoreSuffixTree(fp);
   SU_SEM_POST(FM_MySem5);
@@ -911,6 +917,14 @@ bool FMI_LoadFileTrees(FILE *fp)
         return false;
       }
       fread(FM_Controler.Hosts[i]->Name,Length,1,fp);
+      fread(&Length,sizeof(Length),1,fp);
+      FM_Controler.Hosts[i]->IP = (char *) malloc(Length);
+      if(FM_Controler.Hosts[i]->IP == NULL)
+      {
+        FFSS_PrintSyslog(LOG_ERR,"Load File Trees : Not enough memory\n");
+        return false;
+      }
+      fread(FM_Controler.Hosts[i]->IP,Length,1,fp);
       fread(&FM_Controler.Hosts[i]->FileTreeLength,sizeof(FM_Controler.Hosts[i]->FileTreeLength),1,fp);
       FM_Controler.Hosts[i]->FileTree = (char *) malloc(FM_Controler.Hosts[i]->FileTreeLength);
       if(FM_Controler.Hosts[i]->FileTree == NULL)
@@ -946,6 +960,7 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
 {
   FILE *fp;
   bool res;
+  FFSS_Field Version;
 
   context;
   res = false;
@@ -954,6 +969,12 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
   if(fp != NULL)
   {
     SU_SEM_WAIT(FM_MySem5);
+    fread(&Version,sizeof(Version),1,fp);
+    if(Version != FM_INDEX_VERSION)
+    {
+      FFSS_PrintSyslog(LOG_ERR,"Error loading index file '%s' : Version mismatch (master=0x0%x, index=0x0%x).\nPlease remove it and re-run master\n",FileName,FM_INDEX_VERSION,Version);
+      abort();
+    }
     res = FMI_LoadFileTrees(fp);
     if(res)
       res = FMI_LoadSuffixTree(fp);
