@@ -546,8 +546,8 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 			  FCA_post_tab_item();
 			FCA_tab_post_item();
 		}
-	
-		FCA_tab_btm();
+		if(NbAnswers)
+			FCA_tab_btm();
 	}
 	FCA_pre_infos();
 	FCA_main_num(NbAnswers, "answer");
