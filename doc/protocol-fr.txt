@@ -39,7 +39,7 @@ Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, 
 Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
 
 
-Detail du protocole (Version 0x0010005) :
+Detail du protocole (Version 0x0010006) :
 ---------------------------------
  * Message d'etat (Serveur->Master 695) (UDP) :
    DWord : Taille du message
@@ -108,6 +108,7 @@ Detail du protocole (Version 0x0010005) :
  ou Message de listing des serveurs (Master->Master 695) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 6 (listing serveurs)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Type de compressions authorisees pour la reponse
    ZStr : OS demande ou chaine vide (0) si tout OS
    ZStr : Domain demande ou chaine vide (0) si tous les groupes
@@ -115,6 +116,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de reponse de listing des serveurs (Master->Client qcq) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 7 (reponse listing serveurs)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
    DWord : Nombre de domaines
      ZStr : Nom du domaine
@@ -155,10 +157,12 @@ Detail du protocole (Version 0x0010005) :
  * Message de listing des partages (Client->Serveur 696) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 12 (listing partages)
+   QWord : Pointeur User, retourne dans la reponse
 
  * Message de reponse de listing des partages (Serveur->Client 697) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 13 (reponse listing partages)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Type d'adresse du serveur (0=Neant,1=IPv4,2=IPv6)
     DWord : IPv4 du serveur
     DWord : Reserve
@@ -171,16 +175,19 @@ Detail du protocole (Version 0x0010005) :
  * Message de listing des domaines (Client->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 30 (listing domaines)
+   QWord : Pointeur User, retourne dans la reponse
 
  * Message de reponse de listing des domaines (Master->Client qcq) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 31 (reponse listing domaines)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Nombre de domaines
      ZStr : Nom du domaine
 
  * Message de connexion a un partage (Client->Serveur connecte 696) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 14 (connexion partage)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Version courante du protocole de la lib FFSS
    DWord : Type de compressions supportees
    ZStr : Nom du partage
@@ -195,6 +202,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de demande de listing d'un repertoire (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 15 (demande de listing d'un repertoire)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du repertoire dans le partage
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu
@@ -203,6 +211,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de listing du repertoire courant (Serveur->Client connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 16 (listing d'un repertoire)
+   QWord : Pointeur User, envoye lors de la requete
    ZStr : Path du repertoire dans le partage
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
    DWord : Nombre d'entrees
@@ -214,6 +223,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de download de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 17 (download d'un fichier)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
    QWord : Position a partir de laquelle il faut envoyer le fichier (resume si il y a eu une erreur) ou 0 si fichier complet
    DWord : Port auquel se connecter pour envoyer le fichier
@@ -228,6 +238,7 @@ Detail du protocole (Version 0x0010005) :
  * Message d'upload de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 18 (upload d'un fichier)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
    QWord : Taille du fichier
    DWord : Port auquel se connecter pour recuperer le fichier
@@ -243,6 +254,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de renomage/deplacement de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 19 (renomage/deplacement d'un fichier)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
    ZStr : Nouveau Path du fichier
   -> Messages d'erreur possibles
@@ -254,6 +266,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de copie de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 20 (copie d'un fichier)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
    ZStr : Path de la copie du fichier
   -> Messages d'erreur possibles
@@ -266,6 +279,7 @@ Detail du protocole (Version 0x0010005) :
  * Message d'effacement de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 21 (effacement d'un fichier)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu
@@ -276,6 +290,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de creation d'un repertoire (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 22 (creation d'un repertoire)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du repertoire a creer
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu
@@ -286,6 +301,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de demande de listing recursif d'un repertoire (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 23 (demande de listing recursif d'un repertoire)
+   QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du repertoire dans le partage
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu
@@ -294,6 +310,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de listing recursif du repertoire courant (Serveur->Client connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 24 (listing recursif d'un repertoire)
+   QWord : Pointeur User, envoye lors de la requete
    ZStr : Path du repertoire dans le partage
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
    DWord : Nombre d'entrees
@@ -311,6 +328,7 @@ Detail du protocole (Version 0x0010005) :
  ou Message d'erreur (Master->Client qcq) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 200 (message d'erreur)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Code de l'erreur
    QWord : Valeur variable en fonction du code d'erreur
    ZStr : Description de l'erreur
@@ -318,6 +336,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de recherche (friandise) (Client->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 50 (recherche)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Port pour la reponse
    DWord : Type de compressions authorisees pour la reponse
    ZStr : Domain demande ou chaine vide (0) si tous les groupes
@@ -326,6 +345,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de reponse de recherche (friandise) (Master->Client qcq) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 51 (reponse de recherche)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
    ZStr : Chaine contenant les mots cles que l'on renvoie pour identifier la requete
    DWord : Nombre de domaines
@@ -341,6 +361,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de recherche forwarde (Master->Master 695) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 52 (recherche forwarde)
+   QWord : Pointeur User, envoyer lors de la requete
    DWord : Port du client pour la reponse
    DWord : Type de compressions authorisees pour la reponse
    DWord : Type d'adresse du client (0=Neant,1=IPv4,2=IPv6)
@@ -354,12 +375,14 @@ Detail du protocole (Version 0x0010005) :
  ou Message de recherche d'un master (Serveur->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 55 (recherche de master)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Type of requester (1=SERVER,2=CLIENT)
 
  * Message de reponse de recherche d'un master (Master->Client qcq) (UDP) :
  ou Message de reponse de recherche d'un master (Master->Serveur 696) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 56 (reponse de recherche de master)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Version courante du protocole de la lib FFSS
    ZStr : Nom du domaine du master
 
@@ -371,12 +394,14 @@ Detail du protocole (Version 0x0010005) :
  * Message de streaming : open (Client->Server connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 80 (streaming open)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Flags d'ouverture
    ZStr : Path du fichier
 
  * Message de streaming : reponse open (Server->Client connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 81 (streaming reponse open)
+   QWord : Pointeur User, envoye lors de la requete
    ZStr : Path du fichier
    DWord : Code de l'erreur
    DWord : Handle du fichier (si pas d'erreur)
@@ -390,6 +415,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de streaming : read (Client->Server connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 83 (streaming read)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Handle du fichier
    QWord : Position de lecture
    DWord : Taille de lecture (Indicative uniquement)
@@ -397,12 +423,14 @@ Detail du protocole (Version 0x0010005) :
  * Message de streaming : reponse read (Server->Client connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 84 (streaming reponse read)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Handle du fichier
     Datas
 
  * Message de streaming : write (Client->Server connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 85 (streaming write)
+   QWord : Pointeur User, retourne dans la reponse
    DWord : Handle du fichier
    QWord : Position d'ecriture
     Datas
@@ -410,6 +438,7 @@ Detail du protocole (Version 0x0010005) :
  * Message de streaming : reponse write (Server->Client connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 86 (streaming reponse write)
+   QWord : Pointeur User, envoye lors de la requete
    DWord : Handle du fichier
    DWord : Code de l'erreur
 
