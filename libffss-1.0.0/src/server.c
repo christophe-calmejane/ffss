@@ -812,15 +812,6 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
   while(1)
   {
     Client = SU_ServerAcceptConnection(FS_SI_TCP);
-    if(FFSS_CB.SCB.OnCheckConnection != NULL)
-    {
-      if(FFSS_CB.SCB.OnCheckConnection(Client) == false)
-      {
-        FFSS_PrintSyslog(LOG_WARNING,"Rejecting client %s\n",inet_ntoa(Client->SAddr.sin_addr));
-        SU_FreeCS(Client);
-        continue;
-      }
-    }
     if(FFSS_ShuttingDown)
     {
       FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
@@ -832,6 +823,15 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
     {
       SU_SLEEP(1);
       continue;
+    }
+    if(FFSS_CB.SCB.OnCheckConnection != NULL)
+    {
+      if(FFSS_CB.SCB.OnCheckConnection(Client) == false)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"Rejecting client %s\n",inet_ntoa(Client->SAddr.sin_addr));
+        SU_FreeCS(Client);
+        continue;
+      }
     }
     FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP,(void *)Client,true))

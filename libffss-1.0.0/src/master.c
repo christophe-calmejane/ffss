@@ -431,15 +431,6 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
   while(1)
   {
     Master = SU_ServerAcceptConnection(FM_SI_TCP);
-    if(FFSS_CB.MCB.OnCheckConnection != NULL)
-    {
-      if(FFSS_CB.MCB.OnCheckConnection(Master) == false)
-      {
-        FFSS_PrintSyslog(LOG_WARNING,"Rejecting connection from %s\n",inet_ntoa(Master->SAddr.sin_addr));
-        SU_FreeCS(Master);
-        continue;
-      }
-    }
     if(FFSS_ShuttingDown)
     {
       FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
@@ -451,6 +442,15 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
     {
       SU_SLEEP(1);
       continue;
+    }
+    if(FFSS_CB.MCB.OnCheckConnection != NULL)
+    {
+      if(FFSS_CB.MCB.OnCheckConnection(Master) == false)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"Rejecting connection from %s\n",inet_ntoa(Master->SAddr.sin_addr));
+        SU_FreeCS(Master);
+        continue;
+      }
     }
     FFSS_PrintDebug(5,"Master connected from %s (%s) ...\n",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
     if(!SU_CreateThread(&MasterThr,FM_MasterThreadTCP,(void *)Master,true))
