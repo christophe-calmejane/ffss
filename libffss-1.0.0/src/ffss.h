@@ -201,6 +201,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGE_REC_DIR_LISTING_ANSWER    24
 #define FFSS_MESSAGE_DOMAINS_LISTING           30
 #define FFSS_MESSAGE_DOMAINS_LISTING_ANSWER    31
+#define FFSS_MESSAGE_SHORT_MESSAGE             32
 #define FFSS_MESSAGE_SEARCH                    50
 #define FFSS_MESSAGE_SEARCH_ANSWER             51
 #define FFSS_MESSAGE_SEARCH_FW                 52
@@ -256,6 +257,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER_2   3
 #define FFSS_MESSAGESIZE_DOMAINS_LISTING            4
 #define FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER     5
+#define FFSS_MESSAGESIZE_SHORT_MESSAGE              2
 #define FFSS_MESSAGESIZE_SEARCH                     6
 #define FFSS_MESSAGESIZE_SEARCH_ANSWER              5
 #define FFSS_MESSAGESIZE_SEARCH_FW                  7
@@ -415,6 +417,7 @@ extern char FFSS_WinServerVersion[20];
 
 #define CRLF "\xD\xA"
 #define FFSS_SUPER_MAGIC 0xFF55
+#define FFSS_SHORT_MESSAGE_MAX 1024
 
 /* ************************************************ */
 /*                   DATA STRUCTURE                 */
@@ -489,6 +492,7 @@ typedef struct
   void (*OnIndexRequest)(struct sockaddr_in Master,FFSS_Field Port);
   void (*OnError)(FFSS_Field ErrorCode,const char Description[]);
   void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User);
+  void (*OnShortMessage)(struct sockaddr_in Client,const char Message[]);
 
   /* TCP callbacks */
   void *(*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions,FFSS_LongField User);
@@ -548,6 +552,7 @@ typedef struct
   void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User);
   void (*OnUDPError)(int ErrNum);
   void (*OnMasterError)(FFSS_Field ErrorCode,const char Descr[]);
+  void (*OnShortMessage)(struct sockaddr_in Server,const char Message[]);
 
   /* TCP callbacks */
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
@@ -753,6 +758,7 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
 
 /* FS_SendMessage_ServerSearchAnswer Function       */
 /* Sends a STATE message to a client                */
+/*  Client : The sin of the client                  */
 /*  Domain : The domain of my master                */
 /*  Name : The name of my server                    */
 /*  OS : The os of my server                        */
@@ -764,6 +770,7 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
 
 /* FS_SendMessage_ServerSharesAnswer Function                */
 /* Sends a SHARES ANSWER message to a client                 */
+/*  Client : The sin of the client                           */
 /*  IP : The IP address of my server                         */
 /*  ShareNames : A tab of the share names of my server       */
 /*  ShareComments : A tab of the share comments of my server */
@@ -854,6 +861,12 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
 /*  Code : The error code to send                      */
 /*  User : User pointer returned in message answer     */
 bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code,FFSS_LongField User);
+
+/* FS_SendMessage_ShortMessage Function           */
+/* Sends a SHORT MESSAGE message back to a client */
+/*  Server : The sin of the client to respond to  */
+/*  Message : Message to be sent to the server    */
+bool FS_SendMessage_ShortMessage(struct sockaddr_in Client,const char Message[]);
 
 #endif /* !FFSS_DRIVER */
 /* ************************************************ */
@@ -981,6 +994,12 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Lon
 /*  Flags : The flags for the seek operation            */
 /*  StartPos : The position of the seek                 */
 bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags,FFSS_LongField StartPos);
+
+/* FC_SendMessage_ShortMessage Function                        */
+/* Sends a SHORT MESSAGE message to a server                   */
+/*  Server : The name of the server we want the shares listing */
+/*  Message : Message to be sent to the server                 */
+bool FC_SendMessage_ShortMessage(const char Server[],const char Message[]);
 
 
 #ifndef FFSS_DRIVER

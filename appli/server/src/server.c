@@ -512,6 +512,23 @@ void OnPing(struct sockaddr_in Master)
   SU_SEM_POST(FS_SemPlugin);
 }
 
+void OnShortMessage(struct sockaddr_in Client,const char Message[])
+{
+  SU_PList Ptr;
+
+  SU_DBG_PrintDebug(FS_DBGMSG_IN_MSG,"Server received a short message from %s (%s)",inet_ntoa(Client.sin_addr));
+  FS_SendMessage_ShortMessage(Client,"got it");
+  SU_SEM_WAIT(FS_SemPlugin);
+  Ptr = FS_Plugins;
+  while(Ptr != NULL)
+  {
+    if(((FS_PPlugin)Ptr->Data)->CB.OnShortMessage != NULL)
+      ((FS_PPlugin)Ptr->Data)->CB.OnShortMessage(Client,Message);
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_POST(FS_SemPlugin);
+}
+
 void OnStateAnswer(const char Domain[])
 {
   SU_PList Ptr;
@@ -2719,7 +2736,7 @@ void PrintHelp(void)
   printf("Options : -h or --help : This\n");
   printf("          -v or --version : Prints server version and exits\n");
   printf("          -d or --daemon   : Daemonize the server\n");
-  printf("          -c <config file> : Loads this configuration file, instead of the default one \"%s\"\n",CONFIG_FILE_NAME);
+  printf("          -c <config file> : Loads this configuration file, instead of the default one \"%s\"\n\n",CONFIG_FILE_NAME);
   exit(0);
 }
 
@@ -2851,7 +2868,7 @@ int main(int argc,char *argv[])
       else if((strcmp(argv[i],"--version") == 0) || (strcmp(argv[i],"-v") == 0))
       {
         printf("This is free software; see the source for copying conditions.  There is NO\n");
-        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
         return 0;
       }
       else if((strcmp(argv[i],"-d") == 0) || (strcmp(argv[i],"--daemon") == 0))
@@ -2940,6 +2957,7 @@ int main(int argc,char *argv[])
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
     /* UDP callbacks */
     FFSS_CB.SCB.OnPing = OnPing;
+    FFSS_CB.SCB.OnShortMessage = OnShortMessage;
     FFSS_CB.SCB.OnStateAnswer = OnStateAnswer;
     FFSS_CB.SCB.OnServerSearch = OnServerSearch;
     FFSS_CB.SCB.OnSharesListing = OnSharesListing;

@@ -181,6 +181,7 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
 
 /* FS_SendMessage_ServerSearchAnswer Function       */
 /* Sends a STATE message to a client                */
+/*  Client : The sin of the client                  */
 /*  Domain : The domain of my master                */
 /*  Name : The name of my server                    */
 /*  OS : The os of my server                        */
@@ -231,6 +232,7 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
 
 /* FS_SendMessage_ServerSharesAnswer Function                */
 /* Sends a SHARES ANSWER message to a client                 */
+/*  Client : The sin of the client                           */
 /*  IP : The IP address of my server                         */
 /*  ShareNames : A tab of the share names of my server       */
 /*  ShareComments : A tab of the share comments of my server */
@@ -821,6 +823,33 @@ bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Fiel
   SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming WRITE answer message to client");
   return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
+
+/* FS_SendMessage_ShortMessage Function           */
+/* Sends a SHORT MESSAGE message back to a client */
+/*  Server : The sin of the client to respond to  */
+/*  Message : Message to be sent to the server    */
+bool FS_SendMessage_ShortMessage(struct sockaddr_in Client,const char Message[])
+{
+  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHORT_MESSAGE+FFSS_SHORT_MESSAGE_MAX+1];
+  long int pos,len;
+  int resp;
+
+  context;
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHORT_MESSAGE);
+  if(Message == NULL)
+    return true;
+  len = strlen(Message)+1;
+  if(len > FFSS_SHORT_MESSAGE_MAX)
+    len = FFSS_SHORT_MESSAGE_MAX;
+  pos = FFSS_PackString(msg,pos,Message,len);
+
+  FFSS_PackField(msg,0,pos);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Short Message to client");
+  resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
+  return (resp != SOCKET_ERROR);
+}
+
 
 #endif /* FFSS_DRIVER */
 
@@ -1413,6 +1442,34 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags
   FFSS_PackField(msg,0,pos);
   SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming SEEK message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
+}
+
+/* FC_SendMessage_ShortMessage Function                        */
+/* Sends a SHORT MESSAGE message to a server                   */
+/*  Server : The name of the server we want the shares listing */
+/*  Message : Message to be sent to the server                 */
+bool FC_SendMessage_ShortMessage(const char Server[],const char Message[])
+{
+  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHORT_MESSAGE+FFSS_SHORT_MESSAGE_MAX+1];
+  long int pos,len;
+  int resp;
+
+  context;
+  if(Server == NULL)
+    return true;
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHORT_MESSAGE);
+  if(Message == NULL)
+    return true;
+  len = strlen(Message)+1;
+  if(len > FFSS_SHORT_MESSAGE_MAX)
+    len = FFSS_SHORT_MESSAGE_MAX;
+  pos = FFSS_PackString(msg,pos,Message,len);
+
+  FFSS_PackField(msg,0,pos);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Short Message to %s",Server);
+  resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
+  return (resp != SOCKET_ERROR);
 }
 
 

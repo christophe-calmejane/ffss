@@ -186,6 +186,12 @@ Detail du protocole (Version 0x0010007) :
    DWord : Nombre de domaines
      ZStr : Nom du domaine
 
+ * Message de message court (Client->Serveur 696) (UDP)
+ ou Message de message court (Server->Client qcq) (UDP)
+   DWord : Taille du message
+   DWord : Type de message = 32 (message court)
+   ZStr  : Message court (Taille maximum suggeree 1024 octets)
+
  * Message de connexion a un partage (Client->Serveur connecte 696) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 14 (connexion partage)

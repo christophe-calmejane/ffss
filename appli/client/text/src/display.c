@@ -1019,7 +1019,7 @@ void FCA_version()
 {
 	FCA_print_version();
         printf("This is free software; see the source for copying conditions.  There is NO\n");
-        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
 	exit(0);
 }
 

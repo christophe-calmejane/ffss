@@ -840,7 +840,7 @@ void PrintHelp(void)
   printf("          -v or --version  : Prints server version and exits\n");
   printf("          -d or --daemon   : Daemonize the master\n");
   printf("          -l or --log      : Log all search request\n");
-  printf("          -c <config file> : Loads this configuration file, instead of the default one \"%s\"\n",CONFIG_FILE_NAME);
+  printf("          -c <config file> : Loads this configuration file, instead of the default one \"%s\"\n\n",CONFIG_FILE_NAME);
   exit(0);
 }
 
@@ -927,7 +927,7 @@ int main(int argc,char *argv[])
       else if((strcmp(argv[i],"--version") == 0) || (strcmp(argv[i],"-v") == 0))
       {
         printf("This is free software; see the source for copying conditions.  There is NO\n");
-        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
+        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
         return 0;
       }
       else if((strcmp(argv[i],"-d") == 0) || (strcmp(argv[i],"--daemon") == 0))

@@ -119,6 +119,17 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       if(FFSS_CB.SCB.OnMasterSearchAnswer != NULL)
         FFSS_CB.SCB.OnMasterSearchAnswer(Client,val,str,lval);
       break;
+    case FFSS_MESSAGE_SHORT_MESSAGE :
+      context;
+      str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+      if(str == NULL)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SHORT_MESSAGE : One or many fields empty, or out of buffer (%s) (%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),str);
+        break;
+      }
+      if(FFSS_CB.SCB.OnShortMessage != NULL)
+        FFSS_CB.SCB.OnShortMessage(Client,str);
+      break;
     default :
       FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %lx ... DoS attack ?\n",inet_ntoa(Client.sin_addr),Type);
   }

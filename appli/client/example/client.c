@@ -46,6 +46,11 @@ bool OnTransferFileWrite(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size,FFSS
 #endif
 
 /* UDP callbacks */
+void OnShortMessage(struct sockaddr_in Server,const char Message[])
+{
+  printf("Server answered to my short message : \n%s\n",Message);
+}
+
 void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
   static int done = 0;
@@ -215,6 +220,7 @@ int main()
 //if(fork() == 0)
   {
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
+    FFSS_CB.CCB.OnShortMessage = OnShortMessage;
     FFSS_CB.CCB.OnNewState = OnNewState;
     FFSS_CB.CCB.OnSharesListing = OnSharesListing;
     FFSS_CB.CCB.OnServerListingAnswer = OnServerListingAnswer;
@@ -243,7 +249,8 @@ int main()
       return -1;
     printf("Client running...\n");
 
-    FC_SendMessage_ShareConnect("10.0.0.2","mp3",NULL,NULL,0);
+    FC_SendMessage_ShortMessage("10.0.0.2","hello");
+    //FC_SendMessage_ShareConnect("10.0.0.2","mp3",NULL,NULL,0);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
     sleep(20);
     return 0;

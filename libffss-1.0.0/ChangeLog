@@ -8,6 +8,9 @@
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+September, 15th 2003:
+  - Added a new message to protocol : 'Short Message' between clients & servers
+
 August, 4th 2003:
   - Added missing ErrorMessages to ErrorTable
   - Added a new ErrorMessage in client thread, when remote host (server) disconnects
