@@ -1295,7 +1295,8 @@ void FCA_printlog(char *msg, ...)
 	if(!FCA_VAR_IS_ON(FCA_log))
 		return;
 #ifdef CGI
-	snprintf(strIP, 15, "(%s) ", getenv("REMOTE_ADDR"));
+	if(FCA_CGI_mode)
+		snprintf(strIP, 15, "(%s) ", getenv("REMOTE_ADDR"));
 #endif
 	va_start(argptr,msg);
 	vsnprintf(strtxt, 1007, msg, argptr);

@@ -239,6 +239,7 @@ printf("command to run: '%s'<br>\n", FCA_command);
 printf("</html>\n");
 exit(0);
 */
+FCA_printlog("test dans un log...");
 	FCA_run_once(dw);
 	FCA_exit(0);
 }
