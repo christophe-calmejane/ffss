@@ -201,11 +201,8 @@ void FS_FreeConn(FS_PConn Conn,bool RemoveXFers)
   SU_SEM_POST(FS_SemXFer);
   if(Conn->Remote != NULL)
     free(Conn->Remote);
-  if(FS_MyGlobal.XFerInConn)
-  {
-    if(Conn->TransferBuffer != NULL)
-      free(Conn->TransferBuffer);
-  }
+  if(Conn->TransferBuffer != NULL)
+    free(Conn->TransferBuffer);
   free(Conn);
 }
 
@@ -743,21 +740,6 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
 
   FFSS_PrintDebug(1,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d\n",Path,(long int)StartPos,Port);
 
-  if(FS_MyGlobal.XFerInConn)
-  {
-    if(Port != -1) /* XFer mode not supported */
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
-  }
-  else
-  {
-    if(Port == -1) /* XFer mode not supported */
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
-  }
-  if(FS_MyState != FFSS_STATE_ON)
-  { /* Quiet mode - Sending error message */
-    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET]);
-  }
-
   ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
@@ -765,6 +747,16 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
     FFSS_PrintDebug(1,"Conn not found in Share->Conns\n");
     return false;
   }
+  if(FS_MyGlobal.XFerInConn || Conn->XFerInConn)
+  {
+    if(Port != -1) /* XFer mode not supported */
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
+  }
+  if(FS_MyState != FFSS_STATE_ON)
+  { /* Quiet mode - Sending error message */
+    return FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET]);
+  }
+
   if(FS_MyGlobal.MaxXFerPerConn != 0)
   {
     if(FS_XFersCount(Conn) >= FS_MyGlobal.MaxXFerPerConn)
@@ -788,8 +780,11 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
       }
     }
   }
-  if(FS_MyGlobal.XFerInConn)
+  if(Port == -1) /* Xfer in sock */
   {
+    if((!Conn->XFerInConn) && (Conn->XFers != NULL)) /* Can't start xfer in socket while there are active 'normal' xfers */
+      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_XFER_MODE_NOT_SUPPORTED,FFSS_ErrorTable[FFSS_ERROR_XFER_MODE_NOT_SUPPORTED]);
+    Conn->XFerInConn = true;
     if(Conn->TransferBuffer == NULL)
     {
       Conn->TransferBuffer = (char *) malloc(FFSS_TRANSFER_READ_BUFFER_SIZE);
@@ -811,7 +806,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   snprintf(buf,sizeof(buf),"%s\\%s",ts->Share->Path,(Path[0] == 0)?Path:(Path+1));
 #endif /* __unix__ */
   SU_SEM_WAIT(FS_SemXFer); /* Must lock now, to protect it if the Xfer ends before the XFer is added bellow */
-  if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,FS_MyGlobal.XFerInConn,&FT))
+  if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,(Port == -1),&FT))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     SU_SEM_POST(FS_SemXFer); /* Unlock */
@@ -848,7 +843,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
     }
     return true;
   }
-  if(FS_MyGlobal.XFerInConn)
+  if(Port == -1)
   {
     if(!FS_InitXFerUpload(Client,FT,Path,false))
     {
@@ -996,7 +991,7 @@ int OnSelect(void) /* 0=Do timed-out select ; 1=don't do timed-out select, but s
     printf("Couldn't find PConn in OnSelect !!!\n");
     return 0;
   }
-  if(!FS_MyGlobal.XFerInConn) /* If use separate socket for xfers */
+  if(!Conn->XFerInConn) /* If use separate socket for xfers */
     return ((Conn->XFers != NULL) || (Conn->Strms != NULL)); /* Don't timeout if a xfer is active */ /* 0 or 1 */
   if(Conn->XFers == NULL)
     return 0;
@@ -1023,8 +1018,6 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   FFSS_PTransfer FT = NULL;
   FS_PConn Conn;
 
-  if(!FS_MyGlobal.XFerInConn)
-    return;
   ts = FS_GetThreadSpecific(false);
   /* Getting PConn structure */
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
@@ -1033,6 +1026,8 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
     printf("Couldn't find PConn in OnCancelXFer !!!\n");
     return;
   }
+  if(!Conn->XFerInConn)
+    return;
   if(Conn->XFers == NULL)
     return;
   Ptr = Conn->XFers;

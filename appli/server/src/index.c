@@ -678,7 +678,7 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
   long int pos=1,len;
 
   Node = &Share->Root;
-  if(Path[0] != 0)
+  if((Path[0] != 0) && (Path[0] == '/'))
   {
     tmp = strdup(Path);
     tok = strtok_r(tmp,"/",&p);
@@ -695,7 +695,8 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
         {
           len = strlen(((FS_PDir)Ptr->Data)->DirName);
           memcpy(Path+pos,((FS_PDir)Ptr->Data)->DirName,len);
-          pos += len + 1;
+          pos += len;
+          Path[pos++] = '/';
           break;
         }
         Ptr = Ptr->Next;
@@ -716,6 +717,8 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
       {
         len = strlen(((FS_PFile)Ptr->Data)->FileName);
         memcpy(Path+pos,((FS_PFile)Ptr->Data)->FileName,len);
+        pos += len;
+        Path[pos] = 0;
         free(tmp);
         return true;
       }

@@ -17,7 +17,7 @@ bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path
   {
     return false;
   }
-  return FFSS_SendData(FT,FT->XI.XFerTag,(char *)&FT->XI.fsize,sizeof(FT->XI.fsize));
+  return FFSS_SendData(FT,FT->XI.XFerTag,(char *)&FT->XI.fsize,sizeof(FT->XI.fsize)); /* Send filesize */
 }
 
 bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFER */
@@ -71,6 +71,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   if(last)
   {
     /* Send Checksum */
+    FFSS_PrintDebug(3,"FS_TransferBloc : Last packet sent after %lld bytes (fsize=%lld)...sending checksum\n",FT->XI.total,FT->XI.fsize);
     if(!FFSS_SendData(FT,FT->XI.XFerTag,(char *)&FT->XI.Checksum,sizeof(FT->XI.Checksum)))
       return false;
     if(FFSS_CB.SCB.OnTransferSuccess != NULL)

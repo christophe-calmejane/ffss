@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : March, 3th 2002
+                  Last Update : April, 13th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+April, 13th 2002:
+  - Added support for both 'nomal' and 'in conn socket' xfers
+  - Fixed a bug in path check when download is requested
 
 March, 3rd 2002:
   - Added check for login/password in share connection

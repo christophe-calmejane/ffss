@@ -37,7 +37,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre79"
+#define FFSS_SERVER_VERSION "1.0-pre80"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
@@ -122,6 +122,7 @@ typedef struct
   FS_PUser User;         /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL SHARE */
   FS_PThreadSpecific ts; /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL SHARE */
   SU_PList XFers;        /* FFSS_PTransfer */ /* DO NOT FREE THESE, ONLY A POINTER TO THE REAL XFERS */
+  bool XFerInConn;       /* If Xfer in connection socket (once in this mode... can't go back until share reconnection) */
   int CurrentXFer;       /* Only used for xfer in connection socket */
   char *TransferBuffer;  /* Only used for xfer in connection socket */
   SU_PList Strms;        /* FS_PStreaming */
