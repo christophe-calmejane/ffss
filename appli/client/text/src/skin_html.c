@@ -553,6 +553,7 @@ void FCA_post_link(bool firstArg)
 	free(p);
 	printf("&debug=%s",
 		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
+	printf("&included_doc=%d", FCA_included_doc);
 	free(p);
 	printf("'>");
 }

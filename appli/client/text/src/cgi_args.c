@@ -47,6 +47,7 @@ bool FCA_must_download;
 bool FCA_can_header;
 bool FCA_included_doc;
 char FCA_dir_to_list[FFSS_MAX_PATH_LENGTH];
+char FCA_html_page[FFSS_MAX_PATH_LENGTH];
 char FCA_search[FFSS_MAX_KEYWORDS_LENGTH];
 char FCA_search_dom[FFSS_MAX_DOMAIN_LENGTH];
 
@@ -61,6 +62,7 @@ const FCA_TCGI_arg FCA_CGI_ARGS[]={
 	name		variable		max of the	index in the FCA_VARS table
 			where it's stored	 variable	 (only if the value is restricted)
 */
+	{"page",	FCA_html_page,		FFSS_MAX_PATH_LENGTH,	-1	},
 	{"prefix",	FCA_html_prefix,	FCA_VAR_MAX,		-1	},
 	{"img_prefix",	FCA_html_img_prefix,	FCA_VAR_MAX,		-1	},
 	{"firstarg",	FCA_html_firstarg,	FCA_VAR_MAX,		FCA_skin_env_index+2},

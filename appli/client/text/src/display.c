@@ -670,7 +670,7 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 			if(totSz) {
 				FCA_infos(", ");
 				FCA_info_size(totSz,"total size: %d ");
-				FCA_infos("b");
+				FCA_infos("B");
 			}
 			FCA_infos(".");
 			FCA_post_infos();
@@ -1212,16 +1212,16 @@ void FCA_print_size(FFSS_LongField size, char *format)
 {
 		/* be VERY careful of the value of format... */
     
-	if(size>=1099511627776) {	/* >= 1 Tb ! */
+	if(size>=1099511627776) {	/* >= 1 TB ! */
 		printf(format, size/1099511627776);
 		printf("T");
-	} else if(size>=1073741824) {	/* >= 1 Gb */
+	} else if(size>=1073741824) {	/* >= 1 GB */
 		printf(format, size/1073741824);
 		printf("G");
-	} else if(size>=1048576) {	/* >= 1 Mb */
+	} else if(size>=1048576) {	/* >= 1 MB */
 		printf(format, size/1048576);
 		printf("M");
-	} else if(size>=1024) {	/* >= 1 Kb */
+	} else if(size>=1024) {	/* >= 1 KB */
 		printf(format, size/1024);
 		printf("K");
 	} else {

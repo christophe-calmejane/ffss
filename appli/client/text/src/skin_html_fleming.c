@@ -37,6 +37,7 @@ void FCA_htmlfl_tab_post_item();
 
 void FCA_htmlfl_tab_btm();
 
+void FCA_htmlfl_pre_infos();
 void FCA_htmlfl_infos(const char format[], ...);
 void FCA_htmlfl_num(int n, const char text[]);
 void FCA_htmlfl_info_size(FFSS_LongField n, const char text[]);
@@ -71,6 +72,9 @@ void FCA_htmlfl_post_search_ans(const char *query);
 
 void FCA_htmlfl_prog_end();
 
+void FCA_htmlfl_form_hidden_args();
+
+
 
 FCA_Tps FCA_htmlfl_ps;
 
@@ -98,6 +102,7 @@ void FCA_htmlfl_init()
 	
 	FCA_htmlfl_ps.tab_btm=FCA_htmlfl_tab_btm;
 
+	FCA_htmlfl_ps.pre_infos=FCA_htmlfl_pre_infos;
 	FCA_htmlfl_ps.infos=FCA_htmlfl_infos;
 	FCA_htmlfl_ps.num=FCA_htmlfl_num;
 	FCA_htmlfl_ps.info_size=FCA_htmlfl_info_size;
@@ -141,16 +146,17 @@ printf("<html>
 <head>
  <title>ffss client</title>
 </head>
+
+<body>
  ");
 printf("
-<body>
 <form name='browsing' action='");FCA_my_url(false);printf("' method=GET class='small'>");
 printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>\n");
-FCA_form_hidden_args();
+FCA_htmlfl_form_hidden_args();
 }
 
 void FCA_htmlfl_pre_listing(char *path)
@@ -170,7 +176,7 @@ printf("address: <input type='text' name='dir' value='%s' tabindex=1>
 <input type='hidden' name='sdom' value=''>
 </form>
 <form name='search' action='");FCA_my_url(false);printf("' method=GET class='small'>");
-FCA_form_hidden_args();printf("
+FCA_htmlfl_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
  <tr>
@@ -211,13 +217,13 @@ void FCA_htmlfl_pre_search_ans(const char *query)
 	char *p;
 	const FCA_Tskin *ps;
 
-printf("address: <input type='text' name='dir' value='/$' tabindex=1>
+printf("<font class='small'>address: </font><input type='text' name='dir' value='/$' tabindex=1>
 &nbsp;<input type='submit' value='go'><br>\n");printf("
 <input type='hidden' name='s' value=''>
 <input type='hidden' name='sdom' value=''>
 </form>
 <form name='search' action='");FCA_my_url(false);printf("' method=GET class='small'>");
-FCA_form_hidden_args();printf("
+FCA_htmlfl_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
  <tr>
@@ -316,10 +322,15 @@ void FCA_htmlfl_tab_btm()
 	printf("</table>\n</center><br>\n");
 }
 
+void FCA_htmlfl_pre_infos()
+{
+	printf("<p class='small'><i>");
+}
+
 void FCA_htmlfl_infos(const char format[], ...)
 {
 	va_list argptr;
-	
+
 	va_start(argptr,format);
 	vprintf(format, argptr);
 	va_end(argptr);
@@ -344,7 +355,7 @@ void FCA_htmlfl_main_num(int n, const char text[])
 
 void FCA_htmlfl_post_infos()
 {
-	printf("<br>\n</center>\n");
+	printf("</i></p><br>\n</center>\n");
 }
 
 void FCA_htmlfl_size(FFSS_LongField n, const char text[])
@@ -492,4 +503,30 @@ if(!FCA_included_doc)
 printf("</body>
 </html>
 ");
+}
+
+void FCA_htmlfl_form_hidden_args()
+{
+	char *p;
+	
+	printf(" <input type='hidden' name='page' value='%s'>\n",
+		FCA_html_page);
+	printf(" <input type='hidden' name='prefix' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf(" <input type='hidden' name='img_prefix' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf(" <input type='hidden' name='firstarg' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
+	free(p);
+	printf(" <input type='hidden' name='skin' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
+	free(p);
+	printf(" <input type='hidden' name='master' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_master) );
+	free(p);
+	printf(" <input type='hidden' name='debug' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
+	free(p);
 }
