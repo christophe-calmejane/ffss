@@ -64,18 +64,40 @@ void FNP_PlayNextFile(bool Lock)
     gtk_clist_get_text(FNP_clist,(gint)items->data,1,&ip);
     assert(path);
     assert(ip);
+    printf("got %s : %s\n",path,ip);
     FNP_GetShareAndFile(path,Share,sizeof(Share),File,sizeof(File));
     if(FNP_CurrentFile != NULL)
       free(FNP_CurrentFile);
     FNP_CurrentFile = strdup(File);
-    //g_free(path);
-    //g_free(ip);
+    /* Start connection with Server */
+    FNP_ConnectServer(ip,Share);
   }
   if(Lock)
     gdk_threads_leave();
+}
 
-  /* Start connection with Server */
-  FNP_ConnectServer(ip,Share);
+void FNP_OnEndOfFile()
+{
+  GList *items;
+  gdk_threads_enter();
+
+  items = FNP_clist->selection;
+  if(items != NULL)
+  {
+    gtk_clist_unselect_row(FNP_clist,(gint)items->data,0);
+    gtk_clist_select_row(FNP_clist,(gint)items->data+1,0);
+    if(FNP_clist->selection == NULL)
+      gtk_clist_select_row(FNP_clist,0,0);
+  }
+  gdk_threads_leave();
+
+  printf("End of file... playing next one\n");
+  FNP_PlayNextFile(true);
+}
+
+void FNP_OnEndTCPThread(void)
+{
+  printf("Connection with ffss server lost\n");
 }
 
 void FNP_OnError(int Code)
@@ -86,24 +108,20 @@ void FNP_OnError(int Code)
 /* **************************** */
 /* START OF OS INDEPENDANT CODE */
 /* **************************** */
-void FNP_ServerDisconnect()
+void FNP_ServerDisconnect(bool SendStrmClose)
 {
   printf("FNP : Disconnecting from server %s\n",FNP_CurrentIP);
-  if(FNP_CurrentFileHandle != 0)
+  if((FNP_CurrentFileHandle != 0) && SendStrmClose)
     FC_SendMessage_StrmClose(FNP_CurrentServer,FNP_CurrentFileHandle);
   FNP_CurrentFileHandle = 0;
-  SU_FreeCS(FNP_CurrentServer);
-  FNP_CurrentServer = NULL;
-  if(FNP_CurrentIP != NULL)
-    free(FNP_CurrentIP);
-  FNP_CurrentIP = NULL;
-  if(FNP_CurrentShare != NULL)
-    free(FNP_CurrentShare);
-  FNP_CurrentShare = NULL;
+  FC_SendMessage_Disconnect(FNP_CurrentServer);
 }
 
 void FNP_ConnectServer(const char IP[],const char Share[])
 {
+  if(FNP_CurrentFileHandle != 0)
+    FC_SendMessage_StrmClose(FNP_CurrentServer,FNP_CurrentFileHandle);
+  FNP_CurrentFileHandle = 0;
   if((FNP_CurrentServer != NULL) && (strcmp(IP,FNP_CurrentIP) == 0) && (strcmp(Share,FNP_CurrentShare) == 0))
   { /* Same as actual connection */
     printf("FNP : Same as actual connection... simulating ConnectionSuccess\n");
@@ -111,7 +129,7 @@ void FNP_ConnectServer(const char IP[],const char Share[])
     return;
   }
   if(FNP_CurrentServer != NULL) /* Disconnect from old server */
-    FNP_ServerDisconnect();
+    FNP_ServerDisconnect(true);
   printf("FNP : Sending Connection message to %s/%s\n",IP,Share);
   FNP_CurrentServer = FC_SendMessage_ShareConnect(IP,Share,NULL,NULL);
   if(FNP_CurrentServer != NULL)
@@ -125,15 +143,28 @@ void FNP_ConnectServer(const char IP[],const char Share[])
   }
 }
 
+bool FNP_ParseBuffer(const char Buf[],int Len)
+{
+  printf("FNP : Parsing HTTP request\n");
+  return true;
+}
+
+bool FNP_SendReply(SU_PClientSocket Client)
+{
+  char Buf[512];
+
+  printf("FNP : Sending HTTP Reply to server\n");
+  snprintf(Buf,sizeof(Buf),"HTTP/1.0 200 OK%c%cServer: %s/%s%c%cContent-Type: audio/mpeg%c%c%c%c",0x0D,0x0A,FNP_NAME,FNP_VERSION,0x0D,0x0A,0x0D,0x0A,0x0D,0x0A);
+  /* Mettre un select ici... avec un petit timeout */
+  send(Client->sock,Buf,sizeof(Buf),SU_MSG_NOSIGNAL);
+  return true;
+}
+
 SU_THREAD_ROUTINE(StreamingRoutine,User)
 {
-  SU_PServerInfo SI;
+  SU_PServerInfo SI = (SU_PServerInfo) User;
   char buf[1024];
-
-  SI = SU_CreateServer(FNP_PORT,SOCK_STREAM,false);
-  if(SI == NULL)
-    return;
-  SU_ServerListen(SI);
+  int read;
 
   while(1)
   {
@@ -141,9 +172,21 @@ SU_THREAD_ROUTINE(StreamingRoutine,User)
     if(FNP_CurrentPlayer != NULL)
     {
       printf("FNP : Player connected from %s... reading HTTP request\n",inet_ntoa(FNP_CurrentPlayer->SAddr.sin_addr));
-      if(recv(FNP_CurrentPlayer->sock,buf,sizeof(buf),SU_MSG_NOSIGNAL) <= 0)
+      if((read = recv(FNP_CurrentPlayer->sock,buf,sizeof(buf),SU_MSG_NOSIGNAL)) <= 0)
       {
         printf("FNP : Error reading HTTP request\n");
+        SU_FreeCS(FNP_CurrentPlayer);
+        break;
+      }
+      if(!FNP_ParseBuffer(buf,read))
+      {
+        printf("FNP : Error parsing HTTP request\n");
+        SU_FreeCS(FNP_CurrentPlayer);
+        break;
+      }
+      if(!FNP_SendReply(FNP_CurrentPlayer))
+      {
+        printf("FNP : Error replying to client\n");
         SU_FreeCS(FNP_CurrentPlayer);
         break;
       }
@@ -152,7 +195,7 @@ SU_THREAD_ROUTINE(StreamingRoutine,User)
         if(recv(FNP_CurrentPlayer->sock,buf,sizeof(buf),SU_MSG_NOSIGNAL) <= 0) /* Wait for connection lost with Player */
         {
           SU_SEM_WAIT(FNP_Sem);
-          FNP_ServerDisconnect();
+          FNP_ServerDisconnect(false);
           SU_FreeCS(FNP_CurrentPlayer);
           FNP_CurrentPlayer = NULL;
           SU_SEM_POST(FNP_Sem);
@@ -212,7 +255,14 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField 
 
 void OnEndTCPThread(SU_PClientSocket Server)
 {
-  printf("On End TCP Thread\n");
+  FNP_CurrentServer = NULL;
+  if(FNP_CurrentIP != NULL)
+    free(FNP_CurrentIP);
+  FNP_CurrentIP = NULL;
+  if(FNP_CurrentShare != NULL)
+    free(FNP_CurrentShare);
+  FNP_CurrentShare = NULL;
+  FNP_OnEndTCPThread();
 }
 
 void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,long int Handle,FFSS_LongField FileSize)
@@ -233,7 +283,7 @@ void OnStrmReadAnswer(SU_PClientSocket Client,long int Handle,const char Bloc[],
 {
   if(BlocSize == 0) /* End of file */
   {
-    FNP_PlayNextFile(true);
+    FNP_OnEndOfFile();
     return;
   }
   SU_SEM_WAIT(FNP_Sem);

@@ -21,6 +21,8 @@
 #define MKDIR(x) mkdir(x)
 #endif /* __unix__ */
 
+#define FNP_NAME "FFSSNetPlay"
+#define FNP_VERSION "0.3"
 #define FNP_PORT 8080
 #define FNP_BUFFER_SIZE 65536
 

@@ -19,6 +19,7 @@ SU_THREAD_HANDLE FNP_Thread;
 
 int main (int argc, char *argv[])
 {
+  SU_PServerInfo SI;
 
   g_thread_init(NULL);
   gtk_set_locale ();
@@ -33,7 +34,18 @@ int main (int argc, char *argv[])
   gtk_widget_show (wnd_main);
   FNP_clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
 
-  if(!SU_CreateThread(&FNP_Thread,StreamingRoutine,NULL,true))
+  SI = SU_CreateServer(FNP_PORT,SOCK_STREAM,false);
+  if(SI == NULL)
+  {
+    printf("Cannot create socket on port %d\n",FNP_PORT);
+    return -1;
+  }
+  if(SU_ServerListen(SI) == SOCKET_ERROR)
+  {
+    printf("Cannot create listening socket\n");
+    return -1;
+  }
+  if(!SU_CreateThread(&FNP_Thread,StreamingRoutine,(void *)SI,true))
   {
     printf("Cannot create listening thread\n");
     return -1;
@@ -55,7 +67,7 @@ int main (int argc, char *argv[])
   if(!FC_Init())
     return -1;
 
-  
+
   gdk_threads_enter();
   gtk_main();
   gdk_threads_leave();
