@@ -38,7 +38,7 @@ int main (int argc, char *argv[])
   FNP_CB.OnSearchAnswerStart = OnSearchAnswerStart;
   FNP_CB.OnSearchAnswerItem = OnSearchAnswerItem;
   FNP_CB.OnSearchAnswerEnd = OnSearchAnswerEnd;
-  if(!FNP_Init("ffss"))
+  if(!FNP_Init("orion"))
   {
     printf("Error : %s\n",FNP_GetLastError());
     return -2;

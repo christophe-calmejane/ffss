@@ -4,7 +4,7 @@ LDFLAGS=-L . -lfnp -L ../../../../../libffss-1.0.0/src/.libs -lffss -L ../../../
 
 all: libfnp.a try
 
-%.o : %.c
+%.o : %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 libfnp.a: fnp.o

@@ -311,6 +311,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_ERROR_END_OF_FILE               24
 #define FFSS_ERROR_IO_ERROR                  25
 #define FFSS_ERROR_BAD_HANDLE                26
+#define FFSS_ERROR_REMOTE_CLOSED             27
 #define FFSS_ERROR_NOT_IMPLEMENTED          100
 #define FFSS_ERROR_NO_ERROR                 666
 

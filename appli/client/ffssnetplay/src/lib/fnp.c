@@ -43,9 +43,9 @@ void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Ans
       {
         if(FNP_CB.OnSearchAnswerItem != NULL)
           FNP_CB.OnSearchAnswerItem(IPs[i],&Answers[i][1]);
-        free(IPs[i]);
       }
-   }
+    }
+    free(IPs[i]);
   }
   if(FNP_CB.OnSearchAnswerEnd != NULL)
     FNP_CB.OnSearchAnswerEnd();

@@ -758,6 +758,9 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     }
     else if(res == 0)
     {
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Disconnected : Remote host closed the connection");
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_REMOTE_CLOSED,FFSS_ErrorTable[FFSS_ERROR_REMOTE_CLOSED],0,0);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);

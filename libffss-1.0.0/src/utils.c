@@ -46,7 +46,7 @@ char *FFSS_DocExt[FFSS_DOC_NB_EXT] = {"htm","html","txt","doc","pdf","nfo","tex"
 char *FFSS_ExeExt[FFSS_EXE_NB_EXT] = {"exe","com","bat","sys","dll"} ; /* 5 */
 char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","bz2","deb","rpm"} ; /* 10 */
 
-char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack"};
+char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack","End of file","I/O error","Bad handle","Remote host closed connection"};
 
 #ifndef FFSS_DRIVER
 SU_THREAD_HANDLE FFSS_MainThread;

@@ -3,10 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 1st 2003
+                  Last Update : August, 4th 2003
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+August, 4th 2003:
+  - Added missing ErrorMessages to ErrorTable
+  - Added a new ErrorMessage in client thread, when remote host (server) disconnects
 
 August, 1st 2003:
   - Changed all debug messages. Now using SU_DBG_xxx functions
