@@ -51,6 +51,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "LangSelect"=".\appli\Install Setting\langselect\LangSelect.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "Log"=.\appli\server\plugins\Log\Log\Log.dsp - Package Owner=<4>
 
 Package=<5>
@@ -124,6 +136,42 @@ Package=<4>
 ###############################################################################
 
 Project: "ffssupdater"=".\appli\Install Setting\ffssupdatercfg\ffssupdater.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ipfgui"=.\appli\server\plugins\ipfilter\ipfgui\ipfgui.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ipfinstall"=.\appli\server\plugins\ipfilter\ipfinstall.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "master"=.\appli\master\src\Windows\master\master.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
