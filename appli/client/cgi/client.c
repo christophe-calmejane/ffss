@@ -5,7 +5,7 @@
 static int Printing = false;
 
 /* UDP callbacks */
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers)
+void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User)
 {
   int i = 0;
   char *col;
@@ -49,7 +49,7 @@ void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,
   }
 }
 
-void OnMasterError(int Code,const char Descr[])
+void OnMasterError(FFSS_Field ErrorCode,const char Descr[])
 {
   printf("Search returned an error : <FONT SIZE+2 COLOR=Red>%s</FONT><BR>\n",Descr);
   /* Shutting down server */
@@ -86,7 +86,7 @@ int main(int argc,char *argv[])
   /* Sending search message to master */
   printf("<HTML><HEAD><TITLE>Search result for \"%s\"</TITLE></HEAD><BODY BGCOLOR=#EEEEEE><FONT FACE=\"Verdana\"><DIV ALIGN=\"CENTER\"><BR>",argv[1]);
   Printing = true;
-  FC_SendMessage_Search(CLT_MASTER,NULL,argv[1]);
+  FC_SendMessage_Search(CLT_MASTER,NULL,argv[1],0);
   sleep(3);
   Printing = false;
   printf("</DIV></FONT></BODY></HTML>");
