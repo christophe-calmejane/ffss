@@ -46,7 +46,28 @@ extern char FFSS_WinServerVersion[20];
 #endif /* _WIN32 */
 #endif /* !DISABLE_BZLIB */
 
+#ifdef FFSS_DRIVER
+#define SU_INCLUDE_NO_SOCKS
+#define SU_INCLUDE_NO_REG
+#define SU_INCLUDE_NO_THREAD
+#define FILE void
+#ifndef DWORD
+#define DWORD long int
+#endif /* !DWORD */
+#define strtok_r(a,b,c) strtok(a,b)
+#define LOG_INFO    2
+#define LOG_WARNING 1
+#define LOG_ERR     0
+#define time_t unsigned long int
+#define sockaddr_in _TRANSPORT_ADDRESS *
+typedef struct { void *dummy; } *SU_PServerInfo;
+#ifndef SU_PClientSocket
+#error "You must define SU_PClientSocket to your internal driver type before including ffss.h !!"
+#endif /* !SU_PClientSocket */
+#endif /* FFSS_DRIVER */
+
 #include <skyutils.h>
+#ifndef FFSS_DRIVER
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,6 +93,7 @@ extern char FFSS_WinServerVersion[20];
 #include <sys/sockio.h>
 #endif /* __sun__ */
 #endif /* _WIN32 */
+#endif /* !FFSS_DRIVER */
 
 #define FFSS_VERSION "1.0.0-pre83"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
@@ -553,6 +575,7 @@ typedef struct
   long int BufSize;
 } FC_THandle, *FC_PHandle;
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -560,9 +583,11 @@ extern "C" {
 /* ************************************************ */
 /*                 EXTERN VARIABLES                 */
 /* ************************************************ */
+#ifndef FFSS_DRIVER
 extern SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 extern SU_THREAD_HANDLE FC_THR_UDP;
 extern SU_THREAD_HANDLE FM_THR_UDP,FM_THR_TCP;
+#endif /* !FFSS_DRIVER */
 extern FFSS_TCallbacks FFSS_CB;
 extern char *FFSS_MyIP;
 
@@ -793,7 +818,7 @@ bool FC_SendMessage_ServerSearch(void);
 /*  Server : The name of the server we want the shares listing */
 bool FC_SendMessage_SharesListing(const char Server[]);
 
-/* NC_SendMessage_ServerList Function                      */
+/* FC_SendMessage_ServerList Function                      */
 /* Sends a SERVER LIST message to a master                 */
 /*  Master : The name of my master, or NULL if none        */
 /*  OS : The desired OS, or NULL if requesting all         */
@@ -1096,7 +1121,9 @@ extern bool N_SyslogOn;
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 extern SU_PServerInfo FC_SI_OUT_UDP;
 extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP,FM_SI_TCP;
+#ifndef FFSS_DRIVER
 extern SU_THREAD_HANDLE FFSS_MainThread;
+#endif /* !FFSS_DRIVER */
 #ifdef _WIN32
 #define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\"
 extern FILE *FFSS_LogFile;
@@ -1122,10 +1149,10 @@ void set_context(char *file, int line);
 #define context
 #endif /* FFSS_CONTEXT */
 
-#ifndef SU_MALLOC_TRACE
+#if !defined(SU_MALLOC_TRACE) && !defined(FFSS_DRIVER)
 void *FFSS_malloc(size_t size);
 #define malloc FFSS_malloc
-#endif /* !SU_MALLOC_TRACE */
+#endif /* !SU_MALLOC_TRACE && !FFSS_DRIVER */
 
 #ifdef __cplusplus
 }

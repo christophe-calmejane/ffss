@@ -1,11 +1,56 @@
+#ifndef FFSS_DRIVER
 #include "ffss.h"
 #include "utils.h"
-
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
+#endif /* !FFSS_DRIVER */
 
 /* ************************************ */
 /*        GENERAL SENDING FUNCTIONS     */
 /* ************************************ */
+#ifdef FFSS_DRIVER
+/* Comment from "FC_SendMessage_Download" to "FC_SendMessage_CancelXFer" and from "FC_SendMessage_Search" to "FC_SendMessage_StrmSeek" */
+#include <ffss_tdi.h>
+#define bool SU_BOOL
+#define FFSS_SendBroadcast(a,b,c,d) FFSS_SendUDPBcast(b,c,d)
+#undef FFSS_SERVER_PORT_S
+#define FFSS_SERVER_PORT_S FFSS_SERVER_PORT
+#undef FFSS_MASTER_PORT_S
+#define FFSS_MASTER_PORT_S FFSS_MASTER_PORT
+#define SU_UDPSendToAddr(a,b,c,d,e) FFSS_SendUDP(b,c,d,e)
+#define SU_ClientDisconnect(x) x->disconnect(true);
+#undef free
+#define free(x) delete x
+
+int FFSS_SendUDPBcast(char *Text,int len,unsigned short port)
+{
+  TDI_STATUS resp;
+  TDI_ADDRESS_IP addr = {htons(port),INADDR_BROADCAST};
+  CTDI_CONNECTION_INFORMATION server(addr);
+
+  resp = pUDP->sendto(server,Text,len,NULL);
+  return (resp == TDI_PENDING || resp == TDI_SUCCESS);
+}
+
+int FFSS_SendUDP(char *Text,int len,char *Server,unsigned short port)
+{
+  TDI_STATUS resp;
+  TDI_ADDRESS_IP addr = {htons(port),inet_addr(Server)};
+  CTDI_CONNECTION_INFORMATION server(addr);
+
+  KdPrint(("Sending UDP message to %s:%d\n",Server,port));
+  resp = pUDP->sendto(server,Text,len,NULL);
+  return (resp == TDI_PENDING || resp == TDI_SUCCESS);
+}
+
+bool FFSS_SendTcpPacketCS(FfssTCP *TCP,char *msg,long int len,bool FreeMsg,bool Answer)
+{
+  TDI_STATUS resp;
+
+  resp = TCP->send(msg,len,FreeMsg,Answer);
+  return (resp == TDI_PENDING || resp == TDI_SUCCESS);
+}
+
+#else /* !FFSS_DRIVER */
 bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
 {
   int resp,retval;
@@ -31,6 +76,11 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
   if(FreeMsg)
     free(msg);
   return (resp == len);
+}
+
+bool FFSS_SendTcpPacketCS(SU_PClientSocket Client,char *msg,long int len,bool FreeMsg,bool Answer)
+{
+  return FFSS_SendTcpPacket(CS->sock,msg,len,FreeMsg);
 }
 
 /* ************************************ */
@@ -700,6 +750,7 @@ bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Fiel
   return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
+#endif /* FFSS_DRIVER */
 
 
 /* ************************************ */
@@ -807,9 +858,8 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   bool resp;
   SU_PClientSocket CS;
   long int Comps;
-#ifndef DRIVER
+#ifndef FFSS_DRIVER
   SU_THREAD_HANDLE Thread;
-#endif /* !DRIVER */
 
   context;
   if(Server == NULL)
@@ -817,6 +867,25 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   CS = SU_ClientConnect((char *)Server,FFSS_SERVER_PORT_S,SOCK_STREAM);
   if(CS == NULL)
     return NULL;
+
+#else /* FFSS_DRIVER */
+  TDI_ADDRESS_IP addr = {htons(FFSS_SERVER_PORT),inet_addr(Server)};
+  CTDI_CONNECTION_INFORMATION server(addr);
+
+  CS = new FfssTCP;
+  if(CS == NULL)
+    return NULL;
+   if(!CS->IsCreated())
+     return NULL;
+  CS->SetEvents(TRUE);
+  CS->connect(server);
+  if(!CS->IsConnected())
+  {
+    FFSS_PrintDebug(1,"FC_SendMessage_ShareConnect : Cannot connect to %s\n",Server);
+    delete CS;
+    return NULL;
+  }
+#endif /* !FFSS_DRIVER */
 
   FFSS_PrintDebug(2,"Connected to %s\n",Server);
   pos = sizeof(FFSS_Field);
@@ -856,16 +925,16 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
     msg[pos++] = 0;
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Share connection message to %s\n",Server);
-  resp = FFSS_SendTcpPacket(CS->sock,msg,pos,false);
+  resp = FFSS_SendTcpPacketCS(CS,msg,pos,false,true);
   if(!resp)
   {
-    SU_CLOSE_SOCKET(CS->sock);
+    SU_ClientDisconnect(CS);
     free(CS);
     return NULL;
   }
-#ifndef DRIVER
+#ifndef FFSS_DRIVER
   SU_CreateThread(&Thread,FC_ClientThreadTCP,(void *)CS,true);
-#endif /* !DRIVER */
+#endif /* !FFSS_DRIVER */
   return CS;
 }
 
@@ -890,7 +959,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Directory Listing message to server for %s\n",Path);
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
 /* FC_SendMessage_RecursiveDirectoryListing Function       */
@@ -914,7 +983,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Recursive Directory Listing message to server for %s\n",Path);
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
 /* FC_SendMessage_Download Function                                 */
@@ -972,7 +1041,7 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
     pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Download message to server for %s starting at %ld\n",Path,StartingPos);
-  resp = FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  resp = FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
   if(!resp)
   {
     if(!UseConnSock)
@@ -1001,7 +1070,7 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Disconnect message to server\n");
-  FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
 /* FC_SendMessage_CancelXFer Function                   */
@@ -1022,7 +1091,7 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending cancel xfer message to server\n");
-  FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
   SU_FreeCS(Server);
 }
 
@@ -1142,7 +1211,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming OPEN message to client\n");
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
 /* FC_SendMessage_StrmClose Function                     */
@@ -1162,7 +1231,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle)
   pos = FFSS_PackField(msg,pos,Handle);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming CLOSE message to client\n");
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
 /* FC_SendMessage_StrmRead Function                     */
@@ -1186,7 +1255,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Long
   pos = FFSS_PackField(msg,pos,Length);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming READ message to client\n");
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
 /* FC_SendMessage_StrmWrite Function                    */
@@ -1216,7 +1285,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Lon
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming WRITE message to client\n");
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,true);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,true,true);
 }
 
 /* FC_SendMessage_StrmSeek Function                     */
@@ -1241,10 +1310,11 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");
-  return FFSS_SendTcpPacket(Server->sock,msg,pos,false);
+  return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
 
+#ifndef FFSS_DRIVER
 /* ************************************ */
 /*             MASTER MESSAGES          */
 /* ************************************ */
@@ -1704,3 +1774,5 @@ bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int
   FFSS_PrintDebug(3,"Sending Search Forward message to master - Reply to %s:%d\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   return FFSS_SendTcpPacket(Master,msg,pos,false);
 }
+
+#endif /* !FFSS_DRIVER */

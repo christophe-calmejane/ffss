@@ -1,6 +1,46 @@
+#ifndef FFSS_DRIVER
 #include "ffss.h"
 #include "utils.h"
 #include <stdarg.h>
+
+#else /* FFSS_DRIVER */
+#include <ffss_tdi.h>
+#define bool SU_BOOL
+#undef FILE
+#include <stdio.h>
+#define sscanf FFSS_sscanf
+void FFSS_sscanf(const char IP[],const char [],int *a,int *b,int *c,int *d)
+{
+  int i, tt[4];
+  char *p=(char *)IP;
+  int nbp=0, nbi=0;
+
+  if(!p)
+    return;
+
+  while(*p)
+  {
+    if(*p>='0' && *p<='9')
+	{
+      nbi++;
+      tt[nbp]*=10;
+      tt[nbp]+=*p-'0';
+	}
+    else if(*p=='.' && nbi)
+	{
+      nbp++;
+      nbi=0;
+	}
+    if(nbi>3 || nbp>3)
+      break;
+    p++;
+  }
+  *a = tt[0];
+  *b = tt[1];
+  *c = tt[2];
+  *d = tt[3];
+}
+#endif /* !FFSS_DRIVER */
 
 FFSS_TCallbacks FFSS_CB;
 #ifdef DEBUG
@@ -18,6 +58,7 @@ char *FFSS_DocExt[FFSS_DOC_NB_EXT] = {"htm","html","txt","doc","pdf","nfo","tex"
 char *FFSS_ExeExt[FFSS_EXE_NB_EXT] = {"exe","com","bat","sys","dll"} ; /* 5 */
 char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","bz2","deb","rpm"} ; /* 10 */
 
+#ifndef FFSS_DRIVER
 SU_THREAD_HANDLE FFSS_MainThread;
 SU_THREAD_KEY_HANDLE FFSS_Context_tskey;
 SU_THREAD_ONCE_HANDLE FFSS_Context_once = SU_THREAD_ONCE_INIT;
@@ -86,6 +127,7 @@ void FFSS_handle_SIGNAL(int signal)
     abort();
   }
 }
+#endif /* !FFSS_DRIVER */
 
 /* Unpacks a string from a message, checking if the string really terminates (prevents DoS attacks) */
 /*  Returns the string, or NULL if there is a problem */
@@ -307,6 +349,7 @@ FFSS_Field FFSS_ComputeChecksum(FFSS_Field Old,const char Buf[],long int Len)
 #endif /* DISABLE_CHECKSUM */
 }
 
+#ifndef FFSS_DRIVER
 bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[])
 {
 #ifdef __unix__
@@ -365,6 +408,7 @@ int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port)
   }
   return res;
 }
+#endif /* !FFSS_DRIVER */
 
 #ifndef DISABLE_ZLIB
 bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
@@ -516,6 +560,7 @@ unsigned char FFSS_GetWordTags(const char *Word)  /* <-- word to check for exten
   return FFSS_FILE_TAGS_NOTHING;
 }
 
+#ifndef FFSS_DRIVER
 #undef malloc
 void *FFSS_malloc(size_t size)
 {
@@ -536,6 +581,37 @@ void *FFSS_malloc(size_t size)
   }
   return ptr;
 }
+#endif /* !FFSS_DRIVER */
+
+#ifdef FFSS_DRIVER
+#include <stdarg.h>
+ULONG _cdecl DbgPrint(PCH Format,...);
+#define printf DbgPrint
+char FFSS_SlogStr[4096];
+void FFSS_PrintSyslog(int Level,char *Txt, ...)
+{
+  va_list argptr;
+
+  va_start(argptr,Txt);
+  _vsnprintf(FFSS_SlogStr,sizeof(FFSS_SlogStr),Txt,argptr);
+  va_end(argptr);
+  printf("FFSS(SYSLOG) : %s",FFSS_SlogStr);
+}
+char FFSS_DebugStr[4096];
+#undef FFSS_PrintDebug
+void FFSS_PrintDebug(int Level,char *Txt, ...)
+{
+  va_list argptr;
+
+  if(Level <= N_DebugLevel)
+  {
+    va_start(argptr,Txt);
+    _vsnprintf(FFSS_DebugStr,sizeof(FFSS_DebugStr),Txt,argptr);
+    va_end(argptr);
+    printf("FFSS(%d) : %s",Level,FFSS_DebugStr);
+  }
+}
+#else /* !FFSS_DRIVER */
 
 void FFSS_PrintSyslog(int Level,char *Txt, ...)
 {
@@ -581,6 +657,7 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
       printf("[%.2d:%.2d:%.2d](%ld) FFSS(%d) : %s",TM->tm_hour,TM->tm_min,TM->tm_sec,SU_THREAD_SELF,Level,Str);
   }
 }
+#endif /* FFSS_DRIVER */
 
 int FFSS_GetFFSSOptions(void)
 {
@@ -606,6 +683,7 @@ int FFSS_GetFFSSOptions(void)
   return Flags;
 }
 
+#ifndef FFSS_DRIVER
 #if defined(_WIN32) | defined(__CYGWIN32__)
 char FFSS_WinServerVersion[20] = {0,};
 #endif /* _WIN32 | __CYGWIN32__ */
@@ -640,3 +718,4 @@ char *FFSS_GetOS(void)
   return FFSS_SERVER_OS;
 #endif /* _WIN32 */
 }
+#endif /* !FFSS_DRIVER */

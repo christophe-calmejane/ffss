@@ -2,107 +2,139 @@
 
 /* Functions of this driver are NOT reentrant */
 
-#include "ffss.h"
-#include "utils.h"
-#include "transfer.h"
+#include <ffss_tdi.h>
+#define bool SU_BOOL
+#define strdup FFSS_strdup
+#undef FILE
+#include <stdio.h>
 
-SU_PList FC_Handles = NULL; /* FC_PHandle */
-long int FC_CurrentHandle = 1;
-
-FC_PHandle FC_CreateHandle(void)
+SU_PList SU_AddElementHead(SU_PList List,void *Elem)
 {
-  FC_PHandle Hdl;
+  SU_PList El;
 
-  Hdl = (FC_PHandle) malloc(sizeof(FC_THandle));
-  if(Hdl == NULL)
-    return NULL;
-  memset(Hdl,0,sizeof(FC_THandle));
-  Hdl->Handle = FC_CurrentHandle++;
-  Hdl->BufSize = FFSS_TCP_BUFFER_SIZE;
-  Hdl->Buf = (char *) malloc(Hdl->BufSize);
-  if(Hdl->Buf == NULL)
+  El = (SU_PList) malloc(sizeof(SU_TList));
+  El->Next = List;
+  El->Data = Elem;
+  return El;
+}
+
+void SU_FreeListElem(SU_PList List)
+{
+  SU_PList Ptr,Ptr2;
+
+  Ptr = List;
+  while(Ptr != NULL)
   {
-    free(Hdl);
-    return NULL;
+    Ptr2 = Ptr->Next;
+    free(Ptr->Data);
+    free(Ptr);
+    Ptr = Ptr2;
   }
-  FC_Handles = SU_AddElementHead(FC_Handles,Hdl);
-  return Hdl;
 }
 
-void FC_FreeHandle(FC_PHandle Hdl)
+char *SU_strcpy(char *dest,const char *src,int len)
 {
-  if(Hdl->Buf != NULL)
-    free(Hdl->Buf);
-  free(Hdl);
+  int pos=0;
+
+  if(src != NULL)
+  {
+    while(pos < (len-1))
+    {
+      dest[pos] = src[pos];
+      pos++;
+      if(src[pos] == 0)
+        break;
+    }
+  }
+  dest[pos] = 0;
+  return dest;
 }
 
-bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
+unsigned char SU_toupper(unsigned char c)
 {
-  int Type, i;
+  if((c >= 'a') && (c <= 'z'))
+    return (c-32);
+  if((c >= 224) && (c <= 255))
+    return (c-32);
+  return c;
+}
+
+bool SU_strcasecmp(const char *s,const char *p)
+{
+  while((*s != 0) && (*p != 0))
+  {
+    if(SU_toupper(*s) != SU_toupper(*p))
+      return false;
+    s++;p++;
+  }
+  return ((*s == 0) && (*p == 0));
+}
+
+char *FFSS_strdup(const char *in)
+{
+  char *s;
+  long int len;
+
+  len = strlen(in) + 1;
+  s = (char *) malloc(len);
+  if(s == NULL)
+    return NULL;
+  strncpy(s,in,len);
+  return s;
+}
+
+void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
+{
+  int Type;
+  char *str,*str2,*str3,*str4;
+  char **Names,**Comments;
+  char **answers,**ips;
   long int pos;
-  FFSS_Field val,val2,val3,val4;
-  char *str,*str2;
-  SU_PList Ptr;
-  FC_PEntry Ent;
-  bool ret_val;
-  FFSS_PTransfer FT;
-  bool free_it;
+  FFSS_Field val,val2,val3;
+  FFSS_Field i,j,state,type_ip,type_ip2;
+  char IP[512], IP2[512];
+  FM_PHost Hst;
+  SU_PList HostList;
+  bool do_it,error,free_it;
   char *u_Buf;
   long int u_pos,u_Len;
-  long int Length;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
-  pos = sizeof (FFSS_Field)*2;
-  ret_val = true;
+  pos = sizeof(FFSS_Field)*2;
   free_it = false;
   u_Buf = Buf;
   u_Len = Len;
-  switch (Type)
+  switch(Type)
   {
-    case FFSS_MESSAGE_ERROR :
-      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
-      if((val == 0) || (str == NULL))
-      {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
-        break;
-      }
-      if(FFSS_CB.CCB.OnError != NULL)
-        ret_val = FFSS_CB.CCB.OnError(Server,val,str);
-      break;
-    case FFSS_MESSAGE_DIRECTORY_LISTING_ANSWER :
-      str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+    case FFSS_MESSAGE_NEW_STATES :
+      context;
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      if(str == NULL)
-      {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
-        break;
-      }
-      switch (val2)
+      error = false;
+      switch(val2)
       {
         case FFSS_COMPRESSION_NONE:
           u_pos = pos;
           break;
+#ifndef DISABLE_ZLIB
         case FFSS_COMPRESSION_ZLIB:
-          u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);
+          u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
           if(u_Buf == NULL)
           {
-            FFSS_PrintDebug(1,"Corrupted Z compressed buffer ... DoS attack ?\n");
-            ret_val = false;
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n","");
+            error = true;
             break;
           }
           free_it = true;
           u_pos = 0;
           break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
         case FFSS_COMPRESSION_BZLIB:
-          u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);
+          u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
           if(u_Buf == NULL)
           {
-            FFSS_PrintDebug(1,"Corrupted BZ compressed buffer ... DoS attack ?\n");
-            ret_val = false;
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n","");
+            error = true;
             break;
           }
           free_it = true;
@@ -110,249 +142,330 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
           break;
 #endif
         default:
-          FFSS_PrintDebug(1,"Unknown compression type : %ld ... DoS attack ?\n",val2);
-          ret_val = false;
+          FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %ld ... DoS attack ?\n","",val2);
+          error = true;
           break;
       }
-      if(!ret_val)
+      if(error)
         break;
       val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-      Ptr = NULL;
+      FFSS_PrintDebug(3,"Received a new state message (%d states)\n",val);
       for(i=0;i<val;i++)
       {
-        Ent = (FC_PEntry) malloc(sizeof(FC_TEntry));
-        memset(Ent,0,sizeof(FC_TEntry));
+        state = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
+        str = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
         str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        val4 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        if(str2 == NULL)
+        str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        str4 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        type_ip2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP2,type_ip2);
+        if((state == 0) || (type_ip == 0) || (IP[0] == 0) || (str == NULL) || (str2 == NULL) || (str3 == NULL) || (str4 == NULL) || (type_ip2 == 0) || (IP2[0] == 0))
         {
-          FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-          free (Ent);
-          SU_FreeListElem(Ptr);
-          ret_val = false;
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
           break;
         }
-        Ent->Name = str2;
-        Ent->Flags = val2;
-        Ent->Size = val3;
-        Ent->Stamp = val4;
-        Ptr = SU_AddElementTail(Ptr,Ent);
+        if(FFSS_CB.CCB.OnNewState != NULL)
+          FFSS_CB.CCB.OnNewState(state,IP2,str,str2,str3,str4,IP);
       }
-      if(FFSS_CB.CCB.OnDirectoryListingAnswer != NULL)
-        ret_val = FFSS_CB.CCB.OnDirectoryListingAnswer(Server,str,val,Ptr);
-      SU_FreeListElem(Ptr);
       break;
-    case FFSS_MESSAGE_INIT_XFER :
+    case FFSS_MESSAGE_SHARES_LISTING_ANSWER :
+      context;
+      type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
+      if((type_ip == 0) || (IP[0] == 0))
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+        break;
+      }
+      val = FFSS_UnpackField (Buf, Buf + pos, Len, &pos);
+      if(val == 0)
+      {
+        FFSS_PrintDebug(3,"Received a shares listing message, but server has no shares\n");
+        if(FFSS_CB.CCB.OnSharesListing != NULL)
+          FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0);
+        break;
+      }
+      FFSS_PrintDebug(3,"Received a shares listing message (%d shares)\n",val);
+      Names = (char **) malloc(val*sizeof(char *));
+      Comments = (char **) malloc(val*sizeof (char *));
+      for(i=0;i<val;i++)
+      {
+        str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        if((str == NULL) || (str2 == NULL))
+        {
+          free (Names);
+          free (Comments);
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+          break;
+        }
+        Names[i] = str;
+        Comments[i] = str2;
+      }
+      if(FFSS_CB.CCB.OnSharesListing != NULL)
+        FFSS_CB.CCB.OnSharesListing (IP,(const char **)Names,(const char **)Comments,val);
+      free(Names);
+      free(Comments);
+      break;
+    case FFSS_MESSAGE_SERVER_LISTING_ANSWER :
+      context;
+      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      error = false;
+      switch(val2)
+      {
+        case FFSS_COMPRESSION_NONE:
+          u_pos = pos;
+          break;
+#ifndef DISABLE_ZLIB
+        case FFSS_COMPRESSION_ZLIB:
+          u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER,&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n","");
+            FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+            error = true;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif /* !DISABLE_ZLIB */
+#ifdef HAVE_BZLIB
+        case FFSS_COMPRESSION_BZLIB:
+          u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER,&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n","");
+            error = true;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif
+        default:
+          FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %ld ... DoS attack ?\n","",val2);
+          error = true;
+          break;
+      }
+      if(error)
+        break;
+      val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+      FFSS_PrintDebug(4,"Received a server listing answer (%d domains)\n",val);
+      for(i=0;i<val;i++)
+      {
+        str = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        if(str == NULL)
+        {
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+          break;
+        }
+        FFSS_PrintDebug(3,"\t%d hosts in domain %s\n",val2,str);
+        HostList = NULL;
+        do_it = true;
+        if(val2 != 0)
+        {
+          for (j=0;j<val2;j++)
+          {
+            val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+            str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+            str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+            str4 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+            type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+            FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
+            if((val3 == 0) || (str2 == NULL) || (str3 == NULL) || (str4 == NULL) || (type_ip == 0) || (IP[0] == 0))
+            {
+              FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+              do_it = false;
+              break;
+            }
+            Hst = (FM_PHost) malloc(sizeof(FM_THost));
+            memset (Hst,0,sizeof(FM_THost));
+            Hst->State = val3;
+            Hst->Name = str2;
+            Hst->OS = str3;
+            Hst->Comment = str4;
+            Hst->IP = strdup(IP);
+            HostList = SU_AddElementHead(HostList,Hst);
+          }
+        }
+        if(do_it)
+        {
+          if(FFSS_CB.CCB.OnServerListingAnswer != NULL)
+            FFSS_CB.CCB.OnServerListingAnswer(str,val2,HostList);
+        }
+        SU_FreeListElem(HostList);
+      }
+      if(FFSS_CB.CCB.OnEndServerListingAnswer != NULL)
+        FFSS_CB.CCB.OnEndServerListingAnswer();
+      break;
+    case FFSS_MESSAGE_DOMAINS_LISTING_ANSWER :
+      context;
+      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      if(val == 0)
+      {
+        FFSS_PrintDebug(3,"Received a domains listing answer, but master has no domains\n");
+        if (FFSS_CB.CCB.OnDomainListingAnswer != NULL)
+          FFSS_CB.CCB.OnDomainListingAnswer(NULL,0);
+        break;
+      }
+      FFSS_PrintDebug(3,"Received a domains listing answer (%d domains)\n",val);
+      Names = (char **) malloc(val*sizeof(char *));
+      for(i=0;i<val;i++)
+      {
+        str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        if(str == NULL)
+        {
+          free (Names);
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+          break;
+        }
+        Names[i] = str;
+      }
+      if(FFSS_CB.CCB.OnDomainListingAnswer != NULL)
+        FFSS_CB.CCB.OnDomainListingAnswer((const char **)Names,val);
+      free (Names);
+      break;
+    case FFSS_MESSAGE_SEARCH_MASTER_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+      if((val == 0) || (str == NULL))
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+        break;
+      }
+      if(FFSS_CB.CCB.OnMasterSearchAnswer != NULL)
+        FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str);
+      break;
+    case FFSS_MESSAGE_SEARCH_ANSWER :
+      context;
+      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      error = false;
+      switch(val2)
+      {
+        case FFSS_COMPRESSION_NONE:
+          u_pos = pos;
+          break;
+#ifndef DISABLE_ZLIB
+        case FFSS_COMPRESSION_ZLIB:
+          u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER,&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n","");
+            error = true;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif /* !DISABLE_ZLIB */
+#ifdef HAVE_BZLIB
+        case FFSS_COMPRESSION_BZLIB:
+          u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER,&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n","");
+            error = true;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif
+        default:
+          FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %ld ... DoS attack ?\n","",val2);
+          error = true;
+          break;
+      }
+      if(error)
+        break;
+      str = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
       if(str == NULL)
       {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
         break;
       }
-      if(FFSS_CB.CCB.OnInitXFer != NULL)
+      val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+      if(val == 0)
       {
-        FT = FFSS_CB.CCB.OnInitXFer(Server,str);
-        if(FT != NULL)
-          FFSS_InitXFerDownload(FT,val);
+        FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
+        if(FFSS_CB.CCB.OnSearchAnswer != NULL)
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0);
+        break;
+      }
+      FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
+      for(i=0;i<val;i++)
+      {
+        str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        if(str2 == NULL)
+        {
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+          break;
+        }
+        val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        if(val2 == 0)
+        {
+          FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
+          if(FFSS_CB.CCB.OnSearchAnswer != NULL)
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0);
+          continue;
+        }
+        answers = (char **) malloc(val2*sizeof(char *));
+        ips = (char **) malloc(val2*sizeof(char *));
+        for(j=0;j<val2;j++)
+        {
+          type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
+          str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          if((str3 == NULL) || (type_ip == 0) || (IP[0] == 0))
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+            error = true;
+            break;
+          }
+          ips[j] = strdup(IP);
+          answers[j] = str3;
+        }
+        if(!error)
+        {
+          if(FFSS_CB.CCB.OnSearchAnswer != NULL)
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2);
+        }
+        free(ips);
+        free(answers);
       }
       break;
-    case FFSS_MESSAGE_DATA :
+    case FFSS_MESSAGE_ERROR :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      Length = Len-FFSS_MESSAGESIZE_DATA*sizeof(FFSS_Field);
-      if(Length < 0)
-      {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
-        break;
-      }
-      if(FFSS_CB.CCB.OnData != NULL)
-      {
-        FT = FFSS_CB.CCB.OnData(Server,val);
-        if(FT != NULL)
-          FFSS_OnDataDownload(FT,Buf+pos,Length);
-      }
-      break;
-    case FFSS_MESSAGE_STREAMING_OPEN_ANSWER :
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
-      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      if((str == NULL) || (val == 0))
+      if((val == 0) || (str == NULL))
       {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
         break;
       }
-      if(FFSS_CB.CCB.OnStrmOpenAnswer != NULL)
-        FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,val3);
-      break;
-    case FFSS_MESSAGE_STREAMING_READ_ANSWER :
-      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      Length = Len-FFSS_MESSAGESIZE_STREAMING_READ_ANSWER*sizeof(FFSS_Field);
-      if((val == 0) || (Length < 0))
-      {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
-        break;
-      }
-      if(FFSS_CB.CCB.OnStrmReadAnswer != NULL)
-        FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length);
-      break;
-    case FFSS_MESSAGE_STREAMING_WRITE_ANSWER :
-      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      if((val == 0) || (val2 == 0))
-      {
-        FFSS_PrintDebug(1,"One or many fields empty, or out of buffer... DoS attack ?\n");
-        ret_val = false;
-        break;
-      }
-      if(FFSS_CB.CCB.OnStrmWriteAnswer != NULL)
-        FFSS_CB.CCB.OnStrmWriteAnswer(Server,val,val2);
+      FFSS_PrintDebug(3,"Received a master error message (%d:%s)\n",val,str);
+      if(FFSS_CB.CCB.OnMasterError != NULL)
+        FFSS_CB.CCB.OnMasterError(val,str);
       break;
     default:
-      FFSS_PrintDebug(1,"Unknown Type of message (%d)... DoS attack ?\n",Type);
-      ret_val = false;
+      FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n","",Type);
   }
   if(free_it)
     free(u_Buf);
-  return ret_val;
 }
 
-bool FC_WaitDataTCP(SU_PClientSocket Client,FC_PHandle Hdl)
-{
-  int len,res;
-  FFSS_Field Size;
-  bool analyse;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
-
-  len = 0;
-  while(1)
-  {
-    if(Client->User != 0)	/* Idle time out value */
-    {
-      FFSS_PrintDebug(5,"Client has defined a idle time out value of %d sec for this connection\n",(int)Client->User);
-      FD_ZERO(&rfds);
-      FD_SET(Client->sock,&rfds);
-      tv.tv_sec = (int)Client->User;
-      tv.tv_usec = 0;
-      retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
-      if(!retval)
-      {
-        if(FFSS_CB.CCB.OnIdleTimeout != NULL)
-          FFSS_CB.CCB.OnIdleTimeout(Client);
-        FFSS_PrintDebug(1,"Error on TCP port of the client (TIME OUT)\n");
-#ifdef __unix__
-        close(Client->sock);
-#else
-        closesocket(Client->sock);
-#endif
-        free(Client);
-        if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-          FFSS_CB.CCB.OnEndTCPThread(Client);
-        return false;
-      }
-    }
-
-    if(len >= Hdl->BufSize)
-    {
-      FFSS_PrintDebug(1,"WARNING : Client's buffer too short for this message !!\n");
-    }
-    res = recv(Client->sock,Hdl->Buf+len,Hdl->BufSize-len,SU_MSG_NOSIGNAL);
-    if(res == SOCKET_ERROR)
-    {
-      FFSS_PrintDebug(1,"Error on TCP port of the client (SOCKET_ERROR : %d)\n",errno);
-#ifdef __unix__
-      close(Client->sock);
-#else
-      closesocket(Client->sock);
-#endif
-      free(Client);
-      if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-        FFSS_CB.CCB.OnEndTCPThread(Client);
-      return false;
-    }
-    else if(res == 0)
-    {
-#ifdef __unix__
-      close(Client->sock);
-#else
-      closesocket(Client->sock);
-#endif
-      free(Client);
-      if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-        FFSS_CB.CCB.OnEndTCPThread(Client);
-      return false;
-    }
-    len += res;
-    FFSS_PrintDebug(5,"Data found on TCP port from %s (%s) ... analysing\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
-    analyse = true;
-    while (analyse)
-    {
-      if(len < 5)
-      {
-	FFSS_PrintDebug(1,"Length of the message is less than 5 (%d)... DoS attack ?\n",len);
-#ifdef __unix__
-        close(Client->sock);
-#else
-        closesocket(Client->sock);
-#endif
-        free(Client);
-        if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-          FFSS_CB.CCB.OnEndTCPThread(Client);
-        return false;
-      }
-      Size = *(FFSS_Field *)Hdl->Buf;
-      if(Size > len)
-      {
-        FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
-        break;
-        /* Keeps waiting for data */
-      }
-      else
-      {
-        if(!FC_AnalyseTCP(Client,Hdl->Buf,Size))
-        {
-#ifdef __unix__
-          close(Client->sock);
-#else
-          closesocket(Client->sock);
-#endif
-          free(Client);
-          if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-            FFSS_CB.CCB.OnEndTCPThread(Client);
-          return false;
-	}
-	if(len > Size)
-	{
-	  FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
-	  memmove(Hdl->Buf,Hdl->Buf+Size,len-Size);
-	  len -= Size;
-	  /* Keeps analysing the buffer */
-	}
-	else
-	{
-	  analyse = false;
-	  len = 0;
-	}
-      }
-    }
-  }
-}
 
 /* FFSS Client : UnInit */
 /* Initialisation of the FFSS Client - Must be called before any other FFSS function */
 /* Returns true on success, false otherwise */
 bool FC_Init(void)
 {
-  FC_Handles = NULL;
-  FFSS_PrintDebug(1,"FFSS driver running\n");
+  KdPrint(("FFSS driver running\n"));
   return true;
 }
 
@@ -361,15 +474,7 @@ bool FC_Init(void)
 /* Returns true on success, false otherwise */
 bool FC_UnInit(void)
 {
-  SU_PList Ptr;
-
-  Ptr = FC_Handles;
-  while(Ptr != NULL)
-  {
-    FC_FreeHandle((FC_PHandle)Ptr->Data);
-  }
-  SU_FreeList(FC_Handles);
-  FFSS_PrintDebug(1,"FFSS driver shut down\n");
+  KdPrint(("FFSS driver shut down\n"));
   return true;
 }
 
