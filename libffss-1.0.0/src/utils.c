@@ -515,6 +515,27 @@ unsigned char FFSS_GetWordTags(const char *Word)  /* <-- word to check for exten
   return FFSS_FILE_TAGS_NOTHING;
 }
 
+#undef malloc
+void *FFSS_malloc(size_t size)
+{
+  void *ptr;
+
+  ptr = malloc(size);
+  if(ptr == NULL)
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Malloc of size %d failed ! Not enough memory... exiting",size);
+    if(FFSS_MainThread != SU_THREAD_SELF)
+    {
+#ifdef __linux__
+      pthread_kill_other_threads_np();
+#endif /* __linux__ */
+      SU_TermThread(FFSS_MainThread);
+    }
+    abort();
+  }
+  return ptr;
+}
+
 void FFSS_PrintSyslog(int Level,char *Txt, ...)
 {
   va_list argptr;

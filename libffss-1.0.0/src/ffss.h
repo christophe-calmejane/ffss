@@ -1001,6 +1001,10 @@ void set_context(char *file, int line);
 #define context
 #endif /* FFSS_CONTEXT */
 
+#ifndef SU_MALLOC_TRACE
+#define malloc FFSS_malloc
+#endif /* !SU_MALLOC_TRACE */
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
