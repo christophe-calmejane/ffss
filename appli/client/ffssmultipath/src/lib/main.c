@@ -4,12 +4,12 @@ struct FMP_SFile *fil = NULL;
 struct FMP_SSearch *sch = NULL;
 volatile bool Complete = false;
 
-void SearchAnswerStart(FFSS_LongField UserTag)
+void SearchAnswerStart(struct FMP_SSearch *Sch,FFSS_LongField UserTag)
 {
   printf("Got answers for Tag %lld\n",UserTag);
 }
 
-void SearchAnswerItem(FFSS_LongField UserTag,const char Name[],FFSS_LongField Size,FFSS_Field Count,struct FMP_SFile *File)
+void SearchAnswerItem(struct FMP_SSearch *Sch,FFSS_LongField UserTag,const char Name[],FFSS_LongField Size,FFSS_Field Count,struct FMP_SFile *File)
 {
   printf("\tName=%50s - Size=%8lld - %d occurences\n",Name,Size,Count);
   if(fil == NULL)
@@ -20,7 +20,7 @@ void SearchAnswerItem(FFSS_LongField UserTag,const char Name[],FFSS_LongField Si
     FMP_FreeFile(File);
 }
 
-void SearchAnswerEnd(FFSS_LongField UserTag)
+void SearchAnswerEnd(struct FMP_SSearch *Sch,FFSS_LongField UserTag)
 {
   printf("End of List for Tag %lld\n",UserTag);
   if(!FMP_StartDownload(fil,"./toto.out",1))

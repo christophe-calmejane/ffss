@@ -333,7 +333,7 @@ void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Ans
     return;
   }
   if(FMP_CB.OnSearchAnswerStart != NULL)
-    FMP_CB.OnSearchAnswerStart(User);
+    FMP_CB.OnSearchAnswerStart(Sch,User);
   for(i=0;i<NbAnswers;i++)
   {
     if(((Answers[i][0] & FFSS_SEARCH_IS_FILE) == FFSS_SEARCH_IS_FILE) /* Answer is a file */
@@ -367,14 +367,14 @@ void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Ans
     {
       File->RefCount++;
       SU_SEM_POST(FMP_Sem_Search);
-      FMP_CB.OnSearchAnswerItem(User,File->Name,File->Size,SU_ListCount(File->Paths),File);
+      FMP_CB.OnSearchAnswerItem(Sch,User,File->Name,File->Size,SU_ListCount(File->Paths),File);
       SU_SEM_WAIT(FMP_Sem_Search);
     }
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FMP_Sem_Search);
   if(FMP_CB.OnSearchAnswerEnd != NULL)
-    FMP_CB.OnSearchAnswerEnd(User);
+    FMP_CB.OnSearchAnswerEnd(Sch,User);
 }
 
 /* FFSS TCP callbacks */

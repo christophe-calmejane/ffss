@@ -33,9 +33,9 @@ struct FMP_SFile;
 typedef struct
 {
   /* Search callbacks */
-  void (*OnSearchAnswerStart)(FFSS_LongField UserTag);
-  void (*OnSearchAnswerItem)(FFSS_LongField UserTag,const char Name[],FFSS_LongField Size,FFSS_Field Count,struct FMP_SFile *File); /* Use 'File' with StartDownload & FreeFile functions */
-  void (*OnSearchAnswerEnd)(FFSS_LongField UserTag);
+  void (*OnSearchAnswerStart)(struct FMP_SSearch *Sch,FFSS_LongField UserTag);
+  void (*OnSearchAnswerItem)(struct FMP_SSearch *Sch,FFSS_LongField UserTag,const char Name[],FFSS_LongField Size,FFSS_Field Count,struct FMP_SFile *File); /* Use 'File' with StartDownload & FreeFile functions */
+  void (*OnSearchAnswerEnd)(struct FMP_SSearch *Sch,FFSS_LongField UserTag);
   /* Download callbacks */
   void (*OnError)(FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode); /* 'UserTag' passed to FMP_StartDownload */
   void (*OnPacketReceived)(FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket); /* 'UserTag' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
@@ -45,7 +45,7 @@ typedef struct
 
 
 /* INIT / UNINIT FUNCTIONS */
-bool FMP_Init(const char Master[]); /* False if failed : Use FMP_GetLastError for more infos */
+bool FMP_Init(const char Master[]); /* False if failed : Use FMP_GetLastError for more infos */ /* Overrides all FFSS_CB.CCB values */
 bool FMP_Uninit(void); /* False if failed : Use FMP_GetLastError for more infos */
 void FMP_SetMaster(const char Master[]);
 void FMP_SetBlocSize(FFSS_Field BS);
