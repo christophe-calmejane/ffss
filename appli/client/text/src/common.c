@@ -144,7 +144,9 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	
 	FCA_Ptrans = NULL;
 	FCA_dw_amount=0;
+	FCA_dw_nb_files++;
 	FCA_dw_size=size;
+	FCA_dw_tot_size+=size;
 	FCA_dw_begin=time(NULL);
 	start=0;
 	FCA_dw_file=strrchr(RemotePath, '/');

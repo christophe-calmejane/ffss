@@ -27,6 +27,8 @@
 char *FCA_dw_file;
 FFSS_LongField FCA_dw_amount;
 FFSS_LongField FCA_dw_size;
+FFSS_LongField FCA_dw_tot_size;
+int FCA_dw_nb_files;
 time_t FCA_dw_begin;
 int FCA_nb_states;
 FILE *FCA_err_stream;
@@ -1278,6 +1280,36 @@ void FCA_print_size(FFSS_LongField size, char *format)
 	} else {
 		printf(format, size);
 		printf(" ");
+	}
+}
+
+void FCA_print_time(int s)
+{
+	bool begun=false;
+	
+	if(s>3600*24) {	/* > 1 day */
+		FCA_num(s/(3600*24), "day");
+		begun=true;
+		s=s%(3600*24);
+	}
+	if(s>3600) {	/* > 1 hour */
+		if(begun)
+			FCA_infos(", ");
+		FCA_infos("%dh", s/3600);
+		begun=true;
+		s=s%(3600);
+	}
+	if(s>60) {	/* > 1 mn */
+		if(begun)
+			FCA_infos(", ");
+		FCA_infos("%dmn", s/60);
+		begun=true;
+		s=s%60;
+	}
+	if(s) {
+		if(begun)
+			FCA_infos(", ");
+		FCA_infos("%ds", s);
 	}
 }
 

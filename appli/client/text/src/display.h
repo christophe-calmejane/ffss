@@ -15,6 +15,8 @@
 extern char *FCA_dw_file;
 extern FFSS_LongField FCA_dw_amount;
 extern FFSS_LongField FCA_dw_size;
+extern FFSS_LongField FCA_dw_tot_size;
+extern int FCA_dw_nb_files;
 extern time_t FCA_dw_begin;
 extern int FCA_nb_states;
 extern FILE *FCA_err_stream;
@@ -63,6 +65,7 @@ void FCA_print_cmd_help(char *cmd);
 
 void FCA_print_size(FFSS_LongField size, char *format);
 void FCA_print_nb(int nb, const char name[]);
+void FCA_print_time(int s);
 
 void FCA_ansi_chs(unsigned short int style);
 void FCA_ansi_chs_err(unsigned short int style);

@@ -652,10 +652,19 @@ or get /$/none/127.0.0.1/tmp/toto/
 				*(share-1)='/';
 				if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL)
 					FCA_printlog("downloading directory %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
+				FCA_dw_nb_files=0;
+				FCA_dw_tot_size=0;
 				t1=time(NULL);
 				FCA_dw_dir(tgt,dir-1, to);
 				t2=time(NULL);
-				FCA_print_cmd_ok("Download sucessful");
+				if(t1==t2)
+					t2++;
+				FCA_main_num(FCA_dw_nb_files, "file");
+				FCA_info_size(FCA_dw_tot_size, " (%d");
+				FCA_infos("B) downloaded in ");
+				FCA_print_time(t2-t1);
+				FCA_info_size(FCA_dw_tot_size/(t2-t1), " (%d");
+				FCA_infos("B/s).\n");
 				ding(); /* dong */
 			} else {
 				FCA_print_cmd_err("cannot do this operation on a directory");
