@@ -270,7 +270,7 @@ object Form1: TForm1
           ShowHint = True
         end
         object Label9: TLabel
-          Left = 20
+          Left = 12
           Top = 204
           Width = 98
           Height = 13
@@ -355,7 +355,7 @@ object Form1: TForm1
           end
         end
         object Edit9: TEdit
-          Left = 128
+          Left = 120
           Top = 204
           Width = 40
           Height = 21
@@ -367,6 +367,15 @@ object Form1: TForm1
           TabOrder = 3
           Text = '0'
           OnChange = Edit1Change
+        end
+        object CheckBox5: TCheckBox
+          Left = 176
+          Top = 204
+          Width = 113
+          Height = 17
+          Caption = 'No File Checksum'
+          TabOrder = 4
+          OnClick = CheckBox2Click
         end
       end
       object RadioButton1: TRadioButton

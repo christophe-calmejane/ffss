@@ -68,6 +68,7 @@ type
     Comment : String;
     Writeable : Boolean;
     Privat : Boolean;
+    NoChksum : Boolean;
     MaxConn : Integer;
     NbUsers : Integer;
     Users : Array[0..20] Of TUser;
@@ -137,6 +138,7 @@ type
     N3: TMenuItem;
     Quitter1: TMenuItem;
     CheckBox4: TCheckBox;
+    CheckBox5: TCheckBox;
     procedure GetInitValues(Remote : Boolean);
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
@@ -341,6 +343,7 @@ begin
       Edit2.Text:=Share.Comment;
       CheckBox2.Checked:=Not Share.Writeable;
       CheckBox3.Checked:=Share.Privat;
+      CheckBox5.Checked:=Share.NoChksum;
       Edit9.Text:=IntToStr(Share.MaxConn);
     End;
     TabSheet2.TabVisible:=True;
@@ -443,6 +446,8 @@ begin
   Shar.Writeable:=Boolean(StrToInt(String(Buf+Posi)));
   Inc(Posi,StrLen(Buf+Posi)+1);
   Shar.Privat:=Boolean(StrToInt(String(Buf+Posi)));
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Shar.NoChksum:=Boolean(StrToInt(String(Buf+Posi)));
   Inc(Posi,StrLen(Buf+Posi)+1);
   Shar.MaxConn:=StrToInt(String(Buf+Posi));
   Inc(Posi,StrLen(Buf+Posi)+1);
@@ -797,6 +802,8 @@ begin
     Inc(Size,IntLength(Integer(CheckBox2.Checked))+1);
     StrPCopy(Buf+Size,IntToStr(Integer(CheckBox3.Checked)));
     Inc(Size,IntLength(Integer(CheckBox3.Checked))+1);
+    StrPCopy(Buf+Size,IntToStr(Integer(CheckBox5.Checked)));
+    Inc(Size,IntLength(Integer(CheckBox5.Checked))+1);
     StrPCopy(Buf+Size,Edit9.Text);
     Inc(Size,Length(Edit9.Text)+1);
     Users:='';
@@ -935,6 +942,7 @@ begin
   Edit9.Color:=clBtnFace;
   CheckBox2.Enabled:=False;
   CheckBox3.Enabled:=False;
+  CheckBox5.Enabled:=False;
   Button4.Enabled:=False;
   ShrChanged:=True;
   Button3.Enabled:=True;
@@ -948,6 +956,7 @@ begin
   Edit9.Color:=clWindow;
   CheckBox2.Enabled:=True;
   CheckBox3.Enabled:=True;
+  CheckBox5.Enabled:=True;
   Button4.Enabled:=True;
   ShrChanged:=True;
   Button3.Enabled:=True;
