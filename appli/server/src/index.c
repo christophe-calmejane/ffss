@@ -152,6 +152,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
 }
 #endif /* __unix__ */
 
+/* Assumes FS_SemShr semaphore is locked */
 void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now)
 {
   FS_PShare Share;
@@ -190,9 +191,8 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
 
-  SU_SEM_WAIT(FS_SemShr);
+  /* Assumes FS_SemShr semaphore is locked */
   FS_Index = SU_AddElementHead(FS_Index,Share);
-  SU_SEM_POST(FS_SemShr);
 }
 
 void FS_RealBuildIndex(void)
