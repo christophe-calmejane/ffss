@@ -386,7 +386,7 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
 
   SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
-  SU_SEM_POST(FM_MySem3);
+  SU_SEM_POST(FM_MySem4);
 }
 
 /* OnMasterSearch is raised by local clients */
@@ -641,6 +641,13 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   SU_THREAD_HANDLE ClientThr;
 
   context;
+  if((FileTreeSize == 0) || (NodesSize == 0))
+  {
+#ifdef DEBUG
+    printf("WARNING : Index from %s is empty... ignoring\n",inet_ntoa(Client.sin_addr));
+#endif /* DEBUG */
+    return;
+  }
   if(!Samba)
   {
     Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Client.sin_addr));

@@ -46,7 +46,9 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
       Ptr = Ptr->Next;
     }
     /* Send PING message - Even if server timed out */
+#ifndef DEBUG
     FM_SendMessage_Ping();
+#endif /* !DEBUG */
     SU_SEM_POST(FM_MySem2);
 
     /* REMOVE SEQUENCE */
