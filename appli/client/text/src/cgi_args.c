@@ -45,7 +45,6 @@ bool FCA_CGI_mode;
 bool FCA_must_download;
 #endif
 bool FCA_can_header;
-bool FCA_included_doc;
 char FCA_dir_to_list[FFSS_MAX_PATH_LENGTH];
 char FCA_html_page[FFSS_MAX_PATH_LENGTH];
 char FCA_search[FFSS_MAX_KEYWORDS_LENGTH];
@@ -71,6 +70,7 @@ const FCA_TCGI_arg FCA_CGI_ARGS[]={
 	{"s",		FCA_search,		FFSS_MAX_KEYWORDS_LENGTH,-1	},
 	{"sdom",	FCA_search_dom,		FFSS_MAX_DOMAIN_LENGTH,	-1	},
 	{"master",	FCA_master,		FCA_VAR_MAX,		-1	},
+	{"included_doc",FCA_html_included_doc,	FCA_VAR_MAX,		FCA_skin_env_index+4},
 	{"debug",	FCA_debuglevel,		FCA_VAR_MAX,		1	},
 #ifdef CGI_DOWNLOADS
 	{"dw_prefix",	FCA_html_dw_prefix,	FCA_VAR_MAX,		-1	},
@@ -86,7 +86,6 @@ const FCA_TCGI_bool_arg FCA_CGI_BOOL_ARGS[]={
 	{"download",	&FCA_must_download	},
 #endif
 	{"can_header",	&FCA_can_header		},
-	{"included_doc",&FCA_included_doc	},
 	{NULL,		NULL			}
 };
 
@@ -122,7 +121,7 @@ void FCA_read_cgi_args()
 	FCA_must_download=false;
 #endif
 	FCA_can_header=true;
-	FCA_included_doc=false;
+	FCA_html_included_doc=false;
 	FCA_dir_to_list[0]='\0';
 	FCA_search[0]='\0';
 	FCA_search_dom[0]='\0';

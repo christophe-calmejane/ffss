@@ -141,7 +141,7 @@ void FCA_htmlfl_init()
 
 void FCA_htmlfl_prog_begin()
 {
-if(!FCA_included_doc)
+if(FCA_html_included_doc[1]=='f')
 printf("<html>
 <head>
  <title>ffss client</title>
@@ -499,7 +499,7 @@ printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</font></center>
 </form>
 ");
-if(!FCA_included_doc)
+if(FCA_html_included_doc[1]=='f')
 printf("</body>
 </html>
 ");
@@ -509,8 +509,10 @@ void FCA_htmlfl_form_hidden_args()
 {
 	char *p;
 	
+#ifdef CGI
 	printf(" <input type='hidden' name='page' value='%s'>\n",
 		FCA_html_page);
+#endif
 	printf(" <input type='hidden' name='prefix' value='%s'>\n",
 		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
 	free(p);

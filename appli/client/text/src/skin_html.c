@@ -136,7 +136,7 @@ void FCA_html_init()
 
 void FCA_html_prog_begin()
 {
-if(!FCA_included_doc)
+if(FCA_html_included_doc[1]=='f')
 printf("<html>
 <head>
  <title>ffss client</title>
@@ -487,7 +487,7 @@ printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>
 </form>
 ");
-if(!FCA_included_doc)
+if(FCA_html_included_doc[1]=='f')
 printf("
 </body>
 </html>
@@ -553,7 +553,7 @@ void FCA_post_link(bool firstArg)
 	free(p);
 	printf("&debug=%s",
 		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
-	printf("&included_doc=%d", FCA_included_doc);
+	printf("&included_doc=%s", FCA_html_included_doc);
 	free(p);
 	printf("'>");
 }
