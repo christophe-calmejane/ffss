@@ -1007,13 +1007,18 @@ unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 	unsigned int *res;
 	
 	FFSS_PrintDebug(1, "(client) sorting answers...\n");
+	FFSS_PrintDebug(5, "(client) preparing index table [0->%d]\n", NbAnswers-1);
 		/* prepare the index table */
 	res=malloc(NbAnswers*sizeof(int));
 	if(!res)
-		FCA_crash("no such memosy");
+		FCA_crash("no such memory");
+	FFSS_PrintDebug(5, "(client) filling index table...\n");
 		/* fill this */
 	for(ir=0; ir<NbAnswers; ir++)
 		res[ir]=ir;
+	
+	if(NbAnswers<2)
+		return res;
 		/* while we have something to sort */
 	while(modified) {
 			/* first, from left to right */
@@ -1029,7 +1034,7 @@ unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 		if(modified) {
 			modified=false;
 				/* second (if needed), from right to left */
-			for(ir=NbAnswers-1; ir>=0; ir--) {
+			for(ir=NbAnswers-2; ir>0; ir--) {
 					/* answer > next answer.... */
 				if( strcmp(*(Answers+res[ir]), *(Answers+res[ir+1]))>0 ) {
 					sav=res[ir];
