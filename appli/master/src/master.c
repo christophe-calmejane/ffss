@@ -6,6 +6,10 @@
 
 #include "master.h"
 #include "index.h"
+#ifdef _WIN32
+#define pid_t int
+#define getpid() _getpid()
+#endif /* _WIN32 */
 
 FM_TDomain FM_MyDomain;
 SU_PList FM_Domains; /* FM_PDomain */
@@ -948,11 +952,11 @@ void handint(int sig)
 }
 
 #ifdef _WIN32
-#ifdef DEBUG
+#ifdef _CONSOLE
 int main(int argc,char *argv[])
-#else /* !DEBUG */
+#else /* !_CONSOLE */
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
-#endif /* DEBUG */
+#endif /* _CONSOLE */
 #else /* !_WIN32 */
 int main(int argc,char *argv[])
 #endif /* _WIN32 */
@@ -977,7 +981,7 @@ int main(int argc,char *argv[])
   }
 
   SU_strcpy(ConfigFile,CONFIG_FILE_NAME,sizeof(ConfigFile));
-#ifdef __unix__
+#if defined(__unix__) || defined(_CONSOLE)
   if(argc != 1)
   {
     i = 1;
@@ -1015,6 +1019,8 @@ int main(int argc,char *argv[])
     }
   }
 
+#endif /* __unix__ || _CONSOLE */
+#ifdef __unix__
   if(daemonize)
   {
     openlog("Ffss Master",0,LOG_DAEMON);

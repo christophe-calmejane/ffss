@@ -10,6 +10,35 @@ int Cur_Nb;
 #include "index.h"
 #include <ctype.h>
 
+#ifdef _WIN32
+void *memmem(const void *haystack,size_t haystacklen,const void *needle,size_t needlelen)
+{
+  unsigned int i,j;
+  char *hs = (char *)haystack;
+  char *n = (char *)needle;
+  bool ok;
+
+  for(i=0;i<haystacklen-needlelen+1;i++)
+  {
+    if(hs[i] == n[0])
+    {
+      ok = true;
+      for(j=1;j<needlelen;j++)
+      {
+        if(hs[i+j] != n[j])
+        {
+          ok = false;
+          break;
+        }
+      }
+      if(ok)
+        return (void*)(hs+i);
+    }
+  }
+  return NULL;
+}
+#endif
+
 void FM_ToUpper(char S[])
 {
   int i,l;
@@ -174,11 +203,11 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
   SU_PList STAnswers;
   unsigned char Tags;
   bool done;
-#ifdef DEBUG
+#ifdef STATS
   struct timeval t1,t2,t3;
   struct timezone tz={0,0};
   char tmp[1024];
-#endif /* DEBUG */
+#endif /* STATS */
 
   pos = 0;
   dom = 0;
@@ -241,12 +270,12 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       continue;
     }
 
-#ifdef DEBUG
+#ifdef STATS
     timerclear(&t1);
     timerclear(&t2);
     timerclear(&t3);
     gettimeofday(&t1,&tz);
-#endif /* DEBUG */
+#endif /* STATS */
     STAnswers = NULL;
     Tags = FFSS_FILE_TAGS_NOTHING;
     done = false;
@@ -302,9 +331,9 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
     pos += sizeof(FFSS_Field); /* Skip Nb Results pos */
     curr = 0;
 
-#ifdef DEBUG
+#ifdef STATS
     gettimeofday(&t2,&tz);
-#endif /* DEBUG */
+#endif /* STATS */
     context;
     answer = FM_IntersectAnswers(STAnswers,Tags,answer,&buf_size,&pos,&curr);
     if(curr > FM_TOO_MANY_ANSWERS_TRIGGER)
@@ -313,13 +342,13 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       free(answer);
       return NULL;
     }
-#ifdef DEBUG
+#ifdef STATS
     gettimeofday(&t3,&tz);
     snprintf(tmp,sizeof(tmp),"Search time : ST=%.3f msec INTER=%.3f msec (%ld answers)",((t2.tv_sec*1000000+t2.tv_usec)-(t1.tv_sec*1000000+t1.tv_usec))/1000.,((t3.tv_sec*1000000+t3.tv_usec)-(t2.tv_sec*1000000+t2.tv_usec))/1000.,curr);
     FFSS_PrintDebug(4,"%s\n",tmp);
     if(FM_SearchLogFile != NULL)
       SU_WriteToLogFile(FM_SearchLogFile,tmp);
-#endif /* DEBUG */
+#endif /* STATS */
     SU_FreeList(STAnswers);
 
     *(FFSS_Field *)(answer+pos_nb) = curr; /* Nb results */

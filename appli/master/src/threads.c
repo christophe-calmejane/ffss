@@ -198,10 +198,10 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
   char *buf;
   long int len;
   long int comp;
-#ifdef DEBUG
+#ifdef STATS
   struct timeval t1,t2;
   struct timezone tz={0,0};
-#endif /* DEBUG */
+#endif /* STATS */
   FM_PSearch Sch;
   char tmp[1024];
 
@@ -227,24 +227,24 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
       snprintf(tmp,sizeof(tmp),"Search from %s for domain %s : %s",inet_ntoa(Sch->Client.sin_addr),Sch->Domain,Sch->KeyWords);
       SU_WriteToLogFile(FM_SearchLogFile,tmp);
     }
-#ifdef DEBUG
+#ifdef STATS
     timerclear(&t1);
     timerclear(&t2);
     gettimeofday(&t1,&tz);
-#endif /* DEBUG */
+#endif /* STATS */
     context;
     buf = FM_Search(Sch,&len);
-#ifdef DEBUG
+#ifdef STATS
     gettimeofday(&t2,&tz);
-#endif /* DEBUG */
+#endif /* STATS */
     SU_SEM_POST(FM_MySem5);
     context;
-#ifdef DEBUG
+#ifdef STATS
     snprintf(tmp,sizeof(tmp),"Search time for %s : %.2f milli secondes",Sch->KeyWords,((t2.tv_sec*1000000+t2.tv_usec)-(t1.tv_sec*1000000+t1.tv_usec))/1000.);
     FFSS_PrintDebug(4,"%s\n",tmp);
     if(FM_SearchLogFile != NULL)
       SU_WriteToLogFile(FM_SearchLogFile,tmp);
-#endif /* DEBUG */
+#endif /* STATS */
     if(buf != NULL)
     {
       if(len >= FM_COMPRESSION_TRIGGER_BZLIB)

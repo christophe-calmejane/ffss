@@ -1,13 +1,10 @@
 #ifndef __MASTER_H__
 #define __MASTER_H__
 
-#ifdef __unix__
 #include <ffss.h>
+#ifdef __unix__
 #include <sys/ioctl.h>
 #include <net/if.h>
-#else /* __unix__ */
-#include "../ffss.h"
-#include "../utils.h"
 #endif /* __unix__ */
 
 #define FFSS_MASTER_VERSION "1.0-pre60"
@@ -16,6 +13,9 @@
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
 
 #ifdef DEBUG
+#ifdef __unix__
+#define STATS
+#endif /* __unix__ */
 #define FM_MYHOSTS_FILE "Hosts.dat"
 #define FM_MYINDEX_FILE "Index.dat"
 #define CONFIG_FILE_NAME "./Master.conf"
