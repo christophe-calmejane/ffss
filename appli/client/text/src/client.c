@@ -122,8 +122,11 @@ void FCA_init()
 	if(FCA_CGI_mode) {
 			/* by default, in CGI mode, it's better to ignore all debug messages */
 		N_DebugLevel=0;
+#ifdef DEBUG
+			/* we use N_SyslogOn to delete some syslog messages in CGI mode */
+		N_SyslogOn=0;
+#endif
 		sprintf(FCA_debuglevel, "0");
-		
 	}
 #endif
 		/* load all skins */
@@ -265,9 +268,8 @@ void FCA_uninit()
 #endif
 	FCA_exiting=true;
 	FCA_ShDisconnect();	/* disconnects if connected */
-/*	if( !FC_UnInit() && !FCA_quiet)	/* cannot call FCA_crash... *
+	if( !FC_UnInit() && !FCA_quiet)	/* cannot call FCA_crash... */
 		printf("FATAL ERROR: cannot shutdown FFSS library !\n");
-	*/
 	FCA_restore_term();
 
 	if(!FCA_quiet)
