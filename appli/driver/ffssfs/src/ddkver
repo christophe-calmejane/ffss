@@ -1,0 +1,41 @@
+#
+# When this file is included in an Sources file for a driver it sets TARGETPATH
+# to an appropriate value depending on witch version of Windows the driver is
+# compiled for and creates that directory.
+#
+# Use: !INCLUDE ddkver
+#
+
+#
+# If Windows 2000 DDK
+#
+!if "$(MIDL_OPTIMIZATION_NT5)" != ""
+
+TARGETPATH=..\bin\w2k\$(DDKBUILDENV)
+
+!if [mkdir $(TARGETPATH)\$(CPU)] > 1
+!error Failed to create output directory "$(TARGETPATH)\$(CPU)".
+!endif
+
+#
+# If Windows NT 4.0 DDK
+#
+!elseif "$(NEW_CRTS)" != ""
+
+TARGETPATH=..\bin\nt4
+
+!if [mkdir $(TARGETPATH)\$(CPU)\$(DDKBUILDENV)] > 1
+!error Failed to create output directory "$(TARGETPATH)\$(CPU)\$(DDKBUILDENV)".
+!endif
+
+#
+# Put debug information in .pdb file for both checked and free build, this is
+# default on Windows 2000 DDK
+#
+USE_PDB=TRUE
+!if "$(DDKBUILDENV)" == "free"
+NTDEBUG=ntsdnodbg
+NTDEBUGTYPE=both
+!endif
+
+!endif

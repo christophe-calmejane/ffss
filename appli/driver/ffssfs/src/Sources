@@ -1,0 +1,78 @@
+#
+# This is a ffssfs file system driver for Windows NT/2000/XP.
+# Copyright (C) 1999, 2000, 2001 Bo Brantén.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+#
+# This file control the build program used to compile and link the driver.
+#
+# To build the driver give the command 'build' in this directory from the
+# appropriate DDK Build environment.
+#
+
+# The file ddkver sets TARGETPATH to an appropriate value depending on witch
+# version of Windows the driver is compiled for and creates that directory.
+!INCLUDE ddkver
+
+INCLUDES=$(DRIVERNETWORKS)\include\tdiclient;\
+	$(DRIVERNETWORKS)\include;\
+	$(DRIVERWORKS)\include;\
+	$(DRIVERWORKS)\source;\
+	$(BASEDIR)\inc;\
+	$(BASEDIR)\inc\ddk;\
+	$(BASEDIR)\src\network\inc;\
+	$(BASEDIR)\src\network\wshsmple;\
+	..\inc;\
+	..\..\..\..\libffss-1.0.0\src;\
+	..\..\..\..\skyutils\src
+
+
+# Name and type of the output file:
+TARGETNAME=ffssfs
+TARGETTYPE=DRIVER
+TARGETLIBS= $(DRIVERWORKS)\lib\$(CPU)\$(DDKBUILDENV)\vdw.lib \
+	$(DRIVERNETWORKS)\lib\$(CPU)\$(DDKBUILDENV)\tdint5.lib \
+	$(DDK_LIB_PATH)\ndis.lib \
+	..\..\..\..\libffss-1.0.0\src\windows\driver\debug\kffss.lib
+
+C_DEFINES=$(C_DEFINES) -DNTVERSION='400' -DTDI_WINDOWS_NT -DFFSS_DRIVER -DDISABLE_ZLIB -DDISABLE_BZLIB
+
+# Creates a file used by Visual Studio to navigate the source code.
+BROWSER_INFO=TRUE
+
+RCNOFONTMAP=TRUE
+
+# The source code:
+SOURCES=alloc.c    \
+        blockdev.c \
+        char.c     \
+        cleanup.c  \
+        close.c    \
+        cmcb.c     \
+        create.c   \
+        debug.c    \
+        devctl.c   \
+        dirctl.c   \
+        fastio.c   \
+        fileinfo.c \
+        fsctl.c    \
+        fsd.c      \
+        init.c     \
+        lockctl.c  \
+        read.c     \
+        ffssfsrec.c \
+        string.c   \
+        volinfo.c  \
+        ffssfs.rc \
+        ffss_tdi.cpp
