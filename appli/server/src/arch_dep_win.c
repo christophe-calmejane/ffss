@@ -158,6 +158,7 @@ N_DebugLevel = 0;
     char buf[4096];
     LONG ret = ERROR_SUCCESS;
     DWORD len,len2;
+    FS_PPlugin Pl;
 
     while(ret != ERROR_NO_MORE_ITEMS)
     {
@@ -165,7 +166,11 @@ N_DebugLevel = 0;
       len2 = sizeof(buf);
       ret = RegEnumValue(HK,idx,key,&len,NULL,NULL,buf,&len2);
       if(ret == ERROR_SUCCESS)
-        FS_LoadPlugin(buf);
+      {
+        Pl = FS_LoadPlugin(buf);
+        if(Pl != NULL)
+          Pl->Startup = true;
+      }
       idx++;
     }
   }
@@ -313,6 +318,7 @@ void FS_AddPluginToStartup(FS_PPlugin Plugin)
   char tmp[1024];
   _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
   SU_RB_SetStrValue(tmp,Plugin->Path);
+  Plugin->Startup = true;
 }
 
 void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
@@ -320,4 +326,5 @@ void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
   char tmp[1024];
   _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
   SU_RB_DelValue(tmp);
+  Plugin->Startup = false;
 }

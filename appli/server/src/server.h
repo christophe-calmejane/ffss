@@ -182,6 +182,7 @@ typedef struct
   char *Name;      /* Set and freed by plugin */
   char *Copyright; /* Set and freed by plugin */
   char *Version;   /* Set and freed by plugin */
+  bool Startup;    /* If plugin is loaded at server startup */
   SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;
   bool (*OnCheckConfConn)(SU_PClientSocket Client);

@@ -516,6 +516,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
   int nb,i;
   char Buf[10000],*tmp1,*tmp2,*tmp3;
   FFSS_Field Size,Pos;
+  bool Startup;
 
   Buf[0] = FS_OPCODE_PL_ENUM;
   Size = 1;
@@ -537,6 +538,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
       free(Pl);
       return Plugins;
     }
+    Startup = (bool) Buf[Pos++];
     Pl->Name = strdup(tmp1);
     Pl->Copyright = strdup(tmp2);
     Pl->Version = strdup(tmp3);

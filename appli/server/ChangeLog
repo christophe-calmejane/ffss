@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 7th 2002
+                  Last Update : June, 8th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+June, 8th 2002:
+  - Added the Startup field in plugin structs (server.h confapi.h)... and in the conf/confapi code
 
 June, 7th 2002:
   - Added SHUTDOWN command in plugin interface

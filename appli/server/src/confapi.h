@@ -59,6 +59,7 @@ typedef struct
   char *Name;      /* Free it */
   char *Copyright; /* Free it */
   char *Version;   /* Free it */
+  bool Startup;    /* If plugin is loaded at server startup */
 } FSCA_TPluginInfo, *FSCA_PPluginInfo;
 
 /* *************** Get Infos *************** */
