@@ -32,7 +32,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifndef NO_ZLIB_INCLUDE
 #include <zlib.h>
+#endif /* NO_ZLIB_INCLUDE */
 #ifdef HAVE_BZLIB
 #include <bzlib.h>
 #endif /* HAVE_BZLIB */
