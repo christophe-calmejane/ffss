@@ -99,7 +99,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.SCB.OnMasterSearchAnswer(Client,val,str,lval);
       break;
     default :
-      FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client.sin_addr),Type);
+      FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %lx ... DoS attack ?\n",inet_ntoa(Client.sin_addr),Type);
   }
 }
 
@@ -372,7 +372,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
           FFSS_CB.SCB.OnStrmSeek(Client,val,val2,lval);
         break;
       default :
-        FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),Type);
+        FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %lx ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),Type);
         ret_val = false;
     }
   }
