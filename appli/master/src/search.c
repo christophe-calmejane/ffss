@@ -199,8 +199,11 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       {
         /* Forwarding request to foreign master */
         FFSS_PrintDebug(4,"Forwarding search \"%s\" to %s\n",KeyWords,Dom->Master);
-        if(!FM_SendMessage_SearchForward(Dom->Master,Sch->Client,Sch->Compressions,KeyWords))
-          FFSS_PrintSyslog(LOG_WARNING,"Error forwarding search to %s\n",Dom->Master);
+        if(Dom->CS != NULL)
+        {
+          if(!FM_SendMessage_SearchForward(Dom->CS->sock,Sch->Client,Sch->Compressions,KeyWords))
+            FFSS_PrintSyslog(LOG_WARNING,"Error forwarding search to %s\n",Dom->Master);
+        }
         Ptr = Ptr->Next;
         continue;
       }

@@ -112,7 +112,10 @@ SU_THREAD_ROUTINE(FM_ThreadQueue,User)
       while(Ptr != NULL)
       {
         if(Ptr->Data != (&FM_MyDomain))
-          FM_SendMessage_NewStatesMaster(((FM_PDomain)Ptr->Data)->Master,buf,len,FFSS_COMPRESSION_BZLIB);
+        {
+          if(((FM_PDomain)Ptr->Data)->CS != NULL)
+            FM_SendMessage_NewStatesMaster(((FM_PDomain)Ptr->Data)->CS->sock,buf,len,FFSS_COMPRESSION_BZLIB);
+        }
         Ptr = Ptr->Next;
       }
       free(buf);

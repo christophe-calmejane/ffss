@@ -1309,6 +1309,61 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,F
 /*             MASTER MESSAGES          */
 /* ************************************ */
 
+SU_THREAD_ROUTINE(FM_MasterThreadTCP,User);
+
+/* FM_SendMessage_Connect Function  */
+/* Connects to a foreign master     */
+/*  Master : The name of the Master */
+SU_PClientSocket FM_SendMessage_Connect(const char Master[])
+{
+  SU_PClientSocket CS;
+  SU_THREAD_HANDLE MasterThr;
+
+  CS = SU_ClientConnect((char *)Master,FFSS_MASTER_PORT_S,SOCK_STREAM);
+  if(CS == NULL)
+    return NULL;
+  if(!SU_CreateThread(&MasterThr,FM_MasterThreadTCP,(void *)CS,true))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error creating TCP Master thread\n");
+    SU_FreeCS(CS);
+    return NULL;
+  }
+  return CS;
+}
+
+/* FM_SendMessage_MasterConnection Function       */
+/* Sends a MASTER CONNECTION message to a master  */
+/* Must be the first message sent upon connection */
+/*  Master : The socket of the Master             */
+bool FM_SendMessage_MasterConnection(int Master)
+{
+  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_MASTER_CONNECTION];
+  long int pos;
+  int resp;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
+
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_MASTER_CONNECTION);
+  pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
+
+  FFSS_PackField(msg,0,pos);
+  FFSS_PrintDebug(3,"Sending Master connection message to master\n");
+  FD_ZERO(&rfds);
+  FD_SET(Master,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Master+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending Master connection message timed out !\n");
+    return false;
+  }
+  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
+  return (resp == pos);
+}
+
 /* FM_SendMessage_Ping Function    */
 /* Sends a PING message to servers */
 bool FM_SendMessage_Ping()
@@ -1327,16 +1382,19 @@ bool FM_SendMessage_Ping()
 
 /* FM_SendMessage_NewStatesMaster Function                          */
 /* Sends a NEW STATES message to a master                           */
-/*  Master : The name of the master we want to send states          */
+/*  Master : The socket of the master                               */
 /*  Buffer : The buffer containing the nb of states, and the states */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long int BufSize,int Compression)
+bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSize,int Compression)
 {
   char *msg;
   long int size,pos;
   int resp;
   long int CompSize;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
 
   CompSize = BufSize*1.05+6000;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES + CompSize;
@@ -1380,9 +1438,19 @@ bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long 
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending New States message to master\n");
-  resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
+  FD_ZERO(&rfds);
+  FD_SET(Master,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Master+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending New states message timed out !\n");
+    return false;
+  }
+  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
   free(msg);
-  return (resp != SOCKET_ERROR);
+  return (resp == pos);
 }
 
 /* FM_SendMessage_ServerListing Function                            */
@@ -1505,17 +1573,61 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
   return (resp == pos);
 }
 
+/* FM_SendMessage_ErrorMaster Function        */
+/* Sends an ERROR message to a master         */
+/*  Master : The socket of the Master         */
+/*  Code : The error code to send             */
+/*  Descr : The description of the error code */
+bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
+{
+  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
+  long int len,pos;
+  int resp;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
+
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
+  pos = FFSS_PackField(msg,pos,Code);
+  if(Descr != NULL)
+  {
+    len = strlen(Descr)+1;
+    if(len > FFSS_MAX_ERRORMSG_LENGTH)
+      len = FFSS_MAX_ERRORMSG_LENGTH;
+    pos = FFSS_PackString(msg,pos,Descr,len);
+  }
+  else
+    msg[pos++] = 0;
+
+  FFSS_PackField(msg,0,pos);
+  FFSS_PrintDebug(3,"Sending Error message (%d:%s) to master\n",Code,Descr);
+  FD_ZERO(&rfds);
+  FD_SET(Master,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Master+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending Error message timed out !\n");
+    return false;
+  }
+  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
+  return (resp == pos);
+}
+
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
-/*  Master : The name of the foreign master        */
-bool FM_SendMessage_ServerList(const char Master[])
+/*  Master : The socket of the Master              */
+bool FM_SendMessage_ServerList(int Master)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_DOMAIN_LENGTH+1];
   long int pos;
   int resp;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
 
-  if(Master == NULL)
-    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_LISTING);
   pos = FFSS_PackField(msg,pos,FFSS_COMPRESSION_BZLIB);
@@ -1525,36 +1637,43 @@ bool FM_SendMessage_ServerList(const char Master[])
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Server listing message to %s\n",Master);
-  resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  return (resp != SOCKET_ERROR);
+  FD_ZERO(&rfds);
+  FD_SET(Master,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Master+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending Server listing message timed out !\n");
+    return false;
+  }
+  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
+  return (resp == pos);
 }
 
-/* FM_SendMessage_DomainListingAnswer Function */
-/* Sends a DOMAIN ANSWER message to client     */
-/*  Client : The sin of the client             */
-/*  Domains : A SU_PList of FM_PDomain         */
-bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,SU_PList Domains)
+/* FM_SendMessage_DomainListingAnswer Function   */
+/* Sends a DOMAIN ANSWER message to client       */
+/*  Client : The sin of the client               */
+/*  NbDomains : Nomber of domains                */
+/*  Domains : Array of strings (name of domains) */
+bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[])
 {
   char *msg;
   long int len,size,pos;
-  int resp,nb;
-  SU_PList Ptr;
+  int resp,i;
 
-  nb = SU_ListCount(Domains);
-  size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER + nb*(FFSS_MAX_DOMAIN_LENGTH+1);
+  size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER + NbDomains*(FFSS_MAX_DOMAIN_LENGTH+1);
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DOMAINS_LISTING_ANSWER);
-  pos = FFSS_PackField(msg,pos,nb);
+  pos = FFSS_PackField(msg,pos,NbDomains);
 
-  Ptr = Domains;
-  while(Ptr != NULL)
+  for(i=0;i<NbDomains;i++)
   {
-    len = strlen(((FM_PDomain)Ptr->Data)->Name)+1;
+    len = strlen(Domains[i])+1;
     if(len > FFSS_MAX_DOMAIN_LENGTH)
       len = FFSS_MAX_DOMAIN_LENGTH;
-    pos = FFSS_PackString(msg,pos,((FM_PDomain)Ptr->Data)->Name,len);
-    Ptr = Ptr->Next;
+    pos = FFSS_PackString(msg,pos,Domains[i],len);
   }
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Domains Listing message to client\n");
@@ -1659,18 +1778,18 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 
 /* FM_SendMessage_SearchForward Function                 */
 /* Sends a SEARCH message to a foreign master            */
-/*  Master : The name of the master                      */
+/*  Master : The socket of the Master                    */
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(const char Master[],struct sockaddr_in Client,int Compression,const char Key[])
+bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compression,const char Key[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_FW + FFSS_IP_FIELD_SIZE + FFSS_MAX_KEYWORDS_LENGTH+1];
   long int len,pos;
   int resp;
-
-  if(Master == NULL)
-    return true;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
 
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_FW);
@@ -1685,6 +1804,16 @@ bool FM_SendMessage_SearchForward(const char Master[],struct sockaddr_in Client,
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Search Forward message to %s - Reply to %s:%d\n",Master,inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
-  resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  return (resp != SOCKET_ERROR);
+  FD_ZERO(&rfds);
+  FD_SET(Master,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Master+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending Search forward message timed out !\n");
+    return false;
+  }
+  resp = send(Master,msg,pos,SU_MSG_NOSIGNAL);
+  return (resp == pos);
 }

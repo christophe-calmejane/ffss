@@ -254,109 +254,44 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
   FM_AddStateToMyQueue(&FM_MyDomain,Hst);
 }
 
-/* OnNewState is raised by foreign masters */
-void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
-{
-  FM_PDomain Dom;
-  FM_PHost Hst;
-
-  context;
-  Dom = FM_SearchDomainByIP(MasterIP);
-  if(Dom == NULL)
-  {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",MasterIP);
-#endif /* DEBUG */
-    return;
-  }
-
-  Hst = FM_SearchHostByIP(Dom,IP);
-  if(Hst == NULL)
-    Hst = FM_AddHostToDomain(Dom,Name,OS,Comment,IP,State);
-  else
-    FM_UpdateHost(Hst,Name,OS,Comment,State);
-  if(FM_IsMyDomain(Dom))
-    FM_AddStateToMyQueue(Dom,Hst);
-  else
-    FM_AddStateToOtherQueue(Dom,Hst);
-}
-
-/* OnServerListing is raised by local clients or foreign masters */
+/* OnServerListing is raised by local clients */
 void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions)
 {
   char *buf,*s_dom,*s_os;
   long int len;
-  SU_PList Queue,Ptr;
-  FM_PQueue Que;
-  FM_PDomain Dom;
   long int comp;
 
   context;
   buf = inet_ntoa(Client.sin_addr);
-  /* Request from a master ? */
-  Dom = FM_SearchDomainByIP(buf);
-  if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0))
-  {
-#ifdef DEBUG
-    printf("MASTER : Received a ServerListing message from new foreign master of %s\n",Dom->Name);
-#endif /* DEBUG */
-    if(Dom->Listed == false) /* If I don't have asked for hosts of this domain */
-    {
-#ifdef DEBUG
-      printf("MASTER : I don't have any hosts for domain %s... requesting hosts list\n",Dom->Name);
-#endif /* DEBUG */
-      if(FM_SendMessage_ServerList(Dom->Master))
-        Dom->Listed = true;
-    }
-    Queue = NULL;
-    Ptr = FM_MyDomain.Hosts;
-    while(Ptr != NULL)
-    {
-      Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
-      Que->Domain = &FM_MyDomain;
-      Que->Host = (FM_PHost)Ptr->Data;
-      Queue = SU_AddElementHead(Queue,Que);
-      Ptr = Ptr->Next;
-    }
-    buf = FM_BuildStatesBuffer(Queue,&len);
-    if(buf != NULL)
-    {
-      FM_SendMessage_NewStatesMaster(inet_ntoa(Client.sin_addr),buf,len,FFSS_COMPRESSION_BZLIB);
-      free(buf);
-    }
-  }
+  if(Domain[0] == 0)
+    s_dom = "*";
   else
+    s_dom = (char *)Domain;
+  if(OS[0] == 0)
+    s_os = "*";
+  else
+    s_os = (char *)OS;
+  buf = FM_BuildServerListing(s_dom,s_os,&len);
+  if(len >= FM_COMPRESSION_TRIGGER_BZLIB)
   {
-    if(Domain[0] == 0)
-      s_dom = "*";
-    else
-      s_dom = (char *)Domain;
-    if(OS[0] == 0)
-      s_os = "*";
-    else
-      s_os = (char *)OS;
-    buf = FM_BuildServerListing(s_dom,s_os,&len);
-    if(len >= FM_COMPRESSION_TRIGGER_BZLIB)
-    {
-      if(Compressions & FFSS_COMPRESSION_BZLIB)
-        comp = FFSS_COMPRESSION_BZLIB;
-      else if(Compressions & FFSS_COMPRESSION_ZLIB)
-        comp = FFSS_COMPRESSION_ZLIB;
-      else
-        comp = FFSS_COMPRESSION_NONE;
-    }
-    else if(len >= FM_COMPRESSION_TRIGGER_ZLIB)
-    {
-      if(Compressions & FFSS_COMPRESSION_ZLIB)
-        comp = FFSS_COMPRESSION_ZLIB;
-      else
-        comp = FFSS_COMPRESSION_NONE;
-    }
+    if(Compressions & FFSS_COMPRESSION_BZLIB)
+      comp = FFSS_COMPRESSION_BZLIB;
+    else if(Compressions & FFSS_COMPRESSION_ZLIB)
+      comp = FFSS_COMPRESSION_ZLIB;
     else
       comp = FFSS_COMPRESSION_NONE;
-    FM_SendMessage_ServerListing(Client,buf,len,comp);
-    free(buf);
   }
+  else if(len >= FM_COMPRESSION_TRIGGER_ZLIB)
+  {
+    if(Compressions & FFSS_COMPRESSION_ZLIB)
+      comp = FFSS_COMPRESSION_ZLIB;
+    else
+      comp = FFSS_COMPRESSION_NONE;
+  }
+  else
+    comp = FFSS_COMPRESSION_NONE;
+  FM_SendMessage_ServerListing(Client,buf,len,comp);
+  free(buf);
 }
 
 /* OnClientServerFailed is raised by local clients that failed to connect to a *said* non-OFF server */
@@ -405,7 +340,19 @@ void OnPong(struct sockaddr_in Server,FFSS_Field State)
 /* OnDomainListing is raised by local clients */
 void OnDomainListing(struct sockaddr_in Client)
 {
-  FM_SendMessage_DomainListingAnswer(Client,FM_Domains);
+  char *buf[1024];
+  SU_PList Ptr;
+  int nb;
+
+  nb = 0;
+  Ptr = FM_Domains;
+  while(Ptr != NULL)
+  {
+    buf[nb] = ((FM_PDomain)Ptr->Data)->Name;
+    nb++;
+    Ptr = Ptr->Next;
+  }
+  FM_SendMessage_DomainListingAnswer(Client,nb,buf);
 }
 
 /* OnSearch is raised by local clients */
@@ -440,45 +387,6 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
   SU_SEM_WAIT(FM_MySem4);
   FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
   SU_SEM_POST(FM_MySem3);
-}
-
-/* OnSearchForward is raised by foreign masters */
-void OnSearchForward(struct sockaddr_in Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions)
-{
-  FM_PSearch Sch;
-  FM_PDomain Dom;
-
-  context;
-#ifdef DEBUG
-  printf("Received a SEARCH FORWARD message : %s\n",KeyWords);
-#endif /* DEBUG */
-
-  Dom = FM_SearchDomainByIP(inet_ntoa(Master.sin_addr));
-  if(Dom == NULL)
-  {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",inet_ntoa(Master.sin_addr));
-#endif /* DEBUG */
-    return;
-  }
-
-  if(strlen(KeyWords) < FFSS_MIN_SEARCH_REQUEST_LENGTH)
-  {
-    return;
-  }
-
-  Sch = (FM_PSearch) malloc(sizeof(FM_TSearch));
-  Sch->Client.sin_port = htons(Port);
-  Sch->Client.sin_addr.s_addr = inet_addr(ClientIP);
-  Sch->Client.sin_family = AF_INET;
-  Sch->Domain = strdup(FM_MyDomain.Name);
-  Sch->KeyWords = strdup(KeyWords);
-  Sch->Compressions = Compressions;
-  Sch->Master = true;
-
-  SU_SEM_WAIT(FM_MySem4);
-  FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
-  SU_SEM_POST(FM_MySem4);
 }
 
 /* OnMasterSearch is raised by local clients */
@@ -795,6 +703,151 @@ void OnIndexAnswerSamba(struct sockaddr_in Client,FFSS_Field CompressionType,FFS
   GlobalIndexAnswer(Client,CompressionType,IndexSize,FileTreeSize,NodesSize,Port,true);
 }
 
+/* TCP callbacks */
+bool OnCheckConnection(SU_PClientSocket Master)
+{
+  FM_PDomain Dom;
+  char *buf;
+
+  buf = inet_ntoa(Master->SAddr.sin_addr);
+  Dom = FM_SearchDomainByIP(buf);
+  if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0)) /* Foreign master, and not me ! */
+    return true;
+  return false;
+}
+
+void OnMasterConnected(SU_PClientSocket Master)
+{
+  FM_PDomain Dom;
+
+  Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
+  if(Dom != NULL)
+  {
+#ifdef DEBUG
+    printf("MASTER : New master connected for domain %s, requesting hosts list\n",Dom->Name);
+#endif /* DEBUG */
+    Dom->CS = Master;
+    FM_SendMessage_MasterConnection(Master->sock);
+    FM_SendMessage_ServerList(Master->sock);
+  }
+}
+
+void OnMasterDisconnected(SU_PClientSocket Master)
+{
+  FM_PDomain Dom;
+
+  Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
+  if(Dom != NULL)
+  {
+#ifdef DEBUG
+    printf("MASTER : Connection lost with master of domain %s\n",Dom->Name);
+#endif /* DEBUG */
+    Dom->CS = NULL;
+  }
+}
+
+void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
+{
+  FM_PDomain Dom;
+  FM_PHost Hst;
+
+  context;
+  Dom = FM_SearchDomainByIP(MasterIP);
+  if(Dom == NULL)
+  {
+#ifdef DEBUG
+    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",MasterIP);
+#endif /* DEBUG */
+    return;
+  }
+
+  Hst = FM_SearchHostByIP(Dom,IP);
+  if(Hst == NULL)
+    Hst = FM_AddHostToDomain(Dom,Name,OS,Comment,IP,State);
+  else
+    FM_UpdateHost(Hst,Name,OS,Comment,State);
+  if(FM_IsMyDomain(Dom))
+    FM_AddStateToMyQueue(Dom,Hst);
+  else
+    FM_AddStateToOtherQueue(Dom,Hst);
+}
+
+void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions)
+{
+  char *buf;
+  long int len;
+  SU_PList Queue,Ptr;
+  FM_PQueue Que;
+  FM_PDomain Dom;
+
+  context;
+  buf = inet_ntoa(Master->SAddr.sin_addr);
+  /* Known master ? */
+  Dom = FM_SearchDomainByIP(buf);
+  if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0))
+  {
+#ifdef DEBUG
+    printf("MASTER : Received a ServerListing message from new foreign master of %s\n",Dom->Name);
+#endif /* DEBUG */
+    Queue = NULL;
+    Ptr = FM_MyDomain.Hosts;
+    while(Ptr != NULL)
+    {
+      Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
+      Que->Domain = &FM_MyDomain;
+      Que->Host = (FM_PHost)Ptr->Data;
+      Queue = SU_AddElementHead(Queue,Que);
+      Ptr = Ptr->Next;
+    }
+    buf = FM_BuildStatesBuffer(Queue,&len);
+    if(buf != NULL)
+    {
+      FM_SendMessage_NewStatesMaster(Master->sock,buf,len,FFSS_COMPRESSION_BZLIB);
+      free(buf);
+    }
+  }
+}
+
+void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions)
+{
+  FM_PSearch Sch;
+  FM_PDomain Dom;
+
+  context;
+#ifdef DEBUG
+  printf("Received a SEARCH FORWARD message : %s\n",KeyWords);
+#endif /* DEBUG */
+
+  Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
+  if(Dom == NULL)
+  {
+#ifdef DEBUG
+    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",inet_ntoa(Master->SAddr.sin_addr));
+#endif /* DEBUG */
+    return;
+  }
+
+  if(strlen(KeyWords) < FFSS_MIN_SEARCH_REQUEST_LENGTH)
+  {
+    return;
+  }
+
+  Sch = (FM_PSearch) malloc(sizeof(FM_TSearch));
+  Sch->Client.sin_port = htons(Port);
+  Sch->Client.sin_addr.s_addr = inet_addr(ClientIP);
+  Sch->Client.sin_family = AF_INET;
+  Sch->Domain = strdup(FM_MyDomain.Name);
+  Sch->KeyWords = strdup(KeyWords);
+  Sch->Compressions = Compressions;
+  Sch->Master = true;
+
+  SU_SEM_WAIT(FM_MySem4);
+  FM_SearchQueue = SU_AddElementTail(FM_SearchQueue,Sch);
+  SU_SEM_POST(FM_MySem4);
+}
+
+
+/* *********************** */
 void PrintHelp(void)
 {
   printf("Usage : ffss-master [options]\n");
@@ -982,13 +1035,11 @@ int main(int argc,char *argv[])
     memset(&FFSS_CB,0,sizeof(FFSS_CB));
     /* UDP callbacks */
     FFSS_CB.MCB.OnState = OnState;
-    FFSS_CB.MCB.OnNewState = OnNewState;
     FFSS_CB.MCB.OnServerListing = OnServerListing;
     FFSS_CB.MCB.OnClientServerFailed = OnClientServerFailed;
     FFSS_CB.MCB.OnPong = OnPong;
     FFSS_CB.MCB.OnDomainListing = OnDomainListing;
     FFSS_CB.MCB.OnSearch = OnSearch;
-    FFSS_CB.MCB.OnSearchForward = OnSearchForward;
     FFSS_CB.MCB.OnMasterSearch = OnMasterSearch;
 #ifndef DISABLE_INDEX
     FFSS_CB.MCB.OnIndexAnswer = OnIndexAnswer;
@@ -996,6 +1047,13 @@ int main(int argc,char *argv[])
     FFSS_CB.MCB.OnIndexAnswerSamba = OnIndexAnswerSamba;
 #endif /* ENABLE_SAMBA */
 #endif /* !DISABLE_INDEX */
+    /* TCP callbacks */
+    FFSS_CB.MCB.OnCheckConnection = OnCheckConnection;
+    FFSS_CB.MCB.OnMasterConnected = OnMasterConnected;
+    FFSS_CB.MCB.OnMasterDisconnected = OnMasterDisconnected;
+    FFSS_CB.MCB.OnNewState = OnNewState;
+    FFSS_CB.MCB.OnServerListingMaster = OnServerListingMaster;
+    FFSS_CB.MCB.OnSearchForward = OnSearchForward;
 
     context;
     if(!FM_LoadConfigFile(ConfigFile,false))

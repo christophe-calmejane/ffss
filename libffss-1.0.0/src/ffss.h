@@ -61,11 +61,11 @@ extern "C" {
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre75"
+#define FFSS_VERSION "1.0.0-pre76"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOL_VERSION                  0x0010002
+#define FFSS_PROTOCOL_VERSION                  0x0010003
 #define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010002
 
 #define FFSS_MASTER_PORT 10001
@@ -111,6 +111,7 @@ extern "C" {
 #define FFSS_UDP_CLIENT_BUFFER_SIZE 500000
 #define FFSS_UDP_SERVER_BUFFER_SIZE 100000
 #define FFSS_UDP_MASTER_BUFFER_SIZE 100000
+#define FFSS_TCP_MASTER_BUFFER_SIZE 100000
 #define FFSS_TCP_CLIENT_BUFFER_SIZE 100000
 #define FFSS_TCP_SERVER_BUFFER_SIZE 60000
 #ifdef _WIN32
@@ -171,6 +172,7 @@ extern "C" {
 #define FFSS_MESSAGE_SEARCH_MASTER             55
 #define FFSS_MESSAGE_SEARCH_MASTER_ANSWER      56
 #define FFSS_MESSAGE_INDEX_ANSWER_SAMBA        57
+#define FFSS_MESSAGE_MASTER_CONNECTION         58
 #define FFSS_MESSAGE_STREAMING_OPEN            80
 #define FFSS_MESSAGE_STREAMING_OPEN_ANSWER     81
 #define FFSS_MESSAGE_STREAMING_CLOSE           82
@@ -222,6 +224,7 @@ extern "C" {
 #define FFSS_MESSAGESIZE_SEARCH_MASTER_ANSWER       3
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA         7
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA_2       5
+#define FFSS_MESSAGESIZE_MASTER_CONNECTION          3
 #define FFSS_MESSAGESIZE_STREAMING_OPEN             3
 #define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      (4+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_CLOSE            3
@@ -360,14 +363,6 @@ typedef struct
 
 typedef struct
 {
-  char *Name;      /* Name of the domain */
-  char *Master;    /* Address of the master of the domain */
-  SU_PList Hosts;  /* FM_PHost */ /* Hosts of the domain */
-  bool Listed;     /* Servers already listed ? */
-} FM_TDomain, *FM_PDomain;
-
-typedef struct
-{
   FFSS_LongField fsize,total;
   FFSS_Field Checksum;
   FFSS_Field XFerTag;
@@ -480,17 +475,22 @@ typedef struct
 {
   /* UDP callbacks */
   void (*OnState)(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[]);
-  void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
   void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions);
-//  void (*OnServerListingAnswer)(const char Domain[],const char NbHost,SU_PList HostList); /* SU_PList of FM_PHost */ /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
   void (*OnClientServerFailed)(const char IP[]);
   void (*OnPong)(struct sockaddr_in Server,FFSS_Field State);
   void (*OnDomainListing)(struct sockaddr_in Client);
   void (*OnSearch)(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions);
-  void (*OnSearchForward)(struct sockaddr_in Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions);
   void (*OnMasterSearch)(struct sockaddr_in Client,bool Server);
   void (*OnIndexAnswer)(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port);
   void (*OnIndexAnswerSamba)(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port);
+
+  /* TCP callbacks */
+  bool (*OnCheckConnection)(SU_PClientSocket Master);
+  void (*OnMasterConnected)(SU_PClientSocket Master);
+  void (*OnMasterDisconnected)(SU_PClientSocket Master);
+  void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
+  void (*OnServerListingMaster)(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions);
+  void (*OnSearchForward)(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions);
 } FFSS_TMasterCallbacks, *FFSS_PMasterCallbacks;
 
 typedef struct
@@ -512,7 +512,7 @@ typedef struct
 /* ************************************************ */
 extern SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 extern SU_THREAD_HANDLE FC_THR_UDP;
-extern SU_THREAD_HANDLE FM_THR_UDP;
+extern SU_THREAD_HANDLE FM_THR_UDP,FM_THR_TCP;
 extern FFSS_TCallbacks FFSS_CB;
 extern char *FFSS_MyIP;
 
@@ -826,26 +826,28 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,F
 /*                  MASTER MESSAGES                 */
 /* ************************************************ */
 
+/* FM_SendMessage_Connect Function  */
+/* Connects to a foreign master     */
+/*  Master : The name of the Master */
+SU_PClientSocket FM_SendMessage_Connect(const char Master[]);
+
+/* FM_SendMessage_MasterConnection Function       */
+/* Sends a MASTER CONNECTION message to a master  */
+/* Must be the first message sent upon connection */
+/*  Master : The socket of the Master             */
+bool FM_SendMessage_MasterConnection(int Master);
+
 /* FM_SendMessage_Ping Function    */
 /* Sends a PING message to servers */
 bool FM_SendMessage_Ping();
 
-/* FM_SendMessage_NewStatesClients Function                         */
-/* Sends a NEW STATES message to clients                            */
-/*  Buffer : The buffer containing the nb of states, and the states */
-/*  BufSize : The size of the buffer                                */
-/*  Compression : The type of compression to be applied to Buffer   */
-  /* !!!!!!!!!!!!!!!!!!!!! USELESS FUNCTION !!!!!!!!!!!!!!!!!!!!!!!!!!! */
-  /* Client should NOT be listening on a fixed port, or we won't be able to run multiple clients on the same host */
-//bool FM_SendMessage_NewStatesClients(const char *Buffer,long int BufSize,int Compression);
-
 /* FM_SendMessage_NewStatesMaster Function                          */
 /* Sends a NEW STATES message to a master                           */
-/*  Master : The name of the master we want to send states          */
+/*  Master : The socket of the master                               */
 /*  Buffer : The buffer containing the nb of states, and the states */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long int BufSize,int Compression);
+bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSize,int Compression);
 
 /* FM_SendMessage_ServerListing Function                            */
 /* Sends a NEW STATES message to client                             */
@@ -869,16 +871,24 @@ bool FM_SendMessage_Error(const char Server[],FFSS_Field Code,const char Descr[]
 /*  Descr : The description of the error code */
 bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const char Descr[]);
 
+/* FM_SendMessage_ErrorMaster Function        */
+/* Sends an ERROR message to a master         */
+/*  Master : The socket of the Master         */
+/*  Code : The error code to send             */
+/*  Descr : The description of the error code */
+bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[]);
+
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
-/*  Master : The name of the foreign master        */
-bool FM_SendMessage_ServerList(const char Master[]);
+/*  Master : The socket of the Master              */
+bool FM_SendMessage_ServerList(int Master);
 
-/* FM_SendMessage_DomainListingAnswer Function */
-/* Sends a DOMAIN ANSWER message to client     */
-/*  Client : The sin of the client             */
-/*  Domains : A SU_PList of FM_PDomain         */
-bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,SU_PList Domains);
+/* FM_SendMessage_DomainListingAnswer Function   */
+/* Sends a DOMAIN ANSWER message to client       */
+/*  Client : The sin of the client               */
+/*  NbDomains : Nomber of domains                */
+/*  Domains : Array of strings (name of domains) */
+bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,char *Domains[]);
 
 /* FM_SendMessage_MasterSearchAnswer Function               */
 /* Sends a MASTER SEARCH ANSWER message to client or server */
@@ -897,11 +907,11 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 
 /* FM_SendMessage_SearchForward Function                 */
 /* Sends a SEARCH message to a foreign master            */
-/*  Master : The name of the master                      */
+/*  Master : The socket of the Master                    */
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(const char Master[],struct sockaddr_in Client,int Compression,const char Key[]);
+bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compression,const char Key[]);
 
 
 
@@ -962,7 +972,7 @@ extern int N_DebugLevel;
 extern bool N_SyslogOn;
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 extern SU_PServerInfo FC_SI_OUT_UDP;
-extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP;
+extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP,FM_SI_TCP;
 #ifdef _WIN32
 extern FILE *FFSS_LogFile;
 #endif /* _WIN32 */

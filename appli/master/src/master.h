@@ -10,7 +10,7 @@
 #include "../utils.h"
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre47"
+#define FFSS_MASTER_VERSION "1.0-pre48"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -29,6 +29,14 @@
 #define FM_INDEX_DUMP_INTERVAL_PING 30
 #endif /* DEBUG */
 #define FM_INDEX_MAX_FATHER_RECURSION 100
+
+typedef struct
+{
+  char *Name;          /* Name of the domain */
+  char *Master;        /* Address of the master of the domain */
+  SU_PList Hosts;      /* FM_PHost */ /* Hosts of the domain */
+  SU_PClientSocket CS; /* NULL if not connected */
+} FM_TDomain, *FM_PDomain;
 
 typedef struct
 { /* Do NOT free those pointeurs !! */

@@ -61,7 +61,18 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
 #endif /* DEBUG */
         FM_Domains = SU_AddElementHead(FM_Domains,Domain);
         context;
-        FM_SendMessage_ServerList(Ip);
+#ifdef DEBUG
+        printf("Config Loader Info : Connecting to master %s:%d\n",Ip,FFSS_MASTER_PORT);
+#endif /* DEBUG */
+        Domain->CS = FM_SendMessage_Connect(Ip);
+        if(Domain->CS != NULL)
+        {
+#ifdef DEBUG
+          printf("Config Loader Info : Successfully connected... requesting servers list\n");
+#endif /* DEBUG */
+          FM_SendMessage_MasterConnection(Domain->CS->sock);
+          FM_SendMessage_ServerList(Domain->CS->sock);
+        }
       }
       else if(strcasecmp(Name,"Domain") == 0)
         FM_MyDomain.Name = strdup(Value);

@@ -26,7 +26,7 @@ Si la connexion d'un client a un serveur echoue, le client en informe son master
 
 Proprietes du Master :
 ----------------------
-Le master est en ecoute sur le port 695 en UDP.
+Le master est en ecoute sur le port 695 en UDP et TCP.
 Le master centralise la liste des serveurs actifs. Il peux aussi etre en contact avec d'autres serveurs (sur un autre sous reseau
 par exemple) pour leur communiquer la liste des serveurs actifs et recuperer leur liste.
 Quand un master demarre, il demande a la liste de ses co-masters leur liste.
@@ -39,7 +39,7 @@ Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, 
 Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
 
 
-Detail du protocole (Version 0100) :
+Detail du protocole (Version 0x0010003) :
 ---------------------------------
  * Message d'etat (Serveur->Master 695) (UDP) :
    DWord : Taille du message
@@ -58,7 +58,7 @@ Detail du protocole (Version 0100) :
     1 : Version du serveur trop ancienne
 
  * Message d'etat d'un serveur (Master->Clients qcq) (Broadcast UDP) :
- ou Message d'etat d'un serveur (Master->Master 695) (UDP) :
+ ou Message d'etat d'un serveur (Master->Master 695) (TCP) :
  ou Message de reponse de recherche des serveurs (Serveur->Client 697) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 3 (etat serveurs)
@@ -87,8 +87,9 @@ Detail du protocole (Version 0100) :
 
  * Message de reponse d'index (Serveur->Client 697) (UDP) : NE LISTER QUE LES PARTAGES ACCESSIBLES PAR TOUT LE MONDE !!!
  ou Message de reponse d'index (Serveur->Master 695) (UDP) :
+ ou Message de reponse d'index samba (ScanMachine->Master 695) (UDP) :
    DWord : Taille du message
-   DWord : Type de message = 5 (reponse d'index)
+   DWord : Type de message = 5 (reponse d'index) (57=index samba)
    DWord : Type de compression (0=Néant 1=??) (Si compression, chaque buffer dans la connexion index sera compressee)
    DWord : Taille de l'index (compressee)
    DWord : Taille totale du FileTree
@@ -104,7 +105,7 @@ Detail du protocole (Version 0100) :
     ...
 
  * Message de listing des serveurs (Client->Master 695) (UDP) :
- ou Message de listing des serveurs (Master->Master 695) (UDP) :
+ ou Message de listing des serveurs (Master->Master 695) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 6 (listing serveurs)
    DWord : Type de compressions authorisees pour la reponse
@@ -112,7 +113,6 @@ Detail du protocole (Version 0100) :
    ZStr : Domain demande ou chaine vide (0) si tous les groupes
 
  * Message de reponse de listing des serveurs (Master->Client qcq) (UDP) :
-// ANNULE ou Message de reponse de listing des serveurs (Master->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 7 (reponse listing serveurs)
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
@@ -304,7 +304,6 @@ Detail du protocole (Version 0100) :
    ZStr : Chaine contenant les mots cles
 
  * Message de reponse de recherche (friandise) (Master->Client qcq) (UDP) :
- ou Message de reponse de recherche forwarde (Master->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 51 (reponse de recherche)
    DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
@@ -314,7 +313,7 @@ Detail du protocole (Version 0100) :
     DWord : Nombre de reponses
      ZStr : Chaine reponse contenant le nom du server et son domaine (suffit a identifier un serveur), le partage, le path dans le partage
 
- * Message de recherche forwarde (Master->Master 695) (UDP) :
+ * Message de recherche forwarde (Master->Master 695) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 52 (recherche forwarde)
    DWord : Port du client pour la reponse
@@ -338,6 +337,11 @@ Detail du protocole (Version 0100) :
    DWord : Type de message = 56 (reponse de recherche de master)
    DWord : Version courante du protocole de la lib FFSS
    ZStr : Nom du domaine du master
+
+ * Message de connexion a un master (Master->Master 695) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 58 (connexion a un master)
+   DWord : Version courante du protocole de la lib FFSS
 
  * Message de streaming : open (Client->Server connecte) (TCP) :
    DWord : Taille du message
