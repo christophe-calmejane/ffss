@@ -62,7 +62,7 @@ bool FSCA_SetStateInfo(SU_PClientSocket Client,int State);
 bool FSCA_SetShareState(SU_PClientSocket Client,const char ShareName[],bool Active);
 bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[]);
 bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
-bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
+bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[]);
 bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
 
 #endif /* !__CONFAPI_H__ */

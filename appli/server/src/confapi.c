@@ -1,5 +1,18 @@
 #include "confapi.h"
 
+int FSCA_GetIntLen(int v)
+{
+  if(v < 10)
+    return 1;
+  if(v < 100)
+    return 2;
+  if(v < 1000)
+    return 3;
+  if(v < 10000)
+    return 4;
+  return 5;
+}
+
 bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
 {
   FFSS_Field Size;
@@ -65,6 +78,7 @@ bool FSCA_Request(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   return true;
 }
 
+/* Get Infos */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
 {
   FSCA_PGlobal Gbl = NULL;
@@ -272,4 +286,108 @@ bool FSCA_RequestEject(SU_PClientSocket Client,const char ShareName[])
   if(!FSCA_Request(Client,Buf,&Size))
     return false;
   return true;
+}
+
+/* Set Infos */
+bool FSCA_SetGlobalInfo(SU_PClientSocket Client,FSCA_PGlobal Gbl)
+{
+  char Buf[10000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_UPDTGLOBAL;
+  Size = 1;
+  SU_strcpy(Buf+Size,Gbl->Name,sizeof(Buf)-Size);
+  Size += strlen(Gbl->Name) + 1;
+  SU_strcpy(Buf+Size,Gbl->Comment,sizeof(Buf)-Size);
+  Size += strlen(Gbl->Comment) + 1;
+  SU_strcpy(Buf+Size,Gbl->Master,sizeof(Buf)-Size);
+  Size += strlen(Gbl->Master) + 1;
+  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d%c%d",Gbl->Idle,0,Gbl->MaxConn,0,Gbl->MaxXFerPerConn,0,Gbl->FTP,0,Gbl->FTP_MaxConn);
+  Size += FSCA_GetIntLen(Gbl->Idle) + FSCA_GetIntLen(Gbl->MaxConn) + FSCA_GetIntLen(Gbl->MaxXFerPerConn) + FSCA_GetIntLen(Gbl->FTP) + FSCA_GetIntLen(Gbl->FTP_MaxConn) + 5;
+
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return false;
+  return (Buf[0] == FS_OPCODE_ACK);
+}
+
+bool FSCA_SetStateInfo(SU_PClientSocket Client,int State)
+{
+  char Buf[10];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_SETSTATE;
+  Buf[1] = (char)State;
+  Size = 2;
+  return FSCA_Request(Client,Buf,&Size);
+}
+
+bool FSCA_SetShareState(SU_PClientSocket Client,const char ShareName[],bool Active)
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_SETSHARESTATE;
+  Buf[1] = (char)Active;
+  Size = 2;
+  SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
+  Size += strlen(ShareName) + 1;
+  return FSCA_Request(Client,Buf,&Size);
+}
+
+bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[])
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_RESCAN;
+  Size = 1;
+  SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
+  Size += strlen(ShareName) + 1;
+  return FSCA_Request(Client,Buf,&Size);
+}
+
+bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share,char Opcode)
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = Opcode;
+  Size = 1;
+  SU_strcpy(Buf+Size,Share->Name,sizeof(Buf)-Size);
+  Size += strlen(Share->Name) + 1;
+  SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
+  Size += strlen(SharePath) + 1;
+  SU_strcpy(Buf+Size,Share->Comment,sizeof(Buf)-Size);
+  Size += strlen(Share->Comment) + 1;
+  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->MaxConn);
+  Size += FSCA_GetIntLen(Share->Writeable) + FSCA_GetIntLen(Share->Private) + FSCA_GetIntLen(Share->MaxConn) + 3;
+
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return false;
+  return (Buf[0] == FS_OPCODE_ACK);
+}
+
+bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share)
+{
+  return FSCA_AddUpdtShare(Client,SharePath,Share,FS_OPCODE_ADDSHARE);
+}
+
+bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share)
+{
+  return FSCA_AddUpdtShare(Client,SharePath,Share,FS_OPCODE_UPDTSHARE);
+}
+
+bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[])
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_DELSHARE;
+  Size = 1;
+  SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
+  Size += strlen(SharePath) + 1;
+
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return false;
+  return (Buf[0] == FS_OPCODE_ACK);
 }
