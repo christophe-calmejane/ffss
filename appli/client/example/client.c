@@ -31,7 +31,7 @@ void OnNewState(long int State,const char IP[],const char Domain[],const char Na
   if(!done)
   {
     /* Sending shares listing */
-    if(!FC_SendMessage_SharesListing(IP))
+    if(!FC_SendMessage_SharesListing(IP,0))
     {
       printf("Error sending Shares listing to server\n");
       exit(-1);
@@ -69,7 +69,7 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
   {
     H = (FM_PHost) Ptr->Data;
     printf("\t%s (%s) running %s is %s : %s\n",H->Name,H->IP,H->OS,States[H->State],H->Comment);
-    FC_SendMessage_SharesListing(H->IP);
+    FC_SendMessage_SharesListing(H->IP,0);
     free(H->IP);
     Ptr = Ptr->Next;
   }
@@ -91,7 +91,7 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
 void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
 {
   printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),MasterVersion,Domain);
-  if(!FC_SendMessage_Search(inet_ntoa(Master.sin_addr),"Fleming","metallica mp3 toto"))
+  if(!FC_SendMessage_Search(inet_ntoa(Master.sin_addr),"Fleming","metallica mp3 toto",0))
     printf("Error sending search message to master\n");
 }
 
@@ -106,7 +106,7 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
 {
   if(Code == FFSS_ERROR_NO_ERROR)
   {
-    FC_SendMessage_DirectoryListing(Server,"/");
+    FC_SendMessage_DirectoryListing(Server,"/",0);
   }
   else
     printf("Received an error code from %s (%d:%s)\n",inet_ntoa(Server->SAddr.sin_addr),Code,Descr);
@@ -139,7 +139,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
   if(tmp != NULL)
   {
     snprintf(buf_tmp,sizeof(buf_tmp),"%s/%s",Path,tmp);
-    FC_SendMessage_DirectoryListing(Server,buf_tmp);
+    FC_SendMessage_DirectoryListing(Server,buf_tmp,0);
   }
 
   if(tmp2 != NULL)
@@ -147,9 +147,9 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
     snprintf(buf_tmp,sizeof(buf_tmp),"%s/%s",Path,tmp2);
 #ifdef FFSS_XFERS_IN_CONN
     if(FC_FT == NULL)
-      FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,true,&FC_FT);
+      FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,true,0,&FC_FT);
 #else
-    FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,false,&FC_FT);
+    FFSS_DownloadFile(Server,buf_tmp,"test_download",0,NULL,false,0,&FC_FT);
 #endif
   }
 
@@ -199,7 +199,7 @@ int main()
     printf("Client running...\n");
 
     while(1)
-      FC_SendMessage_ShareConnect("172.17.64.135","ftp",NULL,NULL);
+      FC_SendMessage_ShareConnect("172.17.64.135","ftp",NULL,NULL,0);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
     sleep(20);
     return 0;
@@ -210,7 +210,7 @@ int main()
     FC_SendMessage_DomainListing(CLT_MASTER);
     FC_SendMessage_ServerList(CLT_MASTER,NULL,NULL);
 #else
-    if(!FC_SendMessage_MasterSearch())
+    if(!FC_SendMessage_MasterSearch(0))
     {
       printf("Error sending master search\n");
       /* Shutting down server */

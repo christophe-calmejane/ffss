@@ -6,8 +6,6 @@ AM_CONFIG_HEADER(config.h)
 dnl Needed version of ffss
 ffss_needed="1.0.0"
 
-AM_PATH_GTK(1.2.0,,AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
-
 dnl Checks for programs.
 AC_ISC_POSIX
 AC_PROG_CC
@@ -79,6 +77,9 @@ if test "$ffss_vers2" -lt "$ffss_needed2"; then
   AC_MSG_ERROR([Your version of libffss ($ffss_vers) is too old, this version of ffss-master needs libffss >= $ffss_needed])
 fi
 
+GTK_CFLAGS=`pkg-config --cflags gtk+-2.0`
+GTK_LIBS=`pkg-config --libs gthread-2.0 gtk+-2.0`
+
 dnl Get cflags and libs
 ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
 ffss_cflags=`$FFSS_CONFIG --cflags`
@@ -146,8 +147,8 @@ AC_DEFINE_UNQUOTED(PACKAGE_HELP_DIR, "${packageprefix}/${packagehelpdir}")
 AC_DEFINE_UNQUOTED(PACKAGE_MENU_DIR, "${packageprefix}/${packagemenudir}")
 AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
 
-LIBS="$LIBS $ffss_libs"
-CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
+LIBS="$LIBS $ffss_libs $GTK_LIBS"
+CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE $GTK_CFLAGS"
 
 AC_OUTPUT([
 Makefile

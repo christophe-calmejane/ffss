@@ -1,7 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = `gtk-config --cflags`
-
 bin_PROGRAMS = ffss-client
 
 ffss_client_SOURCES = \
@@ -14,9 +12,7 @@ ffss_client_SOURCES = \
 	support.h\
 	client.c\
 	client.h\
+	draw.c\
+	draw.h\
 	main.h
-
-ffss_client_LDADD =  \
-	$(GTK_LIBS)\
-	 -lgthread
 

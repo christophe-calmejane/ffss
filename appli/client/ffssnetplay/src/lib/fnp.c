@@ -25,7 +25,7 @@ FNP_TCB FNP_CB;
 /* ******************* FFSS CALLBACKS ******************* */
 /* FFSS UDP callbacks */
 /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
-void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers)
+void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User)
 {
   int i;
 
@@ -52,11 +52,11 @@ void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Ans
 }
 
 /* FFSS TCP callbacks */
-bool FFSS_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value)
+bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
   if(Code == FFSS_ERROR_NO_ERROR)
   {
-    FC_SendMessage_StrmOpen(Server,FNP_CurrentFile,FFSS_STRM_OPEN_READ | FFSS_STRM_OPEN_BINARY);
+    FC_SendMessage_StrmOpen(Server,FNP_CurrentFile,FFSS_STRM_OPEN_READ | FFSS_STRM_OPEN_BINARY,0);
     return true;
   }
   return true;
@@ -75,7 +75,7 @@ void FFSS_OnEndTCPThread(SU_PClientSocket Server)
     FNP_CB.OnEndTCPThread();
 }
 
-void FFSS_OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize)
+void FFSS_OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User)
 {
   FNP_CurrentFilePos = 0;
   FNP_CurrentFileSize = FileSize;
@@ -87,10 +87,10 @@ void FFSS_OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FF
   }
   FNP_CurrentFileHandle = Handle;
   /* Read first bloc */
-  FC_SendMessage_StrmRead(Client,Handle,FNP_CurrentFilePos,FNP_BUFFER_SIZE);
+  FC_SendMessage_StrmRead(Client,Handle,FNP_CurrentFilePos,FNP_BUFFER_SIZE,0);
 }
 
-void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize)
+void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_Field ErrorCode,FFSS_LongField User)
 {
   if(FNP_CurrentFileHandle != Handle) /* FNP_CurrentFileHandle Changed since last call */
   {
@@ -111,7 +111,7 @@ void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char 
   }
   /* Read next bloc - Optimize network card by sending request now */
   FNP_CurrentFilePos += BlocSize;
-  FC_SendMessage_StrmRead(Client,Handle,FNP_CurrentFilePos,FNP_BUFFER_SIZE);
+  FC_SendMessage_StrmRead(Client,Handle,FNP_CurrentFilePos,FNP_BUFFER_SIZE,0);
   /* Send bloc to Player while next bloc is comming from Server */
   send(FNP_CurrentPlayer->sock,Bloc,BlocSize,SU_MSG_NOSIGNAL);
   SU_SEM_POST(FNP_Sem);
@@ -135,13 +135,13 @@ void FNP_ConnectServer(const char IP[],const char Share[])
   if((FNP_CurrentServer != NULL) && (strcmp(IP,FNP_CurrentIP) == 0) && (strcmp(Share,FNP_CurrentShare) == 0))
   { /* Same as actual connection */
     printf("FNP : Same as actual connection... simulating ConnectionSuccess\n");
-    FFSS_OnError(FNP_CurrentServer,FFSS_ERROR_NO_ERROR,"",0); /* Simulate successful connection */
+    FFSS_OnError(FNP_CurrentServer,FFSS_ERROR_NO_ERROR,"",0,0); /* Simulate successful connection */
     return;
   }
   if(FNP_CurrentServer != NULL) /* Disconnect from old server */
     FNP_ServerDisconnect(true);
   printf("FNP : Sending Connection message to %s/%s\n",IP,Share);
-  FNP_CurrentServer = FC_SendMessage_ShareConnect(IP,Share,NULL,NULL);
+  FNP_CurrentServer = FC_SendMessage_ShareConnect(IP,Share,NULL,NULL,0);
   if(FNP_CurrentServer != NULL)
   {
     if(FNP_CurrentIP != NULL)
@@ -291,7 +291,7 @@ void FNP_SearchFiles(const char Key[])
   char buf[1024];
 
   snprintf(buf,sizeof(buf),"%s mp3",Key);
-  FC_SendMessage_Search(FNP_Master,NULL,buf);
+  FC_SendMessage_Search(FNP_Master,NULL,buf,0);
 }
 
 /* **************** PLAY FUNCTIONS *********************** */

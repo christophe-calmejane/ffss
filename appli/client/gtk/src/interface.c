@@ -639,6 +639,6 @@ create_window3 (void)
   return window3;
 }
 
-  GtkTreeModel *store;
-  GtkTreeSelection *select;
-  GtkTreeView *view;
+  //~ GtkTreeModel *store;
+  //~ GtkTreeSelection *select;
+  //~ GtkTreeView *view;
