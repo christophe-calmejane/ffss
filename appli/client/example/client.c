@@ -156,7 +156,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
   return true;
 }
 
-FFSS_PTransfer OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[])
+FFSS_PTransfer OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag)
 {
   return FC_FT;
 }
