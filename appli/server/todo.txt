@@ -46,3 +46,4 @@ TO DO :
 
  - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)
 
+ - Fichier de lock comme dans master...

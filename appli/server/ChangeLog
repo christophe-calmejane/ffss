@@ -10,6 +10,7 @@ VIRER LE -PREx DE SERVER.H
 February, 23th 2002:
   - Added send of index to master when a share changes
   - Added support for BIG_ENDIAN and WORD ALIGNMENT architectures (now works on ipaq)
+  - Fixed a dead lock in conf socket when adding a share
 
 February, 18th 2002:
   - Added possibility to force NO use of zlib (for cross compiling, if zlib doesn't exist)
