@@ -32,7 +32,7 @@ typedef struct
 {
   char *Name;
   char *Path;
-  bool  Active;
+  bool  Disabled;
   int   NbConns;
   int   NbXfers;
 } FSCA_TShareLst, *FSCA_PShareLst;

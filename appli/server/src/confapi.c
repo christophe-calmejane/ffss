@@ -232,7 +232,7 @@ SU_PList FSCA_RequestSharesList(SU_PClientSocket Client)
 {
   char Buf[10000];
   FFSS_Field Size;
-  int Pos,Nb,I,Conns,XFers,Active;
+  int Pos,Nb,I,Conns,XFers,Disabled;
   char *Shr,*Path;
   SU_PList Shares = NULL;
   FSCA_PShareLst Share;
@@ -254,7 +254,7 @@ SU_PList FSCA_RequestSharesList(SU_PClientSocket Client)
     Pos += strlen(Buf+Pos) +1;
     Path = Buf + Pos;
     Pos += strlen(Buf+Pos) +1;
-    Active = atoi(Buf + Pos);
+    Disabled = atoi(Buf + Pos);
     Pos += strlen(Buf+Pos) +1;
     Conns = atoi(Buf + Pos);
     Pos += strlen(Buf+Pos) +1;
@@ -265,7 +265,7 @@ SU_PList FSCA_RequestSharesList(SU_PClientSocket Client)
     memset(Share,0,sizeof(FSCA_TShareLst));
     Share->Name = strdup(Shr);
     Share->Path = strdup(Path);
-    Share->Active = Active;
+    Share->Disabled = Disabled;
     Share->NbConns = Conns;
     Share->NbXfers = XFers;
     Shares = SU_AddElementHead(Shares,Share);
