@@ -62,7 +62,7 @@
 #endif /* __sun__ */
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre81"
+#define FFSS_VERSION "1.0.0-pre82"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
@@ -409,7 +409,7 @@ typedef struct
   bool (*OnCopy)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
   bool (*OnDelete)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnMkDir)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
-  void (*OnEndTCPThread)(void);
+  void (*OnEndTCPThread)(void); /* Last callback raised before ending thread and freeing Client struct */
   bool (*OnDisconnect)(SU_PClientSocket Client);
   int (*OnSelect)(void); /* 0=Do timed-out select ; 1=don't do timed-out select, but sleep ; 2=don't do timed-out select, and continue */
   void (*OnIdleTimeout)(SU_PClientSocket Client);
@@ -459,7 +459,7 @@ typedef struct
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
   bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[]);
   bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
-  void (*OnEndTCPThread)(SU_PClientSocket Server);
+  void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
   void (*OnIdleTimeout)(SU_PClientSocket Server);
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
   void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download);

@@ -523,7 +523,7 @@ void *FFSS_malloc(size_t size)
   ptr = malloc(size);
   if(ptr == NULL)
   {
-    FFSS_PrintSyslog(LOG_ERR,"Malloc of size %d failed ! Not enough memory... exiting",size);
+    FFSS_PrintSyslog(LOG_ERR,"Malloc of size %d failed ! Not enough memory... exiting\n",size);
     if(FFSS_MainThread != SU_THREAD_SELF)
     {
 #ifdef __linux__
