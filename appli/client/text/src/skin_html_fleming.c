@@ -154,11 +154,11 @@ printf("<html>
 
 <body>
  ");
-printf("<center>\n");
+printf("<center>\n<font  class='small'>");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
-printf("</center>\n");
+printf("</font></center>\n");
 }
 
 void FCA_htmlfl_pre_listing(char *path)
