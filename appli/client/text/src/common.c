@@ -379,8 +379,8 @@ void FCA_sem_wait()
 	*/
 void handusr1()
 {
-	printf("recu SIGUSR1 dans la fille...\n");
-	
+	FFSS_PrintDebug(1, "(client) timer killed\n");
+	SU_END_THREAD(0);
 }
 
 #ifdef _WIN32
@@ -436,10 +436,9 @@ void FCA_sem_post()
 			/* kill timer thread */
 		if(FCA_wait_threading) {
 
-printf("paf SIG_USR1...\n");
+			FFSS_PrintDebug(1, "(client) killing timer\n");
 			pthread_kill(*FCA_wait_thread, SIGUSR1);
 			free(FCA_wait_thread);
-printf("ahah t mort\n");
 
 			FCA_wait_threading=false;
 		}
