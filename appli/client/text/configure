@@ -796,17 +796,12 @@ fi
 
 
 
-	ffss_needed="1.0.0"
+ffss_needed="1.0.0"
 
-	SU_VERSION="skyutils-1.12"
-SU_FUNCTION=SU_Dummy112
-
-	FFSS_PREFIX=/usr/local/bin
-	
-	# Extract the first word of "gcc", so it can be a program name with args.
+# Extract the first word of "gcc", so it can be a program name with args.
 set dummy gcc; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:810: checking for $ac_word" >&5
+echo "configure:805: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -836,7 +831,7 @@ if test -z "$CC"; then
   # Extract the first word of "cc", so it can be a program name with args.
 set dummy cc; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:840: checking for $ac_word" >&5
+echo "configure:835: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -887,7 +882,7 @@ fi
       # Extract the first word of "cl", so it can be a program name with args.
 set dummy cl; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:891: checking for $ac_word" >&5
+echo "configure:886: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -919,7 +914,7 @@ fi
 fi
 
 echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
-echo "configure:923: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+echo "configure:918: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
 
 ac_ext=c
 # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
@@ -930,12 +925,12 @@ cross_compiling=$ac_cv_prog_cc_cross
 
 cat > conftest.$ac_ext << EOF
 
-#line 934 "configure"
+#line 929 "configure"
 #include "confdefs.h"
 
 main(){return(0);}
 EOF
-if { (eval echo configure:939: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:934: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   ac_cv_prog_cc_works=yes
   # If we can't run a trivial program, we are probably using a cross compiler.
   if (./conftest; exit) 2>/dev/null; then
@@ -961,12 +956,12 @@ if test $ac_cv_prog_cc_works = no; then
   { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
 fi
 echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
-echo "configure:965: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+echo "configure:960: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
 echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
 cross_compiling=$ac_cv_prog_cc_cross
 
 echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
-echo "configure:970: checking whether we are using GNU C" >&5
+echo "configure:965: checking whether we are using GNU C" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -975,7 +970,7 @@ else
   yes;
 #endif
 EOF
-if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:979: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:974: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
   ac_cv_prog_gcc=yes
 else
   ac_cv_prog_gcc=no
@@ -994,7 +989,7 @@ ac_test_CFLAGS="${CFLAGS+set}"
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS=
 echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
-echo "configure:998: checking whether ${CC-cc} accepts -g" >&5
+echo "configure:993: checking whether ${CC-cc} accepts -g" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1026,7 +1021,7 @@ else
 fi
 
 echo $ac_n "checking for POSIXized ISC""... $ac_c" 1>&6
-echo "configure:1030: checking for POSIXized ISC" >&5
+echo "configure:1025: checking for POSIXized ISC" >&5
 if test -d /etc/conf/kconfig.d &&
   grep _POSIX_VERSION /usr/include/sys/unistd.h >/dev/null 2>&1
 then
@@ -1170,7 +1165,7 @@ fi
 	if test "$aliases" = "true"; then
 		CFLAGS="$CFLAGS -DALIASES"
 	fi
-	
+
 	# Check whether --enable-local-commands or --disable-local-commands was given.
 if test "${enable_local_commands+set}" = set; then
   enableval="$enable_local_commands"
@@ -1196,7 +1191,7 @@ fi
 
 echo -n "checking for ffss-config... "
 if test x"$with_ffss" = x ; then
-	FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+	FFSS_CONFIG=`which ffss-config`
 	FFSS_GET_LIBS=--libs
 	if test -x "$FFSS_CONFIG"; then
 		:
@@ -1223,15 +1218,20 @@ if test "$ffss_vers2" -lt "$ffss_needed2"; then
   { echo "configure: error: Your version of libffss ($ffss_vers) is too old, this version of ffss-master needs libffss >= $ffss_needed" 1>&2; exit 1; }
 fi
 
-	ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
+ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
 ffss_cflags=`$FFSS_CONFIG --cflags`
+ffss_bzlib=`$FFSS_CONFIG --with-bzlib`
+
+if test "$ffss_bzlib" = "yes" ; then
+  CFLAGS="$CFLAGS -DHAVE_BZLIB"
+fi
 
 LIBS="$LIBS $ffss_libs"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
 
 
-	echo $ac_n "checking for tputs in -ltermcap""... $ac_c" 1>&6
+echo $ac_n "checking for tputs in -ltermcap""... $ac_c" 1>&6
 echo "configure:1236: checking for tputs in -ltermcap" >&5
 ac_lib_var=`echo termcap'_'tputs | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
@@ -1569,7 +1569,7 @@ else
 int main() {
 
 /* Ultrix mips cc rejects this.  */
-typedef int charset[2]; const charset x = {0,0};
+typedef int charset[2]; const charset x;
 /* SunOS 4.1.1 cc rejects this.  */
 char const *const *ccp;
 char **p;

@@ -6,11 +6,6 @@ AM_CONFIG_HEADER(config.h)
 dnl Needed version of ffss
 ffss_needed="1.0.0"
 
-dnl Change this if libffss is not installed in /usr/local
-FFSS_PREFIX=/usr/local/bin
-dnl And change line bellow too (--with-ffss)
-
-
 AM_PATH_GTK(1.2.0, ,
             AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
 
@@ -57,7 +52,7 @@ AC_ARG_WITH(ffss, [  --with-ffss=DIR       Bin path to uninstalled copy of libff
 
 echo -n "checking for ffss-config... "
 if test x"$with_ffss" = x ; then
-  FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+  FFSS_CONFIG=`which ffss-config`
   FFSS_GET_LIBS=--libs
   if test -x "$FFSS_CONFIG"; then
     :

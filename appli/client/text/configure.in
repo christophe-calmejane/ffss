@@ -4,18 +4,10 @@ AC_INIT(src/client.c)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE(ffss-client, 1.0.0)
 
-	dnl Needed version of ffss
+dnl Needed version of ffss
 ffss_needed="1.0.0"
 
-	dnl skyutils 1.12 is needed
-SU_VERSION="skyutils-1.12"
-SU_FUNCTION=SU_Dummy112
-
-	dnl Change this if libffss is not installed in /usr/local
-FFSS_PREFIX=/usr/local/bin
-	dnl And change line bellow too (--with-ffss)
-
-	dnl Checks for programs.
+dnl Checks for programs.
 AC_PROG_CC
 AC_ISC_POSIX
 
@@ -116,7 +108,7 @@ AC_ARG_ENABLE(aliases,
 	if test "$aliases" = "true"; then
 		CFLAGS="$CFLAGS -DALIASES"
 	fi
-	
+
 	dnl option to configure: --enable-local-commands, adds a -DLOCAL_CMDS
 AC_ARG_ENABLE(local-commands,
 	[  --enable-local-commands Enables local commands (!<command> and !) (default=yes)],
@@ -135,7 +127,7 @@ AC_ARG_WITH(ffss,
  [  --with-ffss=DIR	  Bin path to uninstalled copy of libffss (default /usr/local/bin)])
 echo -n "checking for ffss-config... "
 if test x"$with_ffss" = x ; then
-	FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+	FFSS_CONFIG=`which ffss-config`
 	FFSS_GET_LIBS=--libs
 	if test -x "$FFSS_CONFIG"; then
 		:
@@ -163,16 +155,21 @@ if test "$ffss_vers2" -lt "$ffss_needed2"; then
   AC_MSG_ERROR([Your version of libffss ($ffss_vers) is too old, this version of ffss-master needs libffss >= $ffss_needed])
 fi
 
-	dnl Get cflags and libs
+dnl Get cflags and libs
 ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
 ffss_cflags=`$FFSS_CONFIG --cflags`
+ffss_bzlib=`$FFSS_CONFIG --with-bzlib`
+
+if test "$ffss_bzlib" = "yes" ; then
+  CFLAGS="$CFLAGS -DHAVE_BZLIB"
+fi
 
 LIBS="$LIBS $ffss_libs"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
 
 
-	dnl for readline we need termcap, check for tputs function in -ltermcap
+dnl for readline we need termcap, check for tputs function in -ltermcap
 AC_CHECK_LIB(termcap, tputs, FFSS_TERMCAP_LIB="-ltermcap")
 if test ! "$FFSS_TERMCAP_LIB"; then
  	AC_MSG_ERROR([Cannot find termcap functions, please compile libtermcap or install libtermcap-dev or -devel package])
@@ -208,12 +205,6 @@ dnl fi
 dnl AC_SUBST(FFSS_PTHREAD_LIB)
 dnl AC_SUBST(FFSS_READLINE_LIB)
 dnl AC_SUBST(FFSS_TERMCAP_LIB)
-dnl AC_SUBST(O_SKYUTILS_FLAGS)
-dnl AC_SUBST(SU_VERSION)
-dnl AC_SUBST(O_SKYUTILS_LIB)
-dnl AC_SUBST(O_SKYUTILS_LIB_CONFIG)
-dnl AC_SUBST(O_LIB_SKYUTILS)
-dnl AC_SUBST(O_H_SKYUTILS)
 
 
 	dnl Checks for header files.
