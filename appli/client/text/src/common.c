@@ -92,7 +92,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	start=0;
 	
 		/* only if it's not a cat */
-	if(LocalPath[0]!='\0') {
+	if(LocalPath && LocalPath[0]!='\0') {
 			/* if same file exist (replace || resume ?) */
 		fd=fopen(LocalPath, "r");
 		if(fd) {
