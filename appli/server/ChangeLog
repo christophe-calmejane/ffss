@@ -3,11 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 30th 2003
+                  Last Update : August, 1st 2003
 
 VIRER LE -PREx DE SERVER.H
 
-August, 30th 2003:
+August, 1st 2003:
+  - Changed all debug messages. Now using SU_DBG_xxx functions
+
+July, 30th 2003:
   - Added size of directories to be sent to master
 
 July, 29th 2003:

@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : July, 29th 2003
+                  Last Update : August, 1st 2003
 
 VIRER LE -PREx DE MASTER.H
+
+August, 1st 2003:
+  - Changed all debug messages. Now using SU_DBG_xxx functions
 
 July, 29th 2003:
   - Added Size field in the search answer, for each file (and chksum)

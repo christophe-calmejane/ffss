@@ -45,7 +45,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
     res = recv(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (read error)\n");
+      SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (read error)");
       SU_FreeCS(Client);
       free(buf);
       free(Users);
@@ -53,7 +53,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
     }
     else if(res == 0)
     {
-      FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (null paquet)\n");
+      SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (null paquet)");
       SU_FreeCS(Client);
       free(buf);
       free(Users);
@@ -61,7 +61,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
     }
     if(Size >= buf_len)
     {
-      FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (Command greater than receive buffer)\n");
+      SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (Command greater than receive buffer)");
       SU_FreeCS(Client);
       free(buf);
       free(Users);
@@ -77,7 +77,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
       if(!retval)
       {
-        FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (timed out)\n");
+        SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (timed out)");
         SU_FreeCS(Client);
         free(buf);
         free(Users);
@@ -86,7 +86,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       res = recv(Client->sock,buf+pos,Size-pos,SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
       {
-        FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (read error)\n");
+        SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (read error)");
         SU_FreeCS(Client);
         free(buf);
         free(Users);
@@ -94,7 +94,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       }
       else if(res == 0)
       {
-        FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (null paquet)\n");
+        SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (null paquet)");
         SU_FreeCS(Client);
         free(buf);
         free(Users);
@@ -103,7 +103,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       pos += res;
     }
     pos = 0; /* We discard any other command from the buffer */
-    FFSS_PrintDebug(6,"Client from runtime configuration : Command found... analysing\n");
+    SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Command found... analysing");
     /* Analyse command */
     error = false;
     switch(buf[0]) // Command op-code
@@ -118,7 +118,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         if(s_n[0] == 0)
         { /* Empty name */
-          FFSS_PrintDebug(6,"Client from runtime configuration : Empty name... rejecting\n");
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Empty name... rejecting");
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -129,7 +129,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(FS_GetShareFromName(s_n) != NULL) /* If a share with this name already exists */
         {
           SU_SEM_POST(FS_SemShr);
-          FFSS_PrintDebug(6,"Client from runtime configuration : Share with same name already exists : %s\n",s_n);
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Share with same name already exists : %s",s_n);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -200,7 +200,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(Share == NULL)
         {
           SU_SEM_POST(FS_SemShr);
-          FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Share with this path does not exist : %s",s_p);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -325,7 +325,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if((Share == NULL) || ((shr2 != NULL) && (shr2 != Share)))
         {
           SU_SEM_POST(FS_SemShr);
-          FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist, or with this name exists : %s -> %s\n",s_p,s_n);
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Share with this path does not exist, or with this name exists : %s -> %s",s_p,s_n);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -446,7 +446,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(FS_CheckGlobal() != NULL)
         {
           SU_SEM_POST(FS_SemGbl);
-          FFSS_PrintDebug(6,"Client from runtime configuration : Cannot restart server.. error in Global fields\n");
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Cannot restart server.. error in Global fields");
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -472,7 +472,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       }
       case FS_OPCODE_SETSTATE :
         FS_MyState = buf[1];
-        FFSS_PrintDebug(6,"Client from runtime configuration : Changing state of the server : %d\n",FS_MyState);
+        SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Changing state of the server : %d",FS_MyState);
         SU_SEM_WAIT(FS_SemGbl);
         if(FS_MyGlobal.Master != NULL)
         {
@@ -577,7 +577,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         if(Share == NULL)
         {
           SU_SEM_POST(FS_SemShr);
-          FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
+          SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration : Share with this path does not exist : %s",s_p);
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
@@ -712,7 +712,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       default :
-        FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (unknown opcode : %d)\n",buf[0]);
+        SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (unknown opcode : %d)",buf[0]);
         error = true;
     }
     if(error)
@@ -749,7 +749,7 @@ bool FS_CheckConfConn(SU_PClientSocket Client)
 
   if(strcmp(inet_ntoa(Client->SAddr.sin_addr),"127.0.0.1") != 0)
   { /* Non local socket... rejecting */
-    FFSS_PrintDebug(1,"WARNING : Non local socket for runtime configuration... DoS Attack ?\n");
+    SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"WARNING : Non local socket for runtime configuration... DoS Attack ?");
     return false;
   }
   return true;
@@ -781,16 +781,16 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
       SU_SLEEP(1);
       continue;
     }
-    FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s)\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client connected on runtime configuration port of the server from %s (%s)",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!FS_CheckConfConn(Client))
     { /* rejecting */
       SU_FreeCS(Client);
       continue;
     }
-    FFSS_PrintDebug(6,"Connection accepted ... creating new thread\n");
+    SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Connection accepted ... creating new thread");
     if(!SU_CreateThread(&ClientThr,FS_ClientConf,(void *)Client,true))
     {
-      FFSS_PrintDebug(1,"Error creating conf Client thread\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error creating conf Client thread");
       SU_FreeCS(Client);
       continue;
     }

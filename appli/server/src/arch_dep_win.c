@@ -54,7 +54,7 @@ bool FS_LoadConfig(const char FileName[])
   SU_RB_SetStrValue(FFSS_LM_REGISTRY_PATH "CurrentVersion",FFSS_VERSION);
 
   FS_MyGlobal.ConfSock = true;
-  FFSS_PrintDebug(5,"Loading config from registry\n");
+  SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"Loading config from registry");
   SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "ShareNames",Shares,sizeof(Shares),"");
   if(Shares[0] == 0)
     p = NULL;
@@ -209,7 +209,7 @@ bool FS_SaveConfig(const char FileName[])
   char Users[2048];
   FS_PUser Usr;
 
-  FFSS_PrintDebug(5,"Saving config to registry\n");
+  SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"Saving config to registry");
   SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   Shares[0] = 0;
@@ -325,7 +325,7 @@ void FS_RemoveShare(FS_PShare Share)
 /* Assumes FS_SemShr is locked */
 bool FS_CheckDirectoryChanged(FS_PShare Share)
 {
-  FFSS_PrintDebug(5,"Checking for a change in share %s (%s)\n",Share->ShareName,Share->Path);
+  SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"Checking for a change in share %s (%s)",Share->ShareName,Share->Path);
   if(Share->NotifyHandle == NULL)
   {
     Share->NotifyHandle = FindFirstChangeNotification(Share->Path,true,FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME);

@@ -55,18 +55,17 @@ bool remove_conn(PConn Conn,bool clear_wnd);
 PConn lookup_conn(SU_PClientSocket Server,bool even_null_wnd);
 
 /* UDP callbacks */
-void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
-void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares);
-void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList);
+void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
+void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User);
+/* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
+void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User); /* SU_PList of FM_PHost */
 void OnEndServerListingAnswer(void);
-void OnDomainListingAnswer(const char **Domains,int NbDomains);
-void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[]);
-bool OnError(SU_PClientSocket Server,int Code,const char Descr[]);
-bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries);
+void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User); /* First domain is assumed to be domain from the answering master */
+void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User);
 
 /* TCP callbacks */
-bool OnError(SU_PClientSocket Server,int Code,const char Descr[]);
-bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries);
+bool OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
+bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
 void OnEndTCPThread(SU_PClientSocket Server);
 void OnIdleTimeout(SU_PClientSocket Server);
 void OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);

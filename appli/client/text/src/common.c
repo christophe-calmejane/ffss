@@ -45,7 +45,7 @@ bool FCA_sem_timeout;
 
 	/* for logs */
 FILE *FCA_logf;
-	
+
 	/* environment variables */
 	/* WARNING for these 2 tables :
 		if you modify the variable order,
@@ -144,7 +144,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	FILE *fd;
 	FFSS_LongField oldsize;
 	FFSS_LongField start;
-	
+
 	FCA_Ptrans = NULL;
 	FCA_dw_amount=0;
 	FCA_dw_nb_files++;
@@ -155,13 +155,13 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	FCA_dw_file=strrchr(RemotePath, '/');
 	if(!FCA_dw_file || !(FCA_dw_file++))
 		FCA_dw_file=(char*)RemotePath;
-	
+
 		/* only if it's not a cat */
 	if(LocalPath && LocalPath[0]!='\0') {
 			/* if same file exist (replace || resume ?) */
 		fd=fopen(LocalPath, "r");
 		if(fd) {
-			FFSS_PrintDebug(1, "file already exists\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "file already exists");
 			fseek(fd,0,SEEK_END);
 			oldsize=ftell(fd);
 			fclose(fd);
@@ -179,7 +179,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 					return -1;
 			}
 		} else
-			FFSS_PrintDebug(1, "(client) local file doesn\'t exists, cannot resume\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) local file doesn\'t exists, cannot resume");
 	}
 	if(FCA_VAR_IS_ON(FCA_prompt)) {
 		printf("download file ");
@@ -194,7 +194,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passwd)
 {
 	/* returns 0 on success, 1 if cannot connect, 2 if already connected */
-	
+
 	if( FCA_conSh[0]!='\0'
 	    && !SU_strcasecmp(share, FCA_conSh)
 	    && !SU_strcasecmp(IP, FCA_conIP))	/* already connected to the same share */
@@ -249,7 +249,7 @@ void FCA_list_domains()
 			FCA_sem_wait();
 		if(FCA_UDP_errno)
 			FCA_print_domains(NULL,0);
-		FFSS_PrintDebug(1, "(client) domains listed\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) domains listed");
 	}
 	FCA_posted=false;
 }
@@ -312,7 +312,7 @@ FM_PHost isMachineValid(char *machine, char *domain)
 {
 		/* return reference in the strcture if the server is valid */
 	SU_PList Pservs;
-    
+
 		/* look for this machine in the structure */
 		/* first look for domain */
 	Pservs=FCA_Servers;
@@ -333,13 +333,13 @@ bool isShareValid(char *IP, char *share)
 {
 		/* if this share is valid, we are connected */
 	unsigned short int res;
-    
+
 	FCA_err_errno=FFSS_ERROR_NO_ERROR;
 	FCA_posted=false;
 		/* todo: login/pass */
 	res=FCA_ShConnect(IP, share, NULL, NULL);
 	if(!res && !FCA_posted) {	/* new connection */
-	    	FFSS_PrintDebug(1, "(client::isShValid) waiting\n");
+	    	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client::isShValid) waiting");
 	        FCA_sem_wait();
 	}
 	FCA_posted=false;
@@ -363,7 +363,7 @@ bool isDirValid(char *path, char *dir)
 	else {
 	    	if(!FCA_posted)
 			FCA_sem_wait();
-	
+
 		FCA_quiet=false;
 		if( FCA_err_errno!=FFSS_ERROR_NO_ERROR) {
 			FCA_err_errno=FFSS_ERROR_NO_ERROR;
@@ -377,10 +377,10 @@ bool isDirValid(char *path, char *dir)
 void FCA_sem_init()
 {
 	/*
-	sem_init(&FCA_prmptSem,0,0);	
+	sem_init(&FCA_prmptSem,0,0);
 	*/
 	SU_CreateSem(&FCA_prmptSem, 0, 0, "promptsem");
-	
+
 	FCA_sem_locked=false;
 	FCA_wait_threading=false;
 }
@@ -388,16 +388,16 @@ void FCA_sem_init()
 void FCA_sem_wait_no_timeout()
 {
 		/* a sem wait with no timeout, useful for downloads */
-	FFSS_PrintDebug(1, "(client) FCA_sem_wait_no_timeout started\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) FCA_sem_wait_no_timeout started");
 
 	if(FCA_sem_locked)
-		FFSS_PrintDebug(1, "(client) sem has ever been locked\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem has ever been locked");
 	else {
 
-		FFSS_PrintDebug(1, "(client) FCA_sem_no_timeout waiting\n");
-	
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) FCA_sem_no_timeout waiting");
+
 		if(FCA_sem_locked)
-			FFSS_PrintDebug(1, "(client) sem has ever been locked\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem has ever been locked");
 		else {
 			FCA_sem_locked=true;
 			FCA_wait_threading=true;
@@ -409,27 +409,27 @@ void FCA_sem_wait_no_timeout()
 
 void FCA_sem_wait()
 {
-	FFSS_PrintDebug(1, "(client) FCA_sem_wait started\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) FCA_sem_wait started");
 
 	if(FCA_sem_locked)
-		FFSS_PrintDebug(1, "(client) sem has ever been locked\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem has ever been locked");
 	else {
 
-		FFSS_PrintDebug(1, "(client) FCA_sem waiting\n");
-	
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) FCA_sem waiting");
+
 		if(FCA_sem_locked)
-			FFSS_PrintDebug(1, "(client) sem has ever been locked\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem has ever been locked");
 		else {
 			FCA_sem_locked=true;
-			FFSS_PrintDebug(1, "(client) launching timer\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) launching timer");
 			FCA_wait_threading=true;
 			if( ! SU_CreateThread(&FCA_wait_thread, FCA_sem_timer, NULL, true) )
-				FFSS_PrintDebug(1,"(client) cannot create wait timer thread!\n");
+				SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL,"(client) cannot create wait timer thread!");
 			else
-				FFSS_PrintDebug(1, "(client) timer thread created and detached\n");
-			FFSS_PrintDebug(1, "(client) timer launched, waiting...\n");
+				SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer thread created and detached");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer launched, waiting...");
 			SU_SEM_WAIT(FCA_prmptSem);
-			FFSS_PrintDebug(1, "(client) sem_wait unlocked.\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem_wait unlocked.");
 		}
 	}
 }
@@ -441,60 +441,60 @@ void FCA_sem_timer()
 void *FCA_sem_timer()
 #endif
 {
-	FFSS_PrintDebug(1, "(client) preparing timer\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) preparing timer");
 	if(!FCA_sem_locked) {
-		FFSS_PrintDebug(1, "(client) no need of timer\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) no need of timer");
 		SU_END_THREAD(0);
 	}
 		/* we mustn't ignore the SIG_USE1 signal */
 	FCA_restore_usr1();
 	signal(SIGUSR1, FCA_timer_handusr1);
-	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_operation_timeout);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer launched for %d seconds", FCA_operation_timeout);
 	sleep(FCA_operation_timeout);
 		/* now we must ignore SIG_USR1 */
 	FCA_ignore_usr1();
 
 	if(FCA_sem_locked) {
 		FCA_sem_timeout=true;
-		FFSS_PrintDebug(1, "(client) sem timeout...\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem timeout...");
 		FCA_print_err("operation timeout");
 		if(FCA_sem_locked) {
-			FFSS_PrintDebug(1, "(client) timer is helping you by using sem_post !!\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer is helping you by using sem_post !!");
 			SU_SEM_POST(FCA_prmptSem);
 		}
 		FCA_sem_locked=false;
 	} else
-		FFSS_PrintDebug(6, "(client) timer dead\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer dead");
 	SU_END_THREAD(0);
 }
 
 void FCA_timer_handusr1()
 {
-	FFSS_PrintDebug(1, "(client) timer killed\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) timer killed");
 	SU_END_THREAD(0);
 }
 
 
 void FCA_sem_post()
 {
-	FFSS_PrintDebug(1, "(client) FCA_sem_post started\n");
-	
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) FCA_sem_post started");
+
 		/* posted is if we have tried to post */
 	FCA_posted=true;
 	if(!FCA_sem_locked)
-		FFSS_PrintDebug(1, "(client) sem has ever been unlocked\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem has ever been unlocked");
 	else {
 			/* kill timer thread */
 		if(FCA_wait_threading) {
 
-			FFSS_PrintDebug(1, "(client) killing timer\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) killing timer");
 			pthread_kill(FCA_wait_thread, SIGUSR1);
 
 			FCA_wait_threading=false;
 		}
 
 		FCA_sem_locked=false;
-		FFSS_PrintDebug(1, "(client) sem_post\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sem_post");
 		SU_SEM_POST(FCA_prmptSem);
 	}
 }
@@ -503,7 +503,7 @@ void FCA_ignore_usr1()
 {
 #ifdef __unix__
 	sigset_t mask;
-	
+
 	sigemptyset(&mask);
 		/* ignore only SIG_USR1 */
 	sigaddset(&mask, SIGUSR1);
@@ -515,7 +515,7 @@ void FCA_restore_usr1()
 {
 #ifdef __unix__
 	sigset_t mask;
-	
+
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGUSR1);
 	pthread_sigmask(SIG_UNBLOCK,&mask,NULL);
@@ -531,7 +531,7 @@ char **FCA_completion(char *text, int start, int end)
     char first_comm[FCA_MAX_CMD];
     char *fsp;
     unsigned int iC;
-    
+
 	/* if we are typing a command */
     if(!start)
 	matches = rl_completion_matches ((const char *)text, FCA_cmd_gen);
@@ -595,10 +595,10 @@ char *FCA_cmd_gen(char *text, int state)
 		len = strlen (text);
 		rl_completion_append_character=(int)' ';
 	}
-	
+
 	if(compl_var)
 		return FCA_var_gen(text,state);
-	
+
 	ws=strchr(rl_line_buffer, ' ');
 	if(ws) {
 		ws2=strchr(ws+1, ' ');
@@ -608,7 +608,7 @@ char *FCA_cmd_gen(char *text, int state)
 				/* if the completed command accepts a variable */
 			SU_strcpy(cmd, ws+1, FCA_MAX_CMD);
 			cmd[FCA_MAX_CMD-1]='\0';
-			
+
 			if( strchr(ws2+1, ' ')!=NULL ) {
 				*ws2=' ';
 				rl_attempted_completion_over=true;
@@ -686,7 +686,7 @@ char *FCA_path_gen(char *text, int state)
 			rtext++;
 		else
 			rtext=rl_line_buffer;
-		
+
 		rl_completion_append_character=(int)' ';
 			/* get the good directory */
 		if(*rtext=='/')		/* absolute path */
@@ -696,23 +696,23 @@ char *FCA_path_gen(char *text, int state)
 			/* see if we need to list a directory */
 		if( SU_strcasecmp(tolist,FCA_listed_dir) ) {	/* yes, we need */
 				/* send the listing */
-			FFSS_PrintDebug(3, "(client) need to list to complete\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) need to list to complete");
 			FCA_quiet=true;
 			if( FCA_ls_cmd(tolist) && !FCA_posted) {
-				FFSS_PrintDebug(1, "(client) message sent...waiting\n");
+				SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) message sent...waiting");
 				FCA_sem_wait();
 			}
 			FCA_quiet=false;
 				/* if there's an error....return NULL */
 			if( SU_strcasecmp(tolist,FCA_listed_dir) ) {
-				FFSS_PrintDebug(1, "(client) '%s'!='%s'\n",tolist,FCA_listed_dir);
-				FFSS_PrintDebug(3, "(client) we've not the listing...there was an error\n");
+				SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) '%s'!='%s'",tolist,FCA_listed_dir);
+				SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) we've not the listing...there was an error");
 				rl_attempted_completion_over=true;
 				return NULL;
 			}
 		}
 		Pl=FCA_list;
-		
+
 	}
 	if(!started) {
 		if( !strcmp(text,"/")
@@ -758,7 +758,7 @@ char *FCA_var_gen(char *text, int state)
 	static bool compl_val;
 	char *ws, *ws2, cmd[FCA_MAX_CMD];
 	unsigned int iC;
-	
+
 		/* new word to complete */
 	if (!state) {
 		list_index = 0;
@@ -766,10 +766,10 @@ char *FCA_var_gen(char *text, int state)
 		len = strlen (text);
 		rl_completion_append_character=(int)' ';
 	}
-	
+
 	if(compl_val)
 		return FCA_val_gen(text,state);
-	
+
 	ws=strchr(rl_line_buffer,' ');
 		/* we accept val completion only if we're on the third argument */
 	if(ws) {
@@ -794,11 +794,11 @@ char *FCA_var_gen(char *text, int state)
 			}
 		}
 	}
-	
-	
+
+
 		/* Return the next name which partially matches from the command list. */
 	while ( NULL!=FCA_VARS[list_index].name ) {
-		list_index++;	
+		list_index++;
 		if( !strncasecmp(FCA_VARS[list_index-1].name, text, len) )
 			return strdup(FCA_VARS[list_index-1].name);
 	}
@@ -814,7 +814,7 @@ char *FCA_val_gen(char *text, int state)
 	static int list_index, len;
 	static int ivar;
 	char *fsp, var[FCA_MAX_CMD+1+FCA_VAR_MAX], *fsp2;
-	
+
 		/* new word to complete */
 	if (!state) {
 		list_index = 0;
@@ -831,7 +831,7 @@ char *FCA_val_gen(char *text, int state)
 		fsp2=strchr(fsp+1, ' ');
 		if( fsp2!=NULL )
 			*fsp2='\0';
-			
+
 
 			/* look for the variable in the table */
 		ivar=0;
@@ -842,8 +842,8 @@ char *FCA_val_gen(char *text, int state)
 			return NULL;
 		}
 	}
-	
-	
+
+
 		/* Return the next name which partially matches from the command list. */
 	while ( NULL!=FCA_VAR_VALUES[ivar][list_index] ) {
 		list_index++;
@@ -860,7 +860,7 @@ char *FCA_val_gen(char *text, int state)
 
 
     /* string manipulation */
-	/* encode-decode: just if we need: replaces ' ' by '\ ', etc... 
+	/* encode-decode: just if we need: replaces ' ' by '\ ', etc...
 	 it was used for completion
 	*/
 char *FCA_new_encoded(char *txt)
@@ -871,7 +871,7 @@ char *FCA_new_encoded(char *txt)
 	char *res, *pr;
 	int nbsup=0;	/* the nb of caracters we need in supplement */
 	int size=0;
-	
+
 	p=txt;
 		/* find nbsup */
 	while(*p) {
@@ -907,7 +907,7 @@ void FCA_decode(char *txt)
 		/* translate '\ ' to ' ' for example */
 	char *p=txt;
 	int decal=0;
-	
+
 	while( *(p+decal) ) {
 		if( *(p+decal)=='\\' )
 			decal++;
@@ -993,7 +993,7 @@ bool FCA_explode_path(char *path, char **domain, char **machine, char **share, c
     *Ppath='\0';	/* end of share ('/'->'\0') */
     *dir=Ppath+1;
     return true;
-}    
+}
 
 void FCA_process_pp(char *path)
 {
@@ -1001,7 +1001,7 @@ void FCA_process_pp(char *path)
     char *ptpt;
     char *PpthS;
     char *PpthD;
-    
+
     if(path==NULL || *path=='\0')
 	return;
     ptpt=strchr(path, '.');
@@ -1038,10 +1038,10 @@ char *FCA_strtoupper(char *str)
 		  WARNING: this string is directly modified
 		*/
 	char *Pstr=str;
-	
+
 	if(str==NULL)	return str;
-	
-	while(*Pstr) { 
+
+	while(*Pstr) {
 		*Pstr=toupper(*Pstr);
 		Pstr++;
 	}
@@ -1054,10 +1054,10 @@ char *FCA_strtolower(char *str)
 		  WARNING: this string is directly modified
 		*/
 	char *Pstr=str;
-	
+
 	if(str==NULL)	return str;
-	
-	while(*Pstr) { 
+
+	while(*Pstr) {
 		*Pstr=tolower(*Pstr);
 		Pstr++;
 	}
@@ -1070,17 +1070,17 @@ unsigned int *FCA_pre_tabsort(int nbEl)
 {
 	unsigned int ir;
 	unsigned int *res;
-	
+
 		/* prepare the int array */
 	if(nbEl<1)
 		return NULL;
-	FFSS_PrintDebug(1, "(client) sorting...\n");
-	FFSS_PrintDebug(5, "(client) preparing index table [0->%d]\n", nbEl-1);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sorting...");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) preparing index table [0->%d]", nbEl-1);
 		/* prepare the index table */
 	res=malloc(nbEl*sizeof(int));
 	if(!res)
 		FCA_crash("no such memory");
-	FFSS_PrintDebug(5, "(client) filling index table...\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) filling index table...");
 		/* fill this */
 	for(ir=0; ir<nbEl; ir++)
 		res[ir]=ir;
@@ -1095,10 +1095,10 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
 
 	if(Nbels<2) {
-		FFSS_PrintDebug(1, "(client) 1 element, nothing to sort\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) 1 element, nothing to sort");
 		return;
 	}
-	FFSS_PrintDebug(1, "(client) let's sort...\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) let's sort...");
 		/* while we have something to sort */
 	while(modified) {
 			/* first, from left to right */
@@ -1125,7 +1125,7 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 			}
 		}
 	}
-	FFSS_PrintDebug(1, "(client) answers sorted\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) answers sorted");
 	return;
 }
 
@@ -1142,7 +1142,7 @@ SU_PList FCA_sort_dirlist(SU_PList l)
 bool FCA_hostlist_comp(SU_PList p1, SU_PList p2)
 {
 	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
-	
+
 	if(!p1 || !p2)
 		return true;
 	switch(FCA_sort_servers_by[0]) {
@@ -1166,7 +1166,7 @@ bool FCA_dirlist_comp(SU_PList p1, SU_PList p2)
 	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
 	FC_PEntry e1=(FC_PEntry)(p1->Data),
 		e2=(FC_PEntry)(p2->Data);
-	
+
 	if(!p1 || !p2)
 		return true;
 		/* p1 is a directory and p2 is a file...we should not invert it */
@@ -1189,10 +1189,10 @@ SU_PList FCA_sort_list(SU_PList l, bool (*comp)(SU_PList,SU_PList) )
 		/* sort a list */
 	bool modified=true;
 	SU_PList res=l, p, pp, pn;
-	
+
 	if(!l) return l;
 
-	FFSS_PrintDebug(1, "(client) let's sort...\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) let's sort...");
 		/* while we have something to sort */
 	while(modified) {
 		modified=false;
@@ -1213,7 +1213,7 @@ SU_PList FCA_sort_list(SU_PList l, bool (*comp)(SU_PList,SU_PList) )
 			}
 		}
 	}
-	FFSS_PrintDebug(1, "(client) answers sorted\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) answers sorted");
 	return res;
 }
 
@@ -1227,8 +1227,8 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 	unsigned int lg;
 	char tgt[FFSS_MAX_PATH_LENGTH];
 	int code;
-	
-	FFSS_PrintDebug(5, "(client) downloading recursively directory %s...\n", dir);
+
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) downloading recursively directory %s...", dir);
 		/* fist get the listing */
 	if( strcmp(dir,FCA_listed_dir) ) {
 			/* if the listing is not already in the cache */
@@ -1272,9 +1272,9 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 				FCA_print_cmd_err("Download failed");
 			else if(!code) {
 				if(! FCA_posted) {
-					FFSS_PrintDebug(5, "(client) waiting transfert of %s\n",E->Name);
+					SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) waiting transfert of %s",E->Name);
 					FCA_sem_wait_no_timeout();
-					FFSS_PrintDebug(5, "(client) transfert ended for file %s\n",E->Name);
+					SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) transfert ended for file %s",E->Name);
 				}
 			}
 			FCA_quiet=true;
@@ -1313,16 +1313,16 @@ bool FCA_if_same_share(char *path, char *path2)
 		/* compare the 2 paths and say if it's the same server/domain/share */
 	char *p=path, *p2=path2;
 	int i;
-	
+
 		/* first goto the 4th / */
 	for(i=0; i<3; i++) {
 		p=strchr(p+1, (int)'/');
 		p2=strchr(p2+1, (int)'/');
-		FFSS_PrintDebug(1, "(client) state %s,%s\n",p,p2);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) state %s,%s",p,p2);
 		if(!p || !p2)
 			return false;
 	}
-	
+
 	p=strchr(p+1, (char)'/');
 	p2=strchr(p2+1, (char)'/');
 		/* let's compare */
@@ -1331,7 +1331,7 @@ bool FCA_if_same_share(char *path, char *path2)
 	if(p2)
 		*p2='\0';
 	i=SU_strcasecmp(path,path2);
-	FFSS_PrintDebug(1, "(client) %s<->%s -> %d\n",path,path2, i);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) %s<->%s -> %d",path,path2, i);
 	if(p)
 		*p='/';
 	if(p2)
@@ -1344,16 +1344,16 @@ bool FCA_if_same_server(char *path, char *path2)
 		/* compare the 2 paths and say if it's the same server/domain */
 	char *p=path, *p2=path2;
 	int i;
-	
+
 		/* first goto the 3th / */
 	for(i=0; i<2; i++) {
 		p=strchr(p+1, (int)'/');
 		p2=strchr(p2+1, (int)'/');
-		FFSS_PrintDebug(1, "(client) state %s,%s\n",p,p2);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) state %s,%s",p,p2);
 		if(!p || !p2)
 			return false;
 	}
-	
+
 	p=strchr(p+1, (char)'/');
 	p2=strchr(p2+1, (char)'/');
 		/* let's compare */
@@ -1362,7 +1362,7 @@ bool FCA_if_same_server(char *path, char *path2)
 	if(p2)
 		*p2='\0';
 	i=SU_strcasecmp(path,path2);
-	FFSS_PrintDebug(1, "(client) %s<->%s -> %d\n",path,path2, i);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) %s<->%s -> %d",path,path2, i);
 	if(p)
 		*p='/';
 	if(p2)
@@ -1422,14 +1422,14 @@ void FCA_printlog(char *msg, ...)
 
 void FCA_upd_debuglevel()
 {
-	FFSS_PrintDebug(1, "(client) debug level has changed to level %d\n", (int)(FCA_debuglevel[0]-'0'));
-	N_DebugLevel=(int)(FCA_debuglevel[0]-'0');
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) debug level has changed to level %s", FCA_debuglevel);
+	SU_DBG_SetFlags(atoi(FCA_debuglevel));
 }
 
 void FCA_upd_skin()
 {
 	int i=0;
-	
+
 		/* look for the skin in the list */
 	while( FCA_SKINS[i].name && !(!strcmp(FCA_SKINS[i].name,FCA_skin_name) && (!FCA_CGI_mode || FCA_SKINS[i].canCGI)))
 		i++;
@@ -1439,7 +1439,7 @@ void FCA_upd_skin()
 		sprintf(FCA_skin_name, FCA_SKINS[0].name);
 	} else {
 		FCA_skin=(FCA_Pskin)&(FCA_SKINS[i]);
-		FFSS_PrintDebug(1, "(client) the skin has changed to '%s'\n", FCA_skin_name);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) the skin has changed to '%s'", FCA_skin_name);
 	}
 }
 
@@ -1456,11 +1456,11 @@ void FCA_upd_log()
 			FCA_print_cmd_err("cannot open log file, disabling log");
 			sprintf(FCA_log, "off");
 		} else {
-			FFSS_PrintDebug(5, "(client) logfile opened\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) logfile opened");
 			FCA_printlog("starting to log");
 		}
-	}		
-	
+	}
+
 }
 
 void FCA_upd_logfile()
@@ -1472,7 +1472,7 @@ void FCA_upd_logfile()
 			FCA_print_cmd_err("cannot open log file, disabling log");
 			sprintf(FCA_log, "off");
 		} else {
-			FFSS_PrintDebug(5, "(client) logfile reopen\n");
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) logfile reopen");
 			FCA_printlog("restarting to log");
 		}
 	}
@@ -1482,7 +1482,7 @@ void FCA_upd_broadcaddr()
 {
 	char *p=FCA_broadcaaddr;
 	int nbp=0, nbi=0;
-	
+
 	if(!p)
 		return;
 	while(*p) {
@@ -1506,5 +1506,5 @@ void FCA_upd_broadcaddr()
 		return;
 	}
 	FFSS_AddBroadcastAddr(FCA_broadcaaddr);
-	FFSS_PrintDebug(5, "(client) broadcast address added\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) broadcast address added");
 }

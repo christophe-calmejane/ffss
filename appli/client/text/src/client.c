@@ -106,23 +106,24 @@ void FCA_init()
 	rl_attempted_completion_function = (CPPFunction *)FCA_completion;
 	rl_basic_word_break_characters=" ";
     		/* debug default level */
+	SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
+	SU_DBG_SetOptions(true,true);
 #ifdef DEBUG
-	N_DebugLevel=6;
-	sprintf(FCA_debuglevel, "6");
+	SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
+	sprintf(FCA_debuglevel, "0xFFFF");
 #else
-	N_DebugLevel=0;
-	sprintf(FCA_debuglevel, "0");
-#endif
+	sprintf(FCA_debuglevel, "0x0000");
+#endif /* DEBUG */
 #ifdef CGI
 		/* see if we're in CGI mode */
 	FCA_CGI_mode=FCA_isInCGImode();
 	if(FCA_CGI_mode) {
 			/* by default, in CGI mode, it's better to ignore all debug messages */
-		N_DebugLevel=0;
+		SU_DBG_SetFlags(0);
 			/* we use N_SyslogOn to delete some syslog messages in CGI mode */
 		if( FFSS_GetFFSSOptions() & FFSS_OPTIONS_DEBUG)
 			N_SyslogOn=0;
-		sprintf(FCA_debuglevel, "0");
+		sprintf(FCA_debuglevel, "0x0000");
 
 	}
 #endif
@@ -153,14 +154,14 @@ void FCA_process_args()
 		sprintf(FCA_can_ansi, "off");
 	}
 	if( FCA_args.dbg_level!=NULL ) {	/* debug level */
-		if(FCA_args.dbg_level[0]-'0'<0 || FCA_args.dbg_level[0]-'0'>6)
+		/*if(FCA_args.dbg_level[0]-'0'<0 || FCA_args.dbg_level[0]-'0'>6)
 			FCA_print_warning("debug option: level must be between 0 and 6");
-		else {
-			N_DebugLevel=FCA_args.dbg_level[0]-'0';
-			sprintf(FCA_debuglevel, "%d", N_DebugLevel);
+		else {*/
+			SU_DBG_SetFlags(atoi(FCA_args.dbg_level));
+			sprintf(FCA_debuglevel, "%s", FCA_args.dbg_level);
 			if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
-				FCA_printlog("(arg) debuglevel set to %d", N_DebugLevel);
-		}
+				FCA_printlog("(arg) debuglevel set to %s", FCA_args.dbg_level);
+		/*}*/
 	}
 	if( FCA_args.master!=NULL ) {
 		snprintf(FCA_master, FCA_VAR_MAX-1, "%s", FCA_args.master);
@@ -276,7 +277,7 @@ void FCA_first_list()
 		FCA_crash("internal error: empty domains");
 	while(Pdom->Next!=NULL)
 		Pdom=Pdom->Next;
-	FFSS_PrintDebug(3, "(client) going to %s\n", ( (FCA_PServs)(Pdom->Data) )->Domain);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) going to %s", ( (FCA_PServs)(Pdom->Data) )->Domain);
 	FCA_strtoupper(( (FCA_PServs)(Pdom->Data) )->Domain);
 	snprintf(FCA_pwd, sizeof(FCA_pwd), "/$/%s", ( (FCA_PServs)(Pdom->Data) )->Domain);
 	SU_strcpy(FCA_home, ( (FCA_PServs)(Pdom->Data) )->Domain, FFSS_MAX_DOMAIN_LENGTH);

@@ -43,7 +43,11 @@ int main (int argc, char *argv[])
     printf("Error : %s\n",FNP_GetLastError());
     return -2;
   }
-  N_DebugLevel = 0;
+  SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
+  SU_DBG_SetOptions(true,true);
+#ifdef DEBUG
+  SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
+#endif /* DEBUG */
 
   gdk_threads_enter();
   gtk_main();

@@ -25,7 +25,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   {
     case FFSS_MESSAGE_STATE :
       context;
-      FFSS_PrintDebug(3,"Received a state message from server\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a state message from server");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -46,7 +46,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
       case FFSS_MESSAGE_SERVER_LISTING :
         context;
-        FFSS_PrintDebug(3,"Received a server listing message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a server listing message from client");
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -61,7 +61,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         break;
     case FFSS_MESSAGE_CLIENT_SERVER_FAILED :
       context;
-      FFSS_PrintDebug(3,"Received a client/server failed message from client\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a client/server failed message from client");
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
       if((type_ip == 0) || (IP[0] == 0))
@@ -74,7 +74,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_PONG :
       context;
-      FFSS_PrintDebug(3,"Received a pong message from server\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a pong message from server");
       state = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(state == 0)
@@ -88,18 +88,18 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           FFSS_CB.MCB.OnPong(Client,state);
       }
       else
-        FFSS_PrintDebug(1,"Server protocol version mismatch\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Server protocol version mismatch");
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING :
       context;
-      FFSS_PrintDebug(3,"Received a domains listing message from client\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a domains listing message from client");
       lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       if(FFSS_CB.MCB.OnDomainListing != NULL)
         FFSS_CB.MCB.OnDomainListing(Client,lval);
       break;
     case FFSS_MESSAGE_SEARCH :
       context;
-      FFSS_PrintDebug(3,"Received a friandise search message from client\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a friandise search message from client");
       lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -115,7 +115,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_SEARCH_MASTER :
       context;
-      FFSS_PrintDebug(3,"Received a master search message from client or server\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a master search message from client or server");
       lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
@@ -133,7 +133,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val4 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val5 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      FFSS_PrintDebug(3,"Received an index answer message (index size : %ld/%ld/%ld) Connect to %ld\n",val2,val3,val4,val5);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received an index answer message (index size : %ld/%ld/%ld) Connect to %ld",val2,val3,val4,val5);
       error = false;
       if(FFSS_CB.MCB.OnIndexAnswer != NULL)
         FFSS_CB.MCB.OnIndexAnswer(Client,val,val2,val3,val4,val5);
@@ -145,7 +145,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val4 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val5 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      FFSS_PrintDebug(3,"Received a samba index answer message (index size : %ld/%ld/%ld) Connect to %ld\n",val2,val3,val4,val5);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a samba index answer message (index size : %ld/%ld/%ld) Connect to %ld",val2,val3,val4,val5);
       error = false;
       if(FFSS_CB.MCB.OnIndexAnswerSamba != NULL)
         FFSS_CB.MCB.OnIndexAnswerSamba(Client,val,val2,val3,val4,val5);
@@ -180,7 +180,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
   if(Type == FFSS_MESSAGE_MASTER_CONNECTION)
   {
     context;
-    FFSS_PrintDebug(3,"Received a connection message from master\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a connection message from master");
     val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
     if(val == 0)
     {
@@ -250,7 +250,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         if(ret_val == false)
           break;
         val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        FFSS_PrintDebug(3,"Received a new state message (%d states)\n",val);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a new state message (%d states)",val);
         for(i=0;i<val;i++)
         {
           state = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
@@ -273,7 +273,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         break;
       case FFSS_MESSAGE_SERVER_LISTING :
         context;
-        FFSS_PrintDebug(3,"Received a server listing message from master\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a server listing message from master");
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -288,7 +288,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         break;
       case FFSS_MESSAGE_SEARCH_FW :
         context;
-        FFSS_PrintDebug(3,"Received a forwarded friandise search message from master\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a forwarded friandise search message from master");
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -370,7 +370,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
     res = recv(Master->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(1,"Error on TCP port of the master (SOCKET_ERROR : %d)\n",errno);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP port of the master (SOCKET_ERROR : %d)",errno);
       if(FFSS_CB.MCB.OnMasterDisconnected != NULL)
         FFSS_CB.MCB.OnMasterDisconnected(Master);
       SU_FreeCS(Master);
@@ -386,7 +386,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
       SU_END_THREAD(NULL);
     }
     len += res;
-    FFSS_PrintDebug(6,"Data found on TCP port from %s (%s) ... analysing\n",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Data found on TCP port from %s (%s) ... analysing",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
     analyse = true;
     while(analyse)
     {
@@ -403,7 +403,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
       Size = *(FFSS_Field *)Buf;
       if(Size > len)
       {
-        FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?",Size,len);
         break;
         /* Keeps waiting for data */
       }
@@ -426,7 +426,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
         }
         if(len > Size)
         {
-          FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?",Size,len);
           memmove(Buf,Buf+Size,len-Size);
           len -= Size;
           /* Keeps analysing the buffer */
@@ -453,14 +453,14 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
     FFSS_PrintSyslog(LOG_ERR,"Couldn't listen on the TCP socket\n");
     SU_END_THREAD(NULL);
   }
-  FFSS_PrintDebug(1,"TCP thread launched...waiting for connections\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP thread launched...waiting for connections");
   while(1)
   {
     Master = SU_ServerAcceptConnection(FM_SI_TCP);
     context;
     if(FFSS_ShuttingDown)
     {
-      FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP Routine : FFSS Library is been shut down...");
       if(Master != NULL)
         SU_FreeCS(Master);
       SU_END_THREAD(NULL);
@@ -480,11 +480,11 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
         SU_FreeCS(Master);
         continue;
       default :
-        FFSS_PrintDebug(1,"Error in FM_ThreadTCP, unknown filter action\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in FM_ThreadTCP, unknown filter action");
         SU_END_THREAD(NULL);
     }
     context;
-    FFSS_PrintDebug(5,"Master connected from %s (%s) ...\n",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Master connected from %s (%s) ...",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
     if(!SU_CreateThread(&MasterThr,FM_MasterThreadTCP,(void *)Master,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating TCP Master thread\n");

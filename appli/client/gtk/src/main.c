@@ -53,7 +53,6 @@ int main (int argc, char *argv[])
   FFSS_CB.CCB.OnEndServerListingAnswer = OnEndServerListingAnswer;
   FFSS_CB.CCB.OnDomainListingAnswer = OnDomainListingAnswer;
   FFSS_CB.CCB.OnMasterSearchAnswer = OnMasterSearchAnswer;
-  FFSS_CB.CCB.OnError = OnError;
   FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;
   /* TCP CALLBACKS */
 //  void (*OnBeginTCPThread)(SU_PClientSocket Server);

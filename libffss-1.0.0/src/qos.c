@@ -394,7 +394,7 @@ unsigned long int FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain,unsigned long IP,sign
       if(Rule->Throughput > value)
       {
         ret = (unsigned long int)((Rule->Throughput - value) / (float)value * TimeDelta); /* Nb msec to wait */
-        FFSS_PrintDebug(6,"QoS Engine : Quota excedeed... sleeping for %d msec\n",ret);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"QoS Engine : Quota excedeed... sleeping for %d msec",ret);
       }
       break;
     }

@@ -42,9 +42,7 @@ SU_PList FM_LoadHosts(const char FileName[])
   char IP[200];
   char c;
 
-#ifdef DEBUG
-  printf("MASTER : Loading my local servers\n");
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Loading my local servers");
   fp = fopen(FileName,"rb");
   if(fp == NULL)
     return NULL;
@@ -72,9 +70,7 @@ SU_PList FM_LoadHosts(const char FileName[])
     Hst->State = FFSS_STATE_OFF;
 
     Hosts = SU_AddElementHead(Hosts,Hst);
-#ifdef DEBUG
-    printf("\tLoading %s : %s (%s-%s)\n",Name,Comment,OS,IP);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_STATES,"\tLoading %s : %s (%s-%s)",Name,Comment,OS,IP);
   }
   return Hosts;
 }
@@ -85,7 +81,7 @@ bool FM_SaveHosts(SU_PList Hosts,const char FileName[])
   SU_PList Ptr;
   FM_PHost Hst;
 
-  FFSS_PrintDebug(1,"Saving my local servers\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"Saving my local servers");
   fp = fopen(FileName,"wb");
   if(fp == NULL)
     return false;

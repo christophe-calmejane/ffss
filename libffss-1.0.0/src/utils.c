@@ -36,11 +36,6 @@ void FFSS_sscanf(const char IP[],const char [],int *a,int *b,int *c,int *d)
 #endif /* !FFSS_DRIVER */
 
 FFSS_TCallbacks FFSS_CB;
-#ifdef DEBUG
-int N_DebugLevel = 6;
-#else /* !DEBUG */
-int N_DebugLevel = 0;
-#endif /* DEBUG */
 bool N_SyslogOn = true;
 char *FFSS_MyIP = NULL;
 
@@ -236,7 +231,7 @@ void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,ch
       case FFSS_IP_V6 :
         break;
       default :
-        FFSS_PrintDebug(1,"Unknown IP type : %d\n",Type);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_FATAL,"Unknown IP type : %d",Type);
     }
     *new_pos = pos + FFSS_IP_FIELD_SIZE;
   }
@@ -329,7 +324,7 @@ void FFSS_PackIP(char *buf,const char IP[],int Type)
     case FFSS_IP_V6 :
       break;
     default :
-      FFSS_PrintDebug(1,"Unknown IP type : %d\n",Type);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_FATAL,"Unknown IP type : %d",Type);
   }
 }
 
@@ -361,9 +356,7 @@ bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[])
     if(strcmp(ic.ifc_req[i].ifr_name,IntName) == 0)
     {
       FFSS_MyIP = strdup(inet_ntoa(((struct sockaddr_in *)(&ic.ifc_req[i].ifr_addr))->sin_addr));
-#ifdef DEBUG
-      printf("Using interface %s, with ip %s\n",IntName,FFSS_MyIP);
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Using interface %s, with ip %s",IntName,FFSS_MyIP);
       return true;
     }
   }
@@ -411,9 +404,7 @@ bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
   int res;
 
   res = compress(out,len_out,in,len_in);
-#ifdef DEBUG
-  printf("Using Z compression (before=%ld - after=%ld)\n",len_in,*len_out);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Using Z compression (before=%ld - after=%ld)",len_in,*len_out);
   return (res == Z_OK);
 }
 
@@ -459,9 +450,7 @@ bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out)
   int res;
 
   res = BZ2_bzBuffToBuffCompress(out,(unsigned int *)len_out,in,len_in,FFSS_BZLIB_BLOCK100K,0,0);
-#ifdef DEBUG
-  printf("Using BZ compression (before=%ld - after=%ld)\n",len_in,*len_out);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Using BZ compression (before=%ld - after=%ld)",len_in,*len_out);
   return (res == BZ_OK);
 }
 
@@ -592,20 +581,6 @@ void FFSS_PrintSyslog(int Level,char *Txt, ...)
   va_end(argptr);
   printf("FFSS(SYSLOG) : %s",FFSS_SlogStr);
 }
-char FFSS_DebugStr[4096];
-#undef FFSS_PrintDebug
-void FFSS_PrintDebug(int Level,char *Txt, ...)
-{
-  va_list argptr;
-
-  if(Level <= N_DebugLevel)
-  {
-    va_start(argptr,Txt);
-    _vsnprintf(FFSS_DebugStr,sizeof(FFSS_DebugStr),Txt,argptr);
-    va_end(argptr);
-    printf("FFSS(%d) : %s",Level,FFSS_DebugStr);
-  }
-}
 #else /* !FFSS_DRIVER */
 
 void FFSS_PrintSyslog(int Level,char *Txt, ...)
@@ -627,31 +602,6 @@ void FFSS_PrintSyslog(int Level,char *Txt, ...)
   SYSLOG_FN(Level,Str);
 }
 
-#undef FFSS_PrintDebug
-void FFSS_PrintDebug(int Level,char *Txt, ...)
-{
-  va_list argptr;
-  char Str[4096];
-  struct tm *TM;
-  time_t Tim;
-
-  if(Level <= N_DebugLevel)
-  {
-    va_start(argptr,Txt);
-#ifdef _WIN32
-    _vsnprintf(Str,sizeof(Str),Txt,argptr);
-#else /* !_WIN32 */
-    vsnprintf(Str,sizeof(Str),Txt,argptr);
-#endif /* _WIN32 */
-    va_end(argptr);
-    Tim = time(NULL);
-    TM = localtime(&Tim);
-    if(Level <= 3)
-      printf(SU_ANSI_HIGHLIGHT"[%.2d:%.2d:%.2d](%ld) FFSS(%d) : %s"SU_ANSI_RESET,TM->tm_hour,TM->tm_min,TM->tm_sec,SU_THREAD_SELF,Level,Str);
-    else
-      printf("[%.2d:%.2d:%.2d](%ld) FFSS(%d) : %s",TM->tm_hour,TM->tm_min,TM->tm_sec,SU_THREAD_SELF,Level,Str);
-  }
-}
 #endif /* FFSS_DRIVER */
 
 int FFSS_GetFFSSOptions(void)

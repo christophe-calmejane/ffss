@@ -63,8 +63,11 @@ void *FS_PluginQuery(int Type,...)
       break;
 #endif /* _WIN32 */
 
-    case FSPQ_DBG_FLAGS : /* (int DebugFlags) */
-      N_DebugLevel = va_arg(ap, int);
+    case FSPQ_DBG_FLAGS : /* (SU_u64 Flags) */
+      SU_DBG_SetFlags(va_arg(ap, SU_u64));
+      break;
+    case FSPQ_DBG_OUTPUT : /* (SU_u16 Output) */
+      SU_DBG_SetOutput(va_arg(ap, unsigned int));
       break;
   }
   va_end(ap);
@@ -123,9 +126,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
   SU_SEM_WAIT(FS_SemPlugin);
   FS_Plugins = SU_AddElementHead(FS_Plugins,(void *)Pl);
   SU_SEM_POST(FS_SemPlugin);
-#ifdef DEBUG
-  printf("Plugin successfully loaded : %s\n",Pl->Path);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"Plugin successfully loaded : %s",Pl->Path);
 #endif /* PLUGINS */
   return Pl;
 }

@@ -32,7 +32,7 @@ bool FS_CheckDirectoryChanged(FS_PShare Share)
   struct stat st;
   char name[1024];
 
-  FFSS_PrintDebug(5,"Checking for a change in share %s (%s)\n",Share->ShareName,Share->Path);
+  SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"Checking for a change in share %s (%s)",Share->ShareName,Share->Path);
   snprintf(name,sizeof(name),"%s/.",Share->Path);
   stat(name,&st);
   if(st.st_ctime != Share->Time)

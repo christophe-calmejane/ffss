@@ -198,14 +198,14 @@ void FC_DQ_AddOpToList_XFerActive(PConn Conn,const long int Amount)
 /* ************************* */
 
 /* UDP callbacks */
-void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
+void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
   FC_DQ_Init();
   printf("Received a new state (%ld) from %s (%s-%s-%s-%s) using master %s\n",State,IP,Domain,Name,OS,Comment,MasterIP);
   FC_DQ_AddServerToList(State,IP,Domain,Name,OS,Comment);
 }
 
-void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
+void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User)
 {
   int i;
 
@@ -217,7 +217,7 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
 
 /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
 /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
-void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
+void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User) /* SU_PList of FM_PHost */
 {
   SU_PList Ptr,Lst = NULL;
   FM_PHost H;
@@ -236,7 +236,7 @@ void OnEndServerListingAnswer(void)
 {
 }
 
-void OnDomainListingAnswer(const char **Domains,int NbDomains)
+void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User) /* First domain is assumed to be domain from the answering master */
 {
   int i;
 
@@ -247,9 +247,9 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
   }
 }
 
-void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
+void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User)
 {
-  printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),MasterVersion,Domain);
+  printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),ProtocolVersion,Domain);
   MyMaster = strdup(inet_ntoa(Master.sin_addr));
   if(FC_SendMessage_DomainListing(inet_ntoa(Master.sin_addr),0))
     FC_SendMessage_ServerList(inet_ntoa(Master.sin_addr),NULL,NULL,0);
@@ -320,14 +320,14 @@ PConn lookup_conn(SU_PClientSocket Server,bool even_null_wnd)
 }
 
 /* TCP callbacks */
-bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
+bool OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
   PConn Conn = lookup_conn(Server,false);
 
   if(Conn == NULL)
     return false;
 
-  if(Code == FFSS_ERROR_NO_ERROR)
+  if(ErrorCode == FFSS_ERROR_NO_ERROR)
   {
     FC_DQ_AddOpToList_Status(Conn,"Successfully connected to server");
     return FC_SendMessage_DirectoryListing(Server,Conn->path,0);
@@ -336,7 +336,7 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
   return true;
 }
 
-bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries)
+bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User) /* FC_PEntry */
 {
   PConn Conn = lookup_conn(Server,false);
   FC_PEntry Ent;

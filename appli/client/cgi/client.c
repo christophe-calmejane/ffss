@@ -5,7 +5,7 @@
 static int Printing = false;
 
 /* UDP callbacks */
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User)
+void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
   int i = 0;
   char *col;

@@ -70,7 +70,7 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg,boo
   retval = select(Client+1,NULL,&rfds,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(3,"Sending message timed out !\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Sending message timed out !");
     if(FreeMsg)
       free(msg);
     return false;
@@ -159,7 +159,7 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
     len = FFSS_MAX_SERVERCOMMENT_LENGTH;
   pos = FFSS_PackString(msg,pos,Comment,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending State message to %s\n",Master);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending State message to %s",Master);
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -209,7 +209,7 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
   FFSS_PackIP(msg+pos,IP,FFSS_IP_TYPE);
   pos += FFSS_IP_FIELD_SIZE;
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server search answer message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Server search answer message to client");
   resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
   return (resp != SOCKET_ERROR);
 }
@@ -251,7 +251,7 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
     pos = FFSS_PackString(msg,pos,ShareComments[i],len);
   }
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server shares answer message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Server shares answer message to client");
   resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
   free(msg);
   return (resp != SOCKET_ERROR);
@@ -273,7 +273,7 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   pos = FFSS_PackField(msg,pos,State);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Pong message to master\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Pong message to master");
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,inet_ntoa(Master.sin_addr),FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -307,7 +307,7 @@ bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FF
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Error message (%d:%s:%ld) to client\n",Code,Descr,Value);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Error message (%d:%s:%ld) to client",Code,Descr,Value);
   return FFSS_SendTcpPacket(Client,msg,pos,false,false);
 }
 
@@ -351,7 +351,7 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -362,7 +362,7 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -370,13 +370,13 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
       break;
 #endif
     default :
-      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
       free(msg);
       return false;
   }
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Directory listing answer message (\"%s\") to client\n",Path);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Directory listing answer message (\"%s\") to client",Path);
   return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
@@ -420,7 +420,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -431,7 +431,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -439,13 +439,13 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
       break;
 #endif
     default :
-      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
       free(msg);
       return false;
   }
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Recursive Directory listing answer message (\"%s\") to client\n",Path);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Recursive Directory listing answer message (\"%s\") to client",Path);
   return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
@@ -474,7 +474,7 @@ bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Init XFer message (%d:%s) to client\n",Tag,FileName);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Init XFer message (%d:%s) to client",Tag,FileName);
   return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
@@ -493,7 +493,7 @@ bool FS_SendMessage_MasterSearch(FFSS_LongField User)
   pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_SERVER);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Master Search message to broadcast");
   resp = FFSS_SendBroadcast(FS_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -574,7 +574,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
         {
-          FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
           SU_CLOSE_SOCKET(sock);
           free(data);
           return false;
@@ -590,7 +590,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseBZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
         {
-          FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
           SU_CLOSE_SOCKET(sock);
           free(data);
           return false;
@@ -600,7 +600,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         break;
 #endif
       default :
-        FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
         return false;
     }
     total += (long int) Ptr2->Data;
@@ -616,11 +616,11 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   pos = FFSS_PackField(msg,pos,total_node);
   pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending index answer message to %s:%s\n",Host,Port);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending index answer message to %s:%s",Host,Port);
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Host,(char *)Port);
   if(resp == SOCKET_ERROR)
   {
-    FFSS_PrintDebug(3,"Failed to connect master\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Failed to connect master");
     SU_CLOSE_SOCKET(sock);
     return false;
   }
@@ -632,7 +632,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   retval = select(sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(3,"Timed out waiting for master to connect to port %d\n",ntohs(SAddr.sin_port));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Timed out waiting for master to connect to port %d",ntohs(SAddr.sin_port));
     SU_CLOSE_SOCKET(sock);
     return false;
   }
@@ -699,14 +699,14 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
       retval = select(client+1,NULL,&rfds,NULL,&tv);
       if(!retval)
       {
-        FFSS_PrintDebug(3,"Timed out waiting for master to retrieve index data\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Timed out waiting for master to retrieve index data");
         SU_CLOSE_SOCKET(sock);
         return false;
       }
       resp = send(client,data+current,slen,SU_MSG_NOSIGNAL);
       if(resp == SOCKET_ERROR)
       {
-        FFSS_PrintDebug(3,"Error sending index data to master (%ld %ld) : %s\n",current,slen,strerror(errno));
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error sending index data to master (%ld %ld) : %s",current,slen,strerror(errno));
         SU_CLOSE_SOCKET(sock);
         return false;
       }
@@ -716,7 +716,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
     Ptr2 = Ptr2->Next;
   }
   SU_CLOSE_SOCKET(sock);
-  FFSS_PrintDebug(3,"Index successfully sent to %s:%s\n",Host,Port);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Index successfully sent to %s:%s",Host,Port);
   return true;
 }
 
@@ -752,7 +752,7 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
   pos = FFSS_PackField(msg,pos,Handle);
   pos = FFSS_PackLongField(msg,pos,FileSize);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming OPEN answer message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming OPEN answer message to client");
   return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
@@ -781,7 +781,7 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
   pos += BlocLen;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming READ answer message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming READ answer message to client");
   return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
@@ -803,7 +803,7 @@ bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Fiel
   pos = FFSS_PackField(msg,pos,Handle);
   pos = FFSS_PackField(msg,pos,Code);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming WRITE answer message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming WRITE answer message to client");
   return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
@@ -826,7 +826,7 @@ bool FC_SendMessage_ServerSearch(void)
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_SEARCH);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Servers Search message to broadcast\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Servers Search message to broadcast");
   resp = FFSS_SendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -848,7 +848,7 @@ bool FC_SendMessage_SharesListing(const char Server[],FFSS_LongField User)
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING);
   pos = FFSS_PackLongField(msg,pos,User);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Shares Listing message to %s\n",Server);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Shares Listing message to %s",Server);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -901,7 +901,7 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
   else
     msg[pos++] = 0;
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server listing message to %s\n",Master);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Server listing message to %s",Master);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -946,13 +946,13 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   CS->connect(server);
   if(!CS->IsConnected())
   {
-    FFSS_PrintDebug(1,"FC_SendMessage_ShareConnect : Cannot connect to %s\n",Server);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"FC_SendMessage_ShareConnect : Cannot connect to %s",Server);
     CS->Delete();
     return NULL;
   }
 #endif /* !FFSS_DRIVER */
 
-  FFSS_PrintDebug(2,"Connected to %s\n",Server);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Connected to %s",Server);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARE_CONNECTION);
   pos = FFSS_PackLongField(msg,pos,User);
@@ -990,7 +990,7 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   else
     msg[pos++] = 0;
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Share connection message to %s\n",Server);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Share connection message to %s",Server);
   resp = FFSS_SendTcpPacketCS(CS,msg,pos,false,true);
   if(!resp)
   {
@@ -1026,7 +1026,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[],F
     len = FFSS_MAX_PATH_LENGTH;
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Directory Listing message to server for %s\n",Path);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Directory Listing message to server for %s",Path);
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
@@ -1052,7 +1052,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
     len = FFSS_MAX_PATH_LENGTH;
   pos = FFSS_PackString(msg,pos,Path,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Recursive Directory Listing message to server for %s\n",Path);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Recursive Directory Listing message to server for %s",Path);
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 #ifndef FFSS_DRIVER
@@ -1112,7 +1112,7 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   else
     pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Download message to server for %s starting at %ld\n",Path,StartingPos);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Download message to server for %s starting at %ld",Path,StartingPos);
   resp = FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
   if(!resp)
   {
@@ -1141,7 +1141,7 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server)
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DISCONNECT);
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Disconnect message to server\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Disconnect message to server");
   FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
@@ -1162,7 +1162,7 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   pos = FFSS_PackField(msg,pos,XFerTag);
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending cancel xfer message to server\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending cancel xfer message to server");
   FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
   SU_FreeCS(Server);
 }
@@ -1185,7 +1185,7 @@ bool FC_SendMessage_DomainListing(const char Master[],FFSS_LongField User)
   pos = FFSS_PackLongField(msg,pos,User);
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Domains listing message to %s\n",Master);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Domains listing message to %s",Master);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -1235,7 +1235,7 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
     len = FFSS_MAX_KEYWORDS_LENGTH;
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Search message to %s - Reply to port %d\n",Master,ntohs(FC_SI_OUT_UDP->SAddr.sin_port));
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Search message to %s - Reply to port %d",Master,ntohs(FC_SI_OUT_UDP->SAddr.sin_port));
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -1255,7 +1255,7 @@ bool FC_SendMessage_MasterSearch(FFSS_LongField User)
   pos = FFSS_PackLongField(msg,pos,User);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_CLIENT);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Master Search message to broadcast");
   resp = FFSS_SendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -1291,7 +1291,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming OPEN message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming OPEN message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
@@ -1311,7 +1311,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle)
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_CLOSE);
   pos = FFSS_PackField(msg,pos,Handle);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming CLOSE message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming CLOSE message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
@@ -1337,7 +1337,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Long
   pos = FFSS_PackLongField(msg,pos,StartPos);
   pos = FFSS_PackField(msg,pos,Length);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming READ message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming READ message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
 
@@ -1369,7 +1369,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_Lon
   pos += BlocLen;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming WRITE message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming WRITE message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,true,true);
 }
 
@@ -1394,7 +1394,7 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags
   pos = FFSS_PackLongField(msg,pos,StartPos);
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Streaming SEEK message to client");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
 
@@ -1444,7 +1444,7 @@ bool FM_SendMessage_MasterConnection(SU_SOCKET Master)
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Master connection message to master\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Master connection message to master");
   return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
@@ -1461,7 +1461,7 @@ bool FM_SendMessage_Ping()
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_PING);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Ping message to servers\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Ping message to servers");
   resp = FFSS_SendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
@@ -1497,7 +1497,7 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1508,7 +1508,7 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1516,13 +1516,13 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
       break;
 #endif
     default :
-      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
       free(msg);
       return false;
   }
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending New States message to master\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending New States message to master");
   return FFSS_SendTcpPacket(Master,msg,pos,true,false);
 }
 
@@ -1560,7 +1560,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1571,7 +1571,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1579,13 +1579,13 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
       break;
 #endif
     default :
-      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
       free(msg);
       return false;
   }
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server Listing message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Server Listing message to client");
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
   free(msg);
   return (resp != SOCKET_ERROR);
@@ -1619,7 +1619,7 @@ bool FM_SendMessage_Error(const char Server[],FFSS_Field Code,const char Descr[]
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Error message (%d:%s) to server %s\n",Code,Descr,Server);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Error message (%d:%s) to server %s",Code,Descr,Server);
   resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
   return (resp == pos);
 }
@@ -1650,7 +1650,7 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Error message (%d:%s) to client\n",Code,Descr);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Error message (%d:%s) to client",Code,Descr);
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
   return (resp == pos);
 }
@@ -1680,7 +1680,7 @@ bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Desc
     msg[pos++] = 0;
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Error message (%d:%s) to master\n",Code,Descr);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Error message (%d:%s) to master",Code,Descr);
   return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
@@ -1703,7 +1703,7 @@ bool FM_SendMessage_ServerList(SU_SOCKET Master,FFSS_LongField User)
   msg[pos++] = 0; /* Domain is NULL */
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Server listing message to master\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Server listing message to master");
   return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
@@ -1735,7 +1735,7 @@ bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,
     pos = FFSS_PackString(msg,pos,Domains[i],len);
   }
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Domains Listing message to client\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Domains Listing message to client");
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
   free(msg);
   return (resp != SOCKET_ERROR);
@@ -1766,12 +1766,12 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
   FFSS_PackField(msg,0,pos);
   if(Server)
   {
-    FFSS_PrintDebug(3,"Sending Master search answer message to server\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Master search answer message to server");
     resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,inet_ntoa(Client.sin_addr),FFSS_SERVER_PORT_S);
   }
   else
   {
-    FFSS_PrintDebug(3,"Sending Master search answer message to client\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Master search answer message to client");
     resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
   }
   return (resp != SOCKET_ERROR);
@@ -1812,7 +1812,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in Z compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1823,7 +1823,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
-        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in BZ compression routine : Buffer too small ?");
         free(msg);
         return false;
       }
@@ -1831,13 +1831,13 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
       break;
 #endif
     default :
-      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown compression type : %d",Compression);
       free(msg);
       return false;
   }
 
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Search Answer message to client (%s:%d)\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Search Answer message to client (%s:%d)",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
   free(msg);
   return (resp != SOCKET_ERROR);
@@ -1869,7 +1869,7 @@ bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int
     len = FFSS_MAX_KEYWORDS_LENGTH;
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Search Forward message to master - Reply to %s:%d\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Search Forward message to master - Reply to %s:%d",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 

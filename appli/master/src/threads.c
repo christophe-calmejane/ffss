@@ -9,25 +9,19 @@ void FM_CheckMasterConnections(void)
 
   /* Connecting to foreign masters */
   context;
-#ifdef DEBUG
-  printf("FM_CheckMasterConnections : Checking if all masters are still connected\n");
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"FM_CheckMasterConnections : Checking if all masters are still connected");
   Ptr = FM_Domains;
   while(Ptr != NULL)
   {
     Domain = (FM_PDomain) Ptr->Data;
     if((Domain->CS == NULL) && (Domain != &FM_MyDomain))
     {
-#ifdef DEBUG
-      printf("FM_CheckMasterConnections : Master of domain %s not connected... trying to reconnect...\n",Domain->Name);
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"FM_CheckMasterConnections : Master of domain %s not connected... trying to reconnect...",Domain->Name);
       SU_SEM_WAIT(FM_TmpSem); /* Lock to protect a free of the CS struct before end of init */
       Domain->CS = FM_SendMessage_Connect(Domain->Master);
       if(Domain->CS != NULL)
       {
-#ifdef DEBUG
-        printf("FM_CheckMasterConnections : Successfully connected... requesting servers list\n");
-#endif /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"FM_CheckMasterConnections : Successfully connected... requesting servers list");
         FM_SendMessage_MasterConnection(Domain->CS->sock);
         FM_SendMessage_ServerList(Domain->CS->sock,0);
       }
@@ -47,7 +41,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
 
   context;
   SU_ThreadBlockSigs();
-  FFSS_PrintDebug(2,"PING thread running...\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"PING thread running...");
   SaveIndexCount = 0;
   while(1)
   {
@@ -58,8 +52,8 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     if(SaveIndexCount > FM_INDEX_DUMP_INTERVAL_PING)
     {
       context;
-      FFSS_PrintDebug(4,"%d%% of unused space in hash table\n",FMI_GetUnusedHashPos());
-      FFSS_PrintDebug(4,"%d strings in index\n",FMI_GetIndexCount());
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"%d%% of unused space in hash table",FMI_GetUnusedHashPos());
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"%d strings in index",FMI_GetIndexCount());
       FMI_GarbageCollector();
       context;
       FMI_SaveIndex(FM_MYINDEX_FILE);
@@ -69,7 +63,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     FM_CheckMasterConnections();
     /* PING SEQUENCE */
     context;
-    FFSS_PrintDebug(4,"THREADS : PING : Sending PING sequence\n");
+    SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending PING sequence");
     now = time(NULL);
     SU_SEM_WAIT(FM_MySem2);
     if(FM_ShuttingDown)
@@ -83,7 +77,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
         {
           /* Server timed out */
           context;
-          FFSS_PrintDebug(5,"THREADS : PING : Server %s timed out, changing state\n",((FM_PHost)Ptr->Data)->Name);
+          SU_DBG_PrintDebug(FM_DBGMSG_STATES,"THREADS : PING : Server %s timed out, changing state",((FM_PHost)Ptr->Data)->Name);
           ((FM_PHost)Ptr->Data)->State = FFSS_STATE_OFF;
           ((FM_PHost)Ptr->Data)->OffSince = time(NULL);
           FM_AddStateToMyQueue(&FM_MyDomain,(FM_PHost)Ptr->Data);
@@ -101,7 +95,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     /* REMOVE SEQUENCE */
     if(FM_ShuttingDown)
       SU_END_THREAD(NULL);
-    FFSS_PrintDebug(4,"THREADS : PING : Sending REMOVE sequence\n");
+    SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending REMOVE sequence");
     now = time(NULL);
     SU_SEM_WAIT(FM_MySem2);
     if(FM_ShuttingDown)
@@ -113,8 +107,8 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
       if((((FM_PHost)Ptr->Data)->State == FFSS_STATE_OFF) && ((((FM_PHost)Ptr->Data)->OffSince + FFSS_KEEP_HOST_DELAY) < now))
       {
         context;
-        FFSS_PrintDebug(3,"THREADS : PING : Removing host %s from my domain\n",((FM_PHost)Ptr->Data)->IP);
-        FFSS_PrintDebug(3,"He is off since %ld - and we are now %ld\n",((FM_PHost)Ptr->Data)->OffSince,now);
+        SU_DBG_PrintDebug(FM_DBGMSG_STATES,"THREADS : PING : Removing host %s from my domain",((FM_PHost)Ptr->Data)->IP);
+        SU_DBG_PrintDebug(FM_DBGMSG_STATES,"He is off since %ld - and we are now %ld",((FM_PHost)Ptr->Data)->OffSince,now);
         /* Checking if host is not in queue */
         SU_SEM_WAIT(FM_MySem);
         Ptr3 = FM_MyQueue;
@@ -123,7 +117,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
           if(((FM_PQueue)Ptr3->Data)->Host == Ptr->Data)
           {
             ((FM_PQueue)Ptr3->Data)->Removed = true;
-            FFSS_PrintDebug(3,"He is in my state queue... marking as removed\n");
+            SU_DBG_PrintDebug(FM_DBGMSG_STATES,"He is in my state queue... marking as removed");
           }
           Ptr3 = Ptr3->Next;
         }
@@ -150,7 +144,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     SU_SLEEP(5); /* Wait for some servers to answer the ping message */
     if(FM_ShuttingDown)
       SU_END_THREAD(NULL);
-    FFSS_PrintDebug(4,"THREADS : PING : Sending UPDATE sequence\n");
+    SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending UPDATE sequence");
     /* Building states of servers of my domain */
     context;
     /* Acquire semaphore */
@@ -183,7 +177,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     SU_SEM_POST(FM_MySem);
     if(buf != NULL)
     {
-      FFSS_PrintDebug(5,"THREADS : PING : Sending States queue to co-masters\n");
+      SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending States queue to co-masters");
       /* Send states to co-masters */
       Ptr = FM_Domains;
       while(Ptr != NULL)
@@ -227,7 +221,7 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
 
   context;
   SU_ThreadBlockSigs();
-  FFSS_PrintDebug(2,"SEARCH thread running...\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"SEARCH thread running...");
   while(1)
   {
     SU_SLEEP(1);
@@ -261,7 +255,7 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
     context;
 #ifdef STATS
     snprintf(tmp,sizeof(tmp),"Search time for %s : %.2f milli secondes",Sch->KeyWords,((t2.tv_sec*1000000+t2.tv_usec)-(t1.tv_sec*1000000+t1.tv_usec))/1000.);
-    FFSS_PrintDebug(4,"%s\n",tmp);
+    SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"%s",tmp);
     if(FM_SearchLogFile != NULL)
       SU_WriteToLogFile(FM_SearchLogFile,tmp);
 #endif /* STATS */

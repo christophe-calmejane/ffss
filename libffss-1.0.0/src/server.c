@@ -31,7 +31,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   {
     case FFSS_MESSAGE_PING :
       context;
-      FFSS_PrintDebug(3,"Received a ping message\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a ping message");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val >= FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE)
       {
@@ -39,11 +39,11 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           FFSS_CB.SCB.OnPing(Client);
       }
       else
-        FFSS_PrintDebug(1,"Master protocol version mismatch\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Master protocol version mismatch");
       break;
     case FFSS_MESSAGE_STATE_ANSWER :
       context;
-      FFSS_PrintDebug(3,"Received a state answer from master\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a state answer from master");
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
       {
@@ -55,20 +55,20 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_SERVER_SEARCH :
       context;
-      FFSS_PrintDebug(3,"Received a server search from client\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a server search from client");
       if(FFSS_CB.SCB.OnServerSearch != NULL)
         FFSS_CB.SCB.OnServerSearch(Client);
       break;
     case FFSS_MESSAGE_SHARES_LISTING :
       context;
-      FFSS_PrintDebug(3,"Received a shares listing request from client\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a shares listing request from client");
       lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       if(FFSS_CB.SCB.OnSharesListing != NULL)
         FFSS_CB.SCB.OnSharesListing(Client,lval);
       break;
     case FFSS_MESSAGE_INDEX_REQUEST :
       context;
-      FFSS_PrintDebug(3,"Received a index request\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a index request");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
@@ -80,7 +80,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_ERROR :
       context;
-      FFSS_PrintDebug(3,"Received an error message\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received an error message");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -130,7 +130,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
       FFSS_PrintSyslog(LOG_WARNING,"From %s : Already identified... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
       return false;
     }
-    FFSS_PrintDebug(3,"Received a share connection message from client\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a share connection message from client");
     FFSS_CurrentConnectionUserInfo = lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
     val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
     val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -172,7 +172,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
     {
       case FFSS_MESSAGE_DIRECTORY_LISTING :
         context;
-        FFSS_PrintDebug(3,"Received a directory listing message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a directory listing message from client");
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -186,7 +186,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_REC_DIR_LISTING :
         context;
-        FFSS_PrintDebug(3,"Received a recursive directory listing message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a recursive directory listing message from client");
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -200,7 +200,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_DOWNLOAD :
         context;
-        FFSS_PrintDebug(3,"Received a download message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a download message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -216,7 +216,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_UPLOAD :
         context;
-        FFSS_PrintDebug(3,"Received an upload message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received an upload message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -232,7 +232,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_MOVE :
         context;
-        FFSS_PrintDebug(3,"Received a move message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a move message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -247,7 +247,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_COPY :
         context;
-        FFSS_PrintDebug(3,"Received a copy message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a copy message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -262,7 +262,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_DELETE :
         context;
-        FFSS_PrintDebug(3,"Received a delete message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a delete message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -276,7 +276,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_MKDIR :
         context;
-        FFSS_PrintDebug(3,"Received a mkdir message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a mkdir message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -290,21 +290,21 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_DISCONNECT :
         context;
-        FFSS_PrintDebug(3,"Received a disconnect message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a disconnect message from client");
         ret_val = false;
         if(FFSS_CB.SCB.OnDisconnect != NULL)
           ret_val = FFSS_CB.SCB.OnDisconnect(Client);
         break;
       case FFSS_MESSAGE_CANCEL_XFER :
         context;
-        FFSS_PrintDebug(3,"Received a cancel xfer message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a cancel xfer message from client");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if(FFSS_CB.SCB.OnCancelXFer != NULL)
           FFSS_CB.SCB.OnCancelXFer(Client,val);
         break;
       case FFSS_MESSAGE_STREAMING_OPEN :
         context;
-        FFSS_PrintDebug(3,"Received a streaming OPEN message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming OPEN message from client");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -319,7 +319,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_STREAMING_CLOSE :
         context;
-        FFSS_PrintDebug(3,"Received a streaming CLOSE message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming CLOSE message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if(val == 0)
         {
@@ -332,7 +332,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_STREAMING_READ :
         context;
-        FFSS_PrintDebug(3,"Received a streaming READ message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming READ message from client\n");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -348,7 +348,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_STREAMING_WRITE :
         context;
-        FFSS_PrintDebug(3,"Received a streaming WRITE message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming WRITE message from client\n");
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -364,7 +364,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         break;
       case FFSS_MESSAGE_STREAMING_SEEK :
         context;
-        FFSS_PrintDebug(3,"Received a streaming SEEK message from client\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming SEEK message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -408,7 +408,7 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
 
   if(strcasecmp(cmd,"HELP") == 0)
   {
-    FFSS_PrintDebug(3,"Received a HELP message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a HELP message from FTP");
     snprintf(msg,sizeof(msg),"214-The following commands are recognized (* =>'s unimplemented)." CRLF);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
     snprintf(msg,sizeof(msg),"214-USER    PASS*   ACCT*   CWD     XCWD*   CDUP    XCUP*   SMNT*" CRLF);
@@ -424,32 +424,32 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"QUIT") == 0)
   {
-    FFSS_PrintDebug(3,"Received a QUIT message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a QUIT message from FTP");
     snprintf(msg,sizeof(msg),"221 Goodbye." CRLF);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
     return false;
   }
   else if(strcasecmp(cmd,"USER") == 0)
   {
-    FFSS_PrintDebug(3,"Received a USER message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a USER message from FTP");
     snprintf(msg,sizeof(msg),"230 Logged in." CRLF);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   }
   else if(strcasecmp(cmd,"NOOP") == 0)
   {
-    FFSS_PrintDebug(3,"Received a NOOP message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a NOOP message from FTP");
     snprintf(msg,sizeof(msg),"200 NOOP command successful." CRLF);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   }
   else if(strcasecmp(cmd,"SYST") == 0)
   {
-    FFSS_PrintDebug(3,"Received a SYST message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a SYST message from FTP");
     snprintf(msg,sizeof(msg),"215 Unix Type: L8" CRLF);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   }
   else if(strcasecmp(cmd,"PORT") == 0)
   {
-    FFSS_PrintDebug(3,"Received a PORT message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a PORT message from FTP");
     if(Len < 6)
     {
       snprintf(msg,sizeof(msg),"501 Missing Host/Port." CRLF);
@@ -492,7 +492,7 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"LIST") == 0)
   {
-    FFSS_PrintDebug(3,"Received a LIST message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a LIST message from FTP");
     if(H[0] == 0)
     { /* Didn't received a PORT message */
       snprintf(msg,sizeof(msg),"503 Must receive a PORT command before." CRLF);
@@ -526,7 +526,7 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"RETR") == 0)
   {
-    FFSS_PrintDebug(3,"Received a RETR message from FTP for %s\n",p);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a RETR message from FTP for %s",p);
     if(H[0] == 0)
     { /* Didn't received a PORT message */
       snprintf(msg,sizeof(msg),"503 Must receive a PORT command before." CRLF);
@@ -546,13 +546,13 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"PWD") == 0)
   {
-    FFSS_PrintDebug(3,"Received a PWD message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a PWD message from FTP");
     if(FFSS_CB.SCB.OnPWDFTP != NULL)
       FFSS_CB.SCB.OnPWDFTP(Client);
   }
   else if(strcasecmp(cmd,"TYPE") == 0)
   {
-    FFSS_PrintDebug(3,"Received a TYPE message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a TYPE message from FTP");
     if((p == NULL) || (FFSS_CB.SCB.OnTypeFTP == NULL))
     {
       snprintf(msg,sizeof(msg),"501 Missing TYPE argument" CRLF);
@@ -563,7 +563,7 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"MODE") == 0)
   {
-    FFSS_PrintDebug(3,"Received a MODE message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a MODE message from FTP");
     if((p == NULL) || (FFSS_CB.SCB.OnModeFTP == NULL))
     {
       snprintf(msg,sizeof(msg),"501 Missing MODE argument" CRLF);
@@ -574,7 +574,7 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"CWD") == 0)
   {
-    FFSS_PrintDebug(3,"Received a CWD message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a CWD message from FTP");
     if((p == NULL) || (FFSS_CB.SCB.OnCWDFTP == NULL))
     {
       snprintf(msg,sizeof(msg),"501 Missing CWD argument" CRLF);
@@ -585,16 +585,16 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
   }
   else if(strcasecmp(cmd,"CDUP") == 0)
   {
-    FFSS_PrintDebug(3,"Received a CDUP message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a CDUP message from FTP");
     FFSS_CB.SCB.OnCWDFTP(Client,"..");
   }
   else if(strcasecmp(cmd,"A") == 0)
   {
-    FFSS_PrintDebug(3,"Received a QUIT message from FTP\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a QUIT message from FTP");
   }
   else /* Unknown command */
   {
-    FFSS_PrintDebug(1,"Unknown FTP command : %s\n",cmd);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Unknown FTP command : %s",cmd);
     snprintf(msg,sizeof(msg),"500 %s not understood" CRLF,cmd);
     send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   }
@@ -675,7 +675,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     }
     if(Client->User != 0) /* Idle time out value */
     {
-      FFSS_PrintDebug(3,"Server has defined a idle time out value of %d sec for this connection\n",(int)Client->User);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Server has defined a idle time out value of %d sec for this connection",(int)Client->User);
       FD_ZERO(&rfds);
       FD_SET(Client->sock,&rfds);
       tv.tv_sec = (int)Client->User;
@@ -685,7 +685,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       {
         if(FFSS_CB.SCB.OnIdleTimeout != NULL)
           FFSS_CB.SCB.OnIdleTimeout(Client);
-        FFSS_PrintDebug(1,"Error on TCP port of the server (TIME OUT)\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP port of the server (TIME OUT)");
         if(FFSS_CB.SCB.OnEndTCPThread != NULL)
           FFSS_CB.SCB.OnEndTCPThread();
         /* Reset throughput */
@@ -718,7 +718,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     res = recv(Client->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(1,"Error on TCP port of the server (SOCKET_ERROR : %d)\n",errno);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP port of the server (SOCKET_ERROR : %d)",errno);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
       /* Reset throughput */
@@ -746,7 +746,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       SU_END_THREAD(NULL);
     }
     len += res;
-    FFSS_PrintDebug(6,"Data found on TCP port from %s (%s) ... analysing\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Data found on TCP port from %s (%s) ... analysing",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     analyse = true;
     while(analyse)
     {
@@ -768,7 +768,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       Size = *(FFSS_Field *)Buf;
       if(Size > len)
       {
-        FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?",Size,len);
         break;
         /* Keeps waiting for data */
       }
@@ -790,7 +790,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
         }
         if(len > Size)
         {
-          FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?",Size,len);
           memmove(Buf,Buf+Size,len-Size);
           len -= Size;
           /* Keeps analysing the buffer */
@@ -850,7 +850,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
     {
       if(FFSS_CB.SCB.OnIdleTimeoutFTP != NULL)
         FFSS_CB.SCB.OnIdleTimeoutFTP(Client);
-      FFSS_PrintDebug(1,"Error on TCP FTP port of the server (TIME OUT)\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP FTP port of the server (TIME OUT)");
       if(FFSS_CB.SCB.OnEndTCPThreadFTP != NULL)
         FFSS_CB.SCB.OnEndTCPThreadFTP();
       SU_FreeCS(Client);
@@ -865,7 +865,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
     res = recv(Client->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(1,"Error on TCP FTP port of the server (SOCKET_ERROR : %d)\n",errno);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP FTP port of the server (SOCKET_ERROR : %d)",errno);
       if(FFSS_CB.SCB.OnEndTCPThreadFTP != NULL)
         FFSS_CB.SCB.OnEndTCPThreadFTP();
       SU_FreeCS(Client);
@@ -881,7 +881,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
       SU_END_THREAD(NULL);
     }
     len += res;
-    FFSS_PrintDebug(6,"Data found on TCP FTP port from %s (%s) ... analysing\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Data found on TCP FTP port from %s (%s) ... analysing",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     analyse = true;
     while(analyse)
     {
@@ -898,7 +898,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
       }
       if(p == NULL)
       {
-        FFSS_PrintDebug(5,"Warning, Couldn't find CR/LF... Message splitted ?\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Couldn't find CR/LF... Message splitted ?");
         break;
         /* Keeps waiting for data */
       }
@@ -922,7 +922,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
         }
         if(len > Size)
         {
-          FFSS_PrintDebug(5,"Warning, Data found after CR/LF... multiple messages ?\n");
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Warning, Data found after CR/LF... multiple messages ?");
           memmove(Buf,Buf+Size,len-Size);
           len -= Size;
           /* Keeps analysing the buffer */
@@ -957,13 +957,13 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
     FFSS_PrintSyslog(LOG_ERR,"Couldn't listen on the TCP socket\n");
     SU_END_THREAD(NULL);
   }
-  FFSS_PrintDebug(1,"TCP thread launched...waiting for connections\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP thread launched...waiting for connections");
   while(1)
   {
     Client = SU_ServerAcceptConnection(FS_SI_TCP);
     if(FFSS_ShuttingDown)
     {
-      FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP Routine : FFSS Library is been shut down...");
       if(Client != NULL)
         SU_FreeCS(Client);
       SU_END_THREAD(NULL);
@@ -984,11 +984,11 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
         SU_FreeCS(Client);
         continue;
       default :
-        FFSS_PrintDebug(1,"Error in FS_ThreadTCP, unknown filter action\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in FS_ThreadTCP, unknown filter action");
         SU_END_THREAD(NULL);
     }
 
-    FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... checking connection\n",IP,SU_NameOfPort(IP));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Client connected on TCP port of the server from %s (%s) ... checking connection",IP,SU_NameOfPort(IP));
     /* Getting Size of first message */
     FD_ZERO(&rfds);
     FD_SET(Client->sock,&rfds);
@@ -1047,12 +1047,12 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
       continue;
     if(!FS_AnalyseTCP(Client,Buf,MsgSize,false,&Info)) /* Connection not accepted by server... */
     {
-      FFSS_PrintDebug(5,"Connection from %s was refused by the server\n",IP);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Connection from %s was refused by the server",IP);
       SU_FreeCS(Client);
       continue;
     }
 
-    FFSS_PrintDebug(5,"Connection from %s (%s) accepted by server ... creating new thread\n",IP,SU_NameOfPort(IP));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Connection from %s (%s) accepted by server ... creating new thread",IP,SU_NameOfPort(IP));
     TmpStruct = (FS_PInterThreadTmp) malloc(sizeof(FS_TInterThreadTmp));
     TmpStruct->Client = Client;
     TmpStruct->Info = Info;
@@ -1077,13 +1077,13 @@ SU_THREAD_ROUTINE(FS_ThreadTCP_FTP,User)
     FFSS_PrintSyslog(LOG_ERR,"Couldn't listen on the TCP FTP socket\n");
     SU_END_THREAD(NULL);
   }
-  FFSS_PrintDebug(1,"TCP FTP thread launched...waiting for connections\n");
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP FTP thread launched...waiting for connections");
   while(1)
   {
     Client = SU_ServerAcceptConnection(FS_SI_TCP_FTP);
     if(FFSS_ShuttingDown)
     {
-      FFSS_PrintDebug(1,"TCP FTP Routine : FFSS Library is been shut down...\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"TCP FTP Routine : FFSS Library is been shut down...");
       if(Client != NULL)
         SU_FreeCS(Client);
       SU_END_THREAD(NULL);
@@ -1103,11 +1103,11 @@ SU_THREAD_ROUTINE(FS_ThreadTCP_FTP,User)
         SU_FreeCS(Client);
         continue;
       default :
-        FFSS_PrintDebug(1,"Error in FS_ThreadTCP_FTP, unknown filter action\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error in FS_ThreadTCP_FTP, unknown filter action");
         SU_END_THREAD(NULL);
     }
 
-    FFSS_PrintDebug(5,"Client connected on TCP FTP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Client connected on TCP FTP port of the server from %s (%s) ... creating new thread",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP_FTP,(void *)Client,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating TCP FTP Client thread\n");

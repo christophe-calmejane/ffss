@@ -116,20 +116,20 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
   buf_size = *BufSize;
   buf_pos = *BufPos;
   count = *Count;
-  //FFSS_PrintDebug(6,"Looking in node : %d sub nodes\n",Node->NbNodes);
+  //SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Looking in node : %d sub nodes",Node->NbNodes);
   for(i=0;i<Node->NbNodes;i++)
     Ans = FM_IntersectAnswers_rec(&Node->STNodes[i],Tags,Ans,&buf_size,&buf_pos,&count);
-  //FFSS_PrintDebug(6,"Looking in node : %d leafs\n",Node->NbLeafs);
+  //SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Looking in node : %d leafs",Node->NbLeafs);
   for(i=0;i<Node->NbLeafs;i++)
   {
     Leaf = &Node->STLeafs[i];
     Host = FM_Controler.Hosts[Leaf->NumHost];
-    //FFSS_PrintDebug(6,"Looking in leaf : %d files\n",Leaf->NbFiles);
+    //SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Looking in leaf : %d files",Leaf->NbFiles);
     for(j=0;j<Leaf->NbFiles;j++)
     {
       if((Host->FTNodes[Leaf->NumFiles[j]].Tags & Tags) == Tags)
       {
-        //FFSS_PrintDebug(6,"Found file '%s'\n",Host->FileTree+Host->FTNodes[Leaf->NumFiles[j]].Pos);
+        //SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Found file '%s'",Host->FileTree+Host->FTNodes[Leaf->NumFiles[j]].Pos);
 
         /* Flush Path */
         str = FM_BuildPath(Host,&Host->FTNodes[Leaf->NumFiles[j]],StrBuf,sizeof(StrBuf)); /* result string */
@@ -245,7 +245,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       if(!FM_IsMyDomain(Dom)) /* Not for my domain, forward request */
       {
         /* Forwarding request to foreign master */
-        FFSS_PrintDebug(4,"Forwarding search \"%s\" to %s\n",KeyWords,Dom->Master);
+        SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Forwarding search \"%s\" to %s",KeyWords,Dom->Master);
         if(Dom->CS != NULL)
         {
           if(!FM_SendMessage_SearchForward(Dom->CS->sock,Sch->Client,Sch->Compressions,KeyWords,Sch->User))
@@ -328,7 +328,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
     len = strlen(Dom->Name)+1;
     while((pos+len) >= buf_size)
     {
-      //FFSS_PrintDebug(5,"Having to realloc buffer of %ld to fit %ld\n",buf_size,pos+len);
+      //SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Having to realloc buffer of %ld to fit %ld",buf_size,pos+len);
       buf_size += FFSS_MAX_DOMAIN_LENGTH*2+1;
       answer = (char *) realloc(answer,buf_size);
     }
@@ -355,7 +355,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
 #ifdef STATS
     gettimeofday(&t3,&tz);
     snprintf(tmp,sizeof(tmp),"Search time : ST=%.3f msec INTER=%.3f msec (%ld answers)",((t2.tv_sec*1000000+t2.tv_usec)-(t1.tv_sec*1000000+t1.tv_usec))/1000.,((t3.tv_sec*1000000+t3.tv_usec)-(t2.tv_sec*1000000+t2.tv_usec))/1000.,curr);
-    FFSS_PrintDebug(4,"%s\n",tmp);
+    SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"%s",tmp);
     if(FM_SearchLogFile != NULL)
       SU_WriteToLogFile(FM_SearchLogFile,tmp);
 #endif /* STATS */

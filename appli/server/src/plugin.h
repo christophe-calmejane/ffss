@@ -32,6 +32,7 @@
 #define FSPQ_SHUTDOWN         30
 
 #define FSPQ_DBG_FLAGS        40
+#define FSPQ_DBG_OUTPUT       41
 
 /* Structure returned by Plugin_QueryInfos call - Freed by Plugin */
 typedef struct

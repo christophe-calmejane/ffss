@@ -87,7 +87,7 @@ const FCA_Tcommand FCA_COMMANDS[]=
 void FCA_get_cmd()
 {
 	char prompt[FCA_PROMPT_MAX];
-	
+
 	FCA_quiet=false;
 	FCA_posted=false;
 	do {
@@ -120,14 +120,14 @@ void FCA_interpret_cmd()
 	bool espOk=false, aliasOk=false;
 	unsigned short int iC;
 	char *pcom, *pdeb;
-	
+
 		/* we must work only with command, it's a good way to
 			modify our workspace without realloc-ing FCA_command
 		*/
 	command=FCA_command;
 	if(command==NULL)
 		return;
-	
+
 		/* log the stuff */
 	if(FCA_loglevel>=FCA_COMMANDS_LOGLEVEL)
 		FCA_printlog("cmd: %s", command);
@@ -148,7 +148,7 @@ void FCA_interpret_cmd()
 	esp=strstr(command,"//");
 	if(esp)
 		*esp='\0';
-	
+
 	if(command[0]=='\0' || FCA_in_comment)
 		return;
 	esp=strstr(command,"/*");
@@ -156,7 +156,7 @@ void FCA_interpret_cmd()
 		*esp='\0';
 		FCA_in_comment=true;
 	}
-	
+
 		/* TODO: manage '"' in commands */
 		/* command can be some commands separated by ';' */
 	pcom=strchr(command, ';');
@@ -173,7 +173,7 @@ void FCA_interpret_cmd()
 				/* we must refuse '\;' */
 			while( pcom && *(pcom-1)=='\\' )
 				pcom=strchr(pcom+1, ';');
-			
+
 			if(!pcom)
 				break;
 			*pcom='\0';
@@ -188,19 +188,19 @@ void FCA_interpret_cmd()
 		FCA_command=pdeb;
 		return;
 	}
-	
+
 		/* delete last spaces and first spaces */
 	while(!espOk) {
 		FCA_del_lsp(command);
 		command=FCA_del_fsp(command);
-		
+
 		if(command[0]=='\0')
 			return;
-		
+
 		esp=strchr(command,' ');
 		tab=strchr(command,'\t');
 		if(tab && tab<esp)	esp=tab;
-		
+
 		lesp=esp;
 		if(esp!=NULL) {
 			*esp='\0';
@@ -210,9 +210,9 @@ void FCA_interpret_cmd()
 			*esp='\0';
 		else				/* 1 word */
 			esp=NULL;
-		
+
 		espOk=true;
-		
+
 		if(!aliasOk) {
 			aliasOk=true;
 #ifdef ALIASES
@@ -255,7 +255,7 @@ void FCA_interpret_cmd()
 		if( FCA_COMMANDS[iC].exec!=NULL ) {
 			messSent=FCA_COMMANDS[iC].exec(lesp);
 			if(messSent && !FCA_posted) {	/* if a message is sent */
-			    	FFSS_PrintDebug(1, "(client) message sent...waiting\n");
+			    	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) message sent...waiting");
 	    			FCA_sem_wait();
 			}
 		}
@@ -285,7 +285,7 @@ bool FCA_ls_cmd(char *path)
 	 char tgt_pwd[FFSS_MAX_PATH_LENGTH];
 	 char *target;
 	 SU_PList Pdom, Pserv;
-    
+
 	if(path!=NULL) {		/* ls ... */
 		SU_strcpy(tgt_pwd, FCA_pwd, FFSS_MAX_PATH_LENGTH);
 		if(*path!='/') {	/* relative path */
@@ -297,20 +297,20 @@ bool FCA_ls_cmd(char *path)
 		target=&(tgt_pwd[0]);
 	} else			/* ls */
 		target=&(FCA_pwd[0]);
-    
+
 	if(! FCA_explode_path(target, &domain, &machine, &share, &dir) )
 	    	FCA_print_warning("syntax error");
-	
+
 	if(domain==NULL && machine==NULL && share==NULL && dir==NULL) {	/* on / */
 		if(FCA_loglevel>=FCA_BROWSING_LOGLEVEL)
 			FCA_printlog("listing domains");
 		FCA_list_domains();
 		return false;
 	}
-    
+
 	if(domain==NULL)
 	    	FCA_crash("INTERNAL ERROR! please contact bennyben...");
-    
+
 		/* /$/domain... */
 	Pdom=FCA_get_Domain(domain);
 	if(!Pdom) {
@@ -324,10 +324,10 @@ bool FCA_ls_cmd(char *path)
 			FCA_printlog("listing domain %s", domain);
 		return FCA_list_servs(domain);
 	}
-    
+
 	if(domain==NULL && machine!=NULL)
 	    	FCA_crash("INTERNAL ERROR! please contact bennyben...");
-    
+
 	    	/* /$/domain/server... */
 	Pserv=FCA_get_server(Pdom, machine);
 	if(Pserv==NULL) {
@@ -356,7 +356,7 @@ bool FCA_ls_cmd(char *path)
 		}
 		return true;
 	}
-    
+
 	if(domain!=NULL && machine!=NULL && share!=NULL) {	/* /$/domain/server/share... */
 			/* todo: login/pass */
 		if(! isShareValid(IP, share) ) {	/* cannot connect */
@@ -387,7 +387,7 @@ bool FCA_ls_cmd(char *path)
 		FCA_list_dir(FCA_shrSkt, target, dir-1);
 		return true;
 	}
-    
+
 	        /* if here....it's a strange case */
 	FCA_print_cmd_err("INTERNAL ERROR! please contact " FCA_AUTHOR "...");
 	return false;
@@ -404,9 +404,9 @@ bool FCA_cd_cmd(char *path)
 		snprintf(FCA_pwd, FFSS_MAX_PATH_LENGTH, "/$/%s", FCA_home);
 		return false;
 	}
-    
+
 	SU_strcpy(sav_pwd, FCA_pwd, FFSS_MAX_PATH_LENGTH);
-    
+
 	if(*path=='/')	/* absolute path */
 		SU_strcpy(FCA_pwd,path,FFSS_MAX_PATH_LENGTH);
 	else {		/* relative path */
@@ -416,7 +416,7 @@ bool FCA_cd_cmd(char *path)
 	FCA_process_pp(FCA_pwd);
 	if(! FCA_explode_path(FCA_pwd, &domain, &machine, &share, &dir) )
 		FCA_print_warning("syntax error");
-    
+
 	if( domain==NULL && machine==NULL && share==NULL && dir==NULL) {	/* cd / */
 		SU_strcpy(FCA_pwd,"/$",FFSS_MAX_PATH_LENGTH);
 	    	return false;
@@ -428,17 +428,17 @@ bool FCA_cd_cmd(char *path)
 	if(domain && machine && share) {
 	    	*(machine-1)='/';
 		*(share-1)='/';
-		FFSS_PrintDebug(1, "(client) look if we are on the same share...\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) look if we are on the same share...");
 		moved=!FCA_if_same_share(FCA_pwd, sav_pwd);
-		FFSS_PrintDebug(1, "(client) %s <-> %s -> moved=%s\n", FCA_pwd,sav_pwd, moved?"yes":"no");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) %s <-> %s -> moved=%s", FCA_pwd,sav_pwd, moved?"yes":"no");
 	    	*(machine-1)='\0';
 		*(share-1)='\0';
 	}
 	if(domain && machine) {
 	    	*(machine-1)='/';
-		FFSS_PrintDebug(1, "(client) look if we are on the same server...\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) look if we are on the same server...");
 		moved_server=!FCA_if_same_server(FCA_pwd, sav_pwd);
-		FFSS_PrintDebug(1, "(client) %s <-> %s -> moved=%s\n", FCA_pwd,sav_pwd, moved_server?"yes":"no");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) %s <-> %s -> moved=%s", FCA_pwd,sav_pwd, moved_server?"yes":"no");
 	    	*(machine-1)='\0';
 	}
 
@@ -509,7 +509,7 @@ bool FCA_cd_cmd(char *path)
 			FCA_print_cmd_ok("connection sucessfull.");
 		return false;
 	}
-    
+
 	if(moved) {
 		if(domain!=NULL && machine!=NULL && share!=NULL) {	/* /$/domain/server/share... */
 				/* todo: login/pass */
@@ -522,13 +522,13 @@ bool FCA_cd_cmd(char *path)
 			}
 		}
 	}
-   
+
 	if( domain!=NULL && machine!=NULL && share!=NULL && dir==NULL) {	/* go to the share */
 		*(machine-1)='/';
 		*(share-1)='/';
 		return false;
 	}
-    
+
 	if( domain!=NULL && machine!=NULL && share!=NULL && dir!=NULL) {	/* in the share */
 		*(dir-1)='/';
 		*(machine-1)='/';
@@ -575,7 +575,7 @@ bool FCA_get_func(char *rmFile, bool toDisk)
 	SU_PList dom, serv, Ps;
 	int code;
 	time_t t1, t2;
-    
+
 	if(rmFile==NULL || *rmFile=='\0')
 		return false;
 
@@ -680,7 +680,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 				snprintf(to, FFSS_MAX_FILEPATH_LENGTH, "%s/%s", lpwd, file);
 			FCA_posted=false;
 			FCA_quiet=!toDisk;
-			
+
 			if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL) {
 				if(toDisk)
 					FCA_printlog("downloading file %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
@@ -713,7 +713,7 @@ bool FCA_shell_cmd(char *args)
 bool FCA_local_cmd(char *args)
 {
 	char command[FFSS_MAX_FILEPATH_LENGTH];
-    
+
 	if(args!=NULL && *args!='\0') {
 		snprintf(command, FFSS_MAX_FILEPATH_LENGTH, "%s", args);
 		if(FCA_loglevel>=FCA_SHELL_LOGLEVEL)
@@ -770,7 +770,7 @@ bool FCA_find_cmd(char *args)
 	ftime(&FCA_starttime);
 #endif
 	if( domain==NULL || (domain!=NULL && !SU_strcasecmp(domain,"None")) ) {	/* domain None or / -> search on all */
-		FFSS_PrintDebug(5, "(client) looking for '%s' on all domains\n", args, domain);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) looking for '%s' on all domains", args, domain);
 		if(FCA_loglevel>=FCA_FIND_LOGLEVEL)
 			FCA_printlog("looking for '%s' on all domains", args, domain);
 		FCA_inDispFind=true;
@@ -786,13 +786,13 @@ bool FCA_find_cmd(char *args)
 		FCA_multiFind=false;
 		if(FCA_loglevel>=FCA_FIND_LOGLEVEL)
 			FCA_printlog("looking for '%s' on domain '%s'", args, domain);
-		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) looking for '%s' on domain '%s'", args, domain);
 		res=FC_SendMessage_Search(FCA_master,domain, args, 0);
 	}
 	if(machine!=NULL)
 		*(machine-1)='/';
 	if(!res) {
-		FFSS_PrintDebug(5, "(client) mutpost==false -> err\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) mutpost==false -> err");
 		FCA_print_cmd_err("cannot launch research");
 		mustPost=false;
 	}
@@ -803,7 +803,7 @@ bool FCA_set_cmd(char *args)
 {
 	char *p, *p2;
 	int i;
-	
+
 	if(!args) {
 		FCA_print_env();
 		return false;
@@ -840,15 +840,15 @@ bool FCA_set_cmd(char *args)
 	} else
 		FCA_print_cmd_err("cannot assign this value to this variable, incorrect value");
 	return false;
-	
+
 }
 
 #ifdef ALIASES
 bool FCA_alias_cmd(char *args)
 {
 	char *p, *p2, *p3;
-	
-	
+
+
 	if(!args) {
 		FCA_print_aliases(NULL);
 		return false;
@@ -924,7 +924,7 @@ void FCA_find_bench(const char *file)
 	int i, ret=1;
 	struct timeb now, start;
 	time_t tsum=0, t; unsigned short msum=0, m;
-	
+
 	FCA_quiet=true;
 	FCA_multiFind=false;
 	fp=fopen(file, "rt");

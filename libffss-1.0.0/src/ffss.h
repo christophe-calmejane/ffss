@@ -388,6 +388,14 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_QOS_CRITERIA_BYTES_PER_MSEC     1
 #define FFSS_QOS_CRITERIA_BANDWIDTH_PER_CENT 2
 
+/* Debug defines */
+  /* Commons */
+#define FFSS_DBGMSG_GLOBAL      0x00001
+#define FFSS_DBGMSG_WARNING     0x00002
+#define FFSS_DBGMSG_OUT_MSG     0x00004
+#define FFSS_DBGMSG_PARSE_PROTO 0x00008
+#define FFSS_DBGMSG_FATAL       0x00080
+#define FFSS_DBGMSG_ALL         0x0FFFF
 
 #define CRLF "\xD\xA"
 #define FFSS_SUPER_MAGIC 0xFF55
@@ -596,7 +604,6 @@ extern char *FFSS_MyIP;
 extern char *FFSS_ErrorTable[];
 
 void FFSS_PrintSyslog(int Level,char *Txt, ...);
-void FFSS_PrintDebug(int Level,char *Txt, ...);
 
 
 /* ************************************************ */
@@ -1190,7 +1197,6 @@ extern char *FFSS_DocExt[FFSS_DOC_NB_EXT];
 extern char *FFSS_ExeExt[FFSS_EXE_NB_EXT];
 extern char *FFSS_ZipExt[FFSS_ZIP_NB_EXT];
 
-extern int N_DebugLevel;
 extern bool N_SyslogOn;
 #ifndef FFSS_DRIVER
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
@@ -1206,10 +1212,10 @@ extern FILE *FFSS_LogFile;
 
 #ifndef DEBUG
 #ifdef __unix__
-#define FFSS_PrintDebug(x,...) /* */
+#define SU_DBG_PrintDebug(x,...) /* */
 #define SYSLOG_FN(x,y) syslog(x,y)
 #else /* !__unix__ */
-#define FFSS_PrintDebug() /* */
+#define SU_DBG_PrintDebug() /* */
 #define SYSLOG_FN(x,y) SU_WriteToLogFile(FFSS_LogFile,y)
 #endif /* __unix__ */
 #else /* DEBUG */

@@ -23,12 +23,12 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   char buf[1024];
   int siz;
 
-  FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
+  SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tBuilding index for sub-dir %s",Path);
   /* List all files in Path, and fill Node with it */
   dir = opendir(Path);
   if(dir == NULL)
   {
-    FFSS_PrintDebug(4,"Error opening dir %s\n",Path);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Error opening dir %s",Path);
     return 0;
   }
   ent = readdir(dir);
@@ -38,10 +38,13 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
     {
       if(strcmp(Share->Path,Path) == 0)
       {
+        char *ttt;
         snprintf(name,sizeof(name),"%s/.",Share->Path);
         stat(name,&st);
         Share->Time = st.st_ctime;
-        FFSS_PrintDebug(5,"\tStating share main directory... time = %s",ctime(&Share->Time));
+        ttt = ctime(&Share->Time);
+        ttt[strlen(ttt)-1] = 0;
+        SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tStating share main directory... time = %s",ttt);
       }
       ent = readdir(dir);
       continue;
@@ -123,13 +126,13 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   char buf[1024];
   int siz;
 
-  FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
+  SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tBuilding index for sub-dir %s",Path);
   /* List all files in Path, and fill Node with it */
   snprintf(name,sizeof(name),"%s\\*.*",Path);
   dir = FindFirstFile(name,&ent);
   if(dir == INVALID_HANDLE_VALUE)
   {
-    FFSS_PrintDebug(4,"Error opening dir %s (%d)\n",name,GetLastError());
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Error opening dir %s (%d)",name,GetLastError());
     return 0;
   }
   do
@@ -206,12 +209,12 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
   Ptr = Share->Users;
   while(Ptr != NULL)
   {
-    FFSS_PrintDebug(5,"Adding user %s with password %s to this share (%s)\n",((FS_PUser)Ptr->Data)->Login,((FS_PUser)Ptr->Data)->Password,(((FS_PUser)Ptr->Data)->Writeable == true)?"writeable":"read-only");
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Adding user %s with password %s to this share (%s)",((FS_PUser)Ptr->Data)->Login,((FS_PUser)Ptr->Data)->Password,(((FS_PUser)Ptr->Data)->Writeable == true)?"writeable":"read-only");
     Ptr = Ptr->Next;
   }
   if(do_it_now)
   {
-    FFSS_PrintDebug(5,"Start building index for share %s : %s\n",Share->ShareName,Share->Comment);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Start building index for share %s : %s",Share->ShareName,Share->Comment);
 #ifdef _WIN32
     if(strlen(Share->Path) == 3)
     {
@@ -221,7 +224,7 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
     else
 #endif /* _WIN32 */
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
-    FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Done building %s (%ld files, %ld directories)",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
 
   SU_SEM_WAIT(FS_SemShr);
@@ -243,7 +246,7 @@ void FS_RealBuildIndex(void)
   while(Ptr != NULL)
   {
     Share = (FS_PShare) Ptr->Data;
-    FFSS_PrintDebug(5,"Start building index for share %s : %s\n",Share->ShareName,Share->Comment);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Start building index for share %s : %s",Share->ShareName,Share->Comment);
 #ifdef _WIN32
     if(strlen(Share->Path) == 3)
     {
@@ -253,7 +256,7 @@ void FS_RealBuildIndex(void)
     else
 #endif /* _WIN32 */
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
-    FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Done building %s (%ld files, %ld directories)",Share->ShareName,Share->NbFiles,Share->NbDirs);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemShr);
@@ -307,12 +310,12 @@ void FS_FreeShare(FS_PShare Share)
 
   if(Share->Conns != NULL)
   {
-    FFSS_PrintDebug(5,"Share %s not empty, waiting for connections to terminate\n",Share->ShareName);
+    SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Share %s not empty, waiting for connections to terminate",Share->ShareName);
     FS_EjectFromShare(Share,true);
     Share->Remove = true;
     return;
   }
-  FFSS_PrintDebug(5,"Freeing share %s\n",Share->ShareName);
+  SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Freeing share %s",Share->ShareName);
   FS_RemoveShare(Share);
   if(Share->Path != NULL)
     free(Share->Path);
@@ -390,7 +393,7 @@ void FS_RescanShare(FS_PShare Share)
   Share->Root.NbDirs = 0;
   Share->Root.Files = NULL;
   Share->Root.NbFiles = 0;
-  FFSS_PrintDebug(5,"Start re-building index for share %s : %s\n",Share->ShareName,Share->Comment);
+  SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"Start re-building index for share %s : %s",Share->ShareName,Share->Comment);
 #ifdef _WIN32
   if(strlen(Share->Path) == 3)
   {

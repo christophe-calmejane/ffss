@@ -95,9 +95,7 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
   FM_PHost Hst;
 
   context;
-#ifdef DEBUG
-  printf("MASTER : Adding host %s (%s) to domain %s\n",Name,IP,Domain->Name);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Adding host %s (%s) to domain %s",Name,IP,Domain->Name);
   Hst = (FM_PHost) malloc(sizeof(FM_THost));
   memset(Hst,0,sizeof(FM_THost));
   Hst->Name = strdup(Name);
@@ -123,10 +121,8 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
 {
   context;
   SU_SEM_WAIT(FM_MySem2);
-#ifdef DEBUG
-  printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
-  printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"Updating host info : %s - %s - %s - %ld",Name,OS,Comment,State);
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"Old infos : %s - %s - %s - %ld",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
   if(strcmp(Hst->Name,Name) != 0)
   {
     free(Hst->Name);
@@ -182,9 +178,7 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
   FM_PQueue Que;
 
   context;
-#ifdef DEBUG
-  printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Adding state to my queue : %s (%s) %ld",Hst->Name,Hst->IP,Hst->State);
   if(Hst->State == FFSS_STATE_OFF)
     Hst->OffSince = time(NULL);
   else
@@ -224,9 +218,7 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
   FM_PHost Hst;
 
   context;
-#ifdef DEBUG
-  //printf("MASTER : State : %s-%s-%s\n",Name,Comment,OS);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : State : %s-%s-%s",Name,Comment,OS);
   Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
   if(Hst == NULL)
     Hst = FM_AddHostToDomain(&FM_MyDomain,Name,OS,Comment,inet_ntoa(Server.sin_addr),State);
@@ -278,6 +270,7 @@ void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain
 /* OnClientServerFailed is raised by local clients that failed to connect to a *said* non-OFF server */
 void OnClientServerFailed(const char IP[])
 {
+#if 0
   SU_PList Ptr;
   FM_PHost Hst;
 
@@ -288,9 +281,7 @@ void OnClientServerFailed(const char IP[])
     Hst = FM_SearchHostByIP((FM_PDomain)Ptr->Data,IP);
     if(Hst != NULL)
     {
-#ifdef DEBUG
-      printf("MASTER : Client said connection to server %s timed out, changing state\n",IP);
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Client said connection to server %s timed out, changing state",IP);
       Hst->State = FFSS_STATE_OFF;
       Hst->OffSince = time(NULL);
       if(FM_IsMyDomain(Ptr->Data))
@@ -299,6 +290,7 @@ void OnClientServerFailed(const char IP[])
     }
     Ptr = Ptr->Next;
   }
+#endif
 }
 
 /* OnPong is raised by local servers */
@@ -346,9 +338,7 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
   FM_PSearch Sch;
 
   context;
-#ifdef DEBUG
-  printf("Received a SEARCH message for domain %s : %s\n",(Domain[0] == 0)?"All":Domain,KeyWords);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Received a SEARCH message for domain %s : %s",(Domain[0] == 0)?"All":Domain,KeyWords);
 
   if(strlen(KeyWords) < FFSS_MIN_SEARCH_REQUEST_LENGTH)
   {
@@ -402,9 +392,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
 
   context;
   SU_ThreadBlockSigs();
-#ifdef DEBUG
-  printf("Starting index thread\n");
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Starting index thread");
   memcpy(&SAddr,&FM_CurrentClient,sizeof(FM_CurrentClient));
   tmp_ip = inet_ntoa(SAddr.sin_addr);
   FM_CurrentIndexSize = 0;
@@ -413,9 +401,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     Hst = FM_SearchHostByIP(&FM_MyDomain,tmp_ip);
     if(Hst == NULL)
     {
-#ifdef DEBUG
-      printf("%s is not on my domain... rejecting index\n",tmp_ip);
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"%s is not on my domain... rejecting index",tmp_ip);
       SU_CLOSE_SOCKET(sock);
       SU_END_THREAD(NULL);
     }
@@ -429,9 +415,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   retval = select(sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
   {
-#ifdef DEBUG
-    printf("WARNING : Timed out waiting index from server\n");
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
     SU_CLOSE_SOCKET(sock);
     SU_END_THREAD(NULL);
   }
@@ -463,9 +447,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     retval = select(sock+1,&rfds,NULL,NULL,&tv);
     if(!retval)
     {
-#ifdef DEBUG
-      printf("WARNING : Timed out waiting index from server\n");
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
       SU_END_THREAD(NULL);
@@ -473,9 +455,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     res = recv(sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
     if(res <= 0)
     {
-#ifdef DEBUG
-      printf("WARNING : Error receiving index from server\n");
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Error receiving index from server");
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
       SU_END_THREAD(NULL);
@@ -483,7 +463,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     total += Size;
     if(total > IndexSize)
     {
-      printf("WARNING : Index sent is greater than specified size : %ld-%ld\n",total,IndexSize);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"WARNING : Index sent is greater than specified size : %ld-%ld",total,IndexSize);
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
       SU_END_THREAD(NULL);
@@ -500,9 +480,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       retval = select(sock+1,&rfds,NULL,NULL,&tv);
       if(!retval)
       {
-#ifdef DEBUG
-        printf("WARNING : Timed out waiting index from server\n");
-#endif /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
         FMI_FreeFTControler(Host);
         SU_CLOSE_SOCKET(sock);
         SU_END_THREAD(NULL);
@@ -510,9 +488,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       res = recv(sock,buf+actual,Size-actual,SU_MSG_NOSIGNAL);
       if(res <= 0)
       {
-#ifdef DEBUG
-        printf("WARNING : Error receiving index from server\n");
-#endif /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Error receiving index from server");
         FMI_FreeFTControler(Host);
         SU_CLOSE_SOCKET(sock);
         free(buf);
@@ -580,9 +556,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     Host->Name = strdup(Host->FileTree);
     Host->Samba = true;
   }
-#ifdef DEBUG
-  printf("Index thread : buffer received... now indexing\n");
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Index thread : buffer received... now indexing");
   SU_SEM_WAIT(FM_MySem5);
   context;
   NumHost = -1;
@@ -597,9 +571,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   }
   if(NumHost != -1)
   {
-#ifdef DEBUG
-    printf("Index thread : host '%s' already exists with NumHost %d... replacing\n",Host->Name,NumHost);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Index thread : host '%s' already exists with NumHost %d... replacing",Host->Name,NumHost);
     FMI_RemoveHostFromSuffixTree(NumHost);
     FMI_FreeFTControler(FM_Controler.Hosts[NumHost]);
     FM_Controler.Hosts[NumHost] = Host;
@@ -623,9 +595,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       FMI_PrintWholeSuffixTree("st.txt");
 #endif /* DEBUG */
   }
-#ifdef DEBUG
-  printf("Ending index thread... indexing completed (%d hosts)\n",FM_Controler.NbHosts);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Ending index thread... indexing completed (%d hosts)",FM_Controler.NbHosts);
   SU_SEM_POST(FM_MySem5);
   SU_END_THREAD(NULL);
 }
@@ -641,9 +611,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   context;
   if((FileTreeSize == 0) || (NodesSize == 0))
   {
-#ifdef DEBUG
-    printf("WARNING : Index from %s is empty... ignoring\n",inet_ntoa(Client.sin_addr));
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Index from %s is empty... ignoring",inet_ntoa(Client.sin_addr));
     return;
   }
   if(!Samba)
@@ -651,9 +619,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
     Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Client.sin_addr));
     if(Hst == NULL)
     {
-#ifdef DEBUG
-      printf("%s is not on my domain... rejecting index\n",inet_ntoa(Client.sin_addr));
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"%s is not on my domain... rejecting index",inet_ntoa(Client.sin_addr));
       return;
     }
 
@@ -663,11 +629,10 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
     {
       if(tim < (Hst->LastIndex+FFSS_INDEX_INTERVAL)) /* Index received too soon */
       {
-#ifdef DEBUG
-        printf("WARNING : Index from %s received too soon, rejecting... DoS Attack ?\n",Hst->Name);
-#else /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Index from %s received too soon, rejecting... DoS Attack ?",Hst->Name);
+#ifndef DEBUG
         return;
-#endif /* DEBUG */
+#endif /* !DEBUG */
       }
     }
     Hst->LastIndex = tim;
@@ -720,9 +685,7 @@ void OnMasterConnected(SU_PClientSocket Master)
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if((Dom != NULL) && (Dom->CS == NULL))
   {
-#ifdef DEBUG
-    printf("MASTER : New master connected for domain %s, requesting hosts list\n",Dom->Name);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : New master connected for domain %s, requesting hosts list",Dom->Name);
     Dom->CS = Master;
     FM_SendMessage_MasterConnection(Master->sock);
     FM_SendMessage_ServerList(Master->sock,0);
@@ -739,9 +702,7 @@ void OnMasterDisconnected(SU_PClientSocket Master)
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if(Dom != NULL)
   {
-#ifdef DEBUG
-    printf("MASTER : Connection lost with master of domain %s\n",Dom->Name);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Connection lost with master of domain %s",Dom->Name);
     Dom->CS = NULL;
     /* Remove all hosts from this domain, as we'll get a fresh clean new list on next connection */
     SU_SEM_WAIT(FM_MySem2);
@@ -763,15 +724,11 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
   FM_PHost Hst;
 
   context;
-#ifdef DEBUG
-  //printf("MASTER : NewState : %s-%s-%s-%s-%s-%s\n",Name,Comment,OS,Domain,IP,MasterIP);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : NewState : %s-%s-%s-%s-%s-%s",Name,Comment,OS,Domain,IP,MasterIP);
   Dom = FM_SearchDomainByIP(MasterIP);
   if(Dom == NULL)
   {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",MasterIP);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : WARNING : Domain not found searching with this ip : %s",MasterIP);
     return;
   }
 
@@ -802,9 +759,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   Dom = FM_SearchDomainByIP(buf);
   if((Dom != NULL) && (!FM_IsMyDomain(Dom)))
   {
-#ifdef DEBUG
-    //printf("MASTER : Received a ServerListing message from foreign master of %s\n",Dom->Name);
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_STATES,"MASTER : Received a ServerListing message from foreign master of %s",Dom->Name);
     Queue = NULL;
     Ptr = FM_MyDomain.Hosts;
     while(Ptr != NULL)
@@ -832,16 +787,12 @@ void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,cons
   FM_PDomain Dom;
 
   context;
-#ifdef DEBUG
-  printf("Received a SEARCH FORWARD message : %s\n",KeyWords);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"Received a SEARCH FORWARD message : %s",KeyWords);
 
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if(Dom == NULL)
   {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Domain not found searching with this ip : %s\n",inet_ntoa(Master->SAddr.sin_addr));
-#endif /* DEBUG */
+    SU_DBG_PrintDebug(FM_DBGMSG_SEARCH,"MASTER : WARNING : Domain not found searching with this ip : %s",inet_ntoa(Master->SAddr.sin_addr));
     return;
   }
 
@@ -943,6 +894,12 @@ int main(int argc,char *argv[])
     return 1;
   }
 
+  SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
+  SU_DBG_SetOptions(true,true);
+#ifdef DEBUG
+  SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
+#endif /* DEBUG */
+
   SU_strcpy(ConfigFile,CONFIG_FILE_NAME,sizeof(ConfigFile));
 #if defined(__unix__) || defined(_CONSOLE)
   if(argc != 1)
@@ -987,7 +944,7 @@ int main(int argc,char *argv[])
   if(daemonize)
   {
     openlog("Ffss Master",0,LOG_DAEMON);
-    FFSS_PrintSyslog(LOG_INFO,"Master started\n");
+    FFSS_PrintSyslog(LOG_INFO,"FFSS Master started\n");
     if(SU_Daemonize() == false)
     {
       FFSS_PrintSyslog(LOG_ERR,"Cannot daemonize process");
@@ -1001,7 +958,7 @@ int main(int argc,char *argv[])
   }
 #else /* !__unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Master.log");
-  FFSS_PrintSyslog(LOG_INFO,"Master started\n");
+  FFSS_PrintSyslog(LOG_INFO,"FFSS Master started\n");
   if(!SU_WSInit(2,2))
   {
     FFSS_PrintSyslog(LOG_ERR,"Cannot start WinSock\n");
@@ -1137,7 +1094,7 @@ int main(int argc,char *argv[])
     }
     fprintf(fp,"%d",MainPid);
     fclose(fp);
-    FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",MainPid);
+    FFSS_PrintSyslog(LOG_INFO,"FFSS Master running with pid : %d\n",MainPid);
 
     /* Main loop */
     while(1) SU_SLEEP(10);

@@ -62,6 +62,15 @@
 #define CONFIG_FILE_NAME "/etc/ffss/server.conf"
 #endif /* DEBUG */
 
+/* Debug defines */
+  /* Server specific */
+#define FS_DBGMSG_GLOBAL      0x00010
+#define FS_DBGMSG_IN_MSG      0x00020
+#define FS_DBGMSG_CONF_CONN   0x00040
+#define FS_DBGMSG_INDEX       0x00100
+#define FS_DBGMSG_XFER        0x00200
+#define FS_DBGMSG_CONNS       0x00400
+
 typedef struct
 {
   SU_PList Dirs;      /* FS_PDir */

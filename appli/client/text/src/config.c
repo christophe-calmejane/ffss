@@ -5,7 +5,7 @@
  *
  *	config file management
  */
-    
+
 #include "config.h"
 #include "client.h"
 #include "args.h"
@@ -22,26 +22,26 @@ char *FCA_CONFIG_FILES[]={
 	"/usr/local/share/ffss/ffss-clientrc",	/* deprecated */
 	"/usr/local/share/ffss/ffss-client.conf",/* deprecated */
 	"/usr/local/share/ffss/Client.conf",	/* deprecated */
-	
+
 	"/usr/share/ffss/clientrc",		/* deprecated */
 	"/usr/share/ffss/ffss-clientrc",	/* deprecated */
 	"/usr/share/ffss/ffss-client.conf",	/* deprecated */
 	"/usr/share/ffss/Client.conf",		/* deprecated */
-	
+
 	"/etc/ffss/clientrc",
 	"/etc/ffss//ffss-clientrc",
 	"/etc/ffss/ffss-client.conf",		/* deprecated */
 	"/etc/ffss/Client.conf",		/* deprecated */
-	
+
 	"/usr/local/etc/ffss/clientrc",
 	"/usr/local/etc/ffss/ffss-clientrc",
 	"/usr/local/etc/ffss/ffss-client.conf",	/* deprecated */
 	"/usr/local/etc/ffss/Client.conf",	/* deprecated */
-#ifdef __unix__	
+#ifdef __unix__
 	"$.ffss-client",
 	"$.ffss-clientrc",			/* deprecated */
 	"$.ffss-client.conf",			/* deprecated */
-#endif	
+#endif
 	"ffss-clientrc",
 	"clientrc",
 	"ffss-client.conf",			/* deprecated */
@@ -60,13 +60,13 @@ void FCA_read_cfg()
 	int ic=0;
 	char *home;
 
-#ifdef __unix__	
+#ifdef __unix__
 	home=getenv("HOME");
 #endif
 	while(FCA_CONFIG_FILES[ic]) {
 		while(!fp && FCA_CONFIG_FILES[ic]) {
 			filename=FCA_CONFIG_FILES[ic];
-#ifdef __unix__				
+#ifdef __unix__
 				/* '$' before the name=
 					$HOME/ */
 			if(*filename=='$') {
@@ -74,37 +74,37 @@ void FCA_read_cfg()
 				filename=tmp;
 			}
 #endif
-			FFSS_PrintDebug(6, "(client) trying file: '%s'\n", filename);
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) trying file: '%s'", filename);
 			fp=fopen(filename, "rt");
 			ic++;
 		}
 		if(fp) {
-			FFSS_PrintDebug(3, "(client) using file: '%s'\n", filename);
+			SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) using file: '%s'", filename);
 			FCA_read_file(fp,filename);
 			fclose(fp);
 			fp=NULL;
 		}
 	}
-	
+
 	fp=fopen(FCA_args.cfg_file, "rt");
 	filename=FCA_args.cfg_file;
 	if(fp) {
-		FFSS_PrintDebug(3, "(client) using file: '%s'\n", filename);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) using file: '%s'", filename);
 		FCA_read_file(fp,filename);
 		fclose(fp);
 	}
-	
+
 }
 
 void FCA_read_file(FILE *fp, char *filename)
 {
 	int ic=1;
-	
+
 		/* let's read */
 	FCA_reading_file=true;
 	FCA_command=malloc(FCA_CMD_MAX*sizeof(char));
 	while( SU_ReadLine(fp, FCA_command, FCA_CMD_MAX) ) {
-		FFSS_PrintDebug(5, "(client) read: '%s'\n", FCA_command);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) read: '%s'", FCA_command);
 		snprintf(FCA_file_status,FCA_MAX_FILE_STATUS,"file %s, line %d", filename, ic++);
 		FCA_interpret_cmd();
 		if(FCA_command)

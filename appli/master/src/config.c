@@ -61,9 +61,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         memset(Domain,0,sizeof(FM_TDomain));
         Domain->Name = strdup(Nam);
         Domain->Master = strdup(Ip);
-#ifdef DEBUG
-        printf("Config Loader Info : Adding master %s for domain %s\n",Ip,Nam);
-#endif /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Config Loader Info : Adding master %s for domain %s",Ip,Nam);
         FM_Domains = SU_AddElementHead(FM_Domains,Domain);
       }
       else if(strcasecmp(Name,"Domain") == 0)
@@ -73,8 +71,6 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         FFSS_AddBroadcastAddr(Value);
         FFSS_PrintSyslog(LOG_WARNING,"Adding %s as broadcast address\n",Value);
       }
-      else if(strcasecmp(Name,"DebugLevel") == 0)
-        N_DebugLevel = atoi(Value);
     }
   }
 
@@ -119,16 +115,12 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
     while(Ptr != NULL)
     {
       Domain = (FM_PDomain) Ptr->Data;
-#ifdef DEBUG
-      printf("Config Loader Info : Connecting to master %s:%d\n",Domain->Master,FFSS_MASTER_PORT);
-#endif /* DEBUG */
+      SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Config Loader Info : Connecting to master %s:%d",Domain->Master,FFSS_MASTER_PORT);
       SU_SEM_WAIT(FM_TmpSem); /* Lock to protect a free of the CS struct before end of init */
       Domain->CS = FM_SendMessage_Connect(Domain->Master);
       if(Domain->CS != NULL)
       {
-#ifdef DEBUG
-        printf("Config Loader Info : Successfully connected... requesting servers list\n");
-#endif /* DEBUG */
+        SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Config Loader Info : Successfully connected... requesting servers list");
         FM_SendMessage_MasterConnection(Domain->CS->sock);
         FM_SendMessage_ServerList(Domain->CS->sock,0);
       }

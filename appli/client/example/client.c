@@ -23,7 +23,7 @@ void OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 
 
 /* UDP callbacks */
-void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
+void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
   static int done = 0;
 
@@ -40,7 +40,7 @@ void OnNewState(long int State,const char IP[],const char Domain[],const char Na
   }
 }
 
-void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
+void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User)
 {
   /*int i;
   SU_PClientSocket CS;*/
@@ -57,7 +57,7 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
 
 /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
 /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
-void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
+void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User) /* SU_PList of FM_PHost */
 {
   SU_PList Ptr;
   FM_PHost H;
@@ -80,7 +80,7 @@ void OnEndServerListingAnswer(void)
   printf("End of listing\n");
 }
 
-void OnDomainListingAnswer(const char **Domains,int NbDomains)
+void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User) /* First domain is assumed to be domain from the answering master */
 {
   int i;
   printf("Received a listing of domains (%d domains)\n",NbDomains);
@@ -88,32 +88,33 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains)
     printf("\t%s\n",Domains[i]);
 }
 
-void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
+void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User)
 {
-  printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),MasterVersion,Domain);
+  printf("Received a MASTER at ip %s using version %ld for domain %s\n",inet_ntoa(Master.sin_addr),ProtocolVersion,Domain);
   if(!FC_SendMessage_Search(inet_ntoa(Master.sin_addr),"Fleming","metallica mp3 toto",0))
     printf("Error sending search message to master\n");
 }
 
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,int NbAnswers)
+/* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
+void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
   printf("Received a SEARCH answer from domain %s for query %s : %d answers\n",Domain,Query,NbAnswers);
 }
 
 
 /* TCP callbacks */
-bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
+bool OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
-  if(Code == FFSS_ERROR_NO_ERROR)
+  if(ErrorCode == FFSS_ERROR_NO_ERROR)
   {
     FC_SendMessage_DirectoryListing(Server,"/",0);
   }
   else
-    printf("Received an error code from %s (%d:%s)\n",inet_ntoa(Server->SAddr.sin_addr),Code,Descr);
+    printf("Received an error code from %s (%ld:%s)\n",inet_ntoa(Server->SAddr.sin_addr),ErrorCode,Descr);
   return true;
 }
 
-bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries)
+bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User) /* FC_PEntry */
 {
   SU_PList Ptr;
   FC_PEntry Ent;

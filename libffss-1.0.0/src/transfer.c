@@ -55,7 +55,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   RBuf = (char *) malloc(FFSS_TransferReadBufferSize);
   if(RBuf == NULL)
   {
-    FFSS_PrintDebug(1,"Cannot allocate buffer in Upload function\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Cannot allocate buffer in Upload function");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -78,7 +78,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(1,"Transfer timed out\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -99,7 +99,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
 #endif /* WORDS_BIGENDIAN */
   if(res == SOCKET_ERROR)
   {
-    FFSS_PrintDebug(1,"Error while uploading file (size) : %d %s\n",errno,strerror(errno));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (size) : %d %s",errno,strerror(errno));
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -116,7 +116,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   }
   else if(res == 0)
   {
-    FFSS_PrintDebug(1,"EOF from remote host while uploading file\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"EOF from remote host while uploading file");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -162,7 +162,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       rlen = (long int)(fsize - total);
     if(fread(RBuf,1,rlen,FT->fp) != rlen)
     {
-      FFSS_PrintDebug(1,"Error reading file while uploading : %d\n",errno);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error reading file while uploading : %d",errno);
       if(FT->ThreadType == FFSS_THREAD_SERVER)
       {
         if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -199,7 +199,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
         retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
         if(!retval)
         {
-          FFSS_PrintDebug(1,"Transfer timed out while uploading file\n");
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while uploading file");
           if(FT->ThreadType == FFSS_THREAD_SERVER)
           {
             if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -221,7 +221,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
         res += send(FT->sock,RBuf+rpos+res,len-res,SU_MSG_NOSIGNAL);
         if(res <= 0)
         {
-          FFSS_PrintDebug(1,"Error while uploading file (buf) : %d %s\n",errno,strerror(errno));
+          SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (buf) : %d %s",errno,strerror(errno));
           if(FT->ThreadType == FFSS_THREAD_SERVER)
           {
             if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -298,7 +298,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(1,"Transfer timed out\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -323,7 +323,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   res = send(FT->sock,(char *)&Checksum,sizeof(Checksum),SU_MSG_NOSIGNAL);
   if(res == SOCKET_ERROR)
   {
-    FFSS_PrintDebug(1,"Error while uploading file (chksum) : %d %s\n",errno,strerror(errno));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (chksum) : %d %s",errno,strerror(errno));
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -344,7 +344,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   }
   else if(res == 0)
   {
-    FFSS_PrintDebug(1,"EOF from client while uploading file\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"EOF from client while uploading file");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -377,7 +377,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   t2 = time(NULL);
   if(t1 == t2)
     t2 = t1+1;
-  FFSS_PrintDebug(1,"Successfully uploaded the file %s in %d sec (%.2f ko/s) (%ld)\n",FT->LocalPath,((int)(t2-t1)),fsize/1024.0/(t2-t1),SU_THREAD_SELF);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Successfully uploaded the file %s in %d sec (%.2f ko/s) (%ld)",FT->LocalPath,((int)(t2-t1)),fsize/1024.0/(t2-t1),SU_THREAD_SELF);
 
   /* Reset throughput */
   FT->Throughput = 0;
@@ -422,7 +422,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(1,"Error accepting connection (timed out)\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error accepting connection (timed out)");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -440,10 +440,10 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   client = accept(FT->sock,&sad,&retval);
   SU_CLOSE_SOCKET(FT->sock);
   FT->sock = client;
-  FFSS_PrintDebug(1,"Connection accepted from %s\n",inet_ntoa(((struct sockaddr_in *)&sad)->sin_addr));
+  SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Connection accepted from %s",inet_ntoa(((struct sockaddr_in *)&sad)->sin_addr));
   if(FT->sock == SOCKET_ERROR)
   {
-    FFSS_PrintDebug(1,"Error accepting connections\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error accepting connections");
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -470,7 +470,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   FT->XFerPos = 0; /* Do not set this to real pos, because if resume is used, FT->FileSize will be remaning bytes only */
   if(fp == NULL)
   {
-    FFSS_PrintDebug(1,"Can't open local file for writting (%s)\n",FT->LocalPath);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Can't open local file for writting (%s)",FT->LocalPath);
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
@@ -492,7 +492,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(1,"Transfer timed out while downloading file\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while downloading file");
     /* Remove or not file from disk (ask user) */
     if(FT->LocalPath != NULL)
       fclose(fp);
@@ -516,7 +516,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 #endif /* WORDS_BIGENDIAN */
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(1,"Error while downloading file (size) : %d %s\n",errno,strerror(errno));
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while downloading file (size) : %d %s",errno,strerror(errno));
       /* Remove or not file from disk (ask user) */
       if(FT->LocalPath != NULL)
         fclose(fp);
@@ -534,7 +534,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     }
     else if(res == 0)
     {
-      FFSS_PrintDebug(1,"EOF from server while downloading file\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"EOF from server while downloading file");
       /* Remove or not file from disk (ask user) */
       if(FT->LocalPath != NULL)
         fclose(fp);
@@ -585,7 +585,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
     if(!retval)
     {
-      FFSS_PrintDebug(1,"Transfer timed out while downloading file\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while downloading file");
       /* Remove or not file from disk (ask user) */
       if(FT->LocalPath != NULL)
         fclose(fp);
@@ -613,7 +613,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
         res = recv(FT->sock,Buf,len,SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
       {
-        FFSS_PrintDebug(1,"Error while downloading file (buf) : %d %s\n",errno,strerror(errno));
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while downloading file (buf) : %d %s",errno,strerror(errno));
         /* Remove or not file from disk (ask user) */
         if(FT->LocalPath != NULL)
           fclose(fp);
@@ -631,7 +631,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
       }
       else if(res == 0)
       {
-        FFSS_PrintDebug(1,"EOF from server while downloading file\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"EOF from server while downloading file");
         /* Remove or not file from disk (ask user) */
         if(FT->LocalPath != NULL)
           fclose(fp);
@@ -669,7 +669,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
           total += res;
           if(fwrite(Buf,1,res,fp) != (unsigned int)res)
           {
-            FFSS_PrintDebug(1,"Disk full ?\n");
+            SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Disk full ?");
             /* Remove or not file from disk (ask user) */
             if(FT->LocalPath != NULL)
               fclose(fp);
@@ -722,7 +722,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
             if((ChkSum == Checksum) || (ChkSum == 1)) /* A ChkSum of 1 means NO checksum on the other side */
 #endif /* DISABLE_CHECKSUM */
             {
-              FFSS_PrintDebug(1,"File successfully downloaded\n");
+              SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"File successfully downloaded");
               if(FT->LocalPath != NULL)
                 fclose(fp);
               if(FT->ThreadType == FFSS_THREAD_SERVER)
@@ -738,7 +738,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
             }
             else
             {
-              FFSS_PrintDebug(1,"Checksum check failed\n");
+              SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Checksum check failed");
               /* Remove or not file from disk (ask user) */
               if(FT->LocalPath != NULL)
                 fclose(fp);
@@ -759,7 +759,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
           else if(total > Size)
           {
             context;
-            FFSS_PrintDebug(1,"Received data bigger than file size (%ld - %ld)\n",total,Size);
+            SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Received data bigger than file size (%ld - %ld)",total,Size);
             /* Remove or not file from disk (ask user) */
             if(FT->LocalPath != NULL)
               fclose(fp);
@@ -791,7 +791,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     t2 = time(NULL);
     if(t1 == t2)
       t2 = t1+1;
-    FFSS_PrintDebug(1,"Successfully downloaded the file in %d sec (%.2f ko/s)\n",((int)(t2-t1)),Size/1024.0/(t2-t1));
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"Successfully downloaded the file in %d sec (%.2f ko/s)",((int)(t2-t1)),Size/1024.0/(t2-t1));
   }
   SU_END_THREAD(NULL);
 }
@@ -810,7 +810,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
   fp = fopen(FilePath,"rb");
   if(fp == NULL)
   {
-    FFSS_PrintDebug(1,"Couldn't open file for upload : %s (%d)\n",FilePath,errno);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Couldn't open file for upload : %s (%d)",FilePath,errno);
     return FS_SendMessage_Error(Client->sock,FFSS_ERROR_FILE_NOT_FOUND,FFSS_ErrorTable[FFSS_ERROR_FILE_NOT_FOUND],Port,UserInfo);
   }
   if(!UseConnSock)
@@ -870,7 +870,7 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
   sock = FC_SendMessage_Download(Server,RemotePath,StartingPos,UseConnSock,UserInfo);
   if(sock == SOCKET_ERROR)
   {
-    FFSS_PrintDebug(1,"Error sending DOWNLOAD request : %d\n",errno);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error sending DOWNLOAD request : %d",errno);
     return false;
   }
   i = sizeof(saddr);
@@ -931,7 +931,7 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
   retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
   if(!retval)
   {
-    FFSS_PrintDebug(1,"Transfer timed out\n");
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
     if(FFSS_CB.SCB.OnTransferFailed != NULL)
       FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_TIMEOUT,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_TIMEOUT],false);
     FFSS_FreeTransfer(FT);
@@ -944,7 +944,7 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
     res += send(FT->sock,msg+res,pos-res,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
-      FFSS_PrintDebug(1,"Error while uploading file (data) : %d %s\n",errno,strerror(errno));
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (data) : %d %s",errno,strerror(errno));
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
         FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_SEND,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_SEND],false);
       FFSS_FreeTransfer(FT);
@@ -953,7 +953,7 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
     }
     else if(res == 0)
     {
-      FFSS_PrintDebug(1,"EOF from remote host while uploading file\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"EOF from remote host while uploading file");
       if(FFSS_CB.SCB.OnTransferFailed != NULL)
         FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_EOF,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_EOF],false);
       FFSS_FreeTransfer(FT);
@@ -983,12 +983,12 @@ void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
   {
     FT->XI.fsize = *(FFSS_LongField *)(Buf);
     Len -= sizeof(FFSS_LongField);
-    FFSS_PrintDebug(3,"FFSS_OnDataDownload : Receiving file size : %lld\n",FT->XI.fsize);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"FFSS_OnDataDownload : Receiving file size : %lld",FT->XI.fsize);
   }
   FT->XI.total += Len;
   if(FT->XI.total > FT->XI.fsize) /* Extract Checksum */
   {
-    FFSS_PrintDebug(3,"FFSS_OnDataDownload : All data received, after %lld bytes (fsize=%lld)...extracting checksum\n",FT->XI.total,FT->XI.fsize);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"FFSS_OnDataDownload : All data received, after %lld bytes (fsize=%lld)...extracting checksum",FT->XI.total,FT->XI.fsize);
     Len -= sizeof(FFSS_Field);
     Checksum = *(FFSS_Field *)(Buf+Len);
   }
@@ -1057,7 +1057,7 @@ void FFSS_InitXFerDownload(FFSS_PTransfer FT,FFSS_Field XFerTag)
     FT->fp = fopen(FT->LocalPath,"wb");
   if(FT->fp == NULL)
   {
-    FFSS_PrintDebug(1,"Can't open local file for writting (%s)\n",FT->LocalPath);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Can't open local file for writting (%s)",FT->LocalPath);
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferFailed != NULL)

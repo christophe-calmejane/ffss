@@ -16,7 +16,6 @@ extern int line;
 "XFerInConn"         { return XFERCONN; }
 "Interface"          { return INTNAME; }
 "MyIP"               { return MYIP; }
-"Debug"              { return DBG; }
 "ConfSocket"         { return SOCK; }
 "Idle"               { return IDLE; }
 "FTP"                { return USEFTP; }

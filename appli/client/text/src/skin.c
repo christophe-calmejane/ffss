@@ -38,10 +38,10 @@ int FCA_tab_width=5;
 void FCA_load_skins()
 {
 	const FCA_Tskin *ps;
-	
+
 	ps=FCA_SKINS;
 	while(ps && ps->name) {
-		FFSS_PrintDebug(4, "Loading skin %s\n", ps->name);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "Loading skin %s", ps->name);
 		ps->init();
 		ps++;
 	}
@@ -70,7 +70,7 @@ void FCA_tab_top()
 	if(FCA_skin->ps->tab_top)
 		FCA_skin->ps->tab_top();
 }
-	
+
 void FCA_tab_title(const char title[])
 {
 	if(FCA_skin->ps->tab_title)
@@ -83,7 +83,7 @@ void FCA_tab_untitle()
 		FCA_skin->ps->tab_untitle();
 }
 
-	
+
 void FCA_tab_pre_stitle()
 {
 	if(FCA_skin->ps->tab_pre_stitle)
@@ -108,7 +108,7 @@ void FCA_tab_post_stitle()
 		FCA_skin->ps->tab_post_stitle();
 }
 
-	
+
 void FCA_tab_pre_bar()
 {
 	if(FCA_skin->ps->tab_pre_bar)
@@ -133,7 +133,7 @@ void FCA_tab_post_bar()
 		FCA_skin->ps->tab_post_bar();
 }
 
-	
+
 void FCA_tab_pre_item()
 {
 	if(FCA_skin->ps->tab_pre_item)
@@ -170,21 +170,21 @@ void FCA_tab_post_item()
 		FCA_skin->ps->tab_post_item();
 }
 
-	
+
 void FCA_tab_btm()
 {
 	if(FCA_skin->ps->tab_btm)
 		FCA_skin->ps->tab_btm();
 }
 
-	
+
 void FCA_post_tab()
 {
 	if(FCA_skin->ps->post_tab)
 		FCA_skin->ps->post_tab();
 }
 
-	
+
 void FCA_pre_infos()
 {
 	if(FCA_skin->ps->pre_infos)
@@ -195,7 +195,7 @@ void FCA_infos(const char format[], ...)
 {
 	char Str[1024];
 	va_list argptr;
-	
+
 	if(FCA_skin->ps->infos) {
 		va_start(argptr,format);
 		vsnprintf(Str, 1023, format, argptr);
@@ -240,14 +240,14 @@ void FCA_pre_err()
 	if(FCA_skin->ps->pre_err)
 		FCA_skin->ps->pre_err();
 }
-			
+
 void FCA_post_err()
 {
 	if(FCA_skin->ps->post_err)
 		FCA_skin->ps->post_err();
 }
 
-	
+
 void FCA_pre_warning()
 {
 	if(FCA_skin->ps->pre_warning)
@@ -260,7 +260,7 @@ void FCA_post_warning()
 		FCA_skin->ps->post_warning();
 }
 
-	
+
 void FCA_pre_ok()
 {
 	if(FCA_skin->ps->pre_ok)
@@ -286,7 +286,7 @@ void FCA_post_serv(bool isName)
 		FCA_skin->ps->post_serv(isName);
 }
 
-	
+
 void FCA_pre_dir(const char *prefx, const char *name, bool isName)
 {
 	if(FCA_skin->ps->pre_dir)
@@ -299,7 +299,7 @@ void FCA_post_dir(bool isName)
 		FCA_skin->ps->post_dir(isName);
 }
 
-	
+
 void FCA_pre_file(const char *prefx, const char *name, bool isName)
 {
 	if(FCA_skin->ps->pre_file)
@@ -360,7 +360,7 @@ void FCA_print_dw_ok(char *file, float rate)
 	if(FCA_skin->ps->dw_ok)
 		FCA_skin->ps->dw_ok(file,rate);
 }
-	
+
 void FCA_prog_end()
 {
 	if(FCA_skin->ps->prog_end)

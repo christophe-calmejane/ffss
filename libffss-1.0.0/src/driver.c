@@ -11,7 +11,7 @@
 /* ********************************** */
 /*         SkyUtils functions         */
 /* ********************************** */
-/* The following code is a subset grabbed 
+/* The following code is a subset grabbed
    from skyutils (c) Christophe Calmejane */
 SU_PList SU_AddElementTail(SU_PList List,void *Elem)
 {
@@ -229,7 +229,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       if(error)
         break;
       val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-      FFSS_PrintDebug(3,"Received a new state message (%d states)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a new state message (%d states)",val);
       for(i=0;i<val;i++)
       {
         state = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
@@ -263,12 +263,12 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val = FFSS_UnpackField (Buf, Buf + pos, Len, &pos);
       if(val == 0)
       {
-        FFSS_PrintDebug(3,"Received a shares listing message, but server has no shares\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a shares listing message, but server has no shares");
         if(FFSS_CB.CCB.OnSharesListing != NULL)
           FFSS_CB.CCB.OnSharesListing(IP,NULL,NULL,0,lval);
         break;
       }
-      FFSS_PrintDebug(3,"Received a shares listing message (%d shares)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a shares listing message (%d shares)",val);
       Names = (char **) malloc(val*sizeof(char *));
       Comments = (char **) malloc(val*sizeof (char *));
       for(i=0;i<val;i++)
@@ -306,7 +306,6 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           if(u_Buf == NULL)
           {
             FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n","");
-            FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
             error = true;
             break;
           }
@@ -335,7 +334,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       if(error)
         break;
       val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-      FFSS_PrintDebug(4,"Received a server listing answer (%d domains)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a server listing answer (%d domains)",val);
       for(i=0;i<val;i++)
       {
         str = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
@@ -345,7 +344,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
           break;
         }
-        FFSS_PrintDebug(3,"\t%d hosts in domain %s\n",val2,str);
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"\t%d hosts in domain %s",val2,str);
         HostList = NULL;
         do_it = true;
         if(val2 != 0)
@@ -390,12 +389,12 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
-        FFSS_PrintDebug(3,"Received a domains listing answer, but master has no domains\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a domains listing answer, but master has no domains");
         if (FFSS_CB.CCB.OnDomainListingAnswer != NULL)
           FFSS_CB.CCB.OnDomainListingAnswer(NULL,0,lval);
         break;
       }
-      FFSS_PrintDebug(3,"Received a domains listing answer (%d domains)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a domains listing answer (%d domains)",val);
       Names = (char **) malloc(val*sizeof(char *));
       for(i=0;i<val;i++)
       {
@@ -477,12 +476,12 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
       if(val == 0)
       {
-        FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a search answer message, but master has found nothing");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
           FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0,lval);
         break;
       }
-      FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a search answer message (%d domains)",val);
       for(i=0;i<val;i++)
       {
         str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
@@ -494,7 +493,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
         if(val2 == 0)
         {
-          FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
+          SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Master has found nothing for domain %s",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
             FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0,lval);
           continue;
@@ -533,7 +532,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
         break;
       }
-      FFSS_PrintDebug(3,"Received a master error message (%d:%s)\n",val,str);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a master error message (%d:%s)",val,str);
       if(FFSS_CB.CCB.OnMasterError != NULL)
         FFSS_CB.CCB.OnMasterError(val,str);
       break;
@@ -583,7 +582,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a server error message (%d:%s:%ld)\n",val,str,lval);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a server error message (%d:%s:%ld)",val,str,lval);
       if(FFSS_CB.CCB.OnError != NULL)
         ret_val = FFSS_CB.CCB.OnError(Server,val,str,lval,lval2);
       break;
@@ -660,7 +659,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         Ent->Stamp = val4;
         Ptr = SU_AddElementTail(Ptr,Ent);
       }
-      FFSS_PrintDebug(3,"Received a directory listing answer (%d entries)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a directory listing answer (%d entries)",val);
       if(FFSS_CB.CCB.OnDirectoryListingAnswer != NULL)
         ret_val = FFSS_CB.CCB.OnDirectoryListingAnswer(Server,str,val,Ptr,lval2);
       SU_FreeListElem(Ptr);
@@ -738,7 +737,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         Ent->Stamp = val4;
         Ptr = SU_AddElementTail(Ptr,Ent);
       }
-      FFSS_PrintDebug(3,"Received a recursive directory listing answer (%d entries)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a recursive directory listing answer (%d entries)",val);
       if(FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer != NULL)
         ret_val = FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer(Server,str,val,Ptr,lval2);
       SU_FreeListElem(Ptr);
@@ -756,7 +755,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a streaming open answer message (%d)\n",val);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming open answer message (%d)",val);
       if(FFSS_CB.CCB.OnStrmOpenAnswer != NULL)
         FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval,lval2);
       break;
@@ -772,7 +771,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a streaming read answer message (%d bytes)\n",Length);
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming read answer message (%d bytes)",Length);
       if(FFSS_CB.CCB.OnStrmReadAnswer != NULL)
         FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length,val2,lval2);
       break;
@@ -787,7 +786,7 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a streaming write answer message\n");
+      SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a streaming write answer message");
       if(FFSS_CB.CCB.OnStrmWriteAnswer != NULL)
         FFSS_CB.CCB.OnStrmWriteAnswer(Server,val,val2,lval2);
       break;

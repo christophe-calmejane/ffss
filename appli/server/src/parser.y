@@ -77,7 +77,6 @@ bool FS_AddFilterRule()
 %token XFERCONN
 %token INTNAME
 %token MYIP
-%token DBG
 %token SOCK
 %token IDLE
 %token USEFTP
@@ -145,7 +144,6 @@ fieldlineglobal:   NAME STRING                               { FS_MyGlobal.Name 
                  | READSIZE NUM                              { FFSS_TransferReadBufferSize = (long int)($2); }
                  | XFERSIZE NUM                              { FFSS_TransferBufferSize = (long int)($2); }
                  | PLUGIN STRING                             { Pl = FS_LoadPlugin($2); if(Pl != NULL) Pl->Startup = true; }
-                 | DBG NUM                                   { N_DebugLevel = (int)($2); }
                  | FILTER rule                               { if(!FS_AddFilterRule()) yyerror("Error adding filter rule"); }
 ;
 

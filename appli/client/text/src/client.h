@@ -73,4 +73,6 @@ extern bool FCA_exiting;
 extern struct timeb FCA_starttime, FCA_stoptime;
 #endif
 
+#define FC_DBGMSG_GLOBAL 0x00010
+
 #endif

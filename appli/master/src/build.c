@@ -9,9 +9,7 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
 
   context;
   nb = SU_ListCount(Queue);
-#ifdef DEBUG
-  printf("FM_BuildStatesBuffer : Creating states buffer for %ld hosts\n",nb);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"FM_BuildStatesBuffer : Creating states buffer for %ld hosts",nb);
   if(nb == 0)
     return NULL;
   len = sizeof(FFSS_Field) + nb * (sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES_2 + FFSS_IP_FIELD_SIZE*2 + FFSS_MAX_DOMAIN_LENGTH+1 + FFSS_MAX_SERVERNAME_LENGTH+1 + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_SERVERCOMMENT_LENGTH+1);

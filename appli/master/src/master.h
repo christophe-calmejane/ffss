@@ -32,6 +32,13 @@
 #endif /* DEBUG */
 #define FM_INDEX_MAX_FATHER_RECURSION 100
 
+/* Debug defines */
+  /* Master specific */
+#define FM_DBGMSG_GLOBAL      0x00010
+#define FM_DBGMSG_STATES      0x00020
+#define FM_DBGMSG_SEARCH      0x00040
+#define FM_DBGMSG_INDEX       0x00100
+
 typedef struct
 {
   char *Name;          /* Name of the domain */

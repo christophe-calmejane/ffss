@@ -46,7 +46,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   }
   if(fread(Conn->TransferBuffer,1,rlen,FT->fp) != rlen)
   {
-    FFSS_PrintDebug(1,"Error reading file while uploading : %d\n",errno);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error reading file while uploading : %d",errno);
     if(FFSS_CB.SCB.OnTransferFailed != NULL)
       FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_READ_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_READ_FILE],false);
     FFSS_FreeTransfer(FT);
@@ -71,7 +71,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   if(last)
   {
     /* Send Checksum */
-    FFSS_PrintDebug(3,"FS_TransferBloc : Last packet sent after %lld bytes (fsize=%lld)...sending checksum\n",FT->XI.total,FT->XI.fsize);
+    SU_DBG_PrintDebug(FS_DBGMSG_XFER,"FS_TransferBloc : Last packet sent after %lld bytes (fsize=%lld)...sending checksum",FT->XI.total,FT->XI.fsize);
     if(!FFSS_SendData(FT,FT->XI.XFerTag,(char *)&FT->XI.Checksum,sizeof(FT->XI.Checksum)))
       return false;
     if(FFSS_CB.SCB.OnTransferSuccess != NULL)

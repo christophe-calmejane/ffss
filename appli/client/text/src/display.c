@@ -136,15 +136,15 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 	if(servs==NULL)
 		servs=FCA_add_Domain(Domain);
 
-	FFSS_PrintDebug(3, "adding server: %s\n", Name);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "adding server: %s", Name);
 	dom=(FCA_PServs)(servs->Data);
 	dom->everlisted=true;
 	serv=FCA_get_server(servs, IP);
 	if(serv==NULL) {
 		dom->servers=SU_AddElementHead(dom->servers, Server);
-		FFSS_PrintDebug(3, "server added\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "server added");
 	} else {
-		FFSS_PrintDebug(3, "this server was here, upgrading\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "this server was here, upgrading");
 		S=(FM_PHost)serv->Data;
 		free(S->Name);
 		free(S->OS);

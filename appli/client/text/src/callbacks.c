@@ -14,21 +14,21 @@
 
 void FCA_OnBeginTCPThread(SU_PClientSocket Server)
 {
-	FFSS_PrintDebug(1, "(client) Thread is started\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) Thread is started");
 }
 
     /* new machine found */
 void FCA_OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
 	if(FCA_inDispServs) {
-		FFSS_PrintDebug(1, "(client) received a new state from %s\n", IP);
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received a new state from %s", IP);
 		FCA_print_state(State, IP, Domain, Name, OS, Comment, MasterIP);
 	}
 }
 
 void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User)
 {
-	FFSS_PrintDebug(1, "(client) received a domain listing\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received a domain listing");
 	FCA_print_domains(Domains, NbDomains);
 	    	/* end of domains, we stop the domain listing */
 	FCA_sem_post();
@@ -38,7 +38,7 @@ void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField
 /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
 void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User)
 {
-	FFSS_PrintDebug(1, "(client) received a server listing for domain %s\n", Domain);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received a server listing for domain %s", Domain);
 	FCA_print_servers(Domain, NbHost, HostList);
 
 	/* no sem_post, this callback is called for each domain */
@@ -46,7 +46,7 @@ void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,
 
 void FCA_OnEndServerListingAnswer(void)
 {
-	FFSS_PrintDebug(1, "(client) End of server listing\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) End of server listing");
 	FCA_inDispServs=false;
 		/* end of domains, we stop the server listing */
 	FCA_sem_post();
@@ -55,7 +55,7 @@ void FCA_OnEndServerListingAnswer(void)
     /* new ls */
 bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User)
 {
-	FFSS_PrintDebug(3, "(client) received a dir listing for path %s\n", Path);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received a dir listing for path %s", Path);
 	FCA_print_ls(Path, NbEntries,Entries);
 
 	FCA_sem_post();
@@ -64,7 +64,7 @@ bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int 
     /* listing shares */
 void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares, FFSS_LongField User)
 {
-	FFSS_PrintDebug(3, "(client) received a share listing from %s\n", IP);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received a share listing from %s", IP);
 	FCA_print_shares(IP,Names,Comments,NbShares);
 
 /* only for debug
@@ -76,12 +76,12 @@ printf("POUF\n");
 
 void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
-	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received search answer for domain %s, query=%s", Domain, Query);
 
 	if(FCA_inDispFind || !FCA_multiFind)
 		FCA_print_search(Query,Domain,Answers,ChkSums,Sizes,NbAnswers);
 	else
-		FFSS_PrintDebug(3, "(client) sorry, too late to give your answer\n");
+		SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sorry, too late to give your answer");
 
     	if(!FCA_multiFind)
 		FCA_sem_post();
@@ -110,16 +110,16 @@ void FCA_OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
 	time_t end;
 
-	FFSS_PrintDebug(3, "(client) download ended without any error\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) download ended without any error");
 	end=time(NULL);
 	if(end-FCA_dw_begin==0)
 		end++;
 	FCA_print_dw_ok(FCA_dw_file, FCA_dw_amount/(end-FCA_dw_begin));
 	FCA_Ptrans=NULL;
 
-/*FFSS_PrintDebug(3, "(client) sleeeeeeeep\n");
+/*SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) sleeeeeeeep");
 	usleep(2000000);
-FFSS_PrintDebug(3, "(client) wake up baby\n");
+SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) wake up baby");
 */
 	FCA_sem_post();
 }
@@ -134,7 +134,7 @@ void FCA_OnMasterError(FFSS_Field ErrorCode,const char Descr[])
     /* error */
 bool FCA_OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
-	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s, value=%d)\n", ErrorCode, Descr, ErrorCode==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) error message recieved: Code: %d (%s, value=%d)", ErrorCode, Descr, ErrorCode==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
 	if(ErrorCode==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {
 		FCA_print_warning("This server supports only useconnsock mode, switching to this one");
 		sprintf(FCA_useConnSock, "on");
@@ -158,7 +158,7 @@ void FCA_OnEndTCPThread(SU_PClientSocket Server)
 {
 	char *domain, *machine, *share, *dir;
 
-	FFSS_PrintDebug(1, "(client) connection closed to this share, thread stopped\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) connection closed to this share, thread stopped");
 	FCA_close_connection();
 	if(FCA_canChange_pwd) {
 			/* update pwd, and go on /$/domain/machine */
@@ -172,14 +172,14 @@ void FCA_OnEndTCPThread(SU_PClientSocket Server)
     /* too many UDP errors: fatal error, exits */
 void FCA_OnFatalError(void)
 {
-	FFSS_PrintDebug(1, "(client) too many UDP errors\n");
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) too many UDP errors");
 	if(!FCA_exiting)
 		FCA_crash("too many UDP errors, exiting");
 }
 
 void FCA_OnUDPError(int ErrNum)
 {
-	FFSS_PrintDebug(1, "(client) UDP error code %d\n", ErrNum);
+	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) UDP error code %d", ErrNum);
 	FCA_UDP_errno=ErrNum;
 
 	FCA_sem_post();

@@ -370,16 +370,12 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
   char buf[1024];
   char *dotPos;
 
-#ifdef DEBUG
-  printf("Indexing engine : Inserting host '%s' (%d nodes)\n",Host->Name,Host->NbNodes);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Indexing engine : Inserting host '%s' (%d nodes)",Host->Name,Host->NbNodes);
   context;
   for(i=0;i<Host->NbNodes;i++)
   {
     SU_strcpy(buf,Host->FileTree+Host->FTNodes[i].Pos,sizeof(buf));
-#ifdef DEBUG
-    //printf("Indexing engine : Inserting node '%s' (%d)\n",buf,i);
-#endif /* DEBUG */
+    //SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Indexing engine : Inserting node '%s' (%d)",buf,i);
 
     dotPos = strrchr(buf,'.');
     if(dotPos != NULL) /* Do not index file extension */
@@ -409,9 +405,7 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
       s += e + 1;
     }
   }
-#ifdef DEBUG
-  printf("Indexing engine : Inserting of '%s' complete\n",Host->Name);
-#endif /* DEBUG */
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Indexing engine : Inserting of '%s' complete",Host->Name);
 }
 
 
@@ -616,7 +610,7 @@ void FMI_GarbageCollector(void)
   FM_PSTNode Node;
 
   SU_SEM_WAIT(FM_MySem5);
-  FFSS_PrintDebug(4,"Starting garbage collector...\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Starting garbage collector...");
   context;
   for(i=0;i<HASHTABLE_SIZE;i++)
   {
@@ -630,7 +624,7 @@ void FMI_GarbageCollector(void)
       }
     }
   }
-  FFSS_PrintDebug(4,"Garbage collector completed\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Garbage collector completed");
   SU_SEM_POST(FM_MySem5);
 }
 
@@ -789,7 +783,7 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
   FILE *fp;
   FFSS_Field Version;
 
-  FFSS_PrintDebug(1,"Dumping index to disk... (%s)\n",FileName);
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Dumping index to disk... (%s)",FileName);
   fp = fopen(FileName,"wb");
   if(fp == NULL)
     return false;
@@ -802,7 +796,7 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
   FMI_StoreSuffixTree(fp);
   SU_SEM_POST(FM_MySem5);
 
-  FFSS_PrintDebug(1,"Dump complete.\n");
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Dump complete.");
   fclose(fp);
   return true;
 }
@@ -978,7 +972,7 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
 
   context;
   res = false;
-  FFSS_PrintDebug(4,"Loading index from disk... (%s)\n",FileName);
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Loading index from disk... (%s)",FileName);
   fp = fopen(FileName,"rb");
   if(fp != NULL)
   {
@@ -1002,7 +996,7 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
     }
     fclose(fp);
   }
-  FFSS_PrintDebug(4,"Load complete : %s\n",res?"Success":"Failed");
+  SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"Load complete : %s",res?"Success":"Failed");
   return res;
 }
 
@@ -1024,7 +1018,7 @@ bool FMI_CheckFileTree(FM_PFTControler Host) /* <-- Host to check */
   FM_PFTNode Curr;
 
   context;
-  FFSS_PrintDebug(6,"Checking index integrity of %s\n",Host->Name);
+  SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Checking index integrity of %s",Host->Name);
   /* Check FileTree string */
   if(Host->FileTree[Host->FileTreeLength-1] != 0)
   {
@@ -1197,7 +1191,7 @@ bool FMI_CheckOrderIntegrity_rec(FM_PSTNode Node)
     {
       if(Node->STLeafs[i].NumHost <= val)
       {
-        printf("############### Leafs not ordered ###############\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"############### Leafs not ordered ###############");
         error = true;
       }
       val = Node->STLeafs[i].NumHost;
@@ -1211,7 +1205,7 @@ bool FMI_CheckOrderIntegrity_rec(FM_PSTNode Node)
     {
       if(Node->STNodes[i].Letter <= val)
       {
-        printf("############### Nodes not ordered ###############\n");
+        SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"############### Nodes not ordered ###############");
         error = true;
       }
       val = Node->STNodes[i].Letter;
