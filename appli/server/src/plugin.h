@@ -10,7 +10,12 @@
 
 #include "server.h"
 
-#define FSP_BASE_REG_KEY "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\PluginsConf\\"
+#ifdef _WIN32
+#define FSP_BASE_REG_ROOTHKEY HKEY_CURRENT_USER
+#define FSP_BASE_REG_ROOTKEY "HKEY_CURRENT_USER"
+#define FSP_BASE_REG_SUBKEY "Software\\FFSS\\Server\\PluginsConf\\"
+#define FSP_BASE_REG_KEY FSP_BASE_REG_ROOTKEY "\\" FSP_BASE_REG_SUBKEY
+#endif /* _WIN32 */
 
 #define FSPQ_ACQUIRE_GLOBAL    1
 #define FSPQ_RELEASE_GLOBAL    2
