@@ -304,6 +304,13 @@ int main(int argc, char **argv)
 #ifdef CGI
 	if(FCA_CGI_mode) {
 		FCA_read_cfg();
+{
+FILE *f=fopen("/tmp/ffsstest", "w");
+if(f) {
+	fprintf(f, "log_file=%s\n", FCA_logfile);
+	fclose(f);
+}
+
 /* debug
 FCA_init_headers();
 */
