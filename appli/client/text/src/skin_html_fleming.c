@@ -367,7 +367,7 @@ void FCA_htmlfl_main_num(int n, const char text[])
 
 void FCA_htmlfl_post_infos()
 {
-	printf("</i></p><br>\n</center>\n");
+	printf("</i></p><br>\n");
 }
 
 void FCA_htmlfl_size(FFSS_LongField n, const char text[])
