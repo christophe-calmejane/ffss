@@ -210,7 +210,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
 </table>
 <center>
  <h2>
-  ");FCA_sep_link(path, "");printf("
+  ");FCA_sep_link(path, "", true);printf("
  </h2>
 </center>
 ");
@@ -483,21 +483,21 @@ bool FCA_html_pre_path(const char *domain, const char *path, long int state, boo
 	char *all;
 	char dom[FFSS_MAX_FILEPATH_LENGTH];
 
-	if(state==FFSS_STATE_OFF)
+	if(state & FFSS_STATE_OFF)
 		printf("<font color=gray>");
-	else if(state==FFSS_STATE_QUIET)
+	else if(state & FFSS_STATE_QUIET)
 		printf("<font color=brown>");
 	else
 		printf("<font color=black>");
 	
 	if(isName) {
-		if(state!=FFSS_STATE_OFF) {
+		if(!(state & FFSS_STATE_OFF)) {
 			all=strdup(path);
 			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s/", domain);
 			if(isSamba)
 				FCA_smb_sep_link(all);
 			else
-				FCA_sep_link(all, dom);
+				FCA_sep_link(all, dom, isDir);
 			if(all)
 				free(all);
 		}
@@ -641,7 +641,7 @@ void FCA_my_url(bool isDownload)
 		);
 }
 
-void FCA_sep_link(char *path, char *prefx)
+void FCA_sep_link(char *path, char *prefx, bool isDir)
 {
 	char *p, *begin=path;
 	char p2[FFSS_MAX_FILEPATH_LENGTH];
@@ -670,10 +670,13 @@ void FCA_sep_link(char *path, char *prefx)
 		p=strchr(p+1, '/');
 		printf("/");
 	}
-	FCA_pre_link();
 	snprintf(p2, FFSS_MAX_FILEPATH_LENGTH-1, "%s%s", prefx, path);
-	FCA_dir_arg(p2, false);
-	FCA_post_link(false);
+	if(isDir) {
+		FCA_pre_link();
+		FCA_dir_arg(p2, false);
+		FCA_post_link(false);
+	} else
+		FCA_file_link(p2);
 	printf("%s</a>", begin);
 }
 
