@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <readline/readline.h>
-#include <semaphore.h>
 	/* warning: must be with ffss.h */
 #include <transfer.h>
 	/* mkdir */
@@ -30,13 +29,10 @@
 	/* for thread manipulation */
 bool FCA_sem_locked;
 bool FCA_wait_threading;
-sem_t FCA_prmptSem;              /* the semaphore prompt <-> callbacks */
+SU_SEM_HANDLE FCA_prmptSem;	/* the semaphore prompt <-> callbacks */
 FFSS_PTransfer FCA_Ptrans;	/* the transfert pointer */
-#ifdef _WIN32
-	unsigned long FCA_wait_thread;
-#else
-	pthread_t *FCA_wait_thread;
-#endif
+SU_THREAD_HANDLE FCA_wait_thread;
+
 	/* for completion */
 int FCA_compl_wanted;
 bool FCA_sem_timeout;
@@ -329,7 +325,7 @@ void FCA_sem_wait_no_timeout()
 		else {
 			FCA_sem_locked=true;
 			FCA_wait_threading=true;
-			sem_wait(&FCA_prmptSem);
+			SU_SEM_WAIT(FCA_prmptSem);
 		}
 	}
 }
@@ -350,38 +346,17 @@ void FCA_sem_wait()
 		else {
 			FCA_sem_locked=true;
 			FFSS_PrintDebug(1, "(client) launching timer\n");
-			FCA_wait_thread=malloc(sizeof(pthread_t));
-			if(!FCA_wait_thread)
-				FCA_crash("not enough memory");
-#ifdef _WIN32			/* win */
-			if( *FCA_wait_thread=_beginthread(FCA_sem_timer,0,NULL)!=-1 )
-#else				/* unices */
-			if( pthread_create(FCA_wait_thread,NULL,FCA_sem_timer,NULL) )
-#endif
+			FCA_wait_threading=true;
+			if( SU_CreateThread(&FCA_wait_thread, FCA_sem_timer, NULL, true) )
 				FFSS_PrintDebug(1,"(client) cannot create wait timer thread!\n");
-			else {
-				FFSS_PrintDebug(1, "(client) timer thread created\n");
-				FCA_wait_threading=true;
-#ifndef _WIN32				/* unices */
-				if( pthread_detach(*FCA_wait_thread) )
-					FFSS_PrintDebug(1,"(client) cannot detach wait timer thread!\n");
-				FFSS_PrintDebug(1, "(client) timer thread detached\n");
-#endif
-			}
+			else
+				FFSS_PrintDebug(1, "(client) timer thread created and detached\n");
 			FFSS_PrintDebug(1, "(client) timer launched, waiting...\n");
-			sem_wait(&FCA_prmptSem);
+			SU_SEM_WAIT(FCA_prmptSem);
 		}
 	}
 }
 
-	/* oh  qu'elle est belle la declaration a la bourrin en plein
-		millieu
-	*/
-void handusr1()
-{
-	FFSS_PrintDebug(1, "(client) timer killed\n");
-	SU_END_THREAD(0);
-}
 
 #ifdef _WIN32
 void FCA_sem_timer()
@@ -392,15 +367,11 @@ void *FCA_sem_timer()
 	FFSS_PrintDebug(1, "(client) preparing timer\n");
 	if(!FCA_sem_locked) {
 		FFSS_PrintDebug(1, "(client) no need of timer\n");
-#ifdef _WIN32
-		_endthread();
-#else
-		return 0;
-#endif
+		SU_END_THREAD(0);
 	}
 		/* we mustn't ignore the SIG_USE1 signal */
 	FCA_restore_usr1();
-	signal(SIGUSR1, handusr1);
+	signal(SIGUSR1, FCA_timer_handusr1);
 	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_SEM_TIMEOUT);
 	sleep(FCA_SEM_TIMEOUT);
 		/* now we must ignore SIG_USR1 */
@@ -412,17 +383,20 @@ void *FCA_sem_timer()
 		FCA_print_err("operation timeout");
 		if(FCA_sem_locked) {
 			FFSS_PrintDebug(1, "(client) timer is helping you by using sem_post !!\n");
-			sem_post(&FCA_prmptSem);
+			SU_SEM_POST(FCA_prmptSem);
 		}
 		FCA_sem_locked=false;
 	} else
 		FFSS_PrintDebug(6, "(client) timer dead\n");
-#ifdef _WIN32
-	_endthread();
-#else
-	return 0;
-#endif
+	SU_END_THREAD(0);
 }
+
+void FCA_timer_handusr1()
+{
+	FFSS_PrintDebug(1, "(client) timer killed\n");
+	SU_END_THREAD(0);
+}
+
 
 void FCA_sem_post()
 {
@@ -437,15 +411,14 @@ void FCA_sem_post()
 		if(FCA_wait_threading) {
 
 			FFSS_PrintDebug(1, "(client) killing timer\n");
-			pthread_kill(*FCA_wait_thread, SIGUSR1);
-			free(FCA_wait_thread);
+			pthread_kill(FCA_wait_thread, SIGUSR1);
 
 			FCA_wait_threading=false;
 		}
 
 		FCA_sem_locked=false;
 		FFSS_PrintDebug(1, "(client) sem_post\n");
-		sem_post(&FCA_prmptSem);
+		SU_SEM_POST(FCA_prmptSem);
 	}
 }
 
@@ -1105,9 +1078,9 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 				FCA_print_cmd_err("Download failed");
 			else if(!code) {
 				if(! FCA_posted) {
-printf(" waiting transfert of %s\n",E->Name);
+					FFSS_PrintDebug(5, "(client) waiting transfert of %s\n",E->Name);
 					FCA_sem_wait_no_timeout();
-printf(" transfert ended for file %s\n",E->Name);
+					FFSS_PrintDebug(5, "(client) transfert ended for file %s\n",E->Name);
 				}
 			}
 		}

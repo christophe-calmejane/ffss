@@ -93,6 +93,7 @@ void FCA_sem_timer();
 #else
 void *FCA_sem_timer();
 #endif
+void FCA_timer_handusr1();
 void FCA_sem_post();
 
 void FCA_ignore_usr1();
