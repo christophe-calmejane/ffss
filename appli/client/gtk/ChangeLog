@@ -3,7 +3,10 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : January, 16th 2002
+                  Last Update : January, 22th 2002
+
+January, 22th 2002:
+  - Automatically detect a master if not specified
 
 January, 16th 2002:
   - Updated configure script

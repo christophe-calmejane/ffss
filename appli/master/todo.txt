@@ -20,3 +20,5 @@ KNOW BUGS
 Oct 17 23:59:57 gameboy Ffss Master: FFSS Crashed :-(. Check: search.c:290
 
  - Tester une connexion tardive d'un des masters (eventuellement avec changement de dns..)
+
+ - BUG BUG : KILL -TERM sur server -> defunct... quitte pas !!
