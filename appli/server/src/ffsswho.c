@@ -1,7 +1,7 @@
 
 #include "confapi.h"
 
-#define FFSSWHO_VERSION "1.0-pre6"
+#define FFSSWHO_VERSION "1.0-pre7"
 
 bool RequestConns(SU_PClientSocket Client,const char Path[])
 {
@@ -80,14 +80,14 @@ void PrintHelp(void)
   printf("          -v or --version  : Prints server version and exits\n");
   printf("          -g or --global   : Prints server global infos\n");
   printf("          -c or --conns    : Prints actual connection to the server (and active downloads). [Default]\n");
-  printf("          -s <servername> or --server <servername> : Connects to the specified server instead of localhost\n");
+  printf("          -s <servername> <login> <password> : Connects to the specified server instead of localhost, using specified login and password\n");
   exit(0);
 }
 
 int main(int argc,char *argv[])
 {
   SU_PClientSocket Client;
-  char *Server;
+  char *Server,*Login = NULL,*Pwd = NULL;
   int i;
   bool global_info = false;
   bool conn_info = false;
@@ -127,15 +127,19 @@ int main(int argc,char *argv[])
         conn_info = true;
       else if(strcmp(argv[i],"-s") == 0)
       {
-        if((i+1) == argc)
+        if((i+3) >= argc)
           PrintHelp();
         Server = argv[++i];
+        Login = argv[++i];
+        Pwd = argv[++i];
       }
       else if(strcmp(argv[i],"--server") == 0)
       {
-        if((i+1) == argc)
+        if((i+3) >= argc)
           PrintHelp();
         Server = argv[++i];
+        Login = argv[++i];
+        Pwd = argv[++i];
       }
       i++;
     }
@@ -146,6 +150,32 @@ int main(int argc,char *argv[])
   {
     printf("Cannot connect to %s:%s\n",Server,FFSS_SERVER_CONF_PORT_S);
     return -2;
+  }
+  if(Login != NULL) /* Not connecting to localhost... send login/pwd */
+  {
+    FFSS_Field Length;
+    Length = strlen(Login);
+    if(send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL) != sizeof(Length))
+    {
+      printf("Error sending login/pwd to %s\n",Server);
+      return -3;
+    }
+    if(send(Client->sock,Login,Length,SU_MSG_NOSIGNAL) != Length)
+    {
+      printf("Error sending login/pwd to %s\n",Server);
+      return -3;
+    }
+    Length = strlen(Pwd);
+    if(send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL) != sizeof(Length))
+    {
+      printf("Error sending login/pwd to %s\n",Server);
+      return -3;
+    }
+    if(send(Client->sock,Pwd,Length,SU_MSG_NOSIGNAL) != Length)
+    {
+      printf("Error sending login/pwd to %s\n",Server);
+      return -3;
+    }
   }
 
   if(!global_info && !conn_info)
@@ -168,10 +198,10 @@ int main(int argc,char *argv[])
     }
     if(Plugins != NULL)
     {
+      printf("\nLoaded plugins :\n");
       while(Plugins != NULL)
       {
         FSCA_PPluginInfo Pl = (FSCA_PPluginInfo) Plugins->Data;
-        printf("\nLoaded plugins :\n");
         printf("\t%s %s v%s\n",Pl->Name,Pl->Author,Pl->Version);
         Plugins = Plugins->Next;
       }
