@@ -13,9 +13,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-/*#include "ntifs.h"
-#include "fsd.h"
-#include "ffss_fs.h"*/
+
 #include <ffss_tdi.h>
 
 /* ***************************** TO DO ***************************** *
@@ -157,6 +155,95 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
 /* ********************************************************************** */
 /* ************************** TCP CALLBACKS ***************************** */
 /* ********************************************************************** */
+SU_BOOL OnError(FfssTCP *Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
+{
+  struct ffss_inode *Root = (struct ffss_inode *) User; /* Don't free this inode here ! */
+
+#if DBG
+  if(Root == NULL)
+  {
+    KdPrint(("AIE AIE AIE : OnError : Root Inode is NULL !!!\n"));
+  }
+#endif
+
+  switch(Code)
+  {
+  case FFSS_ERROR_RESOURCE_NOT_AVAIL :
+  case FFSS_ERROR_NEED_LOGIN_PASS :
+  case FFSS_ERROR_TOO_MANY_CONNECTIONS :
+  case FFSS_ERROR_IDLE_TIMEOUT :
+  case FFSS_ERROR_SHARE_DISABLED :
+  case FFSS_ERROR_SHARE_EJECTED :
+  case FFSS_ERROR_INTERNAL_ERROR :
+    KdPrint(("OnError : Found fatal error code (%s). Disconnecting\n",Descr));
+    return false;
+  case FFSS_ERROR_FILE_NOT_FOUND :
+  case FFSS_ERROR_ACCESS_DENIED :
+  case FFSS_ERROR_NOT_ENOUGH_SPACE :
+  case FFSS_ERROR_CANNOT_CONNECT :
+  case FFSS_ERROR_TOO_MANY_TRANSFERS :
+  case FFSS_ERROR_DIRECTORY_NOT_EMPTY :
+  case FFSS_ERROR_FILE_ALREADY_EXISTS :
+  case FFSS_ERROR_SERVER_IS_QUIET :
+  case FFSS_ERROR_BUFFER_OVERFLOW :
+  case FFSS_ERROR_XFER_MODE_NOT_SUPPORTED :
+  case FFSS_ERROR_RESEND_LAST_UDP :
+  case FFSS_ERROR_BAD_SEARCH_REQUEST :
+  case FFSS_ERROR_NOT_IMPLEMENTED :
+    KdPrint(("OnError : Found non fatal error code (%s). Continuing\n",Descr));
+    break;
+  case FFSS_ERROR_NO_ERROR :
+    if((Root->Name[0] == 0) && (!Root->Listed)) /* Connection established, list tree root */
+    {
+      FC_SendMessage_DirectoryListing(Server,"/",(FFSS_LongField)FsdAssignInode(Root,true));
+    }
+    break;
+  }
+  return true;
+}
+
+SU_BOOL OnDirectoryListingAnswer(FfssTCP *Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User) /* FC_PEntry */
+{
+  struct ffss_inode *Inode,*parent;
+  int i,len;
+  SU_PList Ptr;
+  FC_PEntry Ent;
+
+  LOCK_SUPERBLOCK_RESOURCE;
+  parent = (struct ffss_inode *) User;
+  if(parent == NULL)
+  {
+    KdPrint(("OnDirectoryListingAnswer : User Pointer is NULL... disconnecting\n"));
+    UNLOCK_SUPERBLOCK_RESOURCE;
+    return false;
+  }
+  FsdFreeSubInodes(parent,false);
+  if(NbEntries != 0)
+  {
+    parent->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbEntries, 'nuSS');
+    Ptr = Entries;
+    for(i=0;i<NbEntries;i++)
+    {
+      Ent = (FC_PEntry) Ptr->Data;
+      KdPrint(("OnDirectoryListingAnswer : Got entry %s for %s\n",Ent->Name,Path));
+      Inode = FsdAllocInode(Ent->Name,(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE);
+      Inode->Flags = Ent->Flags;
+      Inode->Parent = FsdAssignInode(parent,false);
+      Inode->Conn = Server;
+      len = strlen(Path) + 1;
+      Inode->Path = (char *) malloc(len);
+      RtlCopyMemory(Inode->Path,Path,len);
+      parent->Inodes[i] = FsdAssignInode(Inode,false);
+      Ptr = Ptr->Next;
+    }
+    parent->NbInodes = NbEntries;
+  }
+  parent->Listed = 1;
+  FsdFreeInode(parent,false);
+  UNLOCK_SUPERBLOCK_RESOURCE;
+  
+  return true;
+}
 
 
 /* ********************************************************************** */
@@ -242,8 +329,8 @@ FfssUDP::FfssUDP() : KDatagramSocket()
   FFSS_CB.CCB.OnServerListingAnswer = OnServerListingAnswer;
   FFSS_CB.CCB.OnSharesListing = OnSharesListing;
   /* TCP callbacks */
-  /*FFSS_CB.CCB.OnError = OnError;
-  FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;*/
+  FFSS_CB.CCB.OnError = OnError;
+  FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;
   /* Streaming callbacks */
   /*FFSS_CB.CCB.OnStrmOpenAnswer = OnStrmOpenAnswer;
   FFSS_CB.CCB.OnStrmReadAnswer = OnStrmReadAnswer;
@@ -375,14 +462,21 @@ void FfssUDP::GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA)
 /* ********************************************************************** */
 /* *************************** FFSS TCP ********************************* */
 /* ********************************************************************** */
-FfssTCP::FfssTCP() : KStreamSocket()
+FfssTCP::FfssTCP(const char Server[],const char ShareName[]) : KStreamSocket()
 {
+  int len;
+
+  len = strlen(ShareName) + 1;
+  Share = (char *) malloc(len);
+  RtlCopyMemory(Share,ShareName,len);
+
+  len = strlen(Server) + 1;
+  IP = (char *) malloc(len);
+  RtlCopyMemory(IP,Server,len);
+
   BufSize = FFSS_TCP_CLIENT_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
   len = 0;
-  /*Entries = NULL;
-  Mark = false;
-  Used = 0;*/
   Sem = new FfssSem;
   if(Sem == NULL)
     ASSERT(0);
@@ -398,6 +492,9 @@ FfssTCP::~FfssTCP()
   delete Sem;
   delete Timer;
   free(Buf);
+  free(Share);
+  free(IP);
+  FsdFreeInode(Root,true);
 }
 
 
@@ -457,8 +554,8 @@ void FfssTCP::On_sendComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 
 uint FfssTCP::OnReceive(uint Indicated,uchar* Data,uint Available,uchar** RcvBuffer,uint* RcvBufferLen)
 { 
-  /*if(!GetPacket(this,Data,Indicated))
-    disconnect();*/
+  if(!GetPacket(Data,Indicated))
+    disconnect();
 
   if (Indicated < Available)
   {
@@ -473,8 +570,8 @@ void FfssTCP::OnReceiveComplete(TDI_STATUS status,uint Indicated,uchar* Data)
   KdPrint(("TCP OnReceiveComplete : Remaining %d bytes\n",Indicated));
   if(status == TDI_SUCCESS)
   {
-    /*if(!GetPacket(this,Data,Indicated))
-      disconnect();*/
+    if(!GetPacket(Data,Indicated))
+      disconnect();
   }
   else
   {
@@ -500,11 +597,75 @@ void FfssTCP::OnDisconnect(uint OptionsLength,PVOID Options,BOOLEAN bAbort)
 }
 
 
+bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
+{
+  int res;
+  FFSS_Field Size;
+  bool analyse;
+  int retval;
+
+  if(len >= BufSize)
+  {
+    FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message (%d) ... DoS attack ?\n",len);
+    if(FFSS_CB.CCB.OnError != NULL)
+      FFSS_CB.CCB.OnError(this,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
+    return false;
+  }
+  if(Indicated >= (BufSize - len))
+  {
+    FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message (%d) ... DoS attack ?\n",len);
+    if(FFSS_CB.CCB.OnError != NULL)
+      FFSS_CB.CCB.OnError(this,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
+    return false;
+  }
+  memcpy(Buf+len,Data,Indicated);
+  FFSS_PrintDebug(6,"Data found on TCP port (%d bytes - %d) ... analysing\n",Indicated,len);
+  len += Indicated;
+  analyse = true;
+  while (analyse)
+  {
+    if(len < 5)
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) ... DoS attack ?\n",len);
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(this,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
+      return false;
+    }
+    Size = *(FFSS_Field *)Buf;
+    if(Size > len)
+    {
+      FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
+      break;
+      /* Keeps waiting for data */
+    }
+    else
+    {
+      retval = FC_AnalyseTCP(this,Buf,Size);
+      Sem->SignalTimer();
+      if(!retval)
+      {
+        return false;
+      }
+      if(len > Size)
+      {
+        FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
+        memmove(Buf,Buf+Size,len-Size);
+        len -= Size;
+        /* Keeps analysing the buffer */
+      }
+      else
+      {
+        analyse = false;
+        len = 0;
+      }
+    }
+  }
+}
+
 
 /* ********************************************************************** */
 /* ***************************** UTILS ********************************** */
 /* ********************************************************************** */
-
 
 
 /* ********************************************************************** */
@@ -512,6 +673,51 @@ void FfssTCP::OnDisconnect(uint OptionsLength,PVOID Options,BOOLEAN bAbort)
 /* ********************************************************************** */
 
 extern "C" {
+/* Returned inode must be freed */
+struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
+{
+  int i;
+  struct ffss_inode *Inode;
+  FfssTCP *Conn;
+
+  LOCK_SUPERBLOCK_RESOURCE;
+  for(i=0;i<Share->NbInodes;i++)
+  {
+    if(FFSS_strcasecmp(Share->Name,((FfssTCP *)Share->Inodes[i]->Conn)->Share))
+    {
+      KdPrint(("FsdGetConnection : Active connection found\n"));
+      Inode = FsdAssignInode(Share->Inodes[i],false);
+#if DBG
+      if(Share->Type != FFSS_INODE_SHARE)
+        KdPrint(("AIE AIE AIE : FsdGetConnection : Inode %s is not of type SHARE !!!\n",Share->Name));
+      if(Inode->Type != FFSS_INODE_DIRECTORY)
+        KdPrint(("AIE AIE AIE : FsdGetConnection : Inode %s is not of type DIRECTORY !!!\n",Inode->Name));
+#endif
+      UNLOCK_SUPERBLOCK_RESOURCE;
+      return Inode;
+    }
+  }
+  KdPrint(("FsdGetConnection : No active connection for %s... creating new one\n",Share->Name));
+
+  Inode = FsdAllocInode("",FFSS_INODE_DIRECTORY);
+  Inode->Flags = FFSS_FILE_DIRECTORY;
+  Inode->Parent = FsdAssignInode(Share,false);
+  Inode->Path = (char *) malloc(1);
+  RtlCopyMemory(Inode->Path,"",1);
+  UNLOCK_SUPERBLOCK_RESOURCE;
+  Conn = FC_SendMessage_ShareConnect(Share->IP,Share->Name,NULL,NULL,(FFSS_LongField)FsdAssignInode(Inode,true));
+  if(Conn == NULL)
+  {
+    KdPrint(("FsdGetConnection : Error creating connection to %s/%s\n",Share->IP,Share->Name));
+    FsdFreeInode(Inode,true);
+    return NULL;
+  }
+  Inode->Conn = Conn;
+  Conn->Root = Inode; /* Do not assign it, since it is done in the call to ShareConnect */
+  KdPrint(("FsdGetConnection : Successfully connected to %s/%s\n",Share->IP,Share->Name));
+  return FsdAssignInode(Inode,true);
+}
+
 NTSTATUS TDI_Init()
 {
   // Initialize the TDIClient framework first
@@ -535,4 +741,5 @@ NTSTATUS TDI_Init()
   }
   return STATUS_SUCCESS;
 }
+
 };

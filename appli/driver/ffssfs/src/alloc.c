@@ -283,14 +283,21 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
   ffss_inode = (struct ffss_inode *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode), 'puSR');
 
   ffss_inode->Type = Type;
-  ffss_inode->Parent = NULL;
-  ffss_inode->IP = NULL;
-  ffss_inode->Inodes = NULL;
-  ffss_inode->NbInodes = 0;
-  ffss_inode->RefCount = 0;
-  ffss_inode->NameLength = strlen(Name)+1;
+  ffss_inode->NameLength = strlen(Name) + 1;
   ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
   RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
+
+  ffss_inode->RefCount = 0;
+  ffss_inode->Inodes = NULL;
+  ffss_inode->NbInodes = 0;
+
+  ffss_inode->IP = NULL;
+
+  ffss_inode->Conn = NULL;
+  ffss_inode->Listed = 0;
+  ffss_inode->Path = NULL;
+
+  ffss_inode->Parent = NULL;
   KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name : %s\n",Type,ffss_inode->Name));
 
   return ffss_inode;
@@ -299,6 +306,8 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 /* SuperBlock must be locked (or Lock must be TRUE) */
 struct ffss_inode *FsdAssignInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
+  if(ffss_inode == NULL)
+    return NULL;
 #if DBG
   if(Lock != true && Lock != false)
     KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignInode (%d %d %d) !!!\n",Lock,true,false));
@@ -328,7 +337,7 @@ VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   if(Lock)
     LOCK_SUPERBLOCK_RESOURCE;
   ffss_inode->RefCount--;
-  if(ffss_inode->RefCount != 0)
+  if(ffss_inode->RefCount > 0)
   {
     if(Lock)
       UNLOCK_SUPERBLOCK_RESOURCE;
@@ -350,6 +359,8 @@ VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
     FsdFreeInode(ffss_inode->Parent,false);
   if(ffss_inode->IP != NULL)
     free(ffss_inode->IP); /* Allocated by ffss library using 'malloc'... free it with 'free' */
+  if(ffss_inode->Path != NULL)
+    free(ffss_inode->Path); /* Allocated by ffss library using 'malloc'... free it with 'free' */
 
   FsdFreePool(ffss_inode);
   if(Lock)

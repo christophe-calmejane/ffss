@@ -31,7 +31,7 @@ class FfssTCP;
 #define SU_PClientSocket FfssTCP *
 #include <ffss.h>
 void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
-
+SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len);
 
 /* ********************************************************************** */
 /* **************************** CLASSES ********************************* */
@@ -102,7 +102,10 @@ class FfssTCP : public KStreamSocket
 {
 public:
   FfssSem *Sem;
-  FfssTCP();
+  char *Share;
+  char *IP;
+  struct ffss_inode *Root; /* Assigned upon connection, released when destroying this class */
+  FfssTCP(const char Server[],const char ShareName[]);
   ~FfssTCP();
   TDI_STATUS connect(PTDI_CONNECTION_INFORMATION);
   TDI_STATUS send(void*,uint,bool,bool sem=true);
@@ -118,7 +121,7 @@ private:
   char *Buf;
   long int BufSize;
   unsigned int len;
-  //bool GetPacket(FfssTCP *Server,uchar *Data,uint Indicated);
+  bool GetPacket(uchar *Data,uint Indicated);
 };
 
 
@@ -156,16 +159,21 @@ struct ffss_super_block {
 #define FFSS_INODE_FILE      6
 
 struct ffss_inode {
-  unsigned long int Type;
-  char  *Name;
-  unsigned long int NameLength;
-  unsigned long int Flags;
-  unsigned __int64  Size;
-  unsigned long int Stamp;
-  unsigned long int RefCount;
-  struct ffss_inode **Inodes; /* Tab of sub inodes */
-  unsigned long int NbInodes; /* Number of sub inodes */
-  char *IP; /* For Host Inodes */
+  unsigned long int  Type;
+  char               *Name;
+  unsigned long int  NameLength;
+  unsigned long int  Flags;
+  unsigned __int64   Size;
+  unsigned long int  Stamp;
+  signed long int    RefCount;
+  struct ffss_inode  **Inodes; /* Tab of sub inodes */
+  unsigned long int  NbInodes; /* Number of sub inodes */
+
+  char               *IP;      /* For Host Inodes */
+
+  void               *Conn;    /* In tcp connected mode, FfssTCP class we are attached to */
+  unsigned short int Listed;   /* In tcp connected mode, if node has been listed yet */
+  char               *Path;    /* In tcp connected mode, path from root of share */ 
 
   struct ffss_inode *Parent;
 };
@@ -190,7 +198,10 @@ struct ffss_inode *FsdGetInodeFromServerIP(IN char *IP);
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Server);
 
+int FFSS_strcasecmp(const char *s,const char *p); /* != 0 if strings are equal */
+
 NTSTATUS TDI_Init();
+struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share);
 
 #ifdef __cplusplus
 };

@@ -485,11 +485,27 @@ struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Ser
   return NULL;
 }
 
+void FsdRequestInodeListing(struct ffss_inode *Inode)
+{
+  char buf[1024];
+  int pos = 0,len;
+
+  len = strlen(Inode->Path);
+  RtlCopyMemory(buf,Inode->Path,len);
+  pos = len;
+  buf[pos++] = "/";
+  len = strlen(Inode->Name) + 1;
+  RtlCopyMemory(buf+pos,Inode->Name,len);
+  FC_SendMessage_DirectoryListing(Inode->Conn,buf,(FFSS_LongField)FsdAssignInode(Inode,true));
+}
+
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTATUS *Status)
 {
   char Buf[1024],*parse,*p;
-  struct ffss_inode *Domain,*Server,*Share;
+  struct ffss_inode *Domain,*Server,*Share,*Inode,*Inode2;
+  int i;
+  bool found;
 
   *Status = STATUS_OBJECT_NAME_NOT_FOUND;
 
@@ -535,16 +551,15 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     p[0] = 0;
   /* Check Server name */
   Server = FsdGetInodeFromServer(parse,Domain);
+  FsdFreeInode(Domain,true);
   if(Server == NULL) /* Server does not exists */
   {
-    FsdFreeInode(Domain,true);
     return NULL;
   }
   if((p == NULL) || (p[1] == 0)) /* End of parse */
   {
     KdPrint(("end of parse (server)\n"));
     *Status = STATUS_SUCCESS;
-    FsdFreeInode(Domain,true);
     return Server; /* Already assigned */
   }
   parse = p + 1; /* Update parse position */
@@ -555,35 +570,77 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     p[0] = 0;
   /* Check Share name */
   Share = FsdGetInodeFromShare(parse,Server);
+  FsdFreeInode(Server,true);
   if(Share == NULL) /* Share does not exists */
   {
-    FsdFreeInode(Domain,true);
-    FsdFreeInode(Server,true);
     return NULL;
   }
-  if((p == NULL) || (p[1] == 0)) /* End of parse */
+  if(p == NULL) /* End of parse */
   {
     KdPrint(("end of parse (share)\n"));
     *Status = STATUS_SUCCESS;
-    FsdFreeInode(Domain,true);
-    FsdFreeInode(Server,true);
     return Share; /* Already assigned */
   }
   parse = p + 1; /* Update parse position */
 
-  // FfssTCP * FsdGetConnection();
-  /* Parse directories */
-  p = strchr(parse,'\\');
-  //while(p != NULL)
-  {
-  }
-  /* Check file name */
-
-  FsdFreeInode(Domain,true);
-  FsdFreeInode(Server,true);
+  Inode = FsdGetConnection(Share);
   FsdFreeInode(Share,true);
+  if(Inode == NULL)
+  {
+    return NULL;
+  }
+  /* Parse directories */
+  while(parse[0] != 0)
+  {
+    if(!Inode->Listed)
+    {
+      /* Not listed yet, request listing */
+      FsdRequestInodeListing(Inode);
+    }
+    /* Check if parse exists */
+    found = -1;
+    LOCK_SUPERBLOCK_RESOURCE;
+    for(i=0;i<Inode->NbInodes;i++)
+    {
+      if(FFSS_strcasecmp(parse,Inode->Inodes[i]->Name)) /* Found, ok */
+      {
+        found = i;
+        break;
+      }
+    }
+    if(found == -1)
+    {
+      Inode = NULL;
+      break;
+    }
+    Inode2 = Inode;
+    Inode = FsdAssignInode(Inode->Inodes[i],false); /* Update inode pointer */
+    FsdFreeInode(Inode2,false);
+    UNLOCK_SUPERBLOCK_RESOURCE;
 
-  return NULL;
+    p = strchr(parse,'\\');
+    if(p == NULL) /* End of parse */
+      break;
+    if(p[1] == 0) /* End of parse */
+    {
+      if(!Inode->Listed) /* Need to list for a nearby future */
+      {
+        if(Inode->Flags & FFSS_FILE_DIRECTORY) /* Directory, ok request its listing */
+        {
+          FsdRequestInodeListing(Inode);
+        }
+        else
+        {
+          FsdFreeInode(Inode,true);
+          Inode = NULL; /* Not a directory... error */
+        }
+      }
+      break;
+    }
+    parse = p + 1;
+  }
+
+  return Inode;
 }
 
 

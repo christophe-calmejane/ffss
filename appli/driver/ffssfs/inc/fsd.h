@@ -917,7 +917,6 @@ FsdIsDeviceSameRomfs (
 //
 
 size_t strnlen(const char * s, size_t count);
-int FFSS_strcasecmp(const char *s,const char *p); /* != 0 if strings are equal */
 
 //
 // Function prototypes from volinfo.c
