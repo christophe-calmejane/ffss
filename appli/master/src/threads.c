@@ -19,10 +19,8 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     SaveIndexCount++;
     if(SaveIndexCount > FM_INDEX_DUMP_INTERVAL_PING)
     {
-#ifdef DEBUG
       FFSS_PrintDebug(4,"%d%% of unused space in hash table\n",FMI_GetUnusedHashPos());
       FFSS_PrintDebug(4,"%d strings in index\n",FMI_GetIndexCount());
-#endif /* DEBUG */
       FMI_GarbageCollector();
       FMI_SaveIndex(FM_MYINDEX_FILE);
       SaveIndexCount = 0;

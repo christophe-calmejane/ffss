@@ -10,7 +10,7 @@
 #include "../utils.h"
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre50"
+#define FFSS_MASTER_VERSION "1.0-pre51"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -20,12 +20,14 @@
 #define FM_MYINDEX_FILE "Index.dat"
 #define CONFIG_FILE_NAME "./Master.conf"
 #define FM_SEARCHLOG_FILE "Search.log"
+#define FM_PID_FILE "./Master.pid"
 #define FM_INDEX_DUMP_INTERVAL_PING 0
 #else /* !DEBUG */
 #define FM_MYHOSTS_FILE "/var/lib/ffss/hosts.dat"
 #define FM_MYINDEX_FILE "/var/lib/ffss/index.dat"
 #define CONFIG_FILE_NAME "/etc/ffss/master.conf"
 #define FM_SEARCHLOG_FILE "/var/lib/ffss/search.log"
+#define FM_PID_FILE "/var/lib/ffss/master.pid"
 #define FM_INDEX_DUMP_INTERVAL_PING 30
 #endif /* DEBUG */
 #define FM_INDEX_MAX_FATHER_RECURSION 100

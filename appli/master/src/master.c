@@ -876,6 +876,7 @@ void handint(int sig)
     FMI_SaveIndex(FM_MYINDEX_FILE);
     /* Shutting down master */
     FM_UnInit();
+    remove(FM_PID_FILE);
     exit(0);
   }
   else
@@ -897,9 +898,20 @@ int main(int argc,char *argv[])
   bool daemonize = false;
   bool log = false;
   SU_THREAD_HANDLE Thread;
+  FILE *fp;
+  pid_t MainPid;
 
   printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_MASTER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
+
+  fp = fopen(FM_PID_FILE,"rt");
+  if(fp != NULL)
+  {
+    fscanf(fp,"%d",&MainPid);
+    printf("ffss-master is already running with pid %d\nIf not, remove %s file\n",MainPid,FM_PID_FILE);
+    fclose(fp);
+    return 1;
+  }
 
   SU_strcpy(ConfigFile,CONFIG_FILE_NAME,sizeof(ConfigFile));
 #ifdef __unix__
@@ -1087,15 +1099,19 @@ int main(int argc,char *argv[])
       return -5;
     }
 
-#ifndef DEBUG
+//#ifndef DEBUG
 #ifdef __unix__
     signal(SIGTSTP,handint);
 #endif /* __unix__ */
     signal(SIGINT,handint);
     signal(SIGTERM,handint);
-#endif /* !DEBUG */
+//#endif /* !DEBUG */
 
-    FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",getpid());
+    MainPid = getpid();
+    FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",MainPid);
+    fp = fopen(FM_PID_FILE,"wt");
+    fprintf(fp,"%d",MainPid);
+    fclose(fp);
 
     /* Main loop */
     while(1) SU_SLEEP(10);

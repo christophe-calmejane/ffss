@@ -768,7 +768,7 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
 {
   FILE *fp;
 
-  FFSS_PrintSyslog(LOG_WARNING,"Dumping index to disk... (%s)\n",FileName);
+  FFSS_PrintDebug(1,"Dumping index to disk... (%s)\n",FileName);
   fp = fopen(FileName,"wb");
   if(fp == NULL)
     return false;
@@ -779,7 +779,7 @@ bool FMI_SaveIndex(const char FileName[]) /* <-- Name of the file to save index 
   FMI_StoreSuffixTree(fp);
   SU_SEM_POST(FM_MySem5);
 
-  FFSS_PrintSyslog(LOG_WARNING,"Dump complete.\n");
+  FFSS_PrintDebug(1,"Dump complete.\n");
   fclose(fp);
   return true;
 }

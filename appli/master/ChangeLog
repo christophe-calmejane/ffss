@@ -7,6 +7,9 @@
 
 VIRER LE -PREx DE MASTER.H
 
+February, 25th 2002:
+  - Added use of a pid file
+
 February, 24th 2002:
   - Now using TCP connections between masters
 
