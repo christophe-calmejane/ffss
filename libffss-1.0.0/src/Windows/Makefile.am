@@ -1,3 +1,3 @@
 
-SUBDIRS = ffss
+SUBDIRS = ffss driver
 
