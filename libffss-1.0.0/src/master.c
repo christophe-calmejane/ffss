@@ -229,7 +229,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
             free_it = true;
             u_pos = 0;
             break;
-  #endif
+#endif
           default :
             FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_NEW_STATES : Unknown compression type (%s) : %ld ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),val2);
             ret_val = false;
@@ -531,6 +531,7 @@ bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Inter
     return false;
   }
   context;
+#ifdef __linux__
   if(Interface != NULL)
   {
     if(getuid() == 0)
@@ -556,6 +557,7 @@ bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Inter
     else
       FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot bind to %s only\n",Interface);
   }
+#endif /* __linux__ */
   context;
 #ifdef __unix__
   if((User != NULL) || (Group != NULL))

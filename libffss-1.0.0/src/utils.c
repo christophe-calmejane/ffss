@@ -553,7 +553,10 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
     va_end(argptr);
     Tim = time(NULL);
     TM = localtime(&Tim);
-    printf("[%.2d:%.2d:%.2d] FFSS(%d) : %s",TM->tm_hour,TM->tm_min,TM->tm_sec,Level,Str);
+    if(Level <= 3)
+      printf(SU_ANSI_HIGHLIGHT"[%.2d:%.2d:%.2d] FFSS(%d) : %s"SU_ANSI_RESET,TM->tm_hour,TM->tm_min,TM->tm_sec,Level,Str);
+    else
+      printf("[%.2d:%.2d:%.2d] FFSS(%d) : %s",TM->tm_hour,TM->tm_min,TM->tm_sec,Level,Str);
   }
 }
 
