@@ -31,6 +31,11 @@
 #ifndef rl_completion_matches
 #	define rl_completion_matches	completion_matches
 #endif
+#ifndef ding
+#	define FCA_ding rl_ding
+#else
+#	define FCA_ding ding
+#endif
 
 #define FCA_VAR_IS_ON(x)	x[1]=='n'
 	/* environment variables

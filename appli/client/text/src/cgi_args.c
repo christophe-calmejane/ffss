@@ -185,7 +185,7 @@ void FCA_init_download_headers(char *filename)
 			now how to get the MIME type
 			from a file name
 		 */
-	printf("Content-Disposition: attachment; filename=%s\n", filename);
+	printf("Content-Disposition: attachment; filename=\"%s\"\n", filename);
 	printf("Content-type: application/octet-stream\n\n");
 }
 

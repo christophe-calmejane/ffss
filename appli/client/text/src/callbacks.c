@@ -132,9 +132,9 @@ void FCA_OnMasterError(int Code,const char Descr[])
 }
 
     /* error */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[])
+bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value)
 {
-	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s)\n", Code, Descr);
+	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s, value=%d)\n", Code, Descr, Code==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
 	if(Code==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {
 		FCA_print_warning("This server supports only useconnsock mode, switching to this one");
 		sprintf(FCA_useConnSock, "on");
@@ -152,6 +152,7 @@ bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[])
 	FCA_sem_post();
 	return true;
 }
+
     /* connection lost */
 void FCA_OnEndTCPThread(SU_PClientSocket Server)
 {

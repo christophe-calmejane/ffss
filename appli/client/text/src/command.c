@@ -254,7 +254,6 @@ void FCA_interpret_cmd()
 	    			FCA_sem_wait();
 			}
 		}
-		FFSS_PrintDebug(3, "(client) apres le wait\n");
 	}
 		/* newCommand = command has been dupped, so it must be freed now */
 	if(newCommand)
@@ -665,7 +664,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 				FCA_print_time(t2-t1);
 				FCA_info_size(FCA_dw_tot_size/(t2-t1), " (%d");
 				FCA_infos("B/s).\n");
-				ding(); /* dong */
+				FCA_ding(); /* dong */
 			} else {
 				FCA_print_cmd_err("cannot do this operation on a directory");
 				return false;

@@ -21,7 +21,7 @@ void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comment
 void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
 void FCA_OnMasterError(int Code,const char Descr[]);
     /* TCP */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[]);
+bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value);
 bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries);
 void FCA_OnEndTCPThread(SU_PClientSocket Server);
 void FCA_OnIdleTimeout(SU_PClientSocket Client);

@@ -169,6 +169,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 			} else if(oldsize<size) {	/* exists, need ot resume */
 				FCA_print_info("resuming download...");
 				start=oldsize;
+				FCA_dw_amount=start;
 			} else {			/* exists, but bad size */
 				printf("file %s already exists (bigger size), download it ", LocalPath);
 				if(!FCA_question("again") )
@@ -530,7 +531,7 @@ char **FCA_completion(char *text, int start, int end)
     
 	/* if we are typing a command */
     if(!start)
-	matches = rl_completion_matches (text, (void*)FCA_cmd_gen);
+	matches = rl_completion_matches ((const char *)text, FCA_cmd_gen);
     else {
 		/* get the command name */
 	SU_strcpy(first_comm, rl_line_buffer, FCA_MAX_CMD);
