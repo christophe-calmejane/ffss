@@ -106,7 +106,7 @@ AC_ARG_ENABLE(malloc_trace,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-malloc_trace) ;;
 esac],[malloc_trace=false])
 if test "$malloc_trace" = "true"; then
-  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE -DSU_TRACE_INTERNAL "
 fi
 
 AC_ARG_ENABLE(ftp,

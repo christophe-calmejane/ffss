@@ -2284,7 +2284,7 @@ else
 fi
 
 if test "$malloc_trace" = "true"; then
-  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE -DSU_TRACE_INTERNAL "
 fi
 
 # Check whether --enable-ftp or --disable-ftp was given.
