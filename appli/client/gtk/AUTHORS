@@ -3,15 +3,3 @@ FFSS gtk Client Version 1.0.0
 URL    : http://zekiller.skytech.org
 mailto : zekiller@skytech.org
 
-
-COMPILATION & INSTALL :
-
-  ./configure
-  make
-  (become root)
-  make install
-
-
-UNISTALL :
-  make uninstall
-
