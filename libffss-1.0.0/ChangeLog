@@ -3,10 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : July, 22th 2002
+                  Last Update : July, 23th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+July, 23th 2002:
+  - Fixed bug in client's parsing message routine (wrong unpack call)
 
 July, 22th 2002:
   - Changed protocol (a user pointer is passed to outgoing messages, and must be returned in incoming messages)

@@ -207,7 +207,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         Comments[i] = str2;
       }
       if(FFSS_CB.CCB.OnSharesListing != NULL)
-        FFSS_CB.CCB.OnSharesListing (IP,(const char **)Names,(const char **)Comments,val);
+        FFSS_CB.CCB.OnSharesListing (IP,(const char **)Names,(const char **)Comments,val,lval);
       free(Names);
       free(Comments);
       break;

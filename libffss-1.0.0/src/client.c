@@ -510,7 +510,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_REC_DIR_LISTING_ANSWER :
       context;
-      lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
