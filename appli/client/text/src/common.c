@@ -58,6 +58,7 @@ const FCA_Tvar FCA_VARS[]= {
 	{"skin",	"the skin",					"name",		FCA_upd_skin},
 	{"broadcast_timeout","timeout when listing domain None, in seconds","1-120",	NULL},
 	{"search_timeout","timeout when searching in all domains, in seconds","1-120",	NULL},
+	{"operation_timeout","timeout when doing something, in seconds","1-120",	NULL},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
@@ -77,6 +78,7 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{FCA_SKINLIST, NULL},
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
 	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
+	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", "240", NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
@@ -372,8 +374,8 @@ void *FCA_sem_timer()
 		/* we mustn't ignore the SIG_USE1 signal */
 	FCA_restore_usr1();
 	signal(SIGUSR1, FCA_timer_handusr1);
-	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_SEM_TIMEOUT);
-	sleep(FCA_SEM_TIMEOUT);
+	FFSS_PrintDebug(1, "(client) timer launched for %d seconds\n", FCA_operation_timeout);
+	sleep(FCA_operation_timeout);
 		/* now we must ignore SIG_USR1 */
 	FCA_ignore_usr1();
 

@@ -14,9 +14,6 @@
 #include <ffss.h>
 #include <skyutils.h>
 
-#define FCA_SEM_TIMEOUT		10 /* seconds */
-#define FCA_THREAD_TIMEOUT	1
-
 #define FCA_VARNAME_MAX		20
 #define FCA_ALIAS_MAX		20
 
@@ -44,7 +41,8 @@
 #define FCA_skin_name		FCA_env[6]
 #define FCA_broadcast_timeout	atoi(FCA_env[7])
 #define FCA_search_timeout	atoi(FCA_env[8])
-#define FCA_skin_env_index	9
+#define FCA_operation_timeout	atoi(FCA_env[9])
+#define FCA_skin_env_index	10
 
 
 typedef struct
