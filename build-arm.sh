@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CC=arm-linux-gcc
+export CC=arm-linux-gcc
 
 archdir=`pwd`
 echo

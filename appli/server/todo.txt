@@ -45,3 +45,5 @@ TO DO :
 [23:32:23] <kiki>  hum.. d ailleurs, faut que j ajoute un callback OnShutdown et OnStartup
 
  - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)
+
+ - Lors du RESCAN des shares .... ENVOYER L INDEX AU MASTER !!!!

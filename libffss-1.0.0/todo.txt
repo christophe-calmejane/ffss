@@ -16,3 +16,5 @@
      >> [11:46:04] <kiki[Artabel]>  writev
      >> [11:46:09] <kiki[Artabel]>  WSPSend
      >> [11:46:16] <kiki[Artabel]>  pour envoyer des buffers a concatener
+
+ - AC_C_BIGENDIAN define WORDS_BIGENDIAN

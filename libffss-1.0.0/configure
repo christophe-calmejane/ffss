@@ -2976,5 +2976,5 @@ else
 fi
 echo "BZlib for compression : $tmp"
 echo
-echo "Type 'make' to build ffss library"
+echo "Type 'make' to build ffss library (try 'gmake' if it fails)"
 echo
