@@ -77,6 +77,7 @@ printf("POUF\n");
 void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,int NbAnswers)
 {
 	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
+	
 	if(FCA_inDispFind || !FCA_multiFind)
 		FCA_print_search(Query,Domain,Answers,NbAnswers);
 	else

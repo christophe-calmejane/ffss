@@ -8,9 +8,6 @@ les plus importants.
 
 
 ---------------------------
-preparer le terrain pour virtual fs mc
-
----------------------------
 semaphore: timeout a _faire_
 -> choper la commande handle a kiki/botnet
 c comme un process normal, si tu hook pas le signal, ca termine
@@ -32,6 +29,10 @@ proposer de desactiver la gestion des skins a la compil
 (au configure)
 
 ----------------------------
+proposer d'aller sur des machines off dans un domaine (avec confirmation)
+
+----------------------------
+=======
 voir le pb avec completion_matches et les versions de readline.
 
 ----------------------------
@@ -49,6 +50,9 @@ c sa taille sinon, tous les 10Mo
 
 ----------------------------
 DEBUGGER le pompage recursif
+
+----------------------------
+faire un FCA_PrintDebug (mais pas le passer en printf si FFSS_PrintDebug existe pas)
 
 ----------------------------
 mettre a jour les FAQ et les mans
@@ -100,6 +104,11 @@ bug: aller n'importe ou, puis faire cd -> completion marche pu
 ----------------------------
 utiliser FC_SendMessage_MasterSearch()
 -> Il faut l'utiliser si on m'a pas indique de master
+
+if(ProtocolVersion < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE)
+[00:11:16] <kiki>         FFSS_PrintSyslog(LOG_WARNING,"Master %s uses an
+ inferior FFSS protocol version (%ld), maybe you should contact
+ ffss-master administrator for upgrade\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
 
 ----------------------------
 pompage de dossiers a finir
