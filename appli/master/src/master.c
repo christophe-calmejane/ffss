@@ -423,8 +423,8 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
 #ifdef DEBUG
   printf("Starting index thread\n");
 #endif /* DEBUG */
-  tmp_ip = inet_ntoa(SAddr.sin_addr);
   memcpy(&SAddr,&FM_CurrentClient,sizeof(FM_CurrentClient));
+  tmp_ip = inet_ntoa(SAddr.sin_addr);
   FM_CurrentIndexSize = 0;
   if(!Samba)
   {
