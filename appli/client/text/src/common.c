@@ -304,7 +304,7 @@ bool isDirValid(char *path, char *dir)
 	/* thread manipulation */
 void FCA_sem_init()
 {
-	sem_init(&FCA_prmptSem,0,0);
+	SU_CreateSem(&FCA_prmptSem, 0, 0, "promptsem");
 	FCA_sem_locked=false;
 	FCA_wait_threading=false;
 }
@@ -424,21 +424,25 @@ void FCA_sem_post()
 
 void FCA_ignore_usr1()
 {
+#ifdef __unix__
 	sigset_t mask;
 	
 	sigemptyset(&mask);
 		/* ignore only SIG_USR1 */
 	sigaddset(&mask, SIGUSR1);
 	pthread_sigmask(SIG_BLOCK,&mask,NULL);
+#endif
 }
 
 void FCA_restore_usr1()
 {
+#ifdef __unix__
 	sigset_t mask;
 	
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGUSR1);
 	pthread_sigmask(SIG_UNBLOCK,&mask,NULL);
+#endif
 }
 
 
