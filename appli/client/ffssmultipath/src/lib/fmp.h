@@ -8,6 +8,7 @@
 #define FMP_PATH_STATE_TRANSFERING   2
 #define FMP_PATH_STATE_COMPLETED     3
 #define FMP_PATH_STATE_PAUSED        4
+#define FMP_PATH_STATE_CANCELED      5
 
 #define FMP_BLOC_STATE_NOT_GOT  0
 #define FMP_BLOC_STATE_GETTING  1
@@ -15,28 +16,32 @@
 
 #define FMP_ERRCODE_UNKNOWN_ERROR           1
 #define FMP_ERRCODE_SEMAPHORE_CREATE_ERROR  2
-#define FMP_ERRCODE_HOST_DOWN               3
-#define FMP_ERRCODE_SHARE_CONNECT_FAILED    4
-#define FMP_ERRCODE_FILE_NOT_FOUND          5
-#define FMP_ERRCODE_SERVER_IS_QUIET         6
-#define FMP_ERRCODE_ACCESS_DENIED           7
-#define FMP_ERRCODE_XFER_MODE_NOT_SUPPORTED 8
-#define FMP_ERRCODE_TOO_MANY_TRANSFERS      9
-#define FMP_ERRCODE_SERVER_INTERNAL_ERROR   10
-#define FMP_ERRCODE_SERVER_CANNOT_CONNECT   11
-#define FMP_ERRCODE_TRANSFER_MALLOC         12
-#define FMP_ERRCODE_TRANSFER_TIMEOUT        13
-#define FMP_ERRCODE_TRANSFER_SEND           14
-#define FMP_ERRCODE_TRANSFER_EOF            15
-#define FMP_ERRCODE_TRANSFER_READ_FILE      16
-#define FMP_ERRCODE_TRANSFER_ACCEPT         17
-#define FMP_ERRCODE_TRANSFER_OPENING        18
-#define FMP_ERRCODE_TRANSFER_RECV           19
-#define FMP_ERRCODE_TRANSFER_WRITE_FILE     20
-#define FMP_ERRCODE_TRANSFER_FILE_BIGGER    21
-#define FMP_ERRCODE_TRANSFER_CHECKSUM       22
-#define FMP_ERRCODE_TRANSFER_CANCELED       23
-#define FMP_ERRCODE_TRANSFER_SUSPENDED      24
+#define FMP_ERRCODE_RESOURCE_NOT_AVAIL      3
+#define FMP_ERRCODE_SHARE_DISABLED          4
+#define FMP_ERRCODE_TOO_MANY_CONNECTIONS    5
+#define FMP_ERRCODE_NEED_LOGIN_PASS         6
+#define FMP_ERRCODE_HOST_DOWN               4
+#define FMP_ERRCODE_SHARE_CONNECT_FAILED    5
+#define FMP_ERRCODE_FILE_NOT_FOUND          6
+#define FMP_ERRCODE_SERVER_IS_QUIET         7
+#define FMP_ERRCODE_ACCESS_DENIED           8
+#define FMP_ERRCODE_XFER_MODE_NOT_SUPPORTED 9
+#define FMP_ERRCODE_TOO_MANY_TRANSFERS      10
+#define FMP_ERRCODE_SERVER_INTERNAL_ERROR   11
+#define FMP_ERRCODE_SERVER_CANNOT_CONNECT   12
+#define FMP_ERRCODE_TRANSFER_MALLOC         13
+#define FMP_ERRCODE_TRANSFER_TIMEOUT        14
+#define FMP_ERRCODE_TRANSFER_SEND           15
+#define FMP_ERRCODE_TRANSFER_EOF            16
+#define FMP_ERRCODE_TRANSFER_READ_FILE      17
+#define FMP_ERRCODE_TRANSFER_ACCEPT         18
+#define FMP_ERRCODE_TRANSFER_OPENING        19
+#define FMP_ERRCODE_TRANSFER_RECV           20
+#define FMP_ERRCODE_TRANSFER_WRITE_FILE     21
+#define FMP_ERRCODE_TRANSFER_FILE_BIGGER    22
+#define FMP_ERRCODE_TRANSFER_CHECKSUM       23
+#define FMP_ERRCODE_TRANSFER_CANCELED       24
+#define FMP_ERRCODE_TRANSFER_SUSPENDED      25
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +66,7 @@ typedef struct
   void (*OnDownloadComplete)(struct FMP_SFile *File,FFSS_LongField UserTag,const char Name[]); /* 'UserTag' and 'File' passed to FMP_StartDownload */
 } FMP_TCB, *FMP_PCB;
 
-typedef void (* FMP_LISTPATHS_CB)(const struct FMP_SFile *File,struct FMP_SPath *Pth,const char IP[],const char Path[],FFSS_Field State,FFSS_LongField UserTag);
+typedef void (* FMP_LISTPATHS_CB)(const struct FMP_SFile *File,const struct FMP_SPath *Pth,const char IP[],const char Path[],FFSS_Field State,FFSS_LongField UserTag);
 
 /* INIT / UNINIT FUNCTIONS */
 bool FMP_Init(const char Master[]); /* False if failed : Use FMP_GetLastError for more infos */ /* Overrides all FFSS_CB.CCB values */

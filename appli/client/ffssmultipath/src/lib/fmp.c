@@ -404,7 +404,7 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
 #endif
     SU_THREAD_SET_SPECIFIC(FMP_tskey,Path);
   }
-  if((Path->State == FMP_PATH_STATE_NOT_CONNECTED) && (Code != FFSS_ERROR_NO_ERROR))
+  if((Path->State == FMP_PATH_STATE_NOT_CONNECTED) && (Code == FFSS_ERROR_REMOTE_CLOSED))
   {
 #ifdef DEBUG
     printf("FFSS_OnError : Not connected, ignoring error message\n");
@@ -449,6 +449,26 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
     case FFSS_ERROR_ACCESS_DENIED :
       if(FMP_CB.OnError != NULL)
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_ACCESS_DENIED);
+      Error = true;
+      break;
+    case FFSS_ERROR_RESOURCE_NOT_AVAIL :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_RESOURCE_NOT_AVAIL);
+      Error = true;
+      break;
+    case FFSS_ERROR_SHARE_DISABLED :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_DISABLED);
+      Error = true;
+      break;
+    case FFSS_ERROR_TOO_MANY_CONNECTIONS :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_TOO_MANY_CONNECTIONS);
+      Error = true;
+      break;
+    case FFSS_ERROR_NEED_LOGIN_PASS :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_NEED_LOGIN_PASS);
       Error = true;
       break;
     default :
@@ -820,7 +840,6 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
       continue;
     }
   }
-  printf("FMP_StreamingRoutine Terminating\n");
 }
 
 /* ***************** INIT AND UNINIT ****************** */
@@ -1015,6 +1034,7 @@ void FMP_CancelDownload(struct FMP_SFile *File)
   while(Ptr != NULL)
   {
     Pth = (FMP_PPath) Ptr->Data;
+    Pth->State = FMP_PATH_STATE_CANCELED;
     Pth->MustCancel = true;
     Ptr = Ptr->Next;
   }
