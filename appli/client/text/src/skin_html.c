@@ -242,7 +242,7 @@ FCA_form_hidden_args(true);printf("
 	p=FCA_get_a_domain();
 	while(p) {
 		if(SU_strcasecmp(p, "None"))
-			printf("    <option%s>%s\n", SU_strcasecmp(p, domain)?"":" checked", p);
+			printf("    <option%s>%s\n", SU_strcasecmp(p, domain)?"":" selected", p);
 		p=FCA_get_a_domain();
 	}
 printf("   </select>&nbsp;<input type='submit' value='search'>
