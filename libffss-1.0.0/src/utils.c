@@ -368,3 +368,26 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
   }
 }
 
+int FFSS_GetFFSSOptions(void)
+{
+  int Flags = 0;
+#ifdef DEBUG
+  Flags |= FFSS_OPTIONS_DEBUG;
+#endif /* DEBUG */
+#ifdef HAVE_BZLIB
+  Flags |= FFSS_OPTIONS_BZLIB;
+#endif /* HAVE_BZLIB */
+#ifdef FFSS_CONTEXT
+  Flags |= FFSS_OPTIONS_CONTEXT;
+#endif /* FFSS_CONTEXT */
+#ifdef SU_MALLOC_TRACE
+  Flags |= FFSS_OPTIONS_MALLOC_TRACE;
+#endif /* SU_MALLOC_TRACE */
+#ifdef FFSS_FTP
+  Flags |= FFSS_OPTIONS_FTP;
+#endif /* FFSS_FTP */
+#ifdef DISABLE_CHECKSUM
+  Flags |= FFSS_OPTIONS_NO_CHECKSUM;
+#endif /* DISABLE_CHECKSUM */
+  return Flags;
+}

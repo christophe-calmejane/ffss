@@ -305,6 +305,13 @@
 #define FFSS_EXE_NB_EXT    5
 #define FFSS_ZIP_NB_EXT   10
 
+#define FFSS_OPTIONS_DEBUG        1
+#define FFSS_OPTIONS_BZLIB        2
+#define FFSS_OPTIONS_CONTEXT      4
+#define FFSS_OPTIONS_MALLOC_TRACE 8
+#define FFSS_OPTIONS_FTP          16
+#define FFSS_OPTIONS_NO_CHECKSUM  32
+
 #define CRLF "\xD\xA"
 #define FFSS_SUPER_MAGIC 0xFF55
 
@@ -910,6 +917,8 @@ char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out);
 bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out);
 char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out);
 #endif /* HAVE_BZLIB */
+/* Returns FFSS library compilation options (FFSS_OPTIONS_xx) */
+int FFSS_GetFFSSOptions(void);
 
 extern char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT];
 extern char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT];
