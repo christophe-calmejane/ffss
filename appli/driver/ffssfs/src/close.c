@@ -122,12 +122,12 @@ FsdClose (
             FreeVcb = TRUE;
         }
 
-        KdPrint((
+/*        KdPrint((
             DRIVER_NAME ": OpenHandleCount: %-7u ReferenceCount: %-7u %s\n",
             Fcb->OpenHandleCount,
             Fcb->ReferenceCount,
             Fcb->AnsiFileName.Buffer
-            ));
+            ));*/
 
         FsdFreeCcb(Ccb);
 

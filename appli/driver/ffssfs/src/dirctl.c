@@ -617,14 +617,15 @@ FsdQueryDirectory (
             FileIndex++;
             Ccb->CurrentByteOffset = FileIndex;
 
-            if (UsedLength && ReturnSingleEntry)
+            //if (UsedLength && ReturnSingleEntry) /* Bug in romFs */
+            if (UsedLength || ReturnSingleEntry)
             {
                 Status = STATUS_SUCCESS;
                 __leave;
             }
         }
 
-        if (!UsedLength)
+        if (!UsedLength) /* Nothing filled in buffer */
         {
             if (FirstQuery)
             {
@@ -644,7 +645,7 @@ FsdQueryDirectory (
     {
         if(Inode != NULL)
         {
-          FsdFreeFFSSInode(Inode,true);
+          FsdFreeInode(Inode,true);
         }
 
         if (FcbResourceAcquired)

@@ -166,12 +166,12 @@ FsdCleanup (
         IoRemoveShareAccess(FileObject, &Fcb->ShareAccess);
 #endif
 
-        KdPrint((
+/*        KdPrint((
             DRIVER_NAME ": OpenHandleCount: %-7u ReferenceCount: %-7u %s\n",
             Fcb->OpenHandleCount,
             Fcb->ReferenceCount,
             Fcb->AnsiFileName.Buffer
-            ));
+            ));*/
 
         Status = STATUS_SUCCESS;
     }

@@ -31,41 +31,37 @@ FfssUDP *pUDP;
 /* ********************************************************************** */
 /* ************************** UDP CALLBACKS ***************************** */
 /* ********************************************************************** */
-void OnDomainListingAnswer(const char **Domains,int NbDomains)
+void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User)
 {
   int i;
-  struct ffss_inode *Inode;
+  struct ffss_inode *Inode,*Root;
+
+  Root = (struct ffss_inode *) User;
+  if(Root == NULL)
+    return;
 
   LOCK_SUPERBLOCK_RESOURCE;
-  if(FFSS_SuperBlock->Root->NbInodes != 0)
-  {
-    for(i=0;i<FFSS_SuperBlock->Root->NbInodes;i++)
-    {
-      FsdFreeFFSSInode(FFSS_SuperBlock->Root->Inodes[i],false);
-    }
-    FsdFreePool(FFSS_SuperBlock->Root->Inodes);
-    FFSS_SuperBlock->Root->Inodes = NULL;
-    FFSS_SuperBlock->Root->NbInodes = 0;
-  }
+  FsdFreeSubInodes(Root,false);
 
   if(NbDomains != 0)
   {
-    FFSS_SuperBlock->Root->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'nuSD');
+    Root->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'nuSD');
     for(i=0;i<NbDomains;i++)
     {
       Inode = FsdAllocInode(Domains[i],FFSS_INODE_DOMAIN);
       Inode->Flags = FFSS_FILE_DIRECTORY;
-      Inode->Parent = FsdAssignFFSSInode(FFSS_SuperBlock->Root,false);
-      FFSS_SuperBlock->Root->Inodes[i] = FsdAssignFFSSInode(Inode,false);
+      Inode->Parent = FsdAssignInode(Root,false);
+      Root->Inodes[i] = FsdAssignInode(Inode,false);
     }
-    FFSS_SuperBlock->Root->NbInodes = NbDomains;
+    Root->NbInodes = NbDomains;
   }
+  FsdFreeInode(Root,false);
   UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
   /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
   /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
-void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList) /* SU_PList of FM_PHost */
+void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User) /* SU_PList of FM_PHost */
 {
   FM_PHost Host;
   SU_PList Ptr;
@@ -73,11 +69,16 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList) /* 
   int i,count = 0;
 
   LOCK_SUPERBLOCK_RESOURCE;
-  domain = FsdGetInodeFromDomain((char *)Domain);
+  domain = (struct ffss_inode *) User;
+  if(domain == NULL)
+  {
+    KdPrint(("OnServerListingAnswer : User Pointer is NULL... retrieving domain inode from SuperBlock\n"));
+    domain = FsdGetInodeFromDomain((char *)Domain);
+  }
   if(domain == NULL)
   {
     /* Free IPs */
-    KdPrint(("OnServerListingAnswer : WARNING : Domain %s does not exists !!!!!\n",Domain));
+    KdPrint(("OnServerListingAnswer : WARNING : Domain %s does not exist !!!!!\n",Domain));
     /* TO DO -> Creer le domain, et l'ajouter a la liste des domaines du root */
     UNLOCK_SUPERBLOCK_RESOURCE;
     return;
@@ -91,19 +92,65 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList) /* 
     {
       Host = (FM_PHost) Ptr->Data;
       KdPrint(("OnServerListingAnswer : Got server %s (State = %d)\n",Host->Name,Host->State));
+#if !DBG
       if(Host->State != FFSS_STATE_OFF)
+#endif
       {
         Inode = FsdAllocInode(Host->Name,FFSS_INODE_SERVER);
         Inode->Flags = FFSS_FILE_DIRECTORY;
-        //--- Host->IP
-        Inode->Parent = FsdAssignFFSSInode(domain,false);
-        domain->Inodes[i] = FsdAssignFFSSInode(Inode,false);
+        Inode->IP = Host->IP;
+        Inode->Parent = FsdAssignInode(domain,false);
+        domain->Inodes[i] = FsdAssignInode(Inode,false);
         count++;
       }
+#if !DBG
+      else
+        free(Host->IP);
+#endif
       Ptr = Ptr->Next;
     }
     domain->NbInodes = count;
   }
+  FsdFreeInode(domain,false);
+  UNLOCK_SUPERBLOCK_RESOURCE;
+}
+
+void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares,FFSS_LongField User)
+{
+  struct ffss_inode *Inode,*server;
+  int i,len;
+
+  LOCK_SUPERBLOCK_RESOURCE;
+  server = (struct ffss_inode *) User;
+  if(server == NULL)
+  {
+    KdPrint(("OnSharesListing : User Pointer is NULL... retrieving server inode from SuperBlock\n"));
+    server = FsdGetInodeFromServerIP((char *)IP);
+  }
+  if(server == NULL)
+  {
+    KdPrint(("OnSharesListing : WARNING : Server %s does not exist !!!!!\n",IP));
+    UNLOCK_SUPERBLOCK_RESOURCE;
+    return;
+  }
+  FsdFreeSubInodes(server,false);
+  if(NbShares != 0)
+  {
+    server->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbShares, 'nuSS');
+    for(i=0;i<NbShares;i++)
+    {
+      KdPrint(("OnSharesListing : Got share %s\n",Names[i]));
+      Inode = FsdAllocInode(Names[i],FFSS_INODE_SHARE);
+      Inode->Flags = FFSS_FILE_DIRECTORY;
+      len = strlen(IP) + 1;
+      Inode->IP = (char *) malloc(len);
+      RtlCopyMemory(Inode->IP,IP,len);
+      Inode->Parent = FsdAssignInode(server,false);
+      server->Inodes[i] = FsdAssignInode(Inode,false);
+    }
+    server->NbInodes = NbShares;
+  }
+  FsdFreeInode(server,false);
   UNLOCK_SUPERBLOCK_RESOURCE;
 }
 
@@ -193,7 +240,7 @@ FfssUDP::FfssUDP() : KDatagramSocket()
   /* UDP callbacks */
   FFSS_CB.CCB.OnDomainListingAnswer = OnDomainListingAnswer;
   FFSS_CB.CCB.OnServerListingAnswer = OnServerListingAnswer;
-  /*FFSS_CB.CCB.OnSharesListing = OnSharesListing;*/
+  FFSS_CB.CCB.OnSharesListing = OnSharesListing;
   /* TCP callbacks */
   /*FFSS_CB.CCB.OnError = OnError;
   FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;*/

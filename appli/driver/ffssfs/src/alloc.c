@@ -251,7 +251,7 @@ FsdAllocateFcb (
 
     Fcb->Flags = 0;
 
-    Fcb->ffss_inode = FsdAssignFFSSInode(ffss_inode,true);
+    Fcb->ffss_inode = FsdAssignInode(ffss_inode,true);
 
     RtlZeroMemory(&Fcb->CommonFCBHeader, sizeof(FSRTL_COMMON_FCB_HEADER));
 
@@ -284,6 +284,7 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 
   ffss_inode->Type = Type;
   ffss_inode->Parent = NULL;
+  ffss_inode->IP = NULL;
   ffss_inode->Inodes = NULL;
   ffss_inode->NbInodes = 0;
   ffss_inode->RefCount = 0;
@@ -296,11 +297,11 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 }
 
 /* SuperBlock must be locked (or Lock must be TRUE) */
-struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
+struct ffss_inode *FsdAssignInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
 #if DBG
   if(Lock != true && Lock != false)
-    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignFFSSInode (%d %d %d) !!!\n",Lock,true,false));
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdAssignInode (%d %d %d) !!!\n",Lock,true,false));
 #endif
   if(Lock)
   {
@@ -314,7 +315,7 @@ struct ffss_inode *FsdAssignFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BO
 }
 
 /* SuperBlock must be locked (or Lock must be TRUE) */
-VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
+VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
 {
   int i;
 
@@ -322,7 +323,7 @@ VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
     return;
 #if DBG
   if(Lock != true && Lock != false)
-    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeFFSSInode (%d %d %d) !!!\n",Lock,true,false));
+    KdPrint(("AIE AIE AIE !!! bool != true or false in FsdFreeInode (%d %d %d) !!!\n",Lock,true,false));
 #endif
   if(Lock)
     LOCK_SUPERBLOCK_RESOURCE;
@@ -334,18 +335,21 @@ VOID FsdFreeFFSSInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
     return;
   }
 
+  KdPrint(("FsdFreeInode : Freeing inode (%d) %s\n",ffss_inode->Type,ffss_inode->Name));
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
     {
-      FsdFreeFFSSInode(ffss_inode->Inodes[i],false);
+      FsdFreeInode(ffss_inode->Inodes[i],false);
     }
     FsdFreePool(ffss_inode->Inodes);
   }
   if(ffss_inode->Name != NULL)
     FsdFreePool(ffss_inode->Name);
   if(ffss_inode->Parent != NULL)
-    FsdFreeFFSSInode(ffss_inode->Parent,false);
+    FsdFreeInode(ffss_inode->Parent,false);
+  if(ffss_inode->IP != NULL)
+    free(ffss_inode->IP); /* Allocated by ffss library using 'malloc'... free it with 'free' */
 
   FsdFreePool(ffss_inode);
   if(Lock)
@@ -370,7 +374,7 @@ VOID FsdFreeSubInodes(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
     {
-      FsdFreeFFSSInode(ffss_inode->Inodes[i],false);
+      FsdFreeInode(ffss_inode->Inodes[i],false);
     }
     FsdFreePool(ffss_inode->Inodes);
     ffss_inode->Inodes = NULL;
@@ -387,7 +391,7 @@ struct ffss_super_block *FsdAllocSuperBlock(void)
 
   super_block = (struct ffss_super_block *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_super_block), 'puSR');
 
-  super_block->Root = FsdAssignFFSSInode(FsdAllocInode("",FFSS_INODE_ROOT),false);
+  super_block->Root = FsdAssignInode(FsdAllocInode("",FFSS_INODE_ROOT),false);
   super_block->Root->Flags = FFSS_FILE_DIRECTORY;
   ExInitializeResourceLite(&(super_block->Resource));
 
@@ -401,7 +405,7 @@ VOID FsdFreeSuperBlock(IN struct ffss_super_block *ffss_super_block)
   if(ffss_super_block == NULL)
     return;
 
-  FsdFreeFFSSInode(ffss_super_block->Root,true);
+  FsdFreeInode(ffss_super_block->Root,true);
   ffss_super_block->Root = NULL;
   ExDeleteResourceLite(&ffss_super_block->Resource);
   FsdFreePool(ffss_super_block);
@@ -412,6 +416,7 @@ FsdFreeFcb (
     IN PFSD_FCB Fcb
     )
 {
+  KdPrint(("FsdFreeFcb : %s\n",Fcb->FileName.Buffer));
     ASSERT(Fcb != NULL);
 
     ASSERT((Fcb->Identifier.Type == FCB) &&
@@ -429,7 +434,7 @@ FsdFreeFcb (
 
     FsdFreePool(Fcb->AnsiFileName.Buffer);
 
-	FsdFreeFFSSInode(Fcb->ffss_inode,true);
+	FsdFreeInode(Fcb->ffss_inode,true);
 
     FsdFreePool(Fcb);
 }
