@@ -316,8 +316,6 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmSeek(Client,val,val2,lval);
         break;
       default :
-        if(FFSS_CB.SCB.OnError != NULL)
-          FFSS_CB.SCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
         FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),Type);
         ret_val = false;
     }
@@ -613,8 +611,6 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(1,"Error on TCP port of the server (SOCKET_ERROR : %d)\n",errno);
-      if(FFSS_CB.SCB.OnError != NULL)
-        FFSS_CB.SCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
       SU_FreeCS(Client);
@@ -623,8 +619,6 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     }
     else if(res == 0)
     {
-      if(FFSS_CB.SCB.OnError != NULL)
-        FFSS_CB.SCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
       SU_FreeCS(Client);
@@ -639,8 +633,6 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       if(len < 5)
       {
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
-        if(FFSS_CB.SCB.OnError != NULL)
-          FFSS_CB.SCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
         if(FFSS_CB.SCB.OnEndTCPThread != NULL)
           FFSS_CB.SCB.OnEndTCPThread();
         SU_FreeCS(Client);

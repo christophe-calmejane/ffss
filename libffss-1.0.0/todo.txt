@@ -1,4 +1,11 @@
- - Dans le common.c, qd un message est ignore, ajouter le nom de la machine dans une liste des
+- Ajouter un message de cryptage (en mode connecte) dans le protocol : DWORD CryptType, ... DATAs (de la taille du packet - entete)
+  Une fonction a qui on passe le CryptType et les data (cle privee/publique par ex) (et la socket, si il doit communiquer avec l autre bout pour un echange)
+  Une fonction dans le thread de message (juste avant analyse_packet) a qui on passe le packet pour decryptage
+  Mettre ces 2 fonctions dans un fichier crypt.c
+
+- Renvoyer la version exacte de windows a la place de "Win32"
+
+- Dans le common.c, qd un message est ignore, ajouter le nom de la machine dans une liste des
  machines dont le message a ete refuse, et eventuellement logger dans un log different.
  Au bout d un certain nombre de fois ou la machine est dans cette liste, bannir la machine
 
