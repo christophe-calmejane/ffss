@@ -24,7 +24,10 @@ void SearchAnswerEnd(struct FMP_SSearch *Sch,FFSS_LongField UserTag)
 {
   printf("End of List for Tag %lld\n",UserTag);
   if(!FMP_StartDownload(fil,"./toto.out",1))
+  {
     printf("Start download failed : %s\n",FMP_GetLastError());
+    exit(-1);
+  }
 }
 
 
@@ -33,9 +36,9 @@ void OnError(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,
   printf("Error : %ld at Idx %ld from %s for %s\n",ErrorCode,Idx,IP,Name);
 }
 
-void OnPacketReceived(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+void OnPacketReceived(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket,FFSS_Field Throughput) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
 {
-  printf("Packet received for Idx %ld from %s - Size = %ld\n",Idx,IP,SizeOfPacket);
+  //printf("Packet received for Idx %ld from %s - Size = %ld (%ld bytes/s)\n",Idx,IP,SizeOfPacket,Throughput);
 }
 
 void OnBlocComplete(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[]) /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */

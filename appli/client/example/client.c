@@ -243,7 +243,7 @@ int main()
       return -1;
     printf("Client running...\n");
 
-    FC_SendMessage_ShareConnect("10.0.0.2","Toto",NULL,NULL,0);
+    FC_SendMessage_ShareConnect("10.0.0.2","mp3",NULL,NULL,0);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
     sleep(20);
     return 0;

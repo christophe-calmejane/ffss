@@ -1114,7 +1114,7 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   else
     pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
-  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Download message to server for %s starting at %ld (ending at %ld)",Path,StartingPos,EndingPos);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Download message to server for %s starting at %lld (ending at %lld)",Path,StartingPos,EndingPos);
   resp = FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
   if(!resp)
   {

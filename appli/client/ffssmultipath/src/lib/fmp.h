@@ -11,17 +11,29 @@
 #define FMP_BLOC_STATE_GETTING  1
 #define FMP_BLOC_STATE_GOT      2
 
-#define FMP_ERRCODE_SEMAPHORE_CREATE_ERROR 1
-#define FMP_ERRCODE_HOST_DOWN              2
-#define FMP_ERRCODE_SHARE_CONNECT_FAILED   3
-#define FMP_ERRCODE_FILE_NOT_FOUND         4
-#define FMP_ERRCODE_SERVER_IS_QUIET        5
-#define FMP_ERRCODE_ACCESS_DENIED          6
-#define FMP_ERRCODE_BAD_FILE_HANDLE        7
-#define FMP_ERRCODE_IO_ERROR               8
-#define FMP_ERRCODE_WRITE_ERROR            9
-#define FMP_ERRCODE_FOPEN_ERROR            10
-#define FMP_ERRCODE_UNKNOWN_ERROR          50
+#define FMP_ERRCODE_SEMAPHORE_CREATE_ERROR  1
+#define FMP_ERRCODE_HOST_DOWN               2
+#define FMP_ERRCODE_SHARE_CONNECT_FAILED    3
+#define FMP_ERRCODE_FILE_NOT_FOUND          4
+#define FMP_ERRCODE_SERVER_IS_QUIET         5
+#define FMP_ERRCODE_ACCESS_DENIED           6
+#define FMP_ERRCODE_XFER_MODE_NOT_SUPPORTED 7
+#define FMP_ERRCODE_TOO_MANY_TRANSFERS      8
+#define FMP_ERRCODE_SERVER_INTERNAL_ERROR   9
+#define FMP_ERRCODE_SERVER_CANNOT_CONNECT   10
+#define FMP_ERRCODE_TRANSFER_MALLOC         11
+#define FMP_ERRCODE_TRANSFER_TIMEOUT        12
+#define FMP_ERRCODE_TRANSFER_SEND           13
+#define FMP_ERRCODE_TRANSFER_EOF            14
+#define FMP_ERRCODE_TRANSFER_READ_FILE      15
+#define FMP_ERRCODE_TRANSFER_ACCEPT         16
+#define FMP_ERRCODE_TRANSFER_OPENING        17
+#define FMP_ERRCODE_TRANSFER_RECV           18
+#define FMP_ERRCODE_TRANSFER_WRITE_FILE     19
+#define FMP_ERRCODE_TRANSFER_FILE_BIGGER    20
+#define FMP_ERRCODE_TRANSFER_CHECKSUM       21
+#define FMP_ERRCODE_TRANSFER_CANCELED       22
+#define FMP_ERRCODE_UNKNOWN_ERROR           50
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +50,7 @@ typedef struct
   void (*OnSearchAnswerEnd)(struct FMP_SSearch *Sch,FFSS_LongField UserTag);
   /* Download callbacks */
   void (*OnError)(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field ErrorCode); /* 'UserTag' and 'File' passed to FMP_StartDownload */
-  void (*OnPacketReceived)(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket); /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
+  void (*OnPacketReceived)(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[],FFSS_Field SizeOfPacket,FFSS_Field Throughput); /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
   void (*OnBlocComplete)(struct FMP_SFile *File,FFSS_LongField UserTag,const FFSS_Field Idx,const char IP[],const char Path[],const char Name[]); /* 'UserTag' and 'File' passed to FMP_StartDownload, 'Idx' of FileBloc, 'IP' from where we got the packet,'Path' in its share, 'Name' of the file */
   void (*OnDownloadComplete)(struct FMP_SFile *File,FFSS_LongField UserTag,const char Name[]); /* 'UserTag' and 'File' passed to FMP_StartDownload */
 } FMP_TCB, *FMP_PCB;
