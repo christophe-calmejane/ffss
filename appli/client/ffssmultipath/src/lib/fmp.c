@@ -515,6 +515,7 @@ void FFSS_OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Des
   }
   if(Path->MustCancel)
   {
+    Path->State = FMP_PATH_STATE_CANCELED;
     if(FMP_CB.OnError != NULL)
       FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_TRANSFER_CANCELED);
   }
@@ -624,6 +625,7 @@ bool FFSS_OnTransferFileWrite(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size
 
   if(Path->MustCancel)
   {
+    Path->State = FMP_PATH_STATE_CANCELED;
     if(Path->Locked)
       SU_SEM_POST(Path->Sem);
     else
@@ -632,6 +634,7 @@ bool FFSS_OnTransferFileWrite(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size
   }
   if(Path->MustPause)
   {
+    Path->State = FMP_PATH_STATE_PAUSED;
     if(Path->Locked)
       SU_SEM_POST(Path->Sem);
     else
@@ -716,6 +719,13 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
     while((Path->State == FMP_PATH_STATE_NOT_CONNECTED) || (Path->MustPause))
     {
       /* Check for cancel/pause */
+      while(Path->MustPause)
+      {
+#ifdef DEBUG
+        printf("[%x] THREAD PAUSED... SLEEPING\n",SU_THREAD_SELF);
+#endif
+        SU_SLEEP(1);
+      }
       if(Path->MustCancel)
       {
         SU_SEM_WAIT(FMP_Sem_Search);
@@ -723,13 +733,6 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
         SU_SEM_POST(FMP_Sem_Search);
         printf("FMP_StreamingRoutine CANCELED\n");
         return;
-      }
-      while(Path->MustPause)
-      {
-#ifdef DEBUG
-        printf("[%x] THREAD PAUSED... SLEEPING\n",SU_THREAD_SELF);
-#endif
-        SU_SLEEP(1);
       }
 
       /* Trying to connect to the host */
@@ -827,6 +830,8 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
       printf("Try to find another bloc in 2min\n");
       if(!Path->MustCancel && !Path->MustPause)
         SU_SLEEP(FMP_ReconnectDelay); /* Else, retry in 2 min */
+      else
+        Path->State = FMP_PATH_STATE_NOT_CONNECTED;
       continue;
     }
   }
@@ -1030,6 +1035,7 @@ void FMP_CancelDownload(struct FMP_SFile *File)
     Pth = (FMP_PPath) Ptr->Data;
     Pth->State = FMP_PATH_STATE_CANCELED;
     Pth->MustCancel = true;
+    Pth->MustPause = false;
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FMP_Sem_Search);
