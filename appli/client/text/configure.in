@@ -146,7 +146,7 @@ CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 	dnl for readline we need termcap
 AC_CHECK_LIB(termcap, tputs, FFSS_TERMCAP_LIB="-ltermcap")
 if test ! "$FFSS_TERMCAP_LIB"; then
-	AC_MSG_ERROR([Cannot find termcap functions, please compile libtermcap or install libtermcap-dev or -devel package])
+ 	AC_MSG_ERROR([Cannot find termcap functions, please compile libtermcap or install libtermcap-dev or -devel package])
 fi
 LIBS="$LIBS -ltermcap"
 
