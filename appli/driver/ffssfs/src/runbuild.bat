@@ -9,8 +9,8 @@ rem
 
 setlocal
 
-set NT4_DDK_ROOT=e:\ntddk
-set W2K_DDK_ROOT=e:\ntddk
+set NT4_DDK_ROOT=c:\ntddk
+set W2K_DDK_ROOT=c:\ntddk
 
 if "%1"=="all" goto all
 

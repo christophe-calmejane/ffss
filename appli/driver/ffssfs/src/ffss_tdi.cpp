@@ -662,7 +662,7 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
     return false;
   }
   memcpy(Buf+len,Data,Indicated);
-  FFSS_PrintDebug(6,"Data found on TCP port (%d bytes - %d) ... analysing\n",Indicated,len);
+  //FFSS_PrintDebug(6,"Data found on TCP port (%d bytes - %d) ... analysing\n",Indicated,len);
   len += Indicated;
   analyse = true;
   while (analyse)
@@ -677,7 +677,7 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
     Size = *(FFSS_Field *)Buf;
     if(Size > len)
     {
-      FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
+      //FFSS_PrintDebug(5,"Warning, Size of the message is greater than received data (%d - %d)... Message splitted ?\n",Size,len);
       break;
       /* Keeps waiting for data */
     }
@@ -687,7 +687,7 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
       Sem->SignalTimer();
       if(len > Size)
       {
-        FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
+        //FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
         memmove(Buf,Buf+Size,len-Size);
         len -= Size;
         /* Keeps analysing the buffer */

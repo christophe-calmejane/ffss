@@ -174,6 +174,18 @@ char *FFSS_strdup(const char *in)
   return s;
 }
 
+void SU_DBG_PrintDebug(const SU_u64 Type,char *Txt, ...)
+{
+  /*va_list argptr;
+  char Str[4096];
+
+  va_start(argptr,Txt);
+  _vsnprintf(Str,sizeof(Str),Txt,argptr);
+  va_end(argptr);
+  //dprintf
+  */
+}
+
 /* ********************************** */
 /*        UDP Packet dispatcher       */
 /* ********************************** */
@@ -185,7 +197,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   char **answers,**ips;
   long int pos;
   FFSS_Field val,val2,val3;
-  FFSS_LongField lval;
+  FFSS_LongField lval,lval2;
   FFSS_Field i,j,state,type_ip,type_ip2;
   char IP[512], IP2[512];
   FM_PHost Hst;
@@ -193,6 +205,8 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   bool do_it,error,free_it;
   char *u_Buf;
   long int u_pos,u_Len;
+  FFSS_Field *chksums;
+  FFSS_LongField *sizes;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
   pos = sizeof(FFSS_Field)*2;
@@ -493,7 +507,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a search answer message, but master has found nothing");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0,lval);
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,NULL,NULL,0,lval);
         break;
       }
       SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a search answer message (%d domains)",val);
@@ -510,15 +524,19 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         {
           SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Master has found nothing for domain %s",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0,lval);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,NULL,NULL,0,lval);
           continue;
         }
         answers = (char **) malloc(val2*sizeof(char *));
         ips = (char **) malloc(val2*sizeof(char *));
+        chksums = (FFSS_Field *) malloc(val2*sizeof(FFSS_Field));
+        sizes = (FFSS_LongField *) malloc(val2*sizeof(FFSS_LongField));
         for(j=0;j<val2;j++)
         {
           type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
+          val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           if((str3 == NULL) || (type_ip == 0) || (IP[0] == 0))
           {
@@ -528,11 +546,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           }
           ips[j] = strdup(IP);
           answers[j] = str3;
+          chksums[j] = val3;
+          sizes[j] = lval2;
         }
         if(!error)
         {
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2,lval);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,chksums,sizes,val2,lval);
         }
         free(ips);
         free(answers);
@@ -550,6 +570,17 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       SU_DBG_PrintDebug(FFSS_DBGMSG_PARSE_PROTO,"Received a master error message (%d:%s)",val,str);
       if(FFSS_CB.CCB.OnMasterError != NULL)
         FFSS_CB.CCB.OnMasterError(val,str);
+      break;
+    case FFSS_MESSAGE_SHORT_MESSAGE :
+      context;
+      str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+      if(str == NULL)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n","");
+        break;
+      }
+      if(FFSS_CB.CCB.OnShortMessage != NULL)
+        FFSS_CB.CCB.OnShortMessage(Client,str);
       break;
     default:
       FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n","",Type);

@@ -169,7 +169,6 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           if(u_Buf == NULL)
           {
             FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
-            FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
             error = true;
             break;
           }
