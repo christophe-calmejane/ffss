@@ -517,7 +517,7 @@ void OnShortMessage(struct sockaddr_in Client,const char Message[])
   SU_PList Ptr;
 
   SU_DBG_PrintDebug(FS_DBGMSG_IN_MSG,"Server received a short message from %s (%s)",inet_ntoa(Client.sin_addr));
-  FS_SendMessage_ShortMessage(Client,"got it");
+
   SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
