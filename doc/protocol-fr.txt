@@ -144,11 +144,13 @@ Detail du protocole (Version 0x0010006) :
  * Message de ping (Master->Serveur 696) (UDP)
    DWord : Taille du message
    DWord : Type de message = 9 (ping)
+   DWord : Version courante du protocole de la lib FFSS
 
  * Message de pong (Serveur->Master 695) (UDP)
    DWord : Taille du message
    DWord : Type de message = 10 (pong)
    DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
+   DWord : Version courante du protocole de la lib FFSS
 
  * Message de recherche des serveurs (Client->Serveurs 696) (Broadcast UDP) :
    DWord : Taille du message
