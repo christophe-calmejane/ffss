@@ -49,6 +49,8 @@ char FCA_env[][FCA_VAR_MAX]={
 
 void FCA_init()
 {
+	const FCA_Tskin *p;
+	
 		/* init FFSS callback structure */
 	memset(&FFSS_CB,0,sizeof(FFSS_CB));
 	FFSS_CB.CCB.OnNewState 			= FCA_OnNewState;
@@ -184,22 +186,12 @@ void FCA_process_args()
 #ifdef CGI
 void FCA_process_cgi_args()
 {
-	const FCA_Tskin *p;
 	char buf[6+FFSS_MAX_PATH_LENGTH];
 	bool dw=false;
 	char *pd;
 	
 	if(!FCA_CGI_mode)
 		return;
-		/* first we must have a good skin */
-	p=FCA_SKINS;
-	while(p->name && !p->canCGI)
-		p++;
-		/* use the default skin to display this critical message */
-	if(!p->name)
-		FCA_crash("cannot find a skin adapted to the CGI mode");
-	FCA_skin=(FCA_Pskin)p;
-	sprintf(FCA_skin_name, p->name);
 		/* let's see the CGI args */
 	if(FCA_search[0]!='\0') {
 			/* search */

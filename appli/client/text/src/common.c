@@ -1247,7 +1247,6 @@ void FCA_upd_skin()
 		sprintf(FCA_skin_name, FCA_SKINS[0].name);
 	} else {
 		FCA_skin=(FCA_Pskin)&(FCA_SKINS[i]);
-		printf("(client) the skin has changed to '%s'\n", FCA_skin_name);
 		FFSS_PrintDebug(1, "(client) the skin has changed to '%s'\n", FCA_skin_name);
 	}
 }
