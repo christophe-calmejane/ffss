@@ -636,31 +636,7 @@ char *FFSS_GetOS(void)
       SU_strcpy(FFSS_WinServerVersion,"Win9x",sizeof(FFSS_WinServerVersion));
   }
   return FFSS_WinServerVersion;
-#elif __CYGWIN32__
-  if(FFSS_WinServerVersion[0] == 0)
-  {
-    DWORD dwVersion = GetVersion();
-    if(dwVersion < 0x80000000) /* Windows NT/2K/XP */
-    {
-      DWORD dwWindowsMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
-      DWORD dwWindowsMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
-      if(dwWindowsMajorVersion < 4) /* Win32s */
-        SU_strcpy(FFSS_WinServerVersion,"Cyg-Win32s",sizeof(FFSS_WinServerVersion));
-      else if(dwWindowsMajorVersion == 4) /* Windows NT 4 */
-        SU_strcpy(FFSS_WinServerVersion,"Cyg-WinNT",sizeof(FFSS_WinServerVersion));
-      else /* 2K/XP */
-      {
-        if(dwWindowsMinorVersion == 0)
-          SU_strcpy(FFSS_WinServerVersion,"Cyg-Win2k",sizeof(FFSS_WinServerVersion));
-        else
-          SU_strcpy(FFSS_WinServerVersion,"Cyg-WinXP",sizeof(FFSS_WinServerVersion));
-      }
-    }
-    else /* Windows 9x */
-      SU_strcpy(FFSS_WinServerVersion,"Cyg-Win9x",sizeof(FFSS_WinServerVersion));
-  }
-  return FFSS_WinServerVersion;
-#else /* !_WIN32 & !__CYGWIN32__ */
+#else /* !_WIN32 */
   return FFSS_SERVER_OS;
 #endif /* _WIN32 */
 }
