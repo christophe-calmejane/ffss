@@ -52,8 +52,9 @@
 #define FCA_log			FCA_env[13]
 #define FCA_logfile		FCA_env[14]
 #define FCA_loglevel		FCA_env[15][0]
+#define FCA_useConnSock		FCA_env[16]
 	/* modify this each time you add a variable */
-#define FCA_skin_env_index	16
+#define FCA_skin_env_index	17
 
 #define FCA_FIND_LOGLEVEL	'1'
 #define FCA_SHELL_LOGLEVEL	'2'

@@ -73,6 +73,7 @@ const FCA_Tvar FCA_VARS[]= {
 	{"log",		"if we must log",				"on/off",	FCA_upd_log},
 	{"log_file",	"the file used to log",				"filename",	FCA_upd_logfile},
 	{"log_level",	"1=find 2=downloads 3=browsing 4=arguments 5=cgi 6=commands 7=all",	"1-6",	NULL},
+	{"useconnsock",	"if we must use the same connection for downloads","on/off",	NULL},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
@@ -99,6 +100,7 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"on","off",NULL},
 	{"", "ffss-client.log", NULL},
 	{"1", "2", "3", "4", "5", "6", "7", NULL},
+	{"on","off",NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
@@ -121,6 +123,7 @@ char FCA_env[][FCA_VAR_MAX]={
 	"off",
 	"ffss-client.log",
 	"3",
+	"off",
 	FCA_SKIN_ENV_VALUES
 };
 
@@ -162,11 +165,11 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	if(FCA_VAR_IS_ON(FCA_prompt)) {
 		printf("download file ");
 		if( FCA_question(RemotePath) )
-			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,false,&FCA_Ptrans);
+			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n',&FCA_Ptrans);
 		else		/* unlike an error if we answer 'n' */
 			return -1;
 	} else
-		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,false,&FCA_Ptrans);
+		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n',&FCA_Ptrans);
 }
 
 unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passwd)
