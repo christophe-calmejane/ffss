@@ -62,6 +62,7 @@ BEGIN_MESSAGE_MAP(CPreInstallDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(ID_BUTTON, OnOk)
 	//}}AFX_MSG_MAP
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -77,7 +78,7 @@ BOOL CPreInstallDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 	
 	// TODO: Add extra initialization here
-	char			szLocalHostName[512],szName[512],szComment[512];
+	char			szLocalHostName[512],szName[512],szComment[512],szMaster[512];
 	struct hostent*	pHostEnt;
 	DWORD			dwStringSize;
 	OSVERSIONINFO	Os;
@@ -132,6 +133,11 @@ BOOL CPreInstallDlg::OnInitDialog()
 		if( m_RegKey.QueryValue(szComment,"Global_Comment",&dwStringSize)==ERROR_SUCCESS ) {
 			m_strComment=szComment;
 		}
+		dwStringSize=sizeof(szMaster);
+		if( m_RegKey.QueryValue(szMaster,"Global_Master",&dwStringSize)==ERROR_SUCCESS ) {
+			m_strMaster=szMaster;
+		}
+
 		m_RegKey.Close();
 	} 
 
@@ -198,6 +204,11 @@ void CPreInstallDlg::OnOk()
 	/* Save server comment to registry */
 	if( m_strComment.IsEmpty()==FALSE ) {
 		m_RegKey.SetValue((LPCTSTR)m_strComment,"Global_Comment");
+	}
+
+	/* Save master name to registry */
+	if( m_strMaster.IsEmpty()==FALSE ) {
+		m_RegKey.SetValue((LPCTSTR)m_strMaster,"Global_Master");
 	}
 
 	/* Import samba shares */
@@ -391,4 +402,12 @@ void CPreInstallDlg::ConvertFromOldFormat()
 		}
 		m_RegKey.SetValue(szConvertedShareList,"ShareNames");
 	}
+}
+
+void CPreInstallDlg::OnDestroy()
+{
+	CDialog::OnDestroy();
+
+	// TODO: Add your message handler code here
+	m_RegKey.Close();
 }
