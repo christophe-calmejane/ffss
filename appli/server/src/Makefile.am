@@ -12,6 +12,8 @@ ffss_server_SOURCES = \
 		lexer.l  		\
 		server.c  		\
 		server.h  		\
-		transfer.c
+		transfer.c              \
+                plugin.c                \
+                plugin.h
 
 ffsswho_SOURCES = ffsswho.c server.h confapi.c confapi.h

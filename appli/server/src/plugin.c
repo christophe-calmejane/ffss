@@ -1,6 +1,9 @@
 #include "plugin.h"
+#include <stdarg.h>
 
+#ifdef _WIN32
 extern HINSTANCE FS_hInstance;
+#endif /* _WIN32 */
 
 void *FS_PluginQuery(int Type,...)
 {
@@ -169,7 +172,7 @@ bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
   bool ret = true;
 #ifdef PLUGINS
   void (*Fonc)(void);
- 
+
   Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
   if(Fonc != NULL)
     Fonc();
