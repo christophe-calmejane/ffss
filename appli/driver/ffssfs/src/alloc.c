@@ -280,15 +280,12 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
 {
   struct ffss_inode *ffss_inode;
 
-  ffss_inode = (struct ffss_inode *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode), 'puSR');
+  ffss_inode = (struct ffss_inode *) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_inode), 'puSR');
 
   ffss_inode->Type = Type;
-  if(Name != NULL)
-  {
-    ffss_inode->NameLength = strlen(Name) + 1;
-    ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
-    RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
-  }
+  ffss_inode->NameLength = strlen(Name) + 1;
+  ffss_inode->Name = FsdAllocatePool(NonPagedPool,ffss_inode->NameLength,"fiNP");
+  RtlCopyMemory(ffss_inode->Name,Name,ffss_inode->NameLength);
 
   ffss_inode->RefCount = 0;
   ffss_inode->Inodes = NULL;
@@ -417,7 +414,7 @@ struct ffss_super_block *FsdAllocSuperBlock(void)
 {
   struct ffss_super_block *super_block;
 
-  super_block = (struct ffss_super_block *) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_super_block), 'puSR');
+  super_block = (struct ffss_super_block *) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_super_block), 'puSR');
 
   super_block->Root = FsdAssignInode(FsdAllocInode("",FFSS_INODE_ROOT),false);
   super_block->Root->Flags = FFSS_FILE_DIRECTORY;

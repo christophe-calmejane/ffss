@@ -42,7 +42,7 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField Use
 
   if(NbDomains != 0)
   {
-    Root->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbDomains, 'nuSD');
+    Root->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_inode *)*NbDomains, 'nuSD');
     for(i=0;i<NbDomains;i++)
     {
       Inode = FsdAllocInode(Domains[i],FFSS_INODE_DOMAIN);
@@ -80,7 +80,7 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS
   FsdFreeSubInodes(domain,false);
   if(NbHost != 0)
   {
-    domain->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbHost, 'nuSH');
+    domain->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_inode *)*NbHost, 'nuSH');
     Ptr = HostList;
     for(i=0;i<NbHost;i++)
     {
@@ -127,7 +127,7 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
   FsdFreeSubInodes(server,false);
   if(NbShares != 0)
   {
-    server->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbShares, 'nuSS');
+    server->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_inode *)*NbShares, 'nuSS');
     for(i=0;i<NbShares;i++)
     {
       KdPrint(("OnSharesListing : Got share %s\n",Names[i]));
@@ -201,44 +201,26 @@ SU_BOOL OnDirectoryListingAnswer(FfssTCP *Server,const char Path[],int NbEntries
 
   if(NbEntries != 0)
   {
-    //parent->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPoolCacheAligned, sizeof(struct ffss_inode *)*NbEntries, 'nuSS');
+    parent->Inodes = (struct ffss_inode **) FsdAllocatePool(NonPagedPool, sizeof(struct ffss_inode *)*NbEntries, 'nuSS');
     Ptr = Entries;
     for(i=0;i<NbEntries;i++)
     {
       Ent = (FC_PEntry) Ptr->Data;
       KdPrint(("OnDirectoryListingAnswer : Got entry '%s' for '%s'\n",Ent->Name,Path));
-      Inode = FsdAllocInode("plop",(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE); /* Do not set a name for the inode, since we can't use RtlCopyMemory here ! */
-      /*Inode->NameLength = strlen(Ent->Name) + 1;
-      Inode->Name = (char *) FsdAllocatePool(NonPagedPool,Inode->NameLength,(unsigned long)"fiNP");*/
-      //memcpy(Inode->Name,"plop"/*Ent->Name*/,Inode->NameLength);
-
-/*char *SU_strdup(const char *s)
-{
-  int len;
-  char *o;
-
-  len = strlen(s);
-  o = (char *) SU_malloc2(len+1);
-  if(o == NULL)
-    return NULL;
-  strcpy(o,s);
-  return o;
-}*/
-
-      
-      /*Inode->Flags = Ent->Flags;
+      Inode = FsdAllocInode(Ent->Name,(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE);
+      Inode->Flags = Ent->Flags;
       Inode->Parent = FsdAssignInode(parent,false);
       Inode->Conn = Server;
       len = strlen(Path) + 1;
       Inode->Path = (char *) malloc(len);
       RtlCopyMemory(Inode->Path,Path,len);
-      parent->Inodes[i] = FsdAssignInode(Inode,false);*/
+      parent->Inodes[i] = FsdAssignInode(Inode,false);
       Ptr = Ptr->Next;
     }
-    //parent->NbInodes = NbEntries;
+    parent->NbInodes = NbEntries;
   }
-  /*parent->Listed = 1;
-  FsdFreeInode(parent,false);*/
+  parent->Listed = 1;
+  FsdFreeInode(parent,false);
   
   return true;
 }
@@ -632,7 +614,7 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
   int res;
   FFSS_Field Size;
   bool analyse;
-  int retval;
+  bool retval = true;
 
   if(len >= BufSize)
   {
@@ -672,10 +654,6 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
     {
       retval = FC_AnalyseTCP(this,Buf,Size);
       Sem->SignalTimer();
-      if(!retval)
-      {
-        return false;
-      }
       if(len > Size)
       {
         FFSS_PrintDebug(5,"Warning, Size of the message is less than received data (%d - %d)... multiple messages ?\n",Size,len);
@@ -688,8 +666,13 @@ bool FfssTCP::GetPacket(uchar *Data,uint Indicated)
         analyse = false;
         len = 0;
       }
+      if(!retval)
+      {
+        return false;
+      }
     }
   }
+  return true;
 }
 
 

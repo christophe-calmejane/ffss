@@ -497,6 +497,10 @@ bool FsdRequestInodeListing(struct ffss_inode *Inode)
     FsdFreeInode(Inode,false);
     return false;
   }
+#if DBG
+  if(!Inode->Listed)
+    KdPrint(("FsdRequestInodeListing : AIE AIE AIE : Still not listed... some error might have occured\n"));
+#endif /* DBG */
   return true;
 }
 
