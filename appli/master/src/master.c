@@ -192,6 +192,7 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
   Que->Domain = Domain;
   Que->Host = Hst;
   SU_SEM_WAIT(FM_MySem);
+  FM_SetHostStateInIndex(Hst->Name,Hst->State);
   FM_MyQueue = SU_AddElementHead(FM_MyQueue,Que);
   SU_SEM_POST(FM_MySem);
 }
@@ -459,7 +460,10 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   Host = (FM_PFTControler) malloc(sizeof(FM_TFTControler));
   memset(Host,0,sizeof(FM_TFTControler));
   if(!Samba)
+  {
     Host->Name = strdup(Hst->Name);
+    Host->State = Hst->State;
+  }
   Host->FileTree = (char *) malloc(FileTreeSize);
   Host->FileTreeLength = FileTreeSize;
   Host->NbNodes = NodesSize/sizeof(FM_TFTNode);
@@ -587,7 +591,10 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   }
   SU_CLOSE_SOCKET(sock);
   if(Samba)
+  {
     Host->Name = strdup(Host->FileTree);
+    Host->Samba = true;
+  }
 #ifdef DEBUG
   printf("Index thread : buffer received... now indexing\n");
 #endif /* DEBUG */

@@ -43,6 +43,7 @@ typedef struct /* 24 bytes */
   FM_TFTNode *FTNodes;         /* Table of Nodes                      */
   int NbNodes;                 /* Size of reallocable table FTNodes   */
   FFSS_Field State;            /* State of the server                 */
+  bool Samba;                  /* Is a samba share                    */
 } FM_TFTControler, *FM_PFTControler;
 
 typedef struct /* 8 bytes */

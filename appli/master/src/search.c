@@ -31,6 +31,13 @@ char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
   int Indexes[1024];
   int NbIdx,i;
 
+  Answer[0] = (char) Host->State;
+  if(Host->Samba)
+    Answer[0] |= (char) FFSS_SEARCH_IS_SAMBA;
+  if(&Host->FTNodes[Node->Last] == Node)
+    Answer[0] |= (char) FFSS_SEARCH_IS_FILE;
+  Answer[1] = 0;
+
   NbIdx = 0;
   while(Node->Father != -1)
   {
@@ -38,7 +45,7 @@ char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
     Node = &Host->FTNodes[Node->Father];
   }
 
-  SU_strcpy(Answer,Host->Name,AnswerSize);
+  SU_strcat(Answer,Host->Name,AnswerSize);
   SU_strcat(Answer,"/",AnswerSize);
   SU_strcat(Answer,Host->FileTree+Node->Pos,AnswerSize);
   for(i=(NbIdx-1);i>=0;i--)
