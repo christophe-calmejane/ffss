@@ -1002,6 +1002,7 @@ void set_context(char *file, int line);
 #endif /* FFSS_CONTEXT */
 
 #ifndef SU_MALLOC_TRACE
+void *FFSS_malloc(size_t size);
 #define malloc FFSS_malloc
 #endif /* !SU_MALLOC_TRACE */
 
