@@ -359,6 +359,8 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   int retval;
   FFSS_Field NbBufs;
 
+  if(Host == NULL)
+    return true;
   sock = socket(AF_INET,SOCK_STREAM,getprotobyname("tcp")->p_proto);
   if(sock == SOCKET_ERROR)
     return false;
