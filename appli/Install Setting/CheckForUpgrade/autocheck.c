@@ -2,7 +2,13 @@
 #include <wininet.h>
 #undef malloc
 
+#define DIRECT_URL
+
+#ifdef DIRECT_URL
+#define FFSS_CHECK_URL_BASE "http://zekiller.skytech.org/ffss/"
+#else /* !DIRECT_URL */
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
+#endif /* DIRECT_URL */
 #define FFSS_CHECK_URL_VERSION FFSS_CHECK_URL_BASE "CurrentVersion"
 #define FFSS_CHECK_RB_BASE FFSS_LM_REGISTRY_PATH "AutoCheck_"
 #define FFSS_CHECK_RB_CONN_TYPE  FFSS_CHECK_RB_BASE "Type"
@@ -33,7 +39,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
   if(strncmp(Data,Version,sizeof(Version)) > 0)
   {
     if((pos == NULL) || (pos[0] == 0))
-      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\nftp-samba-ffss://orion.fleming.u-psud.fr\nftp://tabarka.rub.u-psud.fr",Data);
+      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\nFor Aurore guys : ftp://ftp.fleming.u-psud.fr/ffss/Binaires\nFor other guys : http://zekiller.skytech.org/ffss/Releases",Data);
     else
       _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\n%s",Data,pos);
     MessageBox(NULL,buf,"FFSS UPDATE INFO",MB_OK);
@@ -143,7 +149,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   memset(Act,0,sizeof(SU_THTTPActions));
   Act->Command = ACT_GET;
   strcpy(Act->URL,FFSS_CHECK_URL_VERSION);
+#ifdef DIRECT_URL
+  Act->CB.OnOk = ProcOnOkCheckUpdate;
+#else /* !DIRECT_URL */
   Act->CB.OnOk = ProcOnOkRedirect;
+#endif /* DIRECT_URL */
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {

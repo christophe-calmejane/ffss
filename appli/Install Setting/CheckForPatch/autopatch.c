@@ -3,7 +3,13 @@
 #undef malloc
 #include "AutoPatch\\resource.h"
 
+#define DIRECT_URL
+
+#ifdef DIRECT_URL
+#define FFSS_CHECK_URL_BASE "http://zekiller.skytech.org/ffss/"
+#else /* !DIRECT_URL */
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
+#endif /* DIRECT_URL */
 #define FFSS_CHECK_URL_PATCHES FFSS_CHECK_URL_BASE "CurrentPatches"
 #define FFSS_CHECK_URL_GET_PATCHES FFSS_CHECK_URL_BASE "patches/"
 #define FFSS_CHECK_RB_BASE FFSS_LM_REGISTRY_PATH "AutoCheck_"
@@ -88,9 +94,13 @@ void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
   char FileToPatch[1024];
   RECT rect1,rect2;
 
+  if(SU_nocasestrstr(Ans->Data,"error404") != NULL)
+    return;
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+#ifndef DEBUG
   if(InstallDir[0] == 0)
     return;
+#endif /* !DEBUG */
   snprintf(FileToPatch,sizeof(FileToPatch),"%s\\%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
 
   AP_hwnd = CreateDialog(AP_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),GetDesktopWindow(),wndProc);
@@ -159,9 +169,17 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   char FileToPatch[1024];
   int maxtry = 3;
 
+  if(SU_nocasestrstr(Ans->Data,"error404") != NULL)
+  {
+    snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB12));
+    MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK | MB_ICONEXCLAMATION);
+    return;
+  }
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+#ifndef DEBUG
   if(InstallDir[0] == 0)
     return;
+#endif /* !DEBUG */
   snprintf(FileToPatch,sizeof(FileToPatch),"%s\\%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
 
   fp = fopen(FileToPatch,"wb");
@@ -255,11 +273,13 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     return;
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+#ifndef DEBUG
   if(InstallDir[0] == 0)
   {
     MessageBox(NULL,AP_LANG(AP_LANGS_MB7),"FFSS Auto Patch Info",MB_OK | MB_ICONEXCLAMATION);
     return;
   }
+#endif /* !DEBUG */
   while(ReadLine(Ans->Data,&pos,Ans->Data_Length,S,sizeof(S)))
   {
     if((S[0] == 0) || (S[0] == '#'))
@@ -282,10 +302,12 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     if(FCU_Files[idx].FilePath[0] == 0)
       continue;
     snprintf(buf,sizeof(buf),"%s\\%s",InstallDir,FCU_Files[idx].FilePath);
+#ifndef DEBUG
     fp = fopen(buf,"rb");
     if(fp == NULL)
       continue;
     fclose(fp);
+#endif /* !DEBUG */
     CurrentIdx = idx;
 
     /* Check local version */
@@ -312,7 +334,11 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     Act->Command = ACT_GET;
     strcpy(Act->URL,buf);
     Act->User = (void *)2;
+#ifdef DIRECT_URL
+    Act->CB.OnOk = ProcOnOkGotChangeLog;
+#else /* !DIRECT_URL */
     Act->CB.OnOk = ProcOnOkRedirect;
+#endif /* DIRECT_URL */
     Exec = SU_AddElementHead(Exec,Act);
     if(SU_ExecuteActions(Exec) != 0)
     {
@@ -348,7 +374,11 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
       Act->Command = ACT_GET;
       strcpy(Act->URL,buf);
       Act->User = (void *)1;
+#ifdef DIRECT_URL
+      Act->CB.OnOk = ProcOnOkGotPatch;
+#else /* !DIRECT_URL */
       Act->CB.OnOk = ProcOnOkRedirect;
+#endif /* DIRECT_URL */
       Exec = SU_AddElementHead(Exec,Act);
       if(SU_ExecuteActions(Exec) != 0)
       {
@@ -481,7 +511,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   memset(Act,0,sizeof(SU_THTTPActions));
   Act->Command = ACT_GET;
   strcpy(Act->URL,FFSS_CHECK_URL_PATCHES);
+#ifdef DIRECT_URL
+  Act->CB.OnOk = ProcOnOkCheckUpdate;
+#else /* !DIRECT_URL */
   Act->CB.OnOk = ProcOnOkRedirect;
+#endif /* DIRECT_URL */
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
