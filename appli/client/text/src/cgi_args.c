@@ -121,7 +121,6 @@ void FCA_read_cgi_args()
 	FCA_must_download=false;
 #endif
 	FCA_can_header=true;
-	FCA_html_included_doc=false;
 	FCA_dir_to_list[0]='\0';
 	FCA_search[0]='\0';
 	FCA_search_dom[0]='\0';
