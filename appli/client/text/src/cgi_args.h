@@ -46,10 +46,10 @@ void FCA_read_cgi_args();
 	/* alternatives to libcgi */
 void FCA_init_headers();
 void FCA_init_download_headers();
-char *FCA_cgi_escape_special_chars(const char *str);
 
 #endif	/* CGI */
 
+char *FCA_cgi_escape_special_chars(const char *str);
 bool FCA_isInCGImode();
 
 #endif	/* CGI_H */

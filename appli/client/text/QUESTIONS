@@ -7,20 +7,6 @@ pour envoyer des messages, cad soit l'IP soit le nom de machine.
 Je ne peux pas avoir l'IP a partir du nom...c'est pas genant ?
 Ou alors il faut que j'utilise des fonctions DNS...
 
-2) pour la recherche dans le / , je ne sais pas combien de reponses
-vont m'arriver, donc je ne peux pas bien coordonner mes semaphores.
-Ya pas moyen de me dire ke le OnSearchAnswer k'on me file est bien le dernier
-ou alors me donner le nombre de domaines (dois-je le trouver tout seul
-en regardant la liste des domaines ?).
-
-3) dans le client gtk, tu n'a pas encore fait de --with-ffss au
-configure, donc pour compiler j'ai du modifier le configure.in
-
-4) tjours pour le client gtk...
-Received a listing of domains (173058240 domains)
-puis seg fault...173058240 ca fait bocoup :)
-(c'est bien le client gtk le probleme, car mon client marche bien)
-
 5) Il faudrait un genre de SyslogLevel un peu comme le N_DebugLevel,
 une variable que je puisse changer en live dans mon prog et qui,
 en fonction de sa valeur, lance le syslog ou pas.
@@ -28,8 +14,6 @@ G pas envie de devoir recompiler la lib sans debug pour ne pas avoir
 'FFSS client waiting on arbitrary UDP port' ni
 'FFSS client shut down' dans ma sortie standart.
 
-6) bug avec la derniere skyutils: libskyutils.a n'est plus dans le .libs
-mais dans le dossier des sources de skyutils.
 
 7) ca serait pas possible dans la recherche, de me renvoyer un moyen
 de faire la difference entre une reponse fichier et une reponse dossier.
@@ -66,15 +50,22 @@ FFSS(1 1009793186:820) : Error on UDP port (SOCKET_ERROR : 9)
 x fois, puis
 FFSS(1 1009793186:870) : Too many consecutive errors on UDP port, exiting
 
-13) pour le download en CGI j'ai un patche la lib, j'ai juste ajoute
-des tests dans FFSS_DownloadFile pour que, si LocalPath=="", alors
-on ecrit pas dans un fichier, mais dans stdout. Il faudrait que tu
-fasses la meme modif de ton cote.
-
 
 ---------------------------------------
 	ANCIENNES QUESTIONS
 ---------------------------------------
+
+2) pour la recherche dans le / , je ne sais pas combien de reponses
+vont m'arriver, donc je ne peux pas bien coordonner mes semaphores.
+Ya pas moyen de me dire ke le OnSearchAnswer k'on me file est bien le dernier
+ou alors me donner le nombre de domaines (dois-je le trouver tout seul
+en regardant la liste des domaines ?).
+-> comme dans le domaine None, le principe de broadcast
+-> on lance, on sleep et couic fini
+
+6) bug avec la derniere skyutils: libskyutils.a n'est plus dans le .libs
+mais dans le dossier des sources de skyutils.
+-> c fait par les build-*
 
 1)
  "FFSS client waiting on arbitrary UDP port"

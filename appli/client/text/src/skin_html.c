@@ -13,6 +13,8 @@
 #include "skin.h"
 #include "datastruct.h"
 #include "client.h"
+#include "skin_html.h"
+#include "cgi_args.h"
 
 void FCA_html_prog_begin();
 
@@ -307,7 +309,7 @@ void FCA_html_tab_post_item()
 
 void FCA_html_tab_btm()
 {
-	printf("</table>\n<br>");
+	printf("</table>\n</center><br>\n");
 }
 
 void FCA_html_infos(const char format[], ...)
@@ -353,7 +355,7 @@ void FCA_html_pre_err()
 
 void FCA_html_post_err()
 {
-	fprintf(FCA_err_stream, "</b></font><br>");
+	fprintf(FCA_err_stream, "</b></font><br>\n");
 }
 
 void FCA_html_pre_warning()
@@ -363,7 +365,7 @@ void FCA_html_pre_warning()
 
 void FCA_html_post_warning()
 {
-	printf("</b></font><br>");
+	printf("</b></font><br>\n");
 }
 
 
@@ -374,7 +376,7 @@ void FCA_html_pre_ok()
 
 void FCA_html_post_ok()
 {
-	printf("</b></font><br>");
+	printf("</b></font><br>\n");
 }
 
 void FCA_html_pre_serv(const char *domain, const char *name, long int state, bool isName)
@@ -484,4 +486,131 @@ printf("</center>
 </body>
 </html>
 ");
+}
+
+
+	/* common to all html skins */
+void FCA_dir_link(const char *dir)
+{
+	FCA_pre_link();
+	FCA_dir_arg(dir);
+	FCA_post_link(false);
+}
+
+void FCA_file_link(const char *file)
+{
+#ifdef CGI_DOWNLOADS
+	FCA_pre_link();
+	FCA_dir_arg(file);
+	printf("&download=1");
+	FCA_post_link(false);
+#endif
+}
+
+void FCA_dir_arg(const char *dir)
+{
+	char *tl;
+	
+	tl=FCA_cgi_escape_special_chars(dir);
+	FCA_my_url();
+	printf("%cdir=%s",
+		FCA_html_firstarg[1]=='n'?'?':'&',
+		tl);
+	free(tl);
+}
+
+void FCA_pre_link()
+{
+	printf("<a href='");
+}
+
+void FCA_post_link(bool firstArg)
+{
+	char *p;
+	
+		/* firstArg: if there was an argument before */
+	printf("%c", (FCA_html_firstarg[1]=='f' || !firstArg)?'&':'?');
+	printf("prefix=%s",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf("&img_prefix=%s",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf("&firstarg=%s",
+		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
+	free(p);
+	printf("&skin=%s",
+		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
+	free(p);
+	printf("&master=%s",
+		p=FCA_cgi_escape_special_chars(FCA_master) );
+	free(p);
+	printf("&debug=%s",
+		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
+	free(p);
+	printf("'>");
+}
+
+void FCA_form_hidden_args()
+{
+	char *p;
+	
+	printf(" <input type='hidden' name='prefix' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf(" <input type='hidden' name='img_prefix' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
+	free(p);
+	printf(" <input type='hidden' name='firstarg' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
+	free(p);
+	printf(" <input type='hidden' name='skin' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
+	free(p);
+	printf(" <input type='hidden' name='master' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_master) );
+	free(p);
+	printf(" <input type='hidden' name='debug' value='%s'>\n",
+		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
+	free(p);
+}
+
+void FCA_my_url()
+{
+	printf("%s%s",
+		FCA_html_prefix,
+		FCA_NAME
+	);
+}
+
+void FCA_sep_link(char *path)
+{
+	char *p, *begin=path;
+	
+	p=strchr(path, '/');
+	if(p==path)
+		p=strchr(path+1, '/');
+	if(!p) {
+		FCA_pre_link();
+		FCA_dir_arg(path);
+		FCA_post_link(true);
+		printf("%s</a>", path);
+		return;
+	}
+	while(p) {
+		*p='\0';
+		FCA_pre_link();
+		FCA_dir_arg(path);
+		FCA_post_link(false);
+		printf("%s</a>", begin);
+		
+		*p='/';
+		begin=p+1;
+		p=strchr(p+1, '/');
+		printf("/");
+	}
+	FCA_pre_link();
+	FCA_dir_arg(path);
+	FCA_post_link(false);
+	printf("%s</a>", begin);
 }

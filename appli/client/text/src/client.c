@@ -40,10 +40,9 @@ char FCA_env[][FCA_VAR_MAX]={
 	"",
 	"off",
 	"default",
-	"",
-	"",
-	"on",
-	" "
+	"5",
+	"5",
+	FCA_SKIN_ENV_VALUES
 };
 
 

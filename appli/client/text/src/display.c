@@ -731,14 +731,16 @@ void FCA_print_prog_bar()
 void FCA_print_info(char *Txt, ...)
 {
 	va_list argptr;
+	char str[1024];
 
-	FCA_ansi_chs(35);
+	FCA_pre_infos();
+
 	va_start(argptr,Txt);
-	vprintf(Txt, argptr);
+	vsnprintf(str, 1023, Txt, argptr);
 	va_end(argptr);
+	FCA_infos(str);
 	
-	printf("\n");
-	FCA_ansi_chs(0);
+	FCA_post_infos();
 }
 
 void FCA_print_cmd_ok(char *msg, ...)
@@ -780,10 +782,9 @@ void FCA_print_cmd_err(char *msg, ...)
 	va_list argptr;
 
 	if(FCA_quiet)	return;
-
+	FCA_pre_err();
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
-	FCA_pre_err();
 	fprintf(FCA_err_stream, "cannot execute command: ");
 	
 	va_start(argptr,msg);
@@ -800,9 +801,9 @@ void FCA_print_err(char *msg, ...)
 	va_list argptr;
 
 	if(FCA_quiet)	return;
+	FCA_pre_err();
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
-	FCA_pre_err();
 	fprintf(FCA_err_stream, "error: ");
 	
 	va_start(argptr,msg);
@@ -818,9 +819,9 @@ void FCA_print_warning(char *msg, ...)
 	va_list argptr;
 
 	if(FCA_quiet)	return;
+	FCA_pre_warning();
 	if(FCA_reading_file)
 		printf("%s: ", FCA_file_status);
-	FCA_pre_warning();
 	printf("warning: ");
 
 	va_start(argptr,msg);
@@ -836,9 +837,9 @@ void FCA_crash(char *msg, ...)
 	va_list argptr;
 
 	if(FCA_quiet)	return;
+	FCA_pre_err();
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
-	FCA_pre_err();
 	
 	fprintf(FCA_err_stream, "FATAL ERROR: ");
 	
@@ -909,16 +910,16 @@ void FCA_version()
 }
 
 void FCA_print_version(void)
-{    
-    printf("ffss version %s\n", FFSS_VERSION);
-    printf("ffss text-mode client version %s\n", FCA_VERSION);
+{
+	printf("ffss version %s\n", FFSS_VERSION);
+	printf("ffss text-mode client version %s\n", FCA_VERSION);
 }
 
 void FCA_print_env()
 {
 	int i=0;
 	
-	FCA_tab_width=26;
+	FCA_tab_width=FCA_VARNAME_MAX+11;
 	FCA_tab_top();
 	
 	FCA_tab_pre_stitle();FCA_tab_stitle("Variable",FCA_VARNAME_MAX);
@@ -931,11 +932,15 @@ void FCA_print_env()
 	
 	while(FCA_VARS[i].name) {
 		FCA_tab_pre_item();
+		FCA_pre_tab_item();
 	    	FCA_ansi_chs(33);	/* yellow */
 		FCA_tab_item(FCA_VARS[i].name,FCA_VARNAME_MAX);
 		FCA_ansi_chs(0);
+		FCA_post_tab_item();
 		FCA_tab_int_item();
+		FCA_pre_tab_item();
 		FCA_tab_item(FCA_env[i],0);
+		FCA_post_tab_item();
 		FCA_tab_post_item();
 		i++;
 	}
@@ -944,7 +949,7 @@ void FCA_print_env()
 
 void FCA_print_var(int index)
 {
-	FCA_tab_width=26;
+	FCA_tab_width=FCA_VARNAME_MAX+11;
 	FCA_tab_top();
 	
 	FCA_tab_pre_stitle();FCA_tab_stitle("Variable",FCA_VARNAME_MAX);
@@ -956,11 +961,15 @@ void FCA_print_var(int index)
 	FCA_tab_post_bar();
 	
 	FCA_tab_pre_item();
+	FCA_pre_tab_item();
 	FCA_ansi_chs(33);	/* yellow */
 	FCA_tab_item(FCA_VARS[index].name,FCA_VARNAME_MAX);
 	FCA_ansi_chs(0);
+	FCA_post_tab_item();
 	FCA_tab_int_item();
+	FCA_pre_tab_item();
 	FCA_tab_item(FCA_env[index],0);
+	FCA_post_tab_item();
 	FCA_tab_post_item();
 	FCA_tab_btm();
 }
@@ -984,7 +993,7 @@ void FCA_print_aliases(char *cmd)
 		return;
 	}
 	
-	FCA_tab_width=26;
+	FCA_tab_width=FCA_ALIAS_MAX+11;
 	FCA_tab_top();
 	
 	FCA_tab_pre_stitle();FCA_tab_stitle("Alias",FCA_ALIAS_MAX);
@@ -997,18 +1006,24 @@ void FCA_print_aliases(char *cmd)
 	
 	while(p || l) {
 		FCA_tab_pre_item();
+		FCA_pre_tab_item();
 	    	FCA_ansi_chs(33);	/* yellow */
 		if(p) {
 			FCA_tab_item(cmd,FCA_ALIAS_MAX);
 			FCA_ansi_chs(0);
+			FCA_post_tab_item();
 			FCA_tab_int_item();
+			FCA_pre_tab_item();
 			FCA_tab_item(p,0);
 		} else {
 			FCA_tab_item(((FCA_Palias)(l->Data))->cmd,FCA_ALIAS_MAX);
 			FCA_ansi_chs(0);
+			FCA_post_tab_item();
 			FCA_tab_int_item();
+			FCA_pre_tab_item();
 			FCA_tab_item(((FCA_Palias)(l->Data))->val,0);
 		}
+		FCA_post_tab_item();
 		FCA_tab_post_item();
 		if(p)
 			p=NULL;
@@ -1202,129 +1217,4 @@ void FCA_ansi_chs_err(unsigned short int style)
 		/* change ansi style */
 	if(! SU_strcasecmp(FCA_can_ansi, "on") )
 		fprintf(FCA_err_stream, "\033[%dm", style);
-}
-
-void FCA_dir_link(const char *dir)
-{
-	FCA_pre_link();
-	FCA_dir_arg(dir);
-	FCA_post_link(false);
-}
-
-void FCA_file_link(const char *file)
-{
-#ifdef CGI_DOWNLOADS
-	FCA_pre_link();
-	FCA_dir_arg(file);
-	printf("&download=1");
-	FCA_post_link(false);
-#endif
-}
-
-void FCA_dir_arg(const char *dir)
-{
-	char *tl;
-	
-	tl=FCA_cgi_escape_special_chars(dir);
-	FCA_my_url();
-	printf("%cdir=%s",
-		FCA_html_firstarg[1]=='n'?'?':'&',
-		tl);
-	free(tl);
-}
-
-void FCA_pre_link()
-{
-	printf("<a href='");
-}
-
-void FCA_post_link(bool firstArg)
-{
-	char *p;
-	
-		/* firstArg: if there was an argument before */
-	printf("%c", (FCA_html_firstarg[1]=='f' || !firstArg)?'&':'?');
-	printf("prefix=%s",
-		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
-	free(p);
-	printf("&img_prefix=%s",
-		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
-	free(p);
-	printf("&firstarg=%s",
-		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
-	free(p);
-	printf("&skin=%s",
-		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
-	free(p);
-	printf("&master=%s",
-		p=FCA_cgi_escape_special_chars(FCA_master) );
-	free(p);
-	printf("&debug=%s",
-		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
-	free(p);
-	printf("'>");
-}
-
-void FCA_form_hidden_args()
-{
-	char *p;
-	
-	printf(" <input type='hidden' name='prefix' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
-	free(p);
-	printf(" <input type='hidden' name='img_prefix' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
-	free(p);
-	printf(" <input type='hidden' name='firstarg' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
-	free(p);
-	printf(" <input type='hidden' name='skin' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
-	free(p);
-	printf(" <input type='hidden' name='master' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_master) );
-	free(p);
-	printf(" <input type='hidden' name='debug' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
-	free(p);
-}
-
-void FCA_my_url()
-{
-	printf("%s%s",
-		FCA_html_prefix,
-		FCA_NAME
-	);
-}
-
-void FCA_sep_link(char *path)
-{
-	char *p, *begin=path;
-	
-	p=strchr(path, '/');
-	if(p==path)
-		p=strchr(path+1, '/');
-	if(!p) {
-		FCA_pre_link();
-		FCA_dir_arg(path);
-		FCA_post_link(true);
-		printf("%s</a>", path);
-		return;
-	}
-	while(p) {
-		*p='\0';
-		FCA_pre_link();
-		FCA_dir_arg(path);
-		FCA_post_link(false);
-		printf("%s</a>", begin);
-		
-		*p='/';
-		begin=p+1;
-		p=strchr(p+1, '/');
-		printf("/");
-	}
-	FCA_pre_link();
-	FCA_dir_arg(path);
-	FCA_post_link(false);
-	printf("%s</a>", begin);
 }

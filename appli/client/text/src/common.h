@@ -17,8 +17,8 @@
 #define FCA_SEM_TIMEOUT		10 /* seconds */
 #define FCA_THREAD_TIMEOUT	1
 
-#define FCA_VARNAME_MAX		15
-#define FCA_ALIAS_MAX		15
+#define FCA_VARNAME_MAX		20
+#define FCA_ALIAS_MAX		20
 
 #ifdef _WIN32	/* win */
 #	include <direct.h>
@@ -42,9 +42,9 @@
 #define FCA_master		FCA_env[4]
 #define FCA_prompt		FCA_env[5]
 #define FCA_skin_name		FCA_env[6]
-#define FCA_html_prefix		FCA_env[7]
-#define FCA_html_img_prefix	FCA_env[8]
-#define FCA_html_firstarg	FCA_env[9]
+#define FCA_broadcast_timeout	atoi(FCA_env[7])
+#define FCA_search_timeout	atoi(FCA_env[8])
+#define FCA_skin_env_index	9
 
 
 typedef struct

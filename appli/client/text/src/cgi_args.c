@@ -17,6 +17,23 @@
 #include "common.h"
 #include "client.h"
 
+#ifdef CGI
+	/* to use CGI mode, we MUST have installed the
+		html skin
+	*/
+#include "skin.h"
+#ifndef FCA_html_prefix
+#	error "to use CGI, you must have the HTML skin. FCA_html_prefix is not defined in skin.h"
+#endif /* FCA_html_prefix */
+#ifndef FCA_html_img_prefix
+#	error "to use CGI, you must have the HTML skin. FCA_html_img_prefix is not defined in skin.h"
+#endif /* FCA_html_img_prefix */
+#ifndef FCA_html_firstarg
+#	error "to use CGI, you must have the HTML skin. FCA_html_firstarg is not defined in skin.h"
+#endif /* FCA_html_firstarg */
+#endif /* CGI */
+
+
 bool FCA_CGI_mode;
 
 #ifdef CGI
@@ -31,7 +48,7 @@ char FCA_search_dom[FFSS_MAX_DOMAIN_LENGTH];
 	/* if you add a cgi arg that is in the client environment,
 		update the FCA_read_cgi_args() too
 	   if you want to rename an argument, don't forget to
-		update the display.c, FCA_form_hidden_args()
+		update the skin_html.c, FCA_form_hidden_args()
 		and FCA_post_link(bool firstArg)
 	*/
 const FCA_TCGI_arg FCA_CGI_ARGS[]={
@@ -313,6 +330,8 @@ void FCA_init_hextable()
 	FCA_hextable['F'] = 15;
 }
 
+#endif	/* CGI */
+
 /*
 	copied from libcgi,
 	Original code from PHP source (http://www.php.net)
@@ -347,9 +366,6 @@ char *FCA_cgi_escape_special_chars(const char *str)
 
 	return tmp;
 }
-
-
-#endif	/* CGI */
 
 bool FCA_isInCGImode()
 {

@@ -13,14 +13,12 @@
 #include <ffss.h>
 
 #define FCA_NAME	"ffss-client"
-#define FCA_VERSION	"0.5-pre9"
+#define FCA_VERSION	"0.5-pre11"
 #define FCA_AUTHOR	"bennyben"
 
 #define FCA_MAX_CMD		10
 #define FCA_VAR_MAX		64
-#define FCA_MAX_POSS_VALUES	10
-
-#define FCA_BROADCAST_TIMEOUT	7	/* 7 seconds for a broadcast */
+#define FCA_MAX_POSS_VALUES	16
 
 #ifndef _WIN32  /* not win */
 #	define FCA_LAUNCH_SHELL_CMD     "$SHELL"

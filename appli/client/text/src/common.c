@@ -13,6 +13,7 @@
 #include "config.h"
 #include "command.h"
 #include "cgi_args.h"
+#include "skin.h"
 
 	/* just for threads */
 #include <unistd.h>
@@ -44,6 +45,8 @@ bool FCA_sem_timeout;
 	/* WARNING for these 2 tables :
 		if you modify the variable order,
 		 check the index in cgi.c in the FCA_CGI_ARGS table
+		if you add a variable, BE sure to modify FCA_skin_env_index
+		 in common.h AND FCA_env in client.c
 	*/
 const FCA_Tvar FCA_VARS[]= {
 /*
@@ -57,9 +60,9 @@ const FCA_Tvar FCA_VARS[]= {
 	{"master",	"master's name or IP",				"name/IP",	NULL},
 	{"prompt",	"if the user is prompted on mget/mput",		"on/off",	NULL},
 	{"skin",	"the skin",					"name",		FCA_upd_skin},
-	{"html_prefix",	"to add before links",				"url",		NULL},
-	{"html_img_prefix","to add before image locations",		"url",		NULL},
-	{"html_firstarg","if in a link we can use '?', otherwise we use '&'","on/off",	NULL},
+	{"broadcast_timeout","timeout when listing domain None, in seconds","1-120",	NULL},
+	{"search_timeout","timeout when searching in all domains, in seconds","1-120",	NULL},
+	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
 	/* possible values to variables
@@ -75,11 +78,10 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 		/* here, all values are accepted, but a value can be the current master */
 	{"", FCA_master,NULL},
 	{"on","off",NULL},
-		/* don't forget to add your skin in the list here too ! */
-	{"default","script","html", NULL},
-	{"", "http://localhost/ffss/", NULL},
-	{"", "http://localhost/ffss/img/", NULL},
-	{"on","off",NULL},
+	{FCA_SKINLIST, NULL},
+	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
+	{"1", "2", "3", "5", "7", "10", "15", "20", "30", "40", "50", "60", "90", "120", NULL},
+	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
 
@@ -200,7 +202,7 @@ void FCA_broadcast()
 	FCA_nb_states=0;
 	FCA_inDispServs=true;
         if( FC_SendMessage_ServerSearch() ) {
-		sleep(FCA_BROADCAST_TIMEOUT);	/* sleep and post after */
+		sleep(FCA_broadcast_timeout);	/* sleep and post after */
 		FCA_inDispServs=false;		/* after this, all answers are ignored */
 		FCA_print_post_states();
 	} else

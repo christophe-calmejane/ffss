@@ -8,6 +8,9 @@ les plus importants.
 
 
 ---------------------------
+preparer le terrain pour virtual fs mc
+
+---------------------------
 semaphore: timeout a _faire_
 -> choper la commande handle a kiki/botnet
 c comme un process normal, si tu hook pas le signal, ca termine
@@ -20,10 +23,6 @@ sigfillset(&mask);
 pthread_sigmask(SIG_BLOCK,&mask,NULL);
 sigset_t mask;
 -> voir les questions
-
----------------------------
-revoir la compilation sans le CGI (ca compile pas...) et sans rien du
-tout, diverses combinaisons.
 
 ----------------------------
 trier les machines, les classer par ordre alphabetique par exemple.
@@ -49,6 +48,9 @@ c sa taille sinon, tous les 10Mo
 DEBUGGER le pompage recursif
 
 ----------------------------
+mettre a jour les FAQ et les mans
+
+----------------------------
 aliaser la completion comme pour les commandes
 
 ---------------------------
@@ -58,9 +60,6 @@ download recursif -> meme listing, regarde pas dans le cache
 ---------------------------
 faire un more
 -> get !more !rm dans /tmp, avec le nom d'un fichier temporaire
-
-----------------------------
-mettre a jour les mans
 
 ----------------------------
 faire un mget the*red*

@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include "skin.h"
+#include "client.h"
 
 void FCA_scr_tab_stitle(const char name[], const unsigned int size);
 void FCA_scr_tab_int_stitle();
@@ -43,7 +44,7 @@ void FCA_scr_tab_stitle(const char name[], const unsigned int size)
 
 void FCA_scr_tab_int_stitle()
 {
-	printf(":");
+	printf("%c", FCA_script_delim);
 }
 
 void FCA_scr_tab_post_stitle()
@@ -57,7 +58,7 @@ void FCA_scr_tab_item(const char name[], const unsigned int size)
 
 void FCA_scr_tab_int_item()
 {
-	printf(":");
+	printf("%c", FCA_script_delim);
 }
 
 void FCA_scr_tab_post_item()

@@ -24,6 +24,8 @@ bool FCA_quiet;
 int FCA_err_errno;
 int FCA_UDP_errno;
 bool FCA_inDispServs;
+bool FCA_inDispFind;
+bool FCA_multiFind;
 bool FCA_everListDom;
 bool FCA_posted;
 bool FCA_canChange_pwd;
@@ -689,6 +691,7 @@ bool FCA_find_cmd(char *args)
 {
 	bool res;
 	char *domain, *machine, *share, *dir, *p, *start;
+	bool mustPost=true;
 
 	if(args==NULL) {
 		FCA_print_cmd_err("no keyword specified");
@@ -720,10 +723,19 @@ bool FCA_find_cmd(char *args)
 	if(p-start<4 && p-start>0)
 		FCA_print_warning("%s is considered as a file type", start);
 
-	if( domain!=NULL && !SU_strcasecmp(domain,"None") ) {	/* domain None -> search on all */
+	if( domain==NULL || (domain!=NULL && !SU_strcasecmp(domain,"None")) ) {	/* domain None or / -> search on all */
 		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
+		FCA_inDispFind=true;
+		FCA_multiFind=true;
 		res=FC_SendMessage_Search(FCA_master,NULL, args);
-	} else {						/* other cases (and on /) */
+		if(res) {
+			sleep(FCA_search_timeout);
+			FCA_inDispFind=false;
+		}
+		mustPost=false;
+		FCA_multiFind=false;
+	} else {	/* search on a particular domain */
+		FCA_multiFind=false;
 		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
 		res=FC_SendMessage_Search(FCA_master,domain, args);
 	}
@@ -732,9 +744,9 @@ bool FCA_find_cmd(char *args)
 	if(!res) {
 		FFSS_PrintDebug(5, "(client) mutpost==false -> err\n");
 		FCA_print_cmd_err("cannot launch research");
-		return false;
+		mustPost=false;
 	}
-	return true;
+	return mustPost;
 }
 
 bool FCA_set_cmd(char *args)

@@ -6,20 +6,17 @@
  *	skin functions
  */
 
-#include <client.h>
+#include "client.h"
+#include "skin.h"
+
 #include <stdarg.h>
+
 
 /*		TO CREATE A NEW SKIN :
 	1) create a skin_<skin>.c and a skin_<skin>.h
-	2) include skin_<skin>.h bellow
+	2) complete skin.h, "SKINS DEFINITION"
 	3) fill the skins structure bellow
-	4) fill the variable structure in common.c
  */
-
-	/* include your skin here */
-#include "skin_default.h"
-#include "skin_script.h"
-#include "skin_html.h"
 
 	/* fill the skin structure here */
 const FCA_Tskin FCA_SKINS[]={
@@ -32,10 +29,6 @@ const FCA_Tskin FCA_SKINS[]={
 	{"html",	&FCA_html_ps,		FCA_html_init,		true	},
 	{NULL,		NULL,			NULL,			false	}
 };
-
-	/* don't forget to fill the variable structure
-		in common.c
-	*/
 
 int FCA_tab_width=5;
 

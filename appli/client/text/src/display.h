@@ -63,13 +63,4 @@ void FCA_print_nb(int nb, const char name[]);
 void FCA_ansi_chs(unsigned short int style);
 void FCA_ansi_chs_err(unsigned short int style);
 
-void FCA_dir_link(const char *dir);
-void FCA_file_link(const char *file);
-void FCA_dir_arg(const char *dir);
-void FCA_pre_link();
-void FCA_post_link(bool firstArg);
-void FCA_form_hidden_args();
-void FCA_my_url();
-void FCA_sep_link(char *path);
-
 #endif	/* _FCA_DISPLAY_H_ */

@@ -57,6 +57,8 @@ extern bool FCA_quiet;
 extern int FCA_err_errno;
 extern int FCA_UDP_errno;
 extern bool FCA_inDispServs;
+extern bool FCA_inDispFind;
+extern bool FCA_multiFind;
 extern bool FCA_everListDom;
 extern bool FCA_posted;
 extern bool FCA_canChange_pwd;

@@ -77,9 +77,13 @@ printf("POUF\n");
 void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,int NbAnswers)
 {
 	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
-	FCA_print_search(Query,Domain,Answers,NbAnswers);
+	if(FCA_inDispFind || !FCA_multiFind)
+		FCA_print_search(Query,Domain,Answers,NbAnswers);
+	else
+		FFSS_PrintDebug(3, "(client) sorry, too late to give your answer\n");
     
-	FCA_sem_post();
+    	if(!FCA_multiFind)
+		FCA_sem_post();
 }
 
 void FCA_OnTransfertActive(FFSS_PTransfer FT,long int Amount,bool Download)
@@ -114,12 +118,11 @@ FFSS_PrintDebug(3, "(client) wake up baby\n");
 	FCA_sem_post();
 }
 
-bool FCA_OnMasterError(int Code,const char Descr[])
+void FCA_OnMasterError(int Code,const char Descr[])
 {
 	FCA_print_cmd_err("error from master (code %d, %s)\n", Code, Descr);
 
 	FCA_sem_post();
-	return true;
 }
 
     /* error */
