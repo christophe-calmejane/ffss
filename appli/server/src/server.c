@@ -222,6 +222,19 @@ FS_PConn FS_GetConnFromTS(FS_PThreadSpecific ts,SU_PList Conns)
   return NULL;
 }
 
+void FS_DoRemoveConnectFromShare(FS_PConn Conn,FS_PShare Share,bool RemoveXFers)
+{
+#ifdef DEBUG
+  printf("REMOVE CONN FORM SHARE\n");
+#endif /* DEBUG */
+  context;
+  FS_FreeConn(Conn,RemoveXFers);
+  Share->Conns = SU_DelElementElem(Share->Conns,Conn);
+  SU_SEM_WAIT(FS_SemGbl);
+  FS_MyGlobal.Conn--;
+  SU_SEM_POST(FS_SemGbl);
+}
+
 void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool RemoveXFers)
 {
   FS_PConn Conn;
@@ -233,20 +246,29 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
   Conn = FS_GetConnFromTS(ts,Share->Conns);
   if(Conn != NULL)
   {
+    if(((Conn->XFers != NULL) || (Conn->Strms != NULL)) && !RemoveXFers) /* Xfers/Strms actives, but do NOT remove them */
+    {
 #ifdef DEBUG
-    printf("REMOVE CONN FORM SHARE\n");
+      printf("NOT REMOVING CONN... SINCE XFERS ARE STILL ACTIVES\n");
 #endif /* DEBUG */
-    context;
-    FS_FreeConn(Conn,RemoveXFers);
-    Share->Conns = SU_DelElementElem(Share->Conns,Conn);
+      Conn->ToRemove = true;
+    }
+    else
+      FS_DoRemoveConnectFromShare(Conn,Share,RemoveXFers);
   }
   else
     printf("HUMMMMMMMMMMMM : Conn matching ts %p not found in FS_RemoveConnectionFromShare !!!!!!\n",ts);
   SU_SEM_POST(FS_SemConn);
+}
 
-  SU_SEM_WAIT(FS_SemGbl);
-  FS_MyGlobal.Conn--;
-  SU_SEM_POST(FS_SemGbl);
+void FS_CheckConnectionForRemoval(FS_PConn Conn,FS_PThreadSpecific ts)
+{
+  if(Conn->ToRemove && (Conn->XFers == NULL) && (Conn->Strms == NULL))
+  {
+    SU_SEM_WAIT(FS_SemConn);
+    FS_DoRemoveConnectFromShare(Conn,ts->Share,true);
+    SU_SEM_POST(FS_SemConn);
+  }
 }
 
 void destroyts(void *ptr)
@@ -2136,6 +2158,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
+    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->ts);
   }
 #ifdef DEBUG
   else
@@ -2176,6 +2199,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
+    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->ts);
   }
 #ifdef DEBUG
   else

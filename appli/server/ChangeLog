@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : April, 13th 2002
+                  Last Update : May, 11th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+May, 11th 2002:
+  - Fixed a bug in xfer displayed by ffsswho : Not removing conn when xfer are still actives
 
 April, 13th 2002:
   - Added support for both 'nomal' and 'in conn socket' xfers

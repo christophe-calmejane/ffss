@@ -23,7 +23,7 @@ TO DO :
 
  - Ajouter un MaxOpenFiles dans la conf globale -> OnDownload++ OnStrmOpen++ OnComplete-- OnFailed-- OnStrClose-- (ou mieux pour les --)
 
- - QUAND ON RECOIT UN DISCONNECT, VERIFIER SI IL N'Y A PAS DE XFER (STRM) EN COURS... SINON, NE PAS FERMER !!
+ - QUAND ON RECOIT UN DISCONNECT, VERIFIER SI IL N'Y A PAS DE XFER (STRM) EN COURS... SINON, NE PAS FERMER !! (enfin si, mais mettre la structure a disabled !!)
 
  - OPTION NETEJECT : Detecter a intervale regulier (dans le OnPing) si le proc est idle (arch_dep)... si oui (et option auto-disable-neteject) et server quiet, passer en ON
 
