@@ -493,7 +493,7 @@ bool FCA_html_pre_path(const char *domain, const char *path, long int state, boo
 	if(isName) {
 		if(state!=FFSS_STATE_OFF) {
 			all=strdup(path);
-			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s", domain);
+			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s/", domain);
 			if(isSamba)
 				FCA_smb_sep_link(all);
 			else
