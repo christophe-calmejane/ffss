@@ -7,6 +7,10 @@
 #include <net/if.h>
 #endif /* __unix__ */
 
+#ifdef USE_CRYPT
+#include <crypt.h>
+#endif
+
 #define FS_OPCODE_ADDSHARE       1
 #define FS_OPCODE_DELSHARE       2
 #define FS_OPCODE_GETGLOBAL      3
@@ -33,7 +37,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre78"
+#define FFSS_SERVER_VERSION "1.0-pre79"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"

@@ -581,6 +581,9 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   FS_PShare Share;
   FS_PThreadSpecific ts;
   FS_PUser Usr;
+#ifdef USE_CRYPT
+  char Key[3];
+#endif
 
   FFSS_PrintDebug(1,"Received a SHARE CONNECTION message (%s)\n",ShareName);
 
@@ -634,9 +637,10 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   ts->Writeable = Share->Writeable;
 
   Usr = NULL;
-  if(Share->Private || (Password[0] != 0))
-  { /* We only check PASSWORD for now */
-    if(Password[0] == 0)
+  if((Login[0] != 0) || (Password[0] != 0))
+  {
+    FFSS_PrintDebug(3,"Login/Password specified... looking for valid user\n");
+    if((Login[0] == 0) || (Password[0] == 0)) /* Need both login and password - Send error message */
     {
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
       return false;
@@ -644,17 +648,43 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     Ptr = Share->Users;
     while(Ptr != NULL)
     {
-      if(strcmp(((FS_PUser)Ptr->Data)->Password,Password) == 0)
+      if(strcmp(((FS_PUser)Ptr->Data)->Login,Login) == 0)
         break;
       Ptr = Ptr->Next;
     }
-    if(Ptr == NULL) /* Password not found in my list */
+    if(Ptr == NULL) /* Login not found in my list - Send error message */
     {
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
       return false;
     }
+    /* Now check password */
+    FFSS_PrintDebug(3,"Found user %s... checking password\n",Login);
     Usr = (FS_PUser)Ptr->Data;
+#ifdef USE_CRYPT
+    if(strlen(Password) < 3)
+    {
+      Key[0] = 'B'; Key[1] = 'N'; Key[2] = 0;
+    }
+    else
+    {
+      Key[0] = Password[0]; Key[1] = Password[1]; Key[2] = 0;
+    }
+    if(strncmp(crypt(Password,Key),Usr->Password,FFSS_MAX_PASSWORD_LENGTH-1) != 0)
+#else
+    if(strncmp(Password,Usr->Password,FFSS_MAX_PASSWORD_LENGTH-1) != 0)
+#endif
+    { /* Wrong password */
+      FFSS_PrintDebug(3,"Tadam... wrong password !!\n");
+      FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+      return false;
+    }
+    FFSS_PrintDebug(3,"Ok, user accepted\n");
     ts->Writeable = Usr->Writeable;
+  }
+  if(Share->Private && (Usr == NULL)) /* Share is private, and login/pass info does not match */
+  {
+    FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS]);
+    return false;
   }
 
   /* Set Idle time out value */

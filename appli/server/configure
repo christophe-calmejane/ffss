@@ -1933,24 +1933,24 @@ if test "$ffss_bzlib" = "yes" ; then
   CFLAGS="$CFLAGS -DHAVE_BZLIB"
 fi
 
-echo $ac_n "checking for dlopen in -ldl""... $ac_c" 1>&6
-echo "configure:1938: checking for dlopen in -ldl" >&5
-ac_lib_var=`echo dl'_'dlopen | sed 'y%./+-%__p_%'`
+echo $ac_n "checking for crypt in -lcrypt""... $ac_c" 1>&6
+echo "configure:1938: checking for crypt in -lcrypt" >&5
+ac_lib_var=`echo crypt'_'crypt | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-ldl  $LIBS"
+LIBS="-lcrypt  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 1946 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char dlopen();
+char crypt();
 
 int main() {
-dlopen()
+crypt()
 ; return 0; }
 EOF
 if { (eval echo configure:1957: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -1968,19 +1968,19 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  O_DL_LIB="-ldl"
+  O_CRYPT_LIB="-lcrypt"
 else
   echo "$ac_t""no" 1>&6
 fi
 
-echo $ac_n "checking for dlopen in -lc_r""... $ac_c" 1>&6
-echo "configure:1978: checking for dlopen in -lc_r" >&5
-ac_lib_var=`echo c_r'_'dlopen | sed 'y%./+-%__p_%'`
+echo $ac_n "checking for dlopen in -ldl""... $ac_c" 1>&6
+echo "configure:1978: checking for dlopen in -ldl" >&5
+ac_lib_var=`echo dl'_'dlopen | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lc_r  $LIBS"
+LIBS="-ldl  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 1986 "configure"
 #include "confdefs.h"
@@ -2008,6 +2008,46 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
+  O_DL_LIB="-ldl"
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+echo $ac_n "checking for dlopen in -lc_r""... $ac_c" 1>&6
+echo "configure:2018: checking for dlopen in -lc_r" >&5
+ac_lib_var=`echo c_r'_'dlopen | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lc_r  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 2026 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char dlopen();
+
+int main() {
+dlopen()
+; return 0; }
+EOF
+if { (eval echo configure:2037: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
   O_DL_LIB="-lc_r"
 else
   echo "$ac_t""no" 1>&6
@@ -2020,7 +2060,13 @@ else
         LIBS="$LIBS $O_DL_LIB"
 fi
 
-LIBS="$LIBS $ffss_libs"
+if test ! "$O_CRYPT_LIB"; then
+	echo "configure: warning: "Cannot find libcrypt so password will NOT BE CRYPTED"" 1>&2
+else
+	CFLAGS="$CFLAGS ""-DUSE_CRYPT "
+fi
+
+LIBS="$LIBS $ffss_libs $O_CRYPT_LIB"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
 trap '' 1 2 15

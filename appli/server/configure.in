@@ -115,6 +115,7 @@ if test "$ffss_bzlib" = "yes" ; then
 fi
 
 dnl Checks for libraries.
+AC_CHECK_LIB(crypt, crypt,O_CRYPT_LIB="-lcrypt")
 AC_CHECK_LIB(dl, dlopen,O_DL_LIB="-ldl")
 AC_CHECK_LIB(c_r, dlopen,O_DL_LIB="-lc_r")
 if test ! "$O_DL_LIB"; then
@@ -124,7 +125,13 @@ else
         LIBS="$LIBS $O_DL_LIB"
 fi
 
-LIBS="$LIBS $ffss_libs"
+if test ! "$O_CRYPT_LIB"; then
+	AC_MSG_WARN("Cannot find libcrypt so password will NOT BE CRYPTED")
+else
+	CFLAGS="$CFLAGS ""-DUSE_CRYPT "
+fi
+
+LIBS="$LIBS $ffss_libs $O_CRYPT_LIB"
 CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
 
 AC_OUTPUT([

@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : March, 1th 2002
+                  Last Update : March, 3th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+March, 3rd 2002:
+  - Added check for login/password in share connection
 
 March, 1st 2002:
   - Added ACK/NACK to every return message for conf api (and fixed a bug in boolean returned for some functions)

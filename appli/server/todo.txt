@@ -1,6 +1,4 @@
 TO DO :
- - OnShareConnection : We currently only check password, must check login/password
-
  - Implementer le debit max par partage (fichier de conf / server.h)
    Ensuite lors d un download, a chaque paquet envoye, on met a jour une variable globale du partage
    Cette var globale peux soit etre dans la structure du share (mais donc une sem par share, bof...)

@@ -1,7 +1,7 @@
 
 #include "confapi.h"
 
-#define FFSSWHO_VERSION "1.0-pre4"
+#define FFSSWHO_VERSION "1.0-pre5"
 
 bool RequestConns(SU_PClientSocket Client,const char Path[])
 {
@@ -73,10 +73,23 @@ bool RequestSharesList(SU_PClientSocket Client)
 }
 
 
+void PrintHelp(void)
+{
+  printf("Usage : ffsswho [options]\n");
+  printf("Options : -h or --help : This\n");
+  printf("          -v or --version  : Prints server version and exits\n");
+  printf("          -g or --global   : Prints server global infos\n");
+  printf("          -c or --conns    : Prints actual connection to the server (and active downloads). [Default]\n");
+  exit(0);
+}
+
 int main(int argc,char *argv[])
 {
   SU_PClientSocket Client;
   char *Server;
+  int i;
+  bool global_info = false;
+  bool conn_info = false;
 
 #ifdef _WIN32
   if(!SU_WSInit(2,2))
@@ -88,6 +101,31 @@ int main(int argc,char *argv[])
   printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSSWHO_VERSION);
   printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n\n",FFSS_SERVER_VERSION);
 
+  if(argc != 1)
+  {
+    i = 1;
+    while(i<argc)
+    {
+      if(strcmp(argv[i],"--help") == 0)
+        PrintHelp();
+      else if(strcmp(argv[i],"-h") == 0)
+        PrintHelp();
+      else if(strcmp(argv[i],"--version") == 0)
+        return 0;
+      else if(strcmp(argv[i],"-v") == 0)
+        return 0;
+      else if(strcmp(argv[i],"-g") == 0)
+        global_info = true;
+      else if(strcmp(argv[i],"--global") == 0)
+        global_info = true;
+      else if(strcmp(argv[i],"-c") == 0)
+        conn_info = true;
+      else if(strcmp(argv[i],"--conns") == 0)
+        conn_info = true;
+      i++;
+    }
+  }
+
   Server = "localhost";
   Client = SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
   if(Client == NULL)
@@ -96,7 +134,9 @@ int main(int argc,char *argv[])
     return -2;
   }
 
-  if(argc != 1)
+  if(!global_info && !conn_info)
+    conn_info = true;
+  if(global_info)
   {
     FSCA_PGlobal Gbl = FSCA_RequestGlobalInfo(Client);
     if(Gbl != NULL)
@@ -112,10 +152,13 @@ int main(int argc,char *argv[])
       printf("\tFTP_MaxConn    = %d\n",Gbl->FTP_MaxConn);
     }
   }
-  if(RequestSharesList(Client) == false)
+  if(conn_info)
   {
-    printf("Cannot request shares for %s\n",Server);
-    return -3;
+    if(RequestSharesList(Client) == false)
+    {
+      printf("Cannot request shares for %s\n",Server);
+      return -3;
+    }
   }
 
   SU_FreeCS(Client);
