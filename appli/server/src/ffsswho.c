@@ -100,8 +100,8 @@ int main(int argc,char *argv[])
     return -1;
   }
 #endif /* _WIN32 */
-  printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001'03\n",FFSSWHO_VERSION);
-  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'03\n\n",FFSS_SERVER_VERSION);
+  printf("FFSS Who v%s (c) Christophe Calmejane 2001'03\n",FFSSWHO_VERSION);
+  printf("FFSS Server v%s (c) Christophe Calmejane 2001'03\n\n",FFSS_SERVER_VERSION);
 
   Server = "localhost";
   if(argc != 1)

@@ -56,7 +56,7 @@ DriverEntry (
     ", checked"
 #endif
 
-    ", _WIN32_WINNT=%#x, Ze KiLleR / SkyTech\n", _WIN32_WINNT);
+    ", _WIN32_WINNT=%#x, Christophe Calmejane\n", _WIN32_WINNT);
 
 	// Initialize TDI
     Status = TDI_Init();

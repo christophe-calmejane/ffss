@@ -882,7 +882,7 @@ int main(int argc,char *argv[])
   FILE *fp;
   pid_t MainPid;
 
-  printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'03\n",FFSS_MASTER_VERSION);
+  printf("FFSS Master v%s (c) Christophe Calmejane 2001'03\n",FFSS_MASTER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
   fp = fopen(FM_PID_FILE,"rt");
