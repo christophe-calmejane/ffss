@@ -740,6 +740,7 @@ begin
     Inc(Pos,StrLen(Buf+Pos)+1);
     Item.SubItems.Add(String(Buf+Pos));
     Inc(Pos,StrLen(Buf+Pos)+1);
+    Inc(Pos); // Zap Startup flag
   End;
 end;
 
