@@ -37,7 +37,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre80"
+#define FFSS_SERVER_VERSION "1.0-pre81"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
