@@ -565,7 +565,8 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 	SU_PList Ptr, Ps=NULL;
 	FC_PEntry Ent, Es;
 	char *timech;
-	unsigned int nbEl=0, nbFd=0, nbFl=0, totSz=0;
+	unsigned int nbEl=0, nbFd=0, nbFl=0;
+	long long totSz=0;
     
 	Ptr=Entries;
 	    	/* prepare the internal structure */
