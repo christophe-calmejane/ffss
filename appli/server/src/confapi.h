@@ -1,6 +1,10 @@
 #ifndef __CONFAPI_H__
 #define __CONFAPI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #include "server.h"
 
 typedef struct
@@ -64,5 +68,9 @@ bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[]);
 bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
 bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[]);
 bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* !__CONFAPI_H__ */

@@ -1,6 +1,10 @@
 #ifndef __FFSS_H__
 #define __FFSS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef __linux__
 #define FFSS_SERVER_OS "Linux"
 #elif __FreeBSD__
@@ -966,5 +970,9 @@ void set_context(char *file, int line);
 #else /* !FFSS_CONTEXT */
 #define context
 #endif /* FFSS_CONTEXT */
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* !__FFSS_H__ */

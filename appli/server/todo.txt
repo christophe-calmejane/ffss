@@ -40,6 +40,6 @@ TO DO :
 
  - Option pour chaque share : AutoRescan <interval>
 
- - Ajouter un nouveau type de paquet 'MessageBox sous win, mail @root sous nux' uniquement depuis le master.. au moment de la connect (au moment du check du protocole par ex)
+ - Si pas de master defini lors du Startup, creer un thread 'timer' qui simule les pings du master
 
 [23:32:23] <kiki>  hum.. d ailleurs, faut que j ajoute un callback OnShutdown et OnStartup
