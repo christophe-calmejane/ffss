@@ -50,11 +50,11 @@ FFSS_PRule FFSS_Filter_CreateRule(const char IP[],const char Mask[],FFSS_FILTER_
   ip = inet_addr(IP);
   mask = inet_addr(Mask);
   if(ip == INADDR_NONE)
-    return false;
+    return NULL;
   if(mask == INADDR_NONE)
   {
     if(strcmp(Mask,"255.255.255.255") != 0)
-      return false;
+      return NULL;
   }
   Rule = (FFSS_PRule) malloc(sizeof(FFSS_TRule));
   memset(Rule,0,sizeof(FFSS_TRule));
@@ -209,7 +209,7 @@ bool FFSS_Filter_DelRuleFromChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos)
     SU_SEM_POST(FFSS_SemFilter);
     return false;
   }
-  FFSS_Filter_FreeRule(SU_GetElementPos(FFSS_Chains[Chain]->Rules,Pos));
+  FFSS_Filter_FreeRule((FFSS_TRule *)SU_GetElementPos(FFSS_Chains[Chain]->Rules,Pos));
   FFSS_Chains[Chain]->Rules = SU_DelElementPos(FFSS_Chains[Chain]->Rules,Pos);
   SU_SEM_POST(FFSS_SemFilter);
   return true;
@@ -256,7 +256,7 @@ bool FFSS_Filter_ClearChain(FFSS_FILTER_CHAIN Chain)
   Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
-    FFSS_Filter_FreeRule(Ptr->Data);
+    FFSS_Filter_FreeRule((FFSS_TRule *)Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(FFSS_Chains[Chain]->Rules);
@@ -395,5 +395,5 @@ FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAIN Chain,un
   }
   SU_SEM_POST(FFSS_SemFilter);
 
-  return res; 
+  return res;
 }

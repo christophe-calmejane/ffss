@@ -513,11 +513,11 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   int resp;
   long int partial,current,slen;
   char *data;
-  SU_SOCKET sock=0,len,client;
+  SU_SOCKET sock=0,client;
   struct sockaddr_in SAddr;
   fd_set rfds;
   struct timeval tv;
-  int retval;
+  int retval,len;
   FFSS_Field NbBufs;
 
   context;
@@ -1061,9 +1061,10 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
 /*  Server : The Server's structure we are connected to             */
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
+/*  EndingPos : The pos we want the download to stop (0=full file)  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
 /*  User : User pointer returned in message answer                  */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock,FFSS_LongField User)
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,bool UseConnSock,FFSS_LongField User)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOWNLOAD + FFSS_MAX_FILEPATH_LENGTH+1];
   long int pos;
@@ -1107,12 +1108,13 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
     len = FFSS_MAX_FILEPATH_LENGTH;
   pos = FFSS_PackString(msg,pos,Path,len);
   pos = FFSS_PackLongField(msg,pos,StartingPos);
+  pos = FFSS_PackLongField(msg,pos,EndingPos);
   if(UseConnSock)
     pos = FFSS_PackField(msg,pos,-1);
   else
     pos = FFSS_PackField(msg,pos,ntohs(SAddr.sin_port));
   FFSS_PackField(msg,0,pos);
-  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Download message to server for %s starting at %ld",Path,StartingPos);
+  SU_DBG_PrintDebug(FFSS_DBGMSG_OUT_MSG,"Sending Download message to server for %s starting at %ld (ending at %ld)",Path,StartingPos,EndingPos);
   resp = FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
   if(!resp)
   {

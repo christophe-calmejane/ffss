@@ -41,14 +41,21 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   fseek(FT->fp,0,SEEK_END);
   fsize = ftell(FT->fp);
   rewind(FT->fp);
+  if(FT->EndingPos != 0)
+  {
+    if(FT->EndingPos < fsize)
+      fsize = FT->EndingPos + 1;
+    else
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Requested EndingSize is less than actual file size");
+  }
   FT->FileSize = fsize;
   Checksum = FFSS_ComputeChecksum(0,NULL,0);
   if(FT->StartingPos != 0)
   {
     fseek(FT->fp,FT->StartingPos,SEEK_SET);
     fsize -= FT->StartingPos;
-    FT->XFerPos = FT->StartingPos;
   }
+  FT->XFerPos = 0; /* Do not set this to real pos, because if resume is used, FT->FileSize will be remaning bytes only */
 
   if(FFSS_TransferReadBufferSize == 0)
     FFSS_TransferReadBufferSize = FFSS_TRANSFER_READ_BUFFER_SIZE;
@@ -464,26 +471,28 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
       fp = fopen(FT->LocalPath,"ab");
     else
       fp = fopen(FT->LocalPath,"wb");
+
+    if(fp == NULL)
+    {
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Can't open local file for writting (%s)",FT->LocalPath);
+      if(FT->ThreadType == FFSS_THREAD_SERVER)
+      {
+        if(FFSS_CB.SCB.OnTransferFailed != NULL)
+          FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_OPENING,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_OPENING],true);
+      }
+      else
+      {
+        if(FFSS_CB.CCB.OnTransferFailed != NULL)
+          FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_OPENING,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_OPENING],true);
+      }
+      FFSS_FreeTransfer(FT);
+      SU_END_THREAD(NULL);
+    }
   }
   else
-    fp = stdout;
+    fp = NULL;
   FT->XFerPos = 0; /* Do not set this to real pos, because if resume is used, FT->FileSize will be remaning bytes only */
-  if(fp == NULL)
-  {
-    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Can't open local file for writting (%s)",FT->LocalPath);
-    if(FT->ThreadType == FFSS_THREAD_SERVER)
-    {
-      if(FFSS_CB.SCB.OnTransferFailed != NULL)
-        FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_OPENING,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_OPENING],true);
-    }
-    else
-    {
-      if(FFSS_CB.CCB.OnTransferFailed != NULL)
-        FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_OPENING,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_OPENING],true);
-    }
-    FFSS_FreeTransfer(FT);
-    SU_END_THREAD(NULL);
-  }
+
   context;
   FD_ZERO(&rfds);
   FD_SET(FT->sock,&rfds);
@@ -666,27 +675,66 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
         context;
         if(len != 0)
         {
-          total += res;
-          if(fwrite(Buf,1,res,fp) != (unsigned int)res)
+          if(fp == NULL)
           {
-            SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Disk full ?");
-            /* Remove or not file from disk (ask user) */
-            if(FT->LocalPath != NULL)
-              fclose(fp);
             if(FT->ThreadType == FFSS_THREAD_SERVER)
             {
-              if(FFSS_CB.SCB.OnTransferFailed != NULL)
-                FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              if(FFSS_CB.SCB.OnTransferFileWrite != NULL)
+              {
+                if(!FFSS_CB.SCB.OnTransferFileWrite(FT,Buf,res,FT->XFerPos))
+                  error = true;
+              }
+              else
+                error = true;
             }
             else
             {
-              if(FFSS_CB.CCB.OnTransferFailed != NULL)
-                FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              if(FFSS_CB.CCB.OnTransferFileWrite != NULL)
+              {
+                if(!FFSS_CB.CCB.OnTransferFileWrite(FT,Buf,res,FT->XFerPos))
+                  error = true;
+              }
+              else
+                error = true;
             }
-            error = true;
+            if(error)
+            {
+              if(FT->ThreadType == FFSS_THREAD_SERVER)
+              {
+                if(FFSS_CB.SCB.OnTransferFailed != NULL)
+                  FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              }
+              else
+              {
+                if(FFSS_CB.CCB.OnTransferFailed != NULL)
+                  FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              }
+            }
+          }
+          else
+          {
+            if(fwrite(Buf,1,res,fp) != (unsigned int)res)
+            {
+              SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Disk full ?");
+              /* Remove or not file from disk (ask user) */
+              if(FT->LocalPath != NULL)
+                fclose(fp);
+              if(FT->ThreadType == FFSS_THREAD_SERVER)
+              {
+                if(FFSS_CB.SCB.OnTransferFailed != NULL)
+                  FFSS_CB.SCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              }
+              else
+              {
+                if(FFSS_CB.CCB.OnTransferFailed != NULL)
+                  FFSS_CB.CCB.OnTransferFailed(FT,FFSS_ERROR_TRANSFER_WRITE_FILE,FFSS_TransferErrorTable[FFSS_ERROR_TRANSFER_WRITE_FILE],true);
+              }
+              error = true;
+            }
           }
           Checksum = FFSS_ComputeChecksum(Checksum,Buf,res);
           FT->XFerPos += res;
+          total += res;
 
           /* QoS Check */
           SU_GetTicks(&et);
@@ -797,14 +845,15 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 }
 
 
-bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out)
+bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,int Port,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out)
 {
-  FILE *fp;
+  FILE *fp = NULL;
   SU_THREAD_HANDLE Thread;
   struct sockaddr_in SAddr;
   SU_SOCKET sock=0;
   FFSS_PTransfer FT;
 
+  /* ATTENTION ICI : Utilisation de messages specifiques Server->Client pour une fonction generique !! */
   context;
   *FT_out = NULL;
   fp = fopen(FilePath,"rb");
@@ -835,6 +884,8 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
   memset(FT,0,sizeof(FFSS_TTransfer));
   FT->fp = fp;
   FT->StartingPos = StartingPos;
+  FT->EndingPos = EndingPos;
+  FT->UserInfo = UserInfo;
   FT->XI.UseConnSock = UseConnSock;
   if(UseConnSock)
     FT->sock = Client->sock;
@@ -858,7 +909,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
   return true;
 }
 
-bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out)
+bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out)
 {
   SU_SOCKET sock;
   struct sockaddr_in saddr;
@@ -867,7 +918,25 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
   FFSS_PTransfer FT;
 
   context;
-  sock = FC_SendMessage_Download(Server,RemotePath,StartingPos,UseConnSock,UserInfo);
+  if(EndingPos != 0)
+  {
+    if(EndingPos <= StartingPos)
+    {
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"FFSS_DownloadFile : Not trying to download file, as StartingPos >= EndinfPos");
+      return false;
+    }
+    if(UseConnSock)
+    {
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"FFSS_DownloadFile : Not trying to download file, as UseConnSock is not yet supported for EndingPos != 0");
+      return false;
+    }
+    if(LocalPath != NULL)
+    {
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"FFSS_DownloadFile : Not trying to download file, as LocalPath != NULL is not yet supported for EndingPos != 0");
+      return false;
+    }
+  }
+  sock = FC_SendMessage_Download(Server,RemotePath,StartingPos,EndingPos,UseConnSock,UserInfo);
   if(sock == SOCKET_ERROR)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error sending DOWNLOAD request : %d",errno);
@@ -881,6 +950,8 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
   if(LocalPath != NULL)
     FT->LocalPath = strdup(LocalPath);
   FT->StartingPos = StartingPos;
+  FT->EndingPos = EndingPos;
+  FT->UserInfo = UserInfo;
   FT->XI.UseConnSock = UseConnSock;
   if(UseConnSock)
     FT->sock = Server->sock;

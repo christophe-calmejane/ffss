@@ -55,11 +55,11 @@ FFSS_PQosRule FFSS_QoS_CreateRule(const char IP[],const char Mask[],FFSS_QOS_CRI
   ip = inet_addr(IP);
   mask = inet_addr(Mask);
   if(ip == INADDR_NONE)
-    return false;
+    return NULL;
   if(mask == INADDR_NONE)
   {
     if(strcmp(Mask,"255.255.255.255") != 0)
-      return false;
+      return NULL;
   }
   switch(Criteria)
   {
@@ -199,7 +199,7 @@ bool FFSS_QoS_DelRuleFromChain_Pos(FFSS_QOS_CHAIN Chain,unsigned int Pos)
     SU_SEM_POST(FFSS_SemQos);
     return false;
   }
-  FFSS_QoS_FreeRule(SU_GetElementPos(FFSS_QosChains[Chain]->Rules,Pos));
+  FFSS_QoS_FreeRule((FFSS_TQosRule *)SU_GetElementPos(FFSS_QosChains[Chain]->Rules,Pos));
   FFSS_QosChains[Chain]->Rules = SU_DelElementPos(FFSS_QosChains[Chain]->Rules,Pos);
   SU_SEM_POST(FFSS_SemQos);
   return true;
@@ -246,7 +246,7 @@ bool FFSS_QoS_ClearChain(FFSS_QOS_CHAIN Chain)
   Ptr = FFSS_QosChains[Chain]->Rules;
   while(Ptr != NULL)
   {
-    FFSS_QoS_FreeRule(Ptr->Data);
+    FFSS_QoS_FreeRule((FFSS_TQosRule *)Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(FFSS_QosChains[Chain]->Rules);

@@ -228,6 +228,7 @@ Detail du protocole (Version 0x0010007) :
    QWord : Pointeur User, retourne dans la reponse
    ZStr : Path du fichier dans le partage
    QWord : Position a partir de laquelle il faut envoyer le fichier (resume si il y a eu une erreur) ou 0 si fichier complet
+   QWord : Position a partir de laquelle il faut arreter d'envoyer le fichier ou 0 si fichier complet
    DWord : Port auquel se connecter pour envoyer le fichier
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu

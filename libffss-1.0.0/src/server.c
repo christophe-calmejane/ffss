@@ -115,7 +115,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
   long int pos;
   char *str,*str2,*str3;
   FFSS_Field val,val2,val3;
-  FFSS_LongField lval,lval2;
+  FFSS_LongField lval,lval2,lval3;
   bool ret_val;
   long int Length;
 
@@ -204,6 +204,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
         lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
+        lval3 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (val2 == 0))
         {
@@ -212,7 +213,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,vo
           break;
         }
         if(FFSS_CB.SCB.OnDownload != NULL)
-          ret_val = FFSS_CB.SCB.OnDownload(Client,str,lval,val2,lval2);
+          ret_val = FFSS_CB.SCB.OnDownload(Client,str,lval,lval3,val2,lval2);
         break;
       case FFSS_MESSAGE_UPLOAD :
         context;

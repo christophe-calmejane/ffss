@@ -408,7 +408,7 @@ typedef unsigned long int FFSS_Field;
 #ifdef __unix__
 typedef unsigned long long FFSS_LongField;
 #else /* !__unix__ */
-typedef __int64 FFSS_LongField;
+typedef unsigned __int64 FFSS_LongField;
 #endif /* __unix__ */
 typedef unsigned short int FFSS_THREAD_TYPE;
 
@@ -451,14 +451,16 @@ typedef struct
   char *FileName;               /* Remote file name */ /* NULL on server side */
   char *LocalPath;              /* Local path of file used for fopen */
   FFSS_LongField StartingPos;   /* Reading/Writing starting pos in the file */
-  FFSS_LongField FileSize;      /* Size of the file */
-  FFSS_LongField XFerPos;       /* Current xfer pos */
+  FFSS_LongField FileSize;      /* Size of the file */ /* Or size of the partial file if requested */
+  FFSS_LongField XFerPos;       /* User readable : Current xfer pos (from 0 to FileSize, even if partial file is requested) */
+  FFSS_LongField EndingPos;     /* Reading/Writing ending pos in the file */ /* 0 if full size requested */
   FFSS_THREAD_TYPE ThreadType;  /* Type of the thread (SERVER / CLIENT) */
   SU_PClientSocket Client;      /* SU_PClientSocket structure of the share connection we transfer from */ /* Do NOT free this, only a pointer !! */
   bool Cancel;                  /* If the transfer is to be canceled */
   void *User;                   /* User information */
   FFSS_TXFerInfo XI;            /* XFer info for xfer using connection socket */
   unsigned long int Throughput; /* Throughput in bytes/sec */
+  FFSS_LongField UserInfo;      /* UserInfo passed to Download/Upload function, and passed back in Transfer Callbacks */
 } FFSS_TTransfer, *FFSS_PTransfer;
 #endif /* !FFSS_DRIVER */
 
@@ -478,7 +480,7 @@ typedef struct
   void (*OnBeginTCPThread)(SU_PClientSocket Client,void *Info); /* Info is the (void *) returned by OnShareConnection */
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
   bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
-  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User); /* Path IN the share (without share name) */
+  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,FFSS_LongField EndingPos,int Port,FFSS_LongField User); /* Path IN the share (without share name) */
   bool (*OnUpload)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port,FFSS_LongField User); /* Path IN the share (without share name) */
   bool (*OnRename)(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User); /* Path IN the share (without share name) */
   bool (*OnCopy)(SU_PClientSocket Client,const char Path[],const char NewPath[],FFSS_LongField User); /* Path IN the share (without share name) */
@@ -488,9 +490,10 @@ typedef struct
   bool (*OnDisconnect)(SU_PClientSocket Client);
   int (*OnSelect)(void); /* 0=Do timed-out select ; 1=don't do timed-out select, but sleep ; 2=don't do timed-out select, and continue */
   void (*OnIdleTimeout)(SU_PClientSocket Client);
-  void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
-  void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download);
-  void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
+  bool (*OnTransferFileWrite)(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size,FFSS_LongField Offset); /* 'Offset' from FT->StartingPos */ /* True on success */
+  void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download); /* UserInfo passed to Download/Upload function is in FT->UserInfo */
+  void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download); /* UserInfo passed to Download/Upload function is in FT->UserInfo */
+  void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download); /* UserInfo passed to Download/Upload function is in FT->UserInfo */
   void (*OnCancelXFer)(SU_PClientSocket Server,FFSS_Field XFerTag);
   void (*OnStrmOpen)(SU_PClientSocket Client,long int Flags,const char Path[],FFSS_LongField User); /* Path IN the share (without share name) */
   void (*OnStrmClose)(SU_PClientSocket Client,FFSS_Field Handle);
@@ -538,6 +541,7 @@ typedef struct
   bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User); /* FC_PEntry */
   void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
   void (*OnIdleTimeout)(SU_PClientSocket Server);
+  bool (*OnTransferFileWrite)(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size,FFSS_LongField Offset); /* 'Offset' from FT->StartingPos */ /* True on success */
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
   void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download);
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
@@ -701,12 +705,14 @@ char *FFSS_GetOS(void);
 /* ************************************************ */
 
 /* If FT_out is NULL, not filled */
-bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
+/* EndingPos must be set to 0 for full file upload */
+bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,int Port,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
 
 /* RemotePath in the share */
 /* If FT_out is NULL, not filled */
-/* If LocalPath is NULL, stdout is used for local writing */
-bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
+/* If LocalPath is NULL, OnTransferFileWrite will be called when a bloc is to be written to file */
+/* EndingPos must be set to 0 for full file download */
+bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,void *User,bool UseConnSock,FFSS_LongField UserInfo,FFSS_PTransfer *FT_out);
 
 
 /* ************************************************ */
@@ -877,9 +883,10 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
 /*  Server : The Server's structure we are connected to             */
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
+/*  EndingPos : The pos we want the download to stop (0=full file)  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
 /*  User : User pointer returned in message answer                  */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock,FFSS_LongField User);
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,FFSS_LongField EndingPos,bool UseConnSock,FFSS_LongField User);
 
 /* FC_SendMessage_Disconnect Function                   */
 /* Sends an DISCONNECT message to a server              */
