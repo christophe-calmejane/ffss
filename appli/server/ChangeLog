@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 27th 2003
+                  Last Update : November, 4th 2003
 
 VIRER LE -PREx DE SERVER.H
+
+November, 4th 2003:
+  - Fixed a bug when Ejecting
 
 August, 27th 2003:
   - Added support for resume for UseSocketConn XFer mode

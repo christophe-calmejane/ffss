@@ -96,13 +96,14 @@ void PrintHelp(void)
   printf("          -g or --global   : Prints server global infos\n");
   printf("          -c or --conns    : Prints actual connection to the server (and active downloads). [Default]\n");
   printf("          -s <servername> <login> <password> : Connects to the specified server instead of localhost, using specified login and password\n");
+  printf("          -j <sharename>   : Ejects everybody from specified share\n");
   exit(0);
 }
 
 int main(int argc,char *argv[])
 {
   SU_PClientSocket Client;
-  char *Server,*Login = NULL,*Pwd = NULL;
+  char *Server,*Login = NULL,*Pwd = NULL,*ejectfrom = NULL;
   int i;
   bool global_info = false;
   bool conn_info = false;
@@ -143,6 +144,12 @@ int main(int argc,char *argv[])
         Server = argv[++i];
         Login = argv[++i];
         Pwd = argv[++i];
+      }
+      else if((strcmp(argv[i],"-j") == 0) || (strcmp(argv[i],"--eject") == 0))
+      {
+        if((i+1) >= argc)
+          PrintHelp();
+        ejectfrom = argv[++i];
       }
       i++;
     }
@@ -199,6 +206,13 @@ int main(int argc,char *argv[])
       printf("Cannot request shares for %s\n",Server);
       return -3;
     }
+  }
+  if(ejectfrom)
+  {
+    if(FSCA_RequestEject(Client,ejectfrom))
+      printf("Ejected everybody from %s\n",ejectfrom);
+    else
+      printf("Couldn't ejected from %s (share name correct ?)\n",ejectfrom);
   }
 
   SU_FreeCS(Client);

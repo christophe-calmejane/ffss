@@ -335,9 +335,9 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
       FS_RemoveConnectionFromShare(ts->Share,ts,true);
       if(ts->Share->Conns == NULL) /* No more connection, removing share */
         FS_FreeShare(ts->Share);
-      /* Clean and kill this thread */
+      /* Return NULL, so the ffsslib will call OnEndTCPThread soon (ts->Share to NULL, to prevent multiple call of RemoveConnection) */
       SU_CLOSE_SOCKET(ts->Client->sock);
-      SU_THREAD_DESTROY_SPECIFIC(destroyts,ts);
+      ts->Share = NULL;
       return NULL;
     }
     if(ts->Remove) /* If connection is waiting to be removed */
@@ -345,9 +345,9 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
       SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"This connection has been requested to exit (Share %s)",ts->Share->ShareName);
       FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED],0,ts->User);
       FS_RemoveConnectionFromShare(ts->Share,ts,false);
-      /* Clean and kill this thread */
+      /* Return NULL, so the ffsslib will call OnEndTCPThread soon (ts->Share to NULL, to prevent multiple call of RemoveConnection) */
       SU_CLOSE_SOCKET(ts->Client->sock);
-      SU_THREAD_DESTROY_SPECIFIC(destroyts,ts);
+      ts->Share = NULL;
       return NULL;
     }
   }
@@ -361,7 +361,7 @@ void OnEndTCPThread(void)
   SU_SEM_WAIT(FS_SemShr);
   ts = FS_GetThreadSpecific(true);
 
-  if(ts != NULL)
+  if((ts != NULL) && (ts->Share != NULL))
   {
     if(ts->ShareName != NULL) /* Not ftp */
     {
