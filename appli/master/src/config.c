@@ -71,6 +71,8 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         FFSS_AddBroadcastAddr(Value);
         FFSS_PrintSyslog(LOG_WARNING,"Adding %s as broadcast address\n",Value);
       }
+      else if(strcasecmp(Name,"DebugLevel") == 0)
+        N_DebugLevel = atoi(Value);
     }
   }
 

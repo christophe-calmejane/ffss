@@ -2,6 +2,39 @@
 
 extern volatile bool FM_ShuttingDown;
 
+void FM_CheckMasterConnections(void)
+{
+  SU_PList Ptr;
+  FM_PDomain Domain;
+
+  /* Connecting to foreign masters */
+  context;
+#ifdef DEBUG
+  printf("FM_CheckMasterConnections : Checking if all masters are still connected\n");
+#endif /* DEBUG */
+  Ptr = FM_Domains;
+  while(Ptr != NULL)
+  {
+    Domain = (FM_PDomain) Ptr->Data;
+    if((Domain->CS == NULL) && (Domain != &FM_MyDomain))
+    {
+#ifdef DEBUG
+      printf("FM_CheckMasterConnections : Master of domain %s not connected... trying to reconnect...\n",Domain->Name);
+#endif /* DEBUG */
+      Domain->CS = FM_SendMessage_Connect(Domain->Master);
+      if(Domain->CS != NULL)
+      {
+#ifdef DEBUG
+        printf("FM_CheckMasterConnections : Successfully connected... requesting servers list\n");
+#endif /* DEBUG */
+        FM_SendMessage_MasterConnection(Domain->CS->sock);
+        FM_SendMessage_ServerList(Domain->CS->sock);
+      }
+    }
+    Ptr = Ptr->Next;
+  }
+}
+
 SU_THREAD_ROUTINE(FM_ThreadPing,User)
 {
   SU_PList Ptr,Ptr2,Ptr3;
@@ -30,6 +63,8 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
       FMI_SaveIndex(FM_MYINDEX_FILE);
       SaveIndexCount = 0;
     }
+    /* Check master connections */
+    FM_CheckMasterConnections();
     /* PING SEQUENCE */
     context;
     FFSS_PrintDebug(4,"THREADS : PING : Sending PING sequence\n");

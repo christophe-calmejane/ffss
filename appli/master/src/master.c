@@ -91,7 +91,7 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
 
   context;
 #ifdef DEBUG
-  printf("MASTER : Adding host %s (%s) to domain %s\n",Name,IP,Domain->Name);
+  //printf("MASTER : Adding host %s (%s) to domain %s\n",Name,IP,Domain->Name);
 #endif /* DEBUG */
   Hst = (FM_PHost) malloc(sizeof(FM_THost));
   memset(Hst,0,sizeof(FM_THost));
@@ -119,8 +119,8 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
   context;
   SU_SEM_WAIT(FM_MySem2);
 #ifdef DEBUG
-  printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
-  printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
+  //printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
+  //printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
 #endif /* DEBUG */
   if(strcmp(Hst->Name,Name) != 0)
   {
@@ -178,19 +178,14 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
 
   context;
 #ifdef DEBUG
-  printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
+  //printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
   if(Hst->State == FFSS_STATE_OFF)
     Hst->OffSince = time(NULL);
   else
     Hst->OffSince = 0;
   if(FM_IsHostInMyQueue(Hst))
-  {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Host %s already in my queue\n",Hst->IP);
-#endif /* DEBUG */
     return;
-  }
 
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   memset(Que,0,sizeof(FM_TQueue));
@@ -207,19 +202,14 @@ void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst)
 
   context;
 #ifdef DEBUG
-  printf("MASTER : Adding state to other queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
+  //printf("MASTER : Adding state to other queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
   if(Hst->State == FFSS_STATE_OFF)
     Hst->OffSince = time(NULL);
   else
     Hst->OffSince = 0;
   if(FM_IsHostInOtherQueue(Hst))
-  {
-#ifdef DEBUG
-    printf("MASTER : WARNING : Host %s already in other queue\n",Hst->IP);
-#endif /* DEBUG */
     return;
-  }
 
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
   Que->Domain = Domain;
@@ -252,7 +242,7 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
 
   context;
 #ifdef DEBUG
-  printf("MASTER : State : %s-%s-%s\n",Name,Comment,OS);
+  //printf("MASTER : State : %s-%s-%s\n",Name,Comment,OS);
 #endif /* DEBUG */
   Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
   if(Hst == NULL)
@@ -793,7 +783,7 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
 
   context;
 #ifdef DEBUG
-  printf("MASTER : NewState : %s-%s-%s-%s-%s-%s\n",Name,Comment,OS,Domain,IP,MasterIP);
+  //printf("MASTER : NewState : %s-%s-%s-%s-%s-%s\n",Name,Comment,OS,Domain,IP,MasterIP);
 #endif /* DEBUG */
   Dom = FM_SearchDomainByIP(MasterIP);
   if(Dom == NULL)
@@ -834,7 +824,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   if((Dom != NULL) && (!FM_IsMyDomain(Dom)))
   {
 #ifdef DEBUG
-    printf("MASTER : Received a ServerListing message from foreign master of %s\n",Dom->Name);
+    //printf("MASTER : Received a ServerListing message from foreign master of %s\n",Dom->Name);
 #endif /* DEBUG */
     Queue = NULL;
     Ptr = FM_MyDomain.Hosts;

@@ -40,4 +40,8 @@
 User ffss
 Group nogroup
 
+# DebugLevel (Optional) :
+#  Define debug level (0 if no debug)  (from 0 to 6)
+#DebugLevel 6
+
 ### End of file ###
