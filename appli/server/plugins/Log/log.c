@@ -286,7 +286,9 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 /* This is the UnInit fonction (Name it CAREFULLY) called on each UnLoadPlugin call */
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
+#ifdef _WIN32
   SendMessage(L_hwnd,WM_DESTROY,0,0);
+#endif /* !_WIN32 */
   SU_KillThread(L_Thr);
   SU_CloseLogFile(L_fp);
   if(L_Gbl.Path != NULL)
