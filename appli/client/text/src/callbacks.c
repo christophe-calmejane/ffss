@@ -18,7 +18,7 @@ void FCA_OnBeginTCPThread(SU_PClientSocket Server)
 }
 
     /* new machine found */
-void FCA_OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
+void FCA_OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
 	if(FCA_inDispServs) {
 		FFSS_PrintDebug(1, "(client) received a new state from %s\n", IP);

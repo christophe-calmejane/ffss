@@ -12,7 +12,7 @@
 #include <ffss.h>
 
     /* UDP */
-void FCA_OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
+void FCA_OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
 void FCA_OnBeginTCPThread(SU_PClientSocket Server);
 void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList);
 void FCA_OnEndServerListingAnswer(void);
