@@ -1,5 +1,14 @@
 #!/bin/sh
 
+if [ $# -ne 1 ] && [ $# -ne 0 ]
+then
+	echo "usage: $0 [cgi]" >&2
+	exit 1
+fi
+
+cgi_params=""
+[ "$1" == "cgi" ] && cgi_params="--enable-cgi --enable-cgi-downloads --disable-local-commands"
+
 archdir=`pwd`
 echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
@@ -28,7 +37,7 @@ then
 	cd appli/client/example
 	make
         cd ../text
-	./configure --with-ffss=$libdir --enable-debug
+	./configure --with-ffss=$libdir --enable-debug $cgi_params
 	make
         cd ../cgi
         make
