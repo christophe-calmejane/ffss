@@ -19,10 +19,11 @@
 /* ***************************** TO DO ***************************** *
    - Tester un FileOpen sur un path complet (existant) sans avoir scanner avec le domain/server/share -> Devrait pas trouver le fichier (le domain ... server ... et/ou share)
    - Dans le GetConnection, tester si la connexion est toujours active, si c'est pas le cas, liberer l'inode "/" connecté.
-   - Ajouter un parametre au OnStrmReadAnswer, indiquant entre autre une fin de fichier
 
   TODO :
    - Mettre une var qq part pour savoir si une conn est tjs active ou non... et dans le getconnection, si non active, relancer la connexion.
+   - TO DO FASTIO
+   - TO DO
  * ***************************************************************** */
 
 /* ********************************************************************** */
@@ -532,6 +533,7 @@ void FfssTCP::On_connectComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 {
   if(Status != TDI_SUCCESS)
     KdPrint(("OnConnectComplete : Cannot connect : %d\n",Status));
+  /* else Active = true */
   Sem->SignalTimer();
 }
 

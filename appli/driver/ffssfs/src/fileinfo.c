@@ -105,38 +105,13 @@ FsdQueryInformation (
         switch (FileInformationClass)
         {
         case FileStreamInformation:
-          {
-            PFILE_STREAM_INFORMATION Buffer;
-
-Status = STATUS_INVALID_PARAMETER;
-__leave;
-
-            if (Length < sizeof(FILE_STREAM_INFORMATION))
-            {
-                Status = STATUS_INFO_LENGTH_MISMATCH;
-                __leave;
-            }
-
-            Buffer = (PFILE_STREAM_INFORMATION) SystemBuffer;
-/*
-            typedef struct _FILE_STREAM_INFORMATION {
-                ULONG NextEntryOffset;
-                ULONG StreamNameLength;
-                LARGE_INTEGER StreamSize;
-                LARGE_INTEGER StreamAllocationSize;
-                WCHAR StreamName[1];
-            } FILE_STREAM_INFORMATION, *PFILE_STREAM_INFORMATION;
-*/
-            Buffer->NextEntryOffset = 0;
-            Buffer->StreamNameLength = 0;
-            Buffer->StreamSize.QuadPart = STREAMING_BUFFER_SIZE;
-            Buffer->StreamAllocationSize.QuadPart = STREAMING_BUFFER_SIZE;
-            Buffer->StreamName[0] = 0;
-
-            Irp->IoStatus.Information = sizeof(FILE_STREAM_INFORMATION);
-            Status = STATUS_SUCCESS;
+            Status = STATUS_NOT_IMPLEMENTED;
             __leave;
-          }
+
+        case FileCompressionInformation:
+			Status = STATUS_NOT_IMPLEMENTED;
+			__leave;
+
         case FileBasicInformation:
             {
                 PFILE_BASIC_INFORMATION Buffer;
@@ -159,10 +134,10 @@ __leave;
                 } FILE_BASIC_INFORMATION, *PFILE_BASIC_INFORMATION;
 */
 
-                Buffer->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->CreationTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastAccessTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastWriteTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->ChangeTime);
                 Buffer->FileAttributes = Fcb->FileAttributes;
 
                 Irp->IoStatus.Information = sizeof(FILE_BASIC_INFORMATION);
@@ -311,6 +286,7 @@ __leave;
 */
 
                 Buffer->CurrentByteOffset = FileObject->CurrentByteOffset;
+                //Buffer->CurrentByteOffset.QuadPart = 0; /* EXT2FS */
 
                 Irp->IoStatus.Information = sizeof(FILE_POSITION_INFORMATION);
                 Status = STATUS_SUCCESS;
@@ -355,10 +331,10 @@ __leave;
                 FileEaInformation = &FileAllInformation->EaInformation;
                 FilePositionInformation = &FileAllInformation->PositionInformation;
                 FileNameInformation = &FileAllInformation->NameInformation;
-                FileBasicInformation->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
-                FileBasicInformation->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
-                FileBasicInformation->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
-                FileBasicInformation->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&FileBasicInformation->CreationTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&FileBasicInformation->LastAccessTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&FileBasicInformation->LastWriteTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&FileBasicInformation->ChangeTime);
                 FileBasicInformation->FileAttributes = Fcb->FileAttributes;
                 FileStandardInformation->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
                 FileStandardInformation->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
@@ -422,10 +398,10 @@ __leave;
                 } FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
 */
 
-                Buffer->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
-                Buffer->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->CreationTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastAccessTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastWriteTime);
+                FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->ChangeTime);
                 Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
                 Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
                 Buffer->FileAttributes = Fcb->FileAttributes;
@@ -441,6 +417,8 @@ __leave;
             {
                 PFILE_ATTRIBUTE_TAG_INFORMATION Buffer;
 
+Status = STATUS_INVALID_PARAMETER; /* TO CHECK */
+__leave;
                 if (Length < sizeof(FILE_ATTRIBUTE_TAG_INFORMATION))
                 {
                     Status = STATUS_INFO_LENGTH_MISMATCH;

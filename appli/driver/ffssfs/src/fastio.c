@@ -40,6 +40,8 @@ FsdFastIoCheckIfPossible (
 
     LargeLength.QuadPart = Length;
 
+/* TO DO FASTIO */
+return FALSE;
     __try
     {
         __try
@@ -277,11 +279,10 @@ FsdFastIoQueryBasicInfo (
                 ULONG           FileAttributes;
             } FILE_BASIC_INFORMATION, *PFILE_BASIC_INFORMATION;
 */
-
-            Buffer->CreationTime.QuadPart = 0;
-            Buffer->LastAccessTime.QuadPart = 0;
-            Buffer->LastWriteTime.QuadPart = 0;
-            Buffer->ChangeTime.QuadPart = 0;
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->CreationTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastAccessTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastWriteTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->ChangeTime);
             Buffer->FileAttributes = Fcb->FileAttributes;
             IoStatus->Information = sizeof(FILE_BASIC_INFORMATION);
             IoStatus->Status = STATUS_SUCCESS;
@@ -866,10 +867,10 @@ FsdFastIoQueryNetworkOpenInfo (
             } FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
 */
 
-            Buffer->CreationTime.QuadPart = 0;
-            Buffer->LastAccessTime.QuadPart = 0;
-            Buffer->LastWriteTime.QuadPart = 0;
-            Buffer->ChangeTime.QuadPart = 0;
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->CreationTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastAccessTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->LastWriteTime);
+            FsdUnixTimeToNTTime(&Fcb->ffss_inode->Stamp,&Buffer->ChangeTime);
             Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
             Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
             Buffer->FileAttributes = Fcb->FileAttributes;

@@ -200,7 +200,7 @@ FsdCreateFile (
         /*if (!FlagOn(be32_to_cpu(Fcb->ffssfs_inode->next), ROMFH_DIR))
         {
             Fcb->CommonFCBHeader.IsFastIoPossible = FastIoIsPossible;
-        }*/ /* TO DO */
+        }*/  /* TO DO FASTIO */
             
         IrpSp->FileObject->FsContext = (void*) Fcb;
         IrpSp->FileObject->FsContext2 = (void*) Ccb;
@@ -701,5 +701,23 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   return Inode;
 }
 
+// time functions
+// nt times are 100ns counts since Jan 1 1601
+// unix times are 1s counts since Jan 1 1970
+
+#define OFFSET 0x019DB1DED53E8000L
+#define FACTOR 10000000L
+
+void FsdUnixTimeToNTTime(__u32 *UnixTime, PLARGE_INTEGER NTTime)
+{
+	LARGE_INTEGER ut;
+	ut.QuadPart = *UnixTime;
+	NTTime->QuadPart = (ut.QuadPart * FACTOR) + OFFSET;
+}
+
+void FsdNTTimeToUnixTime(PLARGE_INTEGER NTTime, __u32 *UnixTime)
+{
+	*UnixTime = (ULONG)(NTTime->QuadPart - OFFSET) / FACTOR;
+}
 
 #pragma code_seg() // end FSD_PAGED_CODE

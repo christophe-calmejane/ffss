@@ -108,22 +108,14 @@ FsdQueryVolumeInformation (
 */
 
                 Buffer->VolumeCreationTime.QuadPart = 0;
-
                 Buffer->VolumeSerialNumber = 0x2106;
-                    //be32_to_cpu(Vcb->romfs_super_block->checksum);
-
-                VolumeLabelLength = strlen(FFSSLABEL);//strnlen(
-                    //Vcb->romfs_super_block->name,
-                    //ROMFS_MAXFN
-                    //);
-
+                VolumeLabelLength = strlen(FFSSLABEL);
                 Buffer->VolumeLabelLength = VolumeLabelLength * 2;
 
                 // I don't know what this means.
                 Buffer->SupportsObjects = FALSE;
 
-                RequiredLength = sizeof(FILE_FS_VOLUME_INFORMATION)
-                    + VolumeLabelLength * 2 - sizeof(WCHAR);
+                RequiredLength = sizeof(FILE_FS_VOLUME_INFORMATION) + VolumeLabelLength * 2 - sizeof(WCHAR);
 
                 if (Length < RequiredLength)
                 {
@@ -135,7 +127,7 @@ FsdQueryVolumeInformation (
 
                 FsdCharToWchar(
                     Buffer->VolumeLabel,
-                    FFSSLABEL,//Vcb->romfs_super_block->name,
+                    FFSSLABEL,
                     VolumeLabelLength
                     );
 
@@ -169,12 +161,7 @@ FsdQueryVolumeInformation (
                 if (!FlagOn(Vcb->Flags, VCB_READ_ONLY))
                 {
                     Buffer->TotalAllocationUnits.QuadPart = 0;
-                        /*Vcb->PartitionInformation.PartitionLength.QuadPart /
-                        ROMBSIZE;*/
-
                     Buffer->AvailableAllocationUnits.QuadPart = 0;
-                        /*(Vcb->PartitionInformation.PartitionLength.QuadPart -
-                        be32_to_cpu(Vcb->romfs_super_block->size)) / ROMBSIZE;*/
                 }
                 else
 #endif // !FSD_RO
@@ -182,15 +169,11 @@ FsdQueryVolumeInformation (
                     // On a readonly filesystem total size is the size of the
                     // contents and available size is zero
 
-                    Buffer->TotalAllocationUnits.QuadPart = 0; /*
-                        be32_to_cpu(Vcb->romfs_super_block->size) / ROMBSIZE;*/
-
-                    Buffer->AvailableAllocationUnits.QuadPart =
-                        0;
+                    Buffer->TotalAllocationUnits.QuadPart = 0;
+                    Buffer->AvailableAllocationUnits.QuadPart = 0;
                 }
 
-                Buffer->SectorsPerAllocationUnit = 8192;
-                    //ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
+                Buffer->SectorsPerAllocationUnit = FFSS_BLOCK_SIZE;
 
                 Buffer->BytesPerSector = Vcb->DiskGeometry.BytesPerSector;
 
@@ -219,18 +202,14 @@ FsdQueryVolumeInformation (
 */
 
                 Buffer->DeviceType = Vcb->TargetDeviceObject->DeviceType;
-
-                Buffer->Characteristics =
-                    Vcb->TargetDeviceObject->Characteristics;
+                Buffer->DeviceType = FILE_DEVICE_DISK; /* EXT2FS */
+                Buffer->Characteristics = Vcb->TargetDeviceObject->Characteristics;
 
 #ifndef FSD_RO
                 if (FlagOn(Vcb->Flags, VCB_READ_ONLY))
 #endif
                 {
-                    SetFlag(
-                        Buffer->Characteristics,
-                        FILE_READ_ONLY_DEVICE
-                        );
+                    //SetFlag(Buffer->Characteristics,FILE_READ_ONLY_DEVICE);
                 }
 
                 Irp->IoStatus.Information = sizeof(FILE_FS_DEVICE_INFORMATION);
@@ -260,15 +239,10 @@ FsdQueryVolumeInformation (
                 } FILE_FS_ATTRIBUTE_INFORMATION, *PFILE_FS_ATTRIBUTE_INFORMATION;
 */
 
-                Buffer->FileSystemAttributes =
-                    FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES;
-
+                Buffer->FileSystemAttributes = /*FILE_CASE_SENSITIVE_SEARCH | */FILE_CASE_PRESERVED_NAMES;
                 Buffer->MaximumComponentNameLength = FFSS_MAX_FILEPATH_LENGTH;
-
                 Buffer->FileSystemNameLength = sizeof(DRIVER_NAME) * 2;
-
-                RequiredLength = sizeof(FILE_FS_ATTRIBUTE_INFORMATION) +
-                    sizeof(DRIVER_NAME) * 2 - sizeof(WCHAR);
+                RequiredLength = sizeof(FILE_FS_ATTRIBUTE_INFORMATION) + sizeof(DRIVER_NAME) * 2 - sizeof(WCHAR);
 
                 if (Length < RequiredLength)
                 {
@@ -316,14 +290,8 @@ FsdQueryVolumeInformation (
 #ifndef FSD_RO
                 if (!FlagOn(Vcb->Flags, VCB_READ_ONLY))
                 {
-                    Buffer->TotalQuotaAllocationUnits.QuadPart =
-                        Vcb->PartitionInformation.PartitionLength.QuadPart /
-                        ROMBSIZE;
-
-                    Buffer->AvailableQuotaAllocationUnits.QuadPart =
-                    Buffer->AvailableAllocationUnits.QuadPart = 0;
-                        //(Vcb->PartitionInformation.PartitionLength.QuadPart -
-                        //be32_to_cpu(Vcb->romfs_super_block->size)) / ROMBSIZE;
+                    Buffer->TotalQuotaAllocationUnits.QuadPart = 0;
+                    Buffer->AvailableQuotaAllocationUnits.QuadPart = Buffer->AvailableAllocationUnits.QuadPart = 0;
                 }
                 else
 #endif // !FSD_RO
@@ -332,16 +300,10 @@ FsdQueryVolumeInformation (
                     // contents and available size is zero
 
                     Buffer->TotalQuotaAllocationUnits.QuadPart =0;
-                        //be32_to_cpu(Vcb->romfs_super_block->size) / ROMBSIZE;
-
-                    Buffer->AvailableQuotaAllocationUnits.QuadPart =
-                    Buffer->AvailableAllocationUnits.QuadPart =
-                        0;
+                    Buffer->AvailableQuotaAllocationUnits.QuadPart = Buffer->AvailableAllocationUnits.QuadPart = 0;
                 }
 
-                Buffer->SectorsPerAllocationUnit = 8192;
-                    //ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
-
+                Buffer->SectorsPerAllocationUnit = FFSS_BLOCK_SIZE;
                 Buffer->BytesPerSector = Vcb->DiskGeometry.BytesPerSector;
 
                 Irp->IoStatus.Information = sizeof(FILE_FS_FULL_SIZE_INFORMATION);

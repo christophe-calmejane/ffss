@@ -25,6 +25,8 @@
 #define SU_PClientSocket void *
 #include <ffss.h>
 
+#define FFSS_BLOCK_SIZE 1024
+
 //#define SECTOR_SIZE         512
 
 //#define BLOCK_SIZE          PAGE_SIZE
@@ -74,6 +76,10 @@
 /*#define ROMFH_SIZE  16
 #define ROMFH_PAD   (ROMFH_SIZE-1)
 #define ROMFH_MASK  (~ROMFH_PAD)*/
+
+void FsdUnixTimeToNTTime(__u32 *UnixTime, PLARGE_INTEGER NTTime);
+void FsdNTTimeToUnixTime(PLARGE_INTEGER NTTime, __u32 *UnixTime);
+
 
 
 //

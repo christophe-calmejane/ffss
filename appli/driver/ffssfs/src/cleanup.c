@@ -149,7 +149,7 @@ FsdCleanup (
             // file the fast I/O read/write functions doesn't have to check for
             // locks so we set IsFastIoPossible to FastIoIsPossible again.
             //
-            if (!FsRtlGetNextFileLock(&Fcb->FileLock, TRUE))
+            /*if (!FsRtlGetNextFileLock(&Fcb->FileLock, TRUE))
             {
                 if (Fcb->CommonFCBHeader.IsFastIoPossible != FastIoIsPossible)
                 {
@@ -162,7 +162,7 @@ FsdCleanup (
 
                     Fcb->CommonFCBHeader.IsFastIoPossible = FastIoIsPossible;
                 }
-            }
+            }*/ /* TO DO FASTIO */
         }
 
 #ifndef FSD_RO

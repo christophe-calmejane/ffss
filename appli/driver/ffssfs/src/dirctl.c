@@ -390,14 +390,17 @@ FsdQueryDirectory (
 */
 
                         Buffer->FileIndex = FileIndex;
-                        Buffer->CreationTime.QuadPart = 0;
-                        Buffer->LastAccessTime.QuadPart = 0;
-                        Buffer->LastWriteTime.QuadPart = 0;
-                        Buffer->ChangeTime.QuadPart = 0;
-                        Buffer->EndOfFile.QuadPart = Inode->Size;
+/*                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->CreationTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastAccessTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastWriteTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->ChangeTime);*/
+		                Buffer->CreationTime.QuadPart = 0; /* EXT2FS */
+		                Buffer->LastAccessTime.QuadPart = 0;
+		                Buffer->LastWriteTime.QuadPart = 0;
+		                Buffer->ChangeTime.QuadPart = 0;
 
-                        Buffer->AllocationSize.QuadPart = Inode->Size;
-
+                        Buffer->EndOfFile.QuadPart = FFSS_BLOCK_SIZE;
+                        Buffer->AllocationSize.QuadPart = FFSS_BLOCK_SIZE;
                         Buffer->FileAttributes = FILE_ATTRIBUTE_NORMAL;
 
                         if (FlagOn(Inode->Flags,FFSS_FILE_DIRECTORY))
@@ -454,14 +457,17 @@ FsdQueryDirectory (
 */
 
                         Buffer->FileIndex = FileIndex;
-                        Buffer->CreationTime.QuadPart = 0;
-                        Buffer->LastAccessTime.QuadPart = 0;
-                        Buffer->LastWriteTime.QuadPart = 0;
-                        Buffer->ChangeTime.QuadPart = 0;
-                        Buffer->EndOfFile.QuadPart = Inode->Size;
+/*                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->CreationTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastAccessTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastWriteTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->ChangeTime);*/
+		                Buffer->CreationTime.QuadPart = 0; /* EXT2FS */
+		                Buffer->LastAccessTime.QuadPart = 0;
+		                Buffer->LastWriteTime.QuadPart = 0;
+		                Buffer->ChangeTime.QuadPart = 0;
 
-                        Buffer->AllocationSize.QuadPart = Inode->Size;
-
+                        Buffer->EndOfFile.QuadPart = FFSS_BLOCK_SIZE;
+                        Buffer->AllocationSize.QuadPart = FFSS_BLOCK_SIZE;
                         Buffer->FileAttributes = FILE_ATTRIBUTE_NORMAL;
 
                         if (FlagOn(Inode->Flags,FFSS_FILE_DIRECTORY))
@@ -521,14 +527,13 @@ FsdQueryDirectory (
 */
 
                         Buffer->FileIndex = FileIndex;
-                        Buffer->CreationTime.QuadPart = 0;
-                        Buffer->LastAccessTime.QuadPart = 0;
-                        Buffer->LastWriteTime.QuadPart = 0;
-                        Buffer->ChangeTime.QuadPart = 0;
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->CreationTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastAccessTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastWriteTime);
+                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->ChangeTime);
+
                         Buffer->EndOfFile.QuadPart = Inode->Size;
-
-                        Buffer->AllocationSize.QuadPart = Inode->Size;
-
+                        Buffer->AllocationSize.QuadPart = Inode->Size + FFSS_BLOCK_SIZE - (Inode->Size % FFSS_BLOCK_SIZE);
                         Buffer->FileAttributes = FILE_ATTRIBUTE_NORMAL;
 
                         if (FlagOn(Inode->Flags,FFSS_FILE_DIRECTORY))
@@ -552,7 +557,7 @@ FsdQueryDirectory (
                         // I don't know how to use the argument
                         // PGENERATE_NAME_CONTEXT
 
-                        // Buffer->ShortNameLength
+                        Buffer->ShortNameLength = 0;
                         // Buffer->ShortName
 
                         RtlCopyMemory(Buffer->FileName,InodeFileName.Buffer,InodeFileNameLength * 2);

@@ -260,7 +260,7 @@ FsdAllocateFcb (
     Fcb->CommonFCBHeader.IsFastIoPossible = FastIoIsNotPossible;
     Fcb->CommonFCBHeader.Resource = &(Fcb->MainResource);
     Fcb->CommonFCBHeader.PagingIoResource = &(Fcb->PagingIoResource);
-    Fcb->CommonFCBHeader.AllocationSize.QuadPart = ffss_inode->Size;
+    Fcb->CommonFCBHeader.AllocationSize.QuadPart = ffss_inode->Size + FFSS_BLOCK_SIZE - (ffss_inode->Size % FFSS_BLOCK_SIZE);
     Fcb->CommonFCBHeader.FileSize.QuadPart = ffss_inode->Size;
     Fcb->CommonFCBHeader.ValidDataLength.QuadPart = ffss_inode->Size;
 
@@ -539,6 +539,7 @@ FsdFreeCcb (
     }
 
     FsdFreePool(Ccb);
+    KdPrint(("FsdFreeCcb : Freeing Ccb\n"));
 }
 
 VOID

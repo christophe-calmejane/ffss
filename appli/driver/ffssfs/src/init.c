@@ -100,8 +100,8 @@ DriverEntry (
     //
     // Initialize the fast I/O entry points
     //
-
-    FastIoDispatch = &FsdGlobalData.FastIoDispatch;
+/* TO DO FASTIO */
+    /*FastIoDispatch = &FsdGlobalData.FastIoDispatch;
 
     FastIoDispatch->SizeOfFastIoDispatch = sizeof(FAST_IO_DISPATCH);
     FastIoDispatch->FastIoCheckIfPossible = FsdFastIoCheckIfPossible;
@@ -118,7 +118,7 @@ DriverEntry (
     FastIoDispatch->FastIoUnlockAllByKey = FsdFastIoUnlockAllByKey;
     FastIoDispatch->FastIoQueryNetworkOpenInfo = FsdFastIoQueryNetworkOpenInfo;
 
-    DriverObject->FastIoDispatch = FastIoDispatch;
+    DriverObject->FastIoDispatch = FastIoDispatch;*/
 
     //
     // Initialize the Cache Manager callbacks

@@ -96,7 +96,7 @@ typedef struct _FSD_GLOBAL_DATA {
     ERESOURCE                   Resource;
 
     // Table of pointers to the fast I/O entry points
-    FAST_IO_DISPATCH            FastIoDispatch;
+    //FAST_IO_DISPATCH            FastIoDispatch;
 
     // Table of pointers to the Cache Manager callbacks
     CACHE_MANAGER_CALLBACKS     CacheManagerCallbacks;

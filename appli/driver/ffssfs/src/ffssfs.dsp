@@ -176,10 +176,6 @@ SOURCE=.\dirctl.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\driver.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\fastio.c
 # End Source File
 # Begin Source File

@@ -1,6 +1,6 @@
 #include <ffss.h>
 
-#define FFSS_REGISTRY_PATH_PROCESSID FFSS_REGISTRY_PATH "Server\\ProcessId"
+#define FFSS_REGISTRY_PATH_PROCESSID FFSS_LM_REGISTRY_PATH "Server\\ProcessId"
 #define SLEEP_TIME 100
 #define MAX_WAIT 50
 
@@ -29,5 +29,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
     nb++;
   } while(nb < MAX_WAIT);
 
+  Sleep(500);
   return 0;
 }
