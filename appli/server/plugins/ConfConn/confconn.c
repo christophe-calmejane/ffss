@@ -6,7 +6,7 @@
 /* mailto : zekiller@skytech.org                */
 
 #define CONFCONN_NAME      "Conf Conn Plugin"
-#define CONFCONN_VERSION   "0.2"
+#define CONFCONN_VERSION   "0.3"
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define CONFCONN_DESCRIPTION "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"
@@ -34,7 +34,7 @@ bool CC_DelConf(const char IP[],const char Login[]);
 
 SU_THREAD_HANDLE CC_Thr;
 #ifdef _WIN32
-HWND CC_hwnd;
+HWND CC_hwnd = NULL;
 HINSTANCE CC_hInstance;
 void ThreadFunc(void *info);
 #endif /* _WIN32 */
@@ -253,18 +253,25 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
     Ptr = Ptr->Next;
   }
 
-  //SetWindowText(dlg,L_Gbl.Path);
   ShowWindow(CC_hwnd,SW_SHOW);
   while(GetMessage(&msg,CC_hwnd,0,0))
   {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+    if(!IsWindow(CC_hwnd) || !IsDialogMessage(CC_hwnd,&msg))
+    {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
   }
+  DestroyWindow(CC_hwnd);
+  CC_hwnd = NULL;
 }
 
 /* This is the function called when plugin is requested to configure itself */
 FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
 {
+  if(IsWindow(CC_hwnd))
+    return true;
+
   /* Create a thread to manage messages */
   if(!SU_CreateThread(&CC_Thr,ThreadFunc,User,true))
     return false;
@@ -447,7 +454,6 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info)
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.
   */
-ThreadFunc(NULL);
   return Pl;
 }
 
