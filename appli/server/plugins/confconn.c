@@ -26,23 +26,21 @@ bool OnCheckConfConn(SU_PClientSocket Client)
 
 
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
-FS_PPlugin Plugin_Init(void)
+FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void)
 {
-  char Name[1024];
-
   /* Setting all callbacks to NULL */
   Pl = (FS_PPlugin) malloc(sizeof(FS_TPlugin));
   if(Pl == NULL)
     return NULL;
   memset(Pl,0,sizeof(FS_TPlugin));
 
-  /* Setting plugin name */
-  snprintf(Name,sizeof(Name),"%s v%s - %s",CONFCONN_NAME,CONFCONN_VERSION,CONFCONN_COPYRIGHT);
-  Pl->Name = strdup(Name);
+  /* Setting plugin infos */
+  Pl->Name = strdup(CONFCONN_NAME);
+  Pl->Author = strdup(CONFCONN_COPYRIGHT);
+  Pl->Version = strdup(CONFCONN_VERSION);
 
   /* Setting our callbacks */
   Pl->OnCheckConfConn = OnCheckConfConn;
-
 
   /* And finaly returning the FS_PPlugin structure to the server.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
@@ -52,7 +50,7 @@ FS_PPlugin Plugin_Init(void)
 }
 
 /* This is the UnInit fonction (Name it CAREFULLY) called on each UnLoadPlugin call */
-void Plugin_UnInit(void)
+FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
   /* Nothing to do, as Pl->Name is freed after */
 }

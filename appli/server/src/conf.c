@@ -647,7 +647,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_PL_ENUM :
-        Size = 0;
+        Size = 1;
+        buf[0] = FS_OPCODE_ACK;
         SU_SEM_WAIT(FS_SemPlugin);
         Size = FFSS_PackField(buf,Size,SU_ListCount(FS_Plugins));
         Ptr = FS_Plugins;
@@ -663,6 +664,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_SEM_POST(FS_SemPlugin);
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        break;
       default :
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (unknown opcode : %d)\n",buf[0]);
         error = true;
