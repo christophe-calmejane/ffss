@@ -731,12 +731,13 @@ char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int
 
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed */
-char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int total,long int *buf_size,FM_TFTNode *TabNodes,long int *NodePos,unsigned char *Tags,long int father,long int total_node)
+char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int total,long int *buf_size,FM_TFTNode *TabNodes,long int *NodePos,unsigned char *Tags,long int father,long int total_node,FFSS_LongField *fsize_out)
 {
   SU_PList Ptr;
   char *buf;
   unsigned char tags,tg;
   long int size,pos,len,i,node,old;
+  FFSS_LongField total_fsize = 0,fsize;
 
   buf = buf_in;
   pos = *buf_pos;
@@ -746,6 +747,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
 
   if((Node->NbFiles+Node->NbDirs) == 0) /* If the directory is empty */
   {
+    *fsize_out = 0;
     return buf;
   }
 
@@ -774,9 +776,11 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     tg = FFSS_FILE_TAGS_NOTHING;
 
     /* Flush sub directory */
-    buf = FS_BuildIndexBuffer(&((FS_PDir)Ptr->Data)->Files,buf,&pos,total,&size,TabNodes,&node,&tg,old,total_node);
+    buf = FS_BuildIndexBuffer(&((FS_PDir)Ptr->Data)->Files,buf,&pos,total,&size,TabNodes,&node,&tg,old,total_node,&fsize);
+    total_fsize += fsize;
     TabNodes[old].Last = total_node + node - 1;
     TabNodes[old].Tags = tg;
+    TabNodes[old].Size = fsize;
     tags |= tg;
 
     /* Next directory */
@@ -798,6 +802,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     TabNodes[node].Tags = tg;
     TabNodes[node].Size = ((FS_PFile)Ptr->Data)->Size;
     TabNodes[node].ChkSum = ((FS_PFile)Ptr->Data)->ChkSum;
+    total_fsize += ((FS_PFile)Ptr->Data)->Size;
     node++;
     len = strlen(((FS_PFile)Ptr->Data)->FileName)+1;
     while((pos+len) >= size)
@@ -817,6 +822,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
   *NodePos = node;
   *buf_pos = pos;
   *buf_size = size;
+  *fsize_out = total_fsize;
   return buf;
 }
 
@@ -833,6 +839,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
   long int NodePos;
   long int NodeSize;
   unsigned char Tags;
+  FFSS_LongField fsize;
 
   if(Host == NULL)
     return true;
@@ -877,9 +884,10 @@ bool FS_SendIndex(const char Host[],const char Port[])
         len = FFSS_MAX_SHARENAME_LENGTH;
       pos = FFSS_PackString(buf,0,Share->ShareName,len);
 
-      buf = FS_BuildIndexBuffer(&Share->Root,buf,&pos,total,&size,TabNodes,&NodePos,&Tags,0,total_node);
+      buf = FS_BuildIndexBuffer(&Share->Root,buf,&pos,total,&size,TabNodes,&NodePos,&Tags,0,total_node,&fsize);
       TabNodes[0].Last = total_node + NodePos - 1;
       TabNodes[0].Tags = Tags;
+      TabNodes[0].Size = fsize;
       Bufs = SU_AddElementTail(Bufs,buf);
       Sizes = SU_AddElementTail(Sizes,(void *)pos);
       Bufs = SU_AddElementTail(Bufs,TabNodes);
