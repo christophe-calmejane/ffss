@@ -1,10 +1,11 @@
 #include <ffss.h>
+#include <wininet.h>
 #undef malloc
 
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
 #define FFSS_CHECK_URL_VERSION FFSS_CHECK_URL_BASE "CurrentVersion"
 #define FFSS_CHECK_RB_BASE "HKEY_CURRENT_USER\\Software\\FFSS\\AutoCheck_"
-#define FFSS_CHECK_RB_USE_PROXY  FFSS_CHECK_RB_BASE "UseProxy"
+#define FFSS_CHECK_RB_CONN_TYPE  FFSS_CHECK_RB_BASE "Type"
 #define FFSS_CHECK_RB_PROXY_HOST FFSS_CHECK_RB_BASE "Proxy_Host"
 #define FFSS_CHECK_RB_PROXY_PORT FFSS_CHECK_RB_BASE "Proxy_Port"
 #define FFSS_CHECK_RB_PROXY_USER FFSS_CHECK_RB_BASE "Proxy_User"
@@ -45,16 +46,48 @@ void CheckProxy()
   int Port;
   char User[1024];
   char Pwd[1024];
-  int UseProxy;
+  int ConnType;
+  char Buffer[1024];
+  DWORD dwBufferLength=sizeof(Buffer);
+  LPINTERNET_PROXY_INFO lpInternetProxy;
 
-  UseProxy = SU_RB_GetIntValue(FFSS_CHECK_RB_USE_PROXY,0);
-  if(UseProxy)
+  ConnType = SU_RB_GetIntValue(FFSS_CHECK_RB_CONN_TYPE,0);
+  switch(ConnType)
   {
+  case 0 : /* No connection */
+    exit(0);
+  case 1 : /* Direct connection */
+    break;
+  case 2 : /* Use proxy */
     SU_RB_GetStrValue(FFSS_CHECK_RB_PROXY_HOST,Host,sizeof(Host),"");
     Port = SU_RB_GetIntValue(FFSS_CHECK_RB_PROXY_PORT,0);
     SU_RB_GetStrValue(FFSS_CHECK_RB_PROXY_USER,User,sizeof(User),"");
     SU_RB_GetStrValue(FFSS_CHECK_RB_PROXY_PWD,Pwd,sizeof(Pwd),"");
     SU_SetProxy(Host,Port,User,Pwd);
+    break;
+  case 3 : /* Use IE settings */
+    /* Get global proxy configuration */
+    if(InternetQueryOption(NULL,INTERNET_OPTION_PROXY,Buffer,&dwBufferLength) == TRUE)
+    {
+      char *host;
+
+      lpInternetProxy=(LPINTERNET_PROXY_INFO)Buffer;
+      /* Not in direct connection  */
+      if(lpInternetProxy->dwAccessType != INTERNET_OPEN_TYPE_DIRECT)
+      {
+        host = strtok((char*)lpInternetProxy->lpszProxy,":");
+        Port = atol(strtok(NULL,""));
+
+        dwBufferLength = sizeof(User);
+        User[0] = 0;
+        InternetQueryOption(NULL,INTERNET_OPTION_PROXY_USERNAME,User,&dwBufferLength);
+        dwBufferLength = sizeof(Pwd);
+        Pwd[0] = 0;
+        InternetQueryOption(NULL,INTERNET_OPTION_PROXY_PASSWORD,Pwd,&dwBufferLength);
+        SU_SetProxy(host,Port,User,Pwd);
+      }
+    }
+    break;
   }
 }
 
