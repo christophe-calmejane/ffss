@@ -12,6 +12,7 @@
 #include "display.h"
 
 #include <ffss.h>
+#include <readline/readline.h>
 #include <skyutils.h>
 
 #define FCA_VARNAME_MAX		20
@@ -26,10 +27,11 @@
 #endif
 
 #include <readline/readline.h>
-	/* for different readline versions */
+	/* for different readline versions
 #ifndef rl_completion_matches
 #	define rl_completion_matches	completion_matches
 #endif
+*/
 
 	/* environment variables */
 #define FCA_can_ansi		FCA_env[0]

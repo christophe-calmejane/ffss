@@ -6,6 +6,11 @@
  *	common funtions
  */
 
+	/* just for threads */
+#include <unistd.h>
+#include <signal.h>
+#include <ffss.h>
+
 #include "common.h"
 #include "datastruct.h"
 #include "client.h"
@@ -15,12 +20,6 @@
 #include "cgi_args.h"
 #include "skin.h"
 
-	/* just for threads */
-#include <unistd.h>
-#include <signal.h>
-#include <readline/readline.h>
-	/* warning: must be with ffss.h */
-#include <transfer.h>
 	/* mkdir */
 #ifndef _WIN32
 #	include <sys/stat.h>
@@ -419,7 +418,7 @@ void FCA_sem_post()
 		if(FCA_wait_threading) {
 
 			FFSS_PrintDebug(1, "(client) killing timer\n");
-			pthread_kill(FCA_wait_thread, SIGUSR1);
+//			pthread_kill(FCA_wait_thread, SIGUSR1);
 
 			FCA_wait_threading=false;
 		}
@@ -465,7 +464,7 @@ char **FCA_completion(char *text, int start, int end)
     
 	/* if we are typing a command */
     if(!start)
-	matches = completion_matches (text, (void*)FCA_cmd_gen);
+	matches = rl_completion_matches (text, (void*)FCA_cmd_gen);
     else {
 		/* get the command name */
 	SU_strcpy(first_comm, rl_line_buffer, FCA_MAX_CMD);
@@ -482,16 +481,18 @@ char **FCA_completion(char *text, int start, int end)
 	if(FCA_COMMANDS[iC].name) {
 		FCA_compl_wanted=FCA_COMMANDS[iC].arg_type;
 		if( FCA_COMMANDS[iC].arg_type & FCA_CMD_ARG )
-			matches = completion_matches (text, (void*)FCA_cmd_gen);
+			matches = rl_completion_matches (text, (void*)FCA_cmd_gen);
 		else if( FCA_COMMANDS[iC].arg_type & FCA_VAR_ARG)
-			matches = completion_matches (text, (void*)FCA_var_gen);
+			matches = rl_completion_matches (text, (void*)FCA_var_gen);
 		else if( FCA_COMMANDS[iC].arg_type & FCA_ALL_ARG
 		 || FCA_COMMANDS[iC].arg_type & FCA_DIR_ARG )
-			matches = completion_matches (text, (void*)FCA_path_gen);
+			matches = rl_completion_matches (text, (void*)FCA_path_gen);
 		else if( (FCA_COMMANDS[iC].arg_type & FCA_LOCAL_ARG)==0) /* no completion */
 			rl_attempted_completion_over=true;
 		/* else, local completion (default) */
 	}
+printf("OK\n");
+
 #ifdef ALIASES
 		/* no completion for aliases */
 	if( FCA_get_alias(first_comm) )
@@ -563,9 +564,12 @@ char *FCA_cmd_gen(char *text, int state)
 		/* Return the next name which partially matches from the command list. */
 	while ( NULL!=FCA_COMMANDS[list_index].name ) {
 		list_index++;
-		if( !strncasecmp(FCA_COMMANDS[list_index-1].name, text, len) )
+		if( !strncasecmp(FCA_COMMANDS[list_index-1].name, text, len) && FCA_COMMANDS[list_index-1].name[0]!='\0' ) {
+	printf("%s\n", FCA_COMMANDS[list_index-1].name);
 			return strdup(FCA_COMMANDS[list_index-1].name);
+		}
 	}
+
 #ifdef ALIASES
 		/* after, there are aliases */
 	while(pl) {
@@ -577,6 +581,7 @@ char *FCA_cmd_gen(char *text, int state)
 #endif
 		/* If no names matched, then return NULL. */
 	rl_attempted_completion_over=true;
+printf ("COMPLETION OVER\n");
 	return NULL;
 }
 

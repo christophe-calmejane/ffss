@@ -32,6 +32,9 @@ proposer de desactiver la gestion des skins a la compil
 (au configure)
 
 ----------------------------
+voir le pb avec completion_matches et les versions de readline.
+
+----------------------------
 afficher un meilleur status du download: un numero de fichier en cours
 
 ----------------------------
