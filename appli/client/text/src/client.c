@@ -192,6 +192,8 @@ void FCA_process_cgi_args()
 	char buf[6+FFSS_MAX_PATH_LENGTH];
 	bool dw=false;
 	char *pd;
+FILE *f;
+
 	
 	if(!FCA_CGI_mode)
 		return;
@@ -239,6 +241,15 @@ printf("command to run: '%s'<br>\n", FCA_command);
 printf("</html>\n");
 exit(0);
 */
+
+f=fopen("/tmp/ffsstest", "w");
+if(f) {
+	if(!FCA_logf)
+		fprintf(f, "le descripteur est vide !\n");
+	fprintf(f, "log=%s, log_file=%s\n", FCA_log, FCA_log_file);
+	fprintf(f, "cmd=%s\n", dw);
+	fclose(f);
+}
 FCA_printlog("test dans un log...");
 	FCA_run_once(dw);
 	FCA_exit(0);
@@ -295,8 +306,6 @@ void FCA_uninit()
 
 int main(int argc, char **argv)
 {
-FILE *f;
-
 	FCA_init();
     
 	FCA_args.argc=argc;
