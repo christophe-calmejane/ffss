@@ -7,6 +7,13 @@ but tell me if you see a bug: <bennybben@caramail.com>
 	BUGS TO SOLVE
 ---------------------------------------------------------------------------------
 
+-------------------
+CGI bug:
+dans une recherche, il existe des resultats qui ne sont pas des liens valides,
+quand on clicke dessus, ca met erreur.
+
+
+-------------------
 	test de pompage du dossier /redhot (master=ffss):
 logs server:
 FFSS(6) time=1008154480 : Data found on TCP port from 192.168.80.10 (pc333.bennyben.fr) ... analysing
