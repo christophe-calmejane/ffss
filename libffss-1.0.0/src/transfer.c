@@ -939,7 +939,7 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
   sock = FC_SendMessage_Download(Server,RemotePath,StartingPos,EndingPos,UseConnSock,UserInfo);
   if(sock == SOCKET_ERROR)
   {
-    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error sending DOWNLOAD request : %d",errno);
+    SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error sending DOWNLOAD request : %d (%s)",errno,strerror(errno));
     return false;
   }
   i = sizeof(saddr);

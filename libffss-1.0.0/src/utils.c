@@ -102,7 +102,7 @@ void FFSS_handle_SIGNAL(int signal)
   if(signal == SIGSEGV)
   {
     FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
-    FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %d (%d) :-(. Check: %s:%d\n",SU_THREAD_SELF,getpid(),ts->File,ts->Line);
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %x (%d) :-(. Check: %s:%d\n",SU_THREAD_SELF,getpid(),ts->File,ts->Line);
     if(FFSS_MainThread != (SU_THREAD_HANDLE)SU_THREAD_SELF)
     {
       FFSS_PrintSyslog(LOG_ERR,"I (%d) am not the main thread (%d). Signaling the main thread\n",SU_THREAD_SELF,FFSS_MainThread);
