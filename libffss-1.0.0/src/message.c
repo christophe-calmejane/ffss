@@ -1803,7 +1803,7 @@ bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compr
     len = FFSS_MAX_KEYWORDS_LENGTH;
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
-  FFSS_PrintDebug(3,"Sending Search Forward message to %s - Reply to %s:%d\n",Master,inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
+  FFSS_PrintDebug(3,"Sending Search Forward message to master - Reply to %s:%d\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   FD_ZERO(&rfds);
   FD_SET(Master,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
