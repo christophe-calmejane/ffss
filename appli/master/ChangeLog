@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : July, 22th 2002
+                  Last Update : August, 23th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+August 23th, 2002:
+  - Fixed synchronization between masters
+  - Added indexation and search of 3 char keywords
 
 July, 22th 2002:
   - Updated to new protocol

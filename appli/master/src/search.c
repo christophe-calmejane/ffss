@@ -18,6 +18,8 @@ void *memmem(const void *haystack,size_t haystacklen,const void *needle,size_t n
   char *n = (char *)needle;
   bool ok;
 
+  if(haystacklen < needlelen)
+    return NULL;
   for(i=0;i<haystacklen-needlelen+1;i++)
   {
     if(hs[i] == n[0])
@@ -201,7 +203,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
   FM_PDomain Dom;
   FM_PSTNode Node;
   SU_PList STAnswers;
-  unsigned char Tags;
+  unsigned char Tags,tg;
   bool done;
 #ifdef STATS
   struct timeval t1,t2,t3;
@@ -292,9 +294,13 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       if(KeyWords[key_pos+i] == 0)
         done = true;
       KeyWords[key_pos+i] = 0;
-      if(strlen(KeyWords+key_pos) < 4)
-        Tags |= FFSS_GetWordTags(KeyWords+key_pos);
-      else
+      tg = FFSS_FILE_TAGS_NOTHING;
+      if(strlen(KeyWords+key_pos) < FM_STR_HASH_LENGTH)
+      {
+        tg = FFSS_GetWordTags(KeyWords+key_pos);
+        Tags |= tg;
+      }
+      if((tg == FFSS_FILE_TAGS_NOTHING) && (strlen(KeyWords+key_pos) >= FM_MIN_INDEX_LENGTH))
       {
         context;
         nb_sch++;

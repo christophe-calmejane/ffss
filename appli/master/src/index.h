@@ -11,6 +11,9 @@
 #define ROOT_CHAR    99
 #define UNUSED_CHAR  -1
 
+#define FM_STR_HASH_LENGTH 4
+#define FM_MIN_INDEX_LENGTH FFSS_MIN_SEARCH_REQUEST_LENGTH
+
 typedef struct /* 16 bytes */
 {
   int NumHost;                 /* Position of the host in hosts table        */ /* -1 if not used        */

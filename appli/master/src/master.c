@@ -1074,7 +1074,7 @@ int main(int argc,char *argv[])
     /* UDP callbacks */
     FFSS_CB.MCB.OnState = OnState;
     FFSS_CB.MCB.OnServerListing = OnServerListing;
-    FFSS_CB.MCB.OnClientServerFailed = OnClientServerFailed;
+    //FFSS_CB.MCB.OnClientServerFailed = OnClientServerFailed;
     FFSS_CB.MCB.OnPong = OnPong;
     FFSS_CB.MCB.OnDomainListing = OnDomainListing;
     FFSS_CB.MCB.OnSearch = OnSearch;

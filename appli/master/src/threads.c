@@ -157,8 +157,27 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     SU_SEM_WAIT(FM_MySem);
     if(FM_ShuttingDown)
       SU_END_THREAD(NULL);
+#if 0
     buf = FM_BuildStatesBuffer(FM_MyQueue,&len);
     FM_MyQueue = NULL;
+#else
+    {
+    SU_PList Queue;
+    FM_PQueue Que;
+
+    Queue = NULL;
+    Ptr = FM_MyDomain.Hosts;
+    while(Ptr != NULL)
+    {
+      Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
+      Que->Domain = &FM_MyDomain;
+      Que->Host = (FM_PHost)Ptr->Data;
+      Queue = SU_AddElementHead(Queue,Que);
+      Ptr = Ptr->Next;
+    }
+    buf = FM_BuildStatesBuffer(Queue,&len);
+    }
+#endif
     /* Release semaphore */
     SU_SEM_POST(FM_MySem);
     if(buf != NULL)

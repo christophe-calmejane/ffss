@@ -323,22 +323,26 @@ void FMI_InsertKeyWordInSuffixTree_Rec(FM_PSTNode Node,   /* <-- Current Node  *
 /*
  * FMI_InsertKeyWord
  *   Inserts a key word in the hash table, then in the suffix tree
- *   Assumes strlen(Word) >= 4
+ *   Assumes strlen(Word) >= FM_MIN_INDEX_LENGTH
  */
 void FMI_InsertKeyWordInSuffixTree(const char *Word,  /* <--  Key word to insert                         */
                                    int NumHost,       /* <--  Position of the host in hosts table        */
                                    int NumFile)       /* <--  Position of the file in host's files table */
 {
-  char KW[1024];
-  char HW[5];
+  char KW[1024]={0,};
+  char HW[FM_STR_HASH_LENGTH+1];
   int len,i,hash_pos;
   FM_PSTNode Node;
+  unsigned int indexingSize = FM_STR_HASH_LENGTH;
 
-  assert(strlen(Word) >= 4);
+  assert(strlen(Word) >= FM_MIN_INDEX_LENGTH);
   SU_strcpy(KW,Word,sizeof(KW));
   len = strlen(KW);
-  for(i=0;i<=(len-4);i++)
+  if(len < indexingSize)
+    indexingSize = FM_MIN_INDEX_LENGTH;
+  for(i=0;i<=(len-indexingSize);i++)
   {
+    memset(HW,0,sizeof(HW));
     SU_strcpy(HW,KW+i,sizeof(HW));
     hash_pos = FMI_HashKeyWord(HW);
     Node = FMI_HashTable[hash_pos];
@@ -350,7 +354,7 @@ void FMI_InsertKeyWordInSuffixTree(const char *Word,  /* <--  Key word to insert
       FMI_HashTable[hash_pos] = Node;
     }
     Node->Letter = ROOT_CHAR;
-    FMI_InsertKeyWordInSuffixTree_Rec(Node,KW+i+4,NumHost,NumFile);
+    FMI_InsertKeyWordInSuffixTree_Rec(Node,KW+i+FM_STR_HASH_LENGTH,NumHost,NumFile);
   }
 }
 
@@ -364,6 +368,7 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
 {
   int i,j,s,e,len;
   char buf[1024];
+  char *dotPos;
 
 #ifdef DEBUG
   printf("Indexing engine : Inserting host '%s' (%d nodes)\n",Host->Name,Host->NbNodes);
@@ -375,11 +380,17 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
 #ifdef DEBUG
     //printf("Indexing engine : Inserting node '%s' (%d)\n",buf,i);
 #endif /* DEBUG */
+
+    dotPos = strrchr(buf,'.');
+    if(dotPos != NULL) /* Do not index file extension */
+      dotPos[0] = 0;
+
     for(j=0;j<strlen(buf);j++)
-      buf[j] = SU_toupper(buf[j]);
+      buf[j] = SU_toupper(buf[j]); /* Upper casing the whole node */
     len = strlen(buf);
+
     s = 0;
-    while(s <= (len-4))
+    while(s <= (len-FM_MIN_INDEX_LENGTH))
     {
       e = 0;
       while((s+e) < len)
@@ -391,7 +402,7 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
         }
         e++;
       }
-      if(e >= 4)
+      if(e >= FM_MIN_INDEX_LENGTH)
       {
         FMI_InsertKeyWordInSuffixTree(buf+s,NumHost,i);
       }
@@ -663,20 +674,23 @@ FM_PSTNode FMI_SearchKeyWordInSuffixTree(FM_PSTNode Node,   /* <-- Current Node 
 
 /* FMI_SearchKey
  *   Returns a FM_PSTNode matching the search key
- *   Assumes strlen(SearchKey) >= 4
+ *   Assumes strlen(SearchKey) >= FM_MIN_INDEX_LENGTH
  */
 FM_PSTNode FMI_SearchKey(const char *SearchKey) /* <-- Search key to search for */
 {
-  char HW[5];
-  int hash_pos;
+  char HW[FM_STR_HASH_LENGTH+1]={0,};
+  int hash_pos,len;
   FM_PSTNode Node;
 
-  assert(strlen(SearchKey) >= 4);
+  assert(strlen(SearchKey) >= FM_MIN_INDEX_LENGTH);
   SU_strcpy(HW,SearchKey,sizeof(HW));
   hash_pos = FMI_HashKeyWord(HW);
   Node = FMI_HashTable[hash_pos];
   if(Node != NULL)
-    Node = FMI_SearchKeyWordInSuffixTree(Node,SearchKey+4);
+  {
+    len = SU_strnlen(SearchKey,FM_STR_HASH_LENGTH);
+    Node = FMI_SearchKeyWordInSuffixTree(Node,SearchKey+len);
+  }
 
   return Node;
 }
@@ -1117,12 +1131,11 @@ void FMI_PrintSuffixTree_rec(FILE *fp,FM_PSTNode Node,const char TabString[])
 void FMI_PrintSuffixTree(FILE *fp,FM_PSTNode Root,int HashPos)
 {
   int i;
-  char HS[5];
+  char HS[FM_STR_HASH_LENGTH+1]={0,};
   int next;
 
-  HS[4] = 0;
   next = HashPos;
-  for(i=3;i>=0;i--)
+  for(i=FM_STR_HASH_LENGTH-1;i>=0;i--)
   {
     HS[i] = next % HASHTABLE_LENGTH;
     next /= HASHTABLE_LENGTH;

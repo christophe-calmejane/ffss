@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "SU_USE_DL" /YX /FD /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
 BSC32=bscmake.exe
@@ -49,7 +49,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 ws2_32.lib ffss.lib skyutils.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /libpath:"../../../../../libffss-1.0.0/src/windows/ffss/release" /libpath:"../../../../../skyutils/src/windows/skyutils/release"
 
 !ELSEIF  "$(CFG)" == "master - Win32 Debug"
 
@@ -65,7 +65,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "DEBUG" /D "_REENTRANT" /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "_DEBUG" /D "DEBUG" /D "_REENTRANT" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "SU_USE_DL" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /d "_DEBUG"
 BSC32=bscmake.exe
@@ -73,7 +73,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 ws2_32.lib ffss.lib skyutils.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"libcmt" /pdbtype:sept /libpath:"../../../../../libffss-1.0.0/src/windows/ffss/debug" /libpath:"../../../../../skyutils/src/windows/skyutils/release"
 
 !ENDIF 
 
@@ -86,31 +86,31 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\build.c
+SOURCE=..\..\build.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\config.c
+SOURCE=..\..\config.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\hosts.c
+SOURCE=..\..\hosts.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\index.c
+SOURCE=..\..\index.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\master.c
+SOURCE=..\..\master.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\search.c
+SOURCE=..\..\search.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\threads.c
+SOURCE=..\..\threads.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -118,11 +118,11 @@ SOURCE=..\threads.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\index.h
+SOURCE=..\..\index.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\master.h
+SOURCE=..\..\master.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
@@ -130,15 +130,11 @@ SOURCE=..\master.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=..\..\ffss\Debug\ffss.lib
+SOURCE=..\..\..\ChangeLog
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\VisualSkyLibs\lib\skyutils.lib
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\Vc98\Lib\Ws2_32.lib"
+SOURCE=..\..\..\todo.txt
 # End Source File
 # End Group
 # End Target

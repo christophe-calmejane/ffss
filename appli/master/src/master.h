@@ -7,7 +7,7 @@
 #include <net/if.h>
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre62"
+#define FFSS_MASTER_VERSION "1.0-pre64"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
