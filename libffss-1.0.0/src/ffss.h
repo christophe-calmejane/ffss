@@ -418,7 +418,7 @@ typedef struct
   void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
 
   /* TCP callbacks */
-  bool (*OnCheckConnection)(SU_PClientSocket Client);
+  bool (*OnCheckConnection)(const char IP[]);
   bool (*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */

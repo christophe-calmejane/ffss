@@ -19,6 +19,7 @@ bool FS_SaveConfig(const char FileName[])
 
 void FS_RemoveShare(FS_PShare Share) {}
 
+/* Assumes FS_SemShr is locked */
 bool FS_CheckDirectoryChanged(FS_PShare Share)
 {
   struct stat st;

@@ -1696,17 +1696,24 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_Long
   }
 }
 
-bool FS_CheckConn(SU_PClientSocket Client)
+/* Check all incoming TCP connections here */
+bool FS_CheckConn(const char IP[])
 {
+  bool ret = true;
+  SU_PList Ptr;
+
   /* Check authorized connections here */
-#ifndef DEBUG
-  if(strcmp(inet_ntoa(Client->SAddr.sin_addr),"127.0.0.1") != 0)
+  SU_SEM_WAIT(FS_SemPlugin);
+  Ptr = FS_Plugins;
+  while(Ptr != NULL)
   {
-    FFSS_PrintDebug(1,"WARNING : Non local socket for connection... rejecting\n");
-    return false;
+    if(((FS_PPlugin)Ptr->Data)->CB.OnCheckConnection != NULL)
+      ret &= ((FS_PPlugin)Ptr->Data)->CB.OnCheckConnection(IP);
+    Ptr = Ptr->Next;
   }
-#endif /* !DEBUG */
-  return true;
+  SU_SEM_POST(FS_SemPlugin);
+
+  return ret;
 }
 
 /* FTP callbacks */
@@ -1719,7 +1726,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
   FFSS_PrintDebug(1,"Received a FTP CONNECTION message\n");
 
   /* Check here if IP is correct */
-  if(FS_CheckConn(Client) == false)
+  if(FS_CheckConn(inet_ntoa(Client->SAddr.sin_addr)) == false)
     return false;
 
   /* Creates a new ts */

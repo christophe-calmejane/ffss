@@ -837,6 +837,7 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
 {
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
+  char *IP;
 
   SU_ThreadBlockSigs();
   if(SU_ServerListen(FS_SI_TCP) == SOCKET_ERROR)
@@ -860,16 +861,17 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
       SU_SLEEP(1);
       continue;
     }
+    IP = inet_ntoa(Client->SAddr.sin_addr);
     if(FFSS_CB.SCB.OnCheckConnection != NULL)
     {
-      if(FFSS_CB.SCB.OnCheckConnection(Client) == false)
+      if(FFSS_CB.SCB.OnCheckConnection(IP) == false)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"Rejecting client %s\n",inet_ntoa(Client->SAddr.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"Rejecting client %s\n",IP);
         SU_FreeCS(Client);
         continue;
       }
     }
-    FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... creating new thread\n",IP,SU_NameOfPort(IP));
     if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP,(void *)Client,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating TCP Client thread\n");

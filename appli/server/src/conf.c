@@ -713,7 +713,6 @@ bool FS_CheckConfConn(SU_PClientSocket Client)
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
-    FS_PPlugin Pl = (FS_PPlugin)Ptr->Data;
     if(((FS_PPlugin)Ptr->Data)->OnCheckConfConn != NULL)
     {
       ret_val &= ((FS_PPlugin)Ptr->Data)->OnCheckConfConn(Client);
