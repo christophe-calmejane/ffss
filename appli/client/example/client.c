@@ -198,7 +198,8 @@ int main()
       return -1;
     printf("Client running...\n");
 
-    FC_SendMessage_ShareConnect("172.17.64.15","test",NULL,NULL);
+    while(1)
+      FC_SendMessage_ShareConnect("172.17.64.135","ftp",NULL,NULL);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
     sleep(20);
     return 0;
