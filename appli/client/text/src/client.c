@@ -122,10 +122,9 @@ void FCA_init()
 	if(FCA_CGI_mode) {
 			/* by default, in CGI mode, it's better to ignore all debug messages */
 		N_DebugLevel=0;
-#ifdef DEBUG
 			/* we use N_SyslogOn to delete some syslog messages in CGI mode */
-		N_SyslogOn=0;
-#endif
+		if( FFSS_GetFFSSOptions() & FFSS_OPTIONS_DEBUG)
+			N_SyslogOn=0;
 		sprintf(FCA_debuglevel, "0");
 	}
 #endif
