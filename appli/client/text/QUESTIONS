@@ -14,7 +14,6 @@ G pas envie de devoir recompiler la lib sans debug pour ne pas avoir
 'FFSS client waiting on arbitrary UDP port' ni
 'FFSS client shut down' dans ma sortie standart.
 
-
 7) ca serait pas possible dans la recherche, de me renvoyer un moyen
 de faire la difference entre une reponse fichier et une reponse dossier.
 (ex: bennyben/ffss/01-limp_bizkit.mp3
@@ -40,6 +39,7 @@ normal ?
 11) ca serait pas mal de me filer des ptites stats lors d'un listing
 de domaines (rien que le nb de machines, ou de machines on).
 A moins que tu preferes que je te bourrine a coups de ServerListing...:)
+MMM...ca serait pas un plugin a faire (ke je devrais faire ? :) ?
 
 12)
 Quand je lance mon client avec des arguments, pour que ca init la lib,
