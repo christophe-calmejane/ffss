@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 20th 2002
+                  Last Update : May, 21th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+May, 21th 2002:
+  - Fixed crash when ejected from share (but not xfers), and re-ejected after that
 
 May, 20th 2002:
   - Added plugin support in confapi

@@ -52,8 +52,11 @@ void FS_EjectFromShare(FS_PShare Share,bool EjectXFers)
   Ptr = Share->Conns;
   while(Ptr != NULL)
   {
-    ((FS_PConn)Ptr->Data)->ts->Remove = true;
-    ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
+    if(((FS_PConn)Ptr->Data)->ts != NULL)
+    {
+      ((FS_PConn)Ptr->Data)->ts->Remove = true;
+      ((FS_PConn)Ptr->Data)->ts->Client->User = (void *)1; /* Sets a time out for ejecting the client */
+    }
     if(EjectXFers)
     {
       Ptr2 = ((FS_PConn)Ptr->Data)->XFers;
@@ -152,6 +155,7 @@ void FS_AddConnectionToShare(FS_PShare Share,const char RemoteIP[],FS_PUser Usr,
   Conn->Remote = strdup(RemoteIP);
   Conn->User = Usr;
   Conn->ts = ts;
+  Conn->Share = Share;
   SU_SEM_WAIT(FS_SemConn);
   Share->Conns = SU_AddElementHead(Share->Conns,Conn);
   SU_SEM_POST(FS_SemConn);
@@ -253,6 +257,7 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
       printf("NOT REMOVING CONN... SINCE XFERS ARE STILL ACTIVES\n");
 #endif /* DEBUG */
       Conn->ToRemove = true;
+      Conn->ts = NULL;
     }
     else
       FS_DoRemoveConnectFromShare(Conn,Share,RemoveXFers);
@@ -262,12 +267,12 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
   SU_SEM_POST(FS_SemConn);
 }
 
-void FS_CheckConnectionForRemoval(FS_PConn Conn,FS_PThreadSpecific ts)
+void FS_CheckConnectionForRemoval(FS_PConn Conn,FS_PShare Share)
 {
   if(Conn->ToRemove && (Conn->XFers == NULL) && (Conn->Strms == NULL))
   {
     SU_SEM_WAIT(FS_SemConn);
-    FS_DoRemoveConnectFromShare(Conn,ts->Share,true);
+    FS_DoRemoveConnectFromShare(Conn,Share,true);
     SU_SEM_POST(FS_SemConn);
   }
 }
@@ -280,6 +285,7 @@ void destroyts(void *ptr)
   if(ts->ShareName != NULL)
     free(ts->ShareName);
   free(ts);
+  SU_THREAD_SET_SPECIFIC(FS_tskey,NULL);
 }
 
 void tsinitkey(void)
@@ -313,8 +319,10 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
       if(ts->Share->Conns == NULL) /* No more connection, removing share */
         FS_FreeShare(ts->Share);
       /* Clean and kill this thread */
+      SU_CLOSE_SOCKET(ts->Client->sock);
       SU_THREAD_DESTROY_SPECIFIC(destroyts,ts);
-      SU_END_THREAD(NULL);
+      //SU_END_THREAD(NULL);
+      return NULL;
     }
     if(ts->Remove) /* If connection is waiting to be removed */
     {
@@ -322,10 +330,12 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
       printf("This connection has been requested to exit (Share %s)\n",ts->Share->ShareName);
 #endif /* DEBUG */
       FS_SendMessage_Error(ts->Client->sock,FFSS_ERROR_SHARE_EJECTED,FFSS_ErrorTable[FFSS_ERROR_SHARE_EJECTED]);
-      FS_RemoveConnectionFromShare(ts->Share,ts,true);
+      FS_RemoveConnectionFromShare(ts->Share,ts,false);
       /* Clean and kill this thread */
+      SU_CLOSE_SOCKET(ts->Client->sock);
       SU_THREAD_DESTROY_SPECIFIC(destroyts,ts);
-      SU_END_THREAD(NULL);
+      //SU_END_THREAD(NULL);
+      return NULL;
     }
   }
   return ts;
@@ -609,6 +619,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
 
   /* Creates a new ts */
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
   ts->ShareName = strdup(ShareName);
   ts->Client = Client;
   ts->Comps = Compressions;
@@ -737,6 +748,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
   FFSS_PrintDebug(1,"Received a DIRECTORY LISTING message\n");
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
   if(!FS_SendDirectoryListing(Client,ts->Share,Path,ts->Comps))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
@@ -764,6 +776,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   FFSS_PrintDebug(1,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d\n",Path,(long int)StartPos,Port);
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
   {
@@ -893,8 +906,10 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
 bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received an UPLOAD message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -911,8 +926,10 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int 
 bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a RENAME message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -929,8 +946,10 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
 bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a COPY message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -947,8 +966,10 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
 bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a DELETE message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -965,8 +986,10 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
 bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return false;
   FFSS_PrintDebug(1,"Received a MKDIR message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -983,8 +1006,10 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
 void OnIdleTimeout(SU_PClientSocket Client)
 {
   SU_PList Ptr;
+  FS_PThreadSpecific ts;
 
-  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  ts = FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
+  if(ts == NULL) return;
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT]);
   /* OnEndThread will be called just after returning this function */
 
@@ -1042,6 +1067,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   FS_PConn Conn;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   /* Getting PConn structure */
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
@@ -1088,6 +1114,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   SU_PList Ptr;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   if(FS_MyState != FFSS_STATE_ON)
   { /* Quiet mode - Sending error message */
     FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_SERVER_IS_QUIET,0,0);
@@ -1166,6 +1193,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
   SU_PList Ptr;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1202,6 +1230,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,
   SU_PList Ptr;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1265,6 +1294,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos
   SU_PList Ptr;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1300,6 +1330,7 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_Long
     return;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1362,6 +1393,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
 
   /* Creates a new ts */
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
 
 #ifdef DEBUG
   printf("ADD FTP CONN\n");
@@ -1400,6 +1432,7 @@ void OnPWDFTP(SU_PClientSocket Client)
   FFSS_PrintDebug(1,"Received a FTP PWD message\n");
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   SU_strcpy(tspath,ts->Path,sizeof(tspath));
   if(tspath[1] != 0)
   {
@@ -1442,6 +1475,7 @@ void OnTypeFTP(SU_PClientSocket Client,const char Type)
       return;
   }
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   ts->Type = Type;
 
   Ptr = FS_Plugins;
@@ -1473,6 +1507,7 @@ void OnModeFTP(SU_PClientSocket Client,const char Mode)
       return;
   }
 /*  ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   ts->Type = Type;*/
 
   Ptr = FS_Plugins;
@@ -1499,6 +1534,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   FFSS_PrintDebug(1,"Received a LIST message for %s\n",(Path == NULL)?"cwd":Path);
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return false;
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 ." CRLF);
   send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 .." CRLF);
@@ -1665,6 +1701,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
   FFSS_PrintDebug(1,"Received a CWD message for %s\n",Path);
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
   if(Path[0] == '/') /* Absolute Path */
   {
     SU_strcpy(New,Path,sizeof(New));
@@ -1897,6 +1934,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
   SU_PList Ptr;
 
   ts = FS_GetThreadSpecific(false);
+  if(ts == NULL) return;
 
   if(Path[0] == '/') /* Absolute Path */
   {
@@ -2159,7 +2197,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
-    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->ts);
+    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->Share);
   }
 #ifdef DEBUG
   else
@@ -2200,7 +2238,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif /* DEBUG */
     SU_SEM_POST(FS_SemXFer);
-    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->ts);
+    FS_CheckConnectionForRemoval((FS_PConn)FT->User,((FS_PConn)FT->User)->Share);
   }
 #ifdef DEBUG
   else

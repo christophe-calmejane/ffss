@@ -129,6 +129,7 @@ typedef struct
   char *Remote;          /* Remote ip of connection */
   FS_PUser User;         /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL USER */
   FS_PThreadSpecific ts; /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL TS */
+  FS_PShare Share;       /* DO NOT FREE THIS, ONLY A POINTER TO THE REAL SHARE */
   SU_PList XFers;        /* FFSS_PTransfer */ /* DO NOT FREE THESE, ONLY A POINTER TO THE REAL XFERS */
   bool XFerInConn;       /* If Xfer in connection socket (once in this mode... can't go back until share reconnection) */
   int CurrentXFer;       /* Only used for xfer in connection socket */
