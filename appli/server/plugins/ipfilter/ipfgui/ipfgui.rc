@@ -1,0 +1,241 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CHAIN_PAGE DIALOG DISCARDABLE  0, 0, 264, 173
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Chain"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "List1",IDC_RULES,"SysListView32",LVS_REPORT | 
+                    LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,4,12,256,120
+    COMBOBOX        IDC_POLICY,8,148,112,60,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Move up",IDC_MOVEUP,208,136,50,14
+    PUSHBUTTON      "Move down",IDC_MOVEDOWN,208,152,50,14
+    LTEXT           "Rules (order is important)",IDC_LRULES,4,4,256,8
+    GROUPBOX        "Default rule, if no other matched",IDC_LDEFAULTRULE,4,
+                    136,120,32
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_CHAIN_PAGE DLGINIT
+BEGIN
+    IDC_POLICY, 0x403, 7, 0
+0x6341, 0x6563, 0x7470, "\000" 
+    IDC_POLICY, 0x403, 7, 0
+0x6552, 0x656a, 0x7463, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_CHAIN_PAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 257
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 166
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// French (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ADDRULE_DLG DIALOG DISCARDABLE  0, 0, 224, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Filter rule"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_RULE_NAME,64,4,112,13,ES_AUTOHSCROLL
+    CONTROL         "IPAddress1",IDC_RULE_IP,"SysIPAddress32",WS_TABSTOP,8,
+                    32,72,13
+    CONTROL         "IPAddress2",IDC_RULE_MASK,"SysIPAddress32",WS_TABSTOP,
+                    88,32,72,13
+    COMBOBOX        IDC_RULE_ACTION,168,32,52,44,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Current chain",IDC_CHAIN_THIS,"Button",
+                    BS_AUTORADIOBUTTON,52,52,148,10
+    CONTROL         "All chains",IDC_CHAIN_ALL,"Button",BS_AUTORADIOBUTTON,
+                    52,64,148,10
+    DEFPUSHBUTTON   "OK",IDOK,59,84,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,115,84,50,14
+    LTEXT           "Rule name",IDC_LRULENAME,8,8,52,8
+    LTEXT           "IP",IDC_LIP,8,24,72,8
+    LTEXT           "Netmask",IDC_LNETMASK,88,24,72,8
+    LTEXT           "Action",IDC_LACTION,168,24,52,8
+    LTEXT           "Apply to",IDC_LAPPLY,8,52,44,8
+END
+
+IDD_CONFIRM DIALOG DISCARDABLE  0, 0, 220, 74
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Delete rule"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "All chains",IDOK,4,52,70,14
+    PUSHBUTTON      "Current chain",IDNO,84,52,70,14
+    PUSHBUTTON      "Cancel",IDCANCEL,164,52,50,14
+    LTEXT           "Remove the following rule",IDC_LDELRULE,4,4,208,8
+    LTEXT           "",IDC_RULEMSG,12,20,200,8
+    LTEXT           "from",IDC_LFROM,4,36,208,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_ADDRULE_DLG DLGINIT
+BEGIN
+    IDC_RULE_ACTION, 0x403, 7, 0
+0x6341, 0x6563, 0x7470, "\000" 
+    IDC_RULE_ACTION, 0x403, 7, 0
+0x6552, 0x656a, 0x7463, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ADDRULE_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 217
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 98
+    END
+
+    IDD_CONFIRM, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 213
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 67
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 12, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\ipfgui.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""l.fra\\afxres.rc""          // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // French (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE 12, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\ipfgui.rc2"  // non-Microsoft Visual C++ edited resources
+#include "l.fra\afxres.rc"          // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

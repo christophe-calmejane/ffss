@@ -1,0 +1,7 @@
+; ipfgui.def : Declares the module parameters for the DLL.
+
+LIBRARY      "ipfgui"
+DESCRIPTION  'ipfgui Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
