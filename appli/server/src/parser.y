@@ -61,7 +61,7 @@ bool FS_AddFilterRule()
   bool res;
 
   if(TmpRule.Default)
-    res =  FFSS_Filter_AddDefaultRuleToChain(TmpRule.Chain,TmpRule.Action);
+    res =  FFSS_Filter_SetDefaultActionOfChain(TmpRule.Chain,TmpRule.Action);
   else
     res = FFSS_Filter_AddRuleToChain_Tail(TmpRule.Chain,TmpRule.IP,TmpRule.Mask,TmpRule.Action,TmpRule.Name);
   FS_FreeTempoRule();
@@ -156,9 +156,9 @@ fieldline:         PATH STRING                               { TmpShr.Path = str
                  | USERS users
 ;
 
-rule:   type STRING STRING action                            { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3);}
-      | type STRING STRING action STRING                     { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3);TmpRule.Name = strdup($5);}
-      | FILTER_DEFAULT type STRING STRING action             { TmpRule.IP = strdup($3);TmpRule.Mask = strdup($4);TmpRule.Default = true;}
+rule:   type STRING STRING action                            { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3); }
+      | type STRING STRING action STRING                     { TmpRule.IP = strdup($2);TmpRule.Mask = strdup($3);TmpRule.Name = strdup($5); }
+      | FILTER_DEFAULT type action                           { TmpRule.Default = true; }
 ;
 
 type:   FILTER_UDP                                           { TmpRule.Chain = FFSS_FILTER_CHAINS_SERVER_UDP_PACKET; }

@@ -47,9 +47,11 @@ void *FS_PluginQuery(int Type,...)
       FS_EjectAll(true);
       break;
 
-    case FSPQ_SHUTDOWN :
+#ifdef _WIN32
+    case FSPQ_SHUTDOWN : /* Only supported on Win32 */
       SendMessage(FS_hwnd,WM_CLOSE,0,0);
       break;
+#endif /* _WIN32 */
   }
   va_end(ap);
   return ret;
