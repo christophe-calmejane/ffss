@@ -5,7 +5,7 @@ echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
 echo
 cd skyutils
-./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal
+./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal --enable-ansi
 make
 cd ..
 echo
