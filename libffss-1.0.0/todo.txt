@@ -11,8 +11,8 @@
 
  - TRANSFORMER LES CONSTANTES DES PORTS en variables (enfin, garder les 2, par defaut, on assigne les constantes au var) et mettre les var en globales
 
-
  - optimiser les messages (ne pas faire de copie des buffers, mais envoyer plusieurs paquets)
      >> [11:46:04] <kiki[Artabel]>  writev
      >> [11:46:09] <kiki[Artabel]>  WSPSend
      >> [11:46:16] <kiki[Artabel]>  pour envoyer des buffers a concatener
+

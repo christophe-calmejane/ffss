@@ -36,12 +36,8 @@ TO DO :
 
  - POSSIBLE BUG : Dans le onSelect et autres fonctions associes (xfer In conn).. aucun sem_wait/sem_post sur les xfers !!!
 
- - Option pour chaque share : AutoRescan <interval>
-
  - Si pas de master defini lors du Startup, creer un thread 'timer' qui simule les pings du master
 
 [23:32:23] <kiki>  hum.. d ailleurs, faut que j ajoute un callback OnShutdown et OnStartup
 
  - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)
-
- - Fichier de lock comme dans master...

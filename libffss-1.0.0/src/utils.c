@@ -539,6 +539,8 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
 {
   va_list argptr;
   char Str[4096];
+  struct tm *TM;
+  time_t Tim;
 
   if(Level <= N_DebugLevel)
   {
@@ -549,7 +551,9 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
     vsnprintf(Str,sizeof(Str),Txt,argptr);
 #endif /* _WIN32 */
     va_end(argptr);
-    printf("FFSS(%d) : %s",Level,Str);
+    Tim = time(NULL);
+    TM = localtime(&Tim);
+    printf("[%.2d:%.2d:%.2d] FFSS(%d) : %s",TM->tm_hour,TM->tm_min,TM->tm_sec,Level,Str);
   }
 }
 

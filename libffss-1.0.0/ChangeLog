@@ -3,10 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : February, 28th 2002
+                  Last Update : March, 5th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+March, 5th 2002:
+  - Added time printing in PrintDebug messages
 
 March, 3rd 2002:
   - Added intensive usage of context() for debug purpose

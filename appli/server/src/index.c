@@ -648,8 +648,6 @@ bool FS_SendIndex(const char Host[],const char Port[])
   }
   SU_SEM_POST(FS_SemShr);
 
-/*  SaveState = FS_MyState;
-  FS_MyState = FFSS_STATE_OFF;*/
 #ifdef HAVE_BZLIB
   if(total >= FS_COMPRESSION_TRIGGER_BZLIB)
     comp = FFSS_COMPRESSION_BZLIB;
@@ -662,7 +660,6 @@ bool FS_SendIndex(const char Host[],const char Port[])
 #endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
   res = FS_SendMessage_IndexAnswer(Host,Port,Bufs,Sizes,comp);
-/*  FS_MyState = SaveState;*/
 
   SU_FreeListElem(Bufs);
   SU_FreeList(Sizes);
