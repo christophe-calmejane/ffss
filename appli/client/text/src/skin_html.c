@@ -143,13 +143,13 @@ void FCA_html_init()
 void FCA_html_prog_begin()
 {
 if(!FCA_VAR_IS_ON(FCA_html_included_doc))
-printf("<html>
-<head>
- <title>ffss client</title>
-</head>
- 
-<body>
-");
+printf("<html>\n"
+"<head>\n"
+" <title>ffss client</title>\n"
+"</head>\n"
+" \n"
+"<body>\n"
+);
 
 printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
@@ -169,34 +169,34 @@ void FCA_html_pre_listing(char *path)
 		FCA_dir_link(path);printf("parent</a>\n");
 		*p='/';
 	}
-printf("
-<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
+printf("\n"
+"<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
 FCA_form_hidden_args(true);
-printf("address: <input type='text' name='dir' value='%s' tabindex=1>
-&nbsp;<input type='submit' value='go'><br>\n", path);printf("
-<input type='hidden' name='s' value=''>
-<input type='hidden' name='sdom' value=''>
-</form>
-<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
-FCA_form_hidden_args(false);printf("
-<input type='hidden' name='dir' value=''>
-<table border=0 width='100%%'>
- <tr>
-  <td>search: <input type='text' name='s' value='' tabindex=2> on
-   <select name='sdom'>
-    <option value='all'>all domains
-");
+printf("address: <input type='text' name='dir' value='%s' tabindex=1>\n"
+"&nbsp;<input type='submit' value='go'><br>\n", path);printf("\n"
+"<input type='hidden' name='s' value=''>\n"
+"<input type='hidden' name='sdom' value=''>\n"
+"</form>\n"
+"<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
+FCA_form_hidden_args(false);printf("\n"
+"<input type='hidden' name='dir' value=''>\n"
+"<table border=0 width='100%%'>\n"
+" <tr>\n"
+"  <td>search: <input type='text' name='s' value='' tabindex=2> on\n"
+"   <select name='sdom'>\n"
+"    <option value='all'>all domains\n"
+"");
 	p=FCA_get_a_domain();
 	while(p) {
 		if(SU_strcasecmp(p, "None"))
 			printf("    <option>%s\n", p);
 		p=FCA_get_a_domain();
 	}
-printf("   </select>&nbsp;<input type='submit' value='search'>
-  </td><td>
-   skin: 
-   <select name='skin'>
-");
+printf("   </select>&nbsp;<input type='submit' value='search'>\n"
+"  </td><td>\n"
+"   skin: \n"
+"   <select name='skin'>\n"
+"");
 	for(ps=FCA_SKINS; ps && ps->name; ps++) {
 		if(ps->canCGI) {
 			printf("    <option");
@@ -205,17 +205,17 @@ printf("   </select>&nbsp;<input type='submit' value='search'>
 			printf(">%s\n", ps->name);
 		}
 	}
-printf("   </select>&nbsp;<input type='submit' value='ok'>
-  </td>
- </tr>
-</table>
-</form>
-<center>
- <h2>
-  ");FCA_sep_link(path, "", true);printf("
- </h2>
-</center>
-");
+printf("   </select>&nbsp;<input type='submit' value='ok'>\n"
+"  </td>\n"
+" </tr>\n"
+"</table>\n"
+"</form>\n"
+"<center>\n"
+" <h2>\n"
+"  ");FCA_sep_link(path, "", true);printf("\n"
+" </h2>\n"
+"</center>\n"
+"");
 }
 
 void FCA_html_pre_search_ans(const char *query, const char *domain)
@@ -223,49 +223,49 @@ void FCA_html_pre_search_ans(const char *query, const char *domain)
 	char *p;
 	const FCA_Tskin *ps;
 
-printf("
-<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
+printf("\n"
+"<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
 FCA_form_hidden_args(true);
-printf("address: <input type='text' name='dir' value='/$' tabindex=1>
-&nbsp;<input type='submit' value='go'><br>\n");printf("
-<input type='hidden' name='s' value=''>
-<input type='hidden' name='sdom' value=''>
-</form>
-<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
-FCA_form_hidden_args(true);printf("
-<input type='hidden' name='dir' value=''>
-<table border=0 width='100%%'>
- <tr>
-  <td>search: <input type='text' name='s' value='%s' tabindex=2> on", query);printf("
-   <select name='sdom'>
-    <option value='all'>all domains
-");
+printf("address: <input type='text' name='dir' value='/$' tabindex=1>\n"
+"&nbsp;<input type='submit' value='go'><br>\n");printf("\n"
+"<input type='hidden' name='s' value=''>\n"
+"<input type='hidden' name='sdom' value=''>\n"
+"</form>\n"
+"<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
+FCA_form_hidden_args(true);printf("\n"
+"<input type='hidden' name='dir' value=''>\n"
+"<table border=0 width='100%%'>\n"
+" <tr>\n"
+"  <td>search: <input type='text' name='s' value='%s' tabindex=2> on", query);printf("\n"
+"   <select name='sdom'>\n"
+"    <option value='all'>all domains\n"
+"");
 	p=FCA_get_a_domain();
 	while(p) {
 		if(SU_strcasecmp(p, "None"))
 			printf("    <option%s>%s\n", SU_strcasecmp(p, domain)?"":" selected", p);
 		p=FCA_get_a_domain();
 	}
-printf("   </select>&nbsp;<input type='submit' value='search'>
-  </td><td>
-   skin: 
-   <select name='skin'>
-");
+printf("   </select>&nbsp;<input type='submit' value='search'>\n"
+"  </td><td>\n"
+"   skin: \n"
+"   <select name='skin'>\n"
+"");
 	for(ps=FCA_SKINS; ps && ps->name; ps++) {
 		if(ps->canCGI)
 			printf("    <option>%s\n", ps->name);
 	}
-printf("   </select>
-  </td>
- </tr>
-</table>
-</form>
-<center>
- <h2>
-  search results for '%s' on %s", query, domain);printf("
- </h2>
-</center>
-");
+printf("   </select>\n"
+"  </td>\n"
+" </tr>\n"
+"</table>\n"
+"</form>\n"
+"<center>\n"
+" <h2>\n"
+"  search results for '%s' on %s", query, domain);printf("\n"
+" </h2>\n"
+"</center>\n"
+"");
 }
 
 void FCA_html_tab_top()
@@ -536,13 +536,13 @@ printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
-printf("</center>
-");
+printf("</center>\n"
+"");
 if(!FCA_VAR_IS_ON(FCA_html_included_doc))
-printf("
-</body>
-</html>
-");
+printf("\n"
+"</body>\n"
+"</html>\n"
+"");
 }
 
 
