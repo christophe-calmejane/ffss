@@ -18,7 +18,7 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
   struct sockaddr_in Client;
   int len,res=SOCKET_ERROR;
   FFSS_Field Size;
-  bool analyse;
+  bool analyse,keep_it;
   int err;
   char whom[150];
   char *Buf;
@@ -158,6 +158,33 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
         else
           FFSS_When = time(NULL); /* Update time */
       }
+    }
+    /* Check for packet reject */
+    keep_it = true;
+    switch((int)User)
+    {
+      case FFSS_THREAD_SERVER :
+        if(FFSS_CB.SCB.OnCheckPacket != NULL)
+          keep_it = FFSS_CB.SCB.OnCheckPacket(whom);
+        break;
+      case FFSS_THREAD_CLIENT :
+        if(FFSS_CB.CCB.OnCheckPacket != NULL)
+          keep_it = FFSS_CB.CCB.OnCheckPacket(whom);
+        break;
+      case FFSS_THREAD_MASTER :
+        if(FFSS_CB.MCB.OnCheckPacket != NULL)
+          keep_it = FFSS_CB.MCB.OnCheckPacket(whom);
+        break;
+      default :
+        FFSS_PrintDebug(1,"Error in UDP common thread, unknown thread type !\n");
+        SU_END_THREAD(NULL);
+    }
+    if(!keep_it)
+    {
+      len = 0;
+      FFSS_CurrentSIN.sin_port = 0;
+      FFSS_PrintDebug(1,"UDP packet from %s has been rejected\n",whom);
+      continue;
     }
     /* If size of message won't fit in the buffer */
     if((len == 0) && ((*(FFSS_Field *)Buf) > BufSize))

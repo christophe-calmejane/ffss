@@ -408,6 +408,7 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
+  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnPing)(struct sockaddr_in Master);
   void (*OnStateAnswer)(const char Domain[]);
   void (*OnServerSearch)(struct sockaddr_in Client);
@@ -461,6 +462,7 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
+  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
   void (*OnSharesListing)(const char IP[],const char **Names,const char **Comments,int NbShares);
   /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
@@ -497,6 +499,7 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
+  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnState)(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[]);
   void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions);
   void (*OnClientServerFailed)(const char IP[]);
