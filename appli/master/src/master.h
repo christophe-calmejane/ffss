@@ -44,6 +44,7 @@ typedef struct
 { /* Do NOT free those pointeurs !! */
   FM_PDomain Domain;
   FM_PHost Host;
+  bool Removed; /* If removed before emptying queue */
 } FM_TQueue, *FM_PQueue;
 
 typedef struct

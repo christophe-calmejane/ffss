@@ -64,17 +64,6 @@ if test "$context" = "true"; then
   CFLAGS="$CFLAGS ""-DCONTEXT "
 fi
 
-AC_ARG_ENABLE(malloc_trace,
-[  --enable-malloc_trace   Enables malloc trace debug info (default=no)],
-[case "${enableval}" in
-  yes) malloc_trace=true ;;
-  no)  malloc_trace=false ;;
-  *) AC_MSG_ERROR(bad value ${enableval} for --enable-malloc_trace) ;;
-esac],[malloc_trace=false])
-if test "$malloc_trace" = "true"; then
-  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
-fi
-
 AC_ARG_ENABLE(static,
 [  --enable-static         Enables static build of ffss-master (default=dynamic)],
 [case "${enableval}" in

@@ -23,6 +23,11 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
   Ptr = Queue;
   while(Ptr != NULL)
   {
+    if(((FM_PQueue)Ptr->Data)->Removed)
+    {
+      Ptr = Ptr->Next;
+      continue;
+    }
     /* Flush State */
     context;
     *(FFSS_Field *)(buf+pos) = ((FM_PQueue)Ptr->Data)->Host->State;

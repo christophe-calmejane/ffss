@@ -4,7 +4,7 @@ extern volatile bool FM_ShuttingDown;
 
 SU_THREAD_ROUTINE(FM_ThreadPing,User)
 {
-  SU_PList Ptr,Ptr2;
+  SU_PList Ptr,Ptr2,Ptr3;
   time_t now;
   int SaveIndexCount;
   char *buf;
@@ -78,6 +78,19 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
         context;
         FFSS_PrintDebug(3,"THREADS : PING : Removing host %s from my domain\n",((FM_PHost)Ptr->Data)->IP);
         FFSS_PrintDebug(3,"He is off since %ld - and we are now %ld\n",((FM_PHost)Ptr->Data)->OffSince,now);
+        /* Checking if host is not in queue */
+        SU_SEM_WAIT(FM_MySem);
+        Ptr3 = FM_MyQueue;
+        while(Ptr3 != NULL)
+        {
+          if(((FM_PQueue)Ptr3->Data)->Host == Ptr->Data)
+          {
+            ((FM_PQueue)Ptr3->Data)->Removed = true;
+            FFSS_PrintDebug(3,"He is in my state queue... marking as removed\n");
+          }
+          Ptr3 = Ptr3->Next;
+        }
+        SU_SEM_POST(FM_MySem);
         /* Remove this host from my domain */
         FM_FreeHost((FM_PHost)Ptr->Data);
         Ptr = SU_DelElementHead(Ptr);

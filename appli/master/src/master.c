@@ -120,6 +120,7 @@ void FM_UpdateHost(FM_PHost Hst,const char Name[],const char OS[],const char Com
   SU_SEM_WAIT(FM_MySem2);
 #ifdef DEBUG
   printf("Updating host info : %s - %s - %s - %ld\n",Name,OS,Comment,State);
+  printf("Old infos : %s - %s - %s - %ld\n",Hst->Name,Hst->OS,Hst->Comment,Hst->State);
 #endif /* DEBUG */
   if(strcmp(Hst->Name,Name) != 0)
   {
@@ -150,7 +151,6 @@ bool FM_IsHostInMyQueue(FM_PHost Hst)
   while(Ptr != NULL)
   {
     if(((FM_PQueue)Ptr->Data)->Host == Hst)
-//    if(strcmp(((FM_PQueue)Ptr->Data)->Host->IP,Hst->IP) == 0)
       return true;
     Ptr = Ptr->Next;
   }
@@ -166,7 +166,6 @@ bool FM_IsHostInOtherQueue(FM_PHost Hst)
   while(Ptr != NULL)
   {
     if(((FM_PQueue)Ptr->Data)->Host == Hst)
-//    if(strcmp(((FM_PQueue)Ptr->Data)->Host->IP,Hst->IP) == 0)
       return true;
     Ptr = Ptr->Next;
   }
@@ -181,10 +180,10 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
 #ifdef DEBUG
   printf("MASTER : Adding state to my queue : %s (%s) %ld\n",Hst->Name,Hst->IP,Hst->State);
 #endif /* DEBUG */
-  /*if(Hst->State == FFSS_STATE_OFF)
+  if(Hst->State == FFSS_STATE_OFF)
     Hst->OffSince = time(NULL);
   else
-    Hst->OffSince = 0;*/
+    Hst->OffSince = 0;
   if(FM_IsHostInMyQueue(Hst))
   {
 #ifdef DEBUG
@@ -194,6 +193,7 @@ void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst)
   }
 
   Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
+  memset(Que,0,sizeof(FM_TQueue));
   Que->Domain = Domain;
   Que->Host = Hst;
   SU_SEM_WAIT(FM_MySem);
@@ -251,6 +251,9 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
   FM_PHost Hst;
 
   context;
+#ifdef DEBUG
+  printf("MASTER : State : %s-%s-%s\n",Name,Comment,OS);
+#endif /* DEBUG */
   Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
   if(Hst == NULL)
     Hst = FM_AddHostToDomain(&FM_MyDomain,Name,OS,Comment,inet_ntoa(Server.sin_addr),State);
@@ -789,6 +792,9 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
   FM_PHost Hst;
 
   context;
+#ifdef DEBUG
+  printf("MASTER : NewState : %s-%s-%s-%s-%s-%s\n",Name,Comment,OS,Domain,IP,MasterIP);
+#endif /* DEBUG */
   Dom = FM_SearchDomainByIP(MasterIP);
   if(Dom == NULL)
   {
