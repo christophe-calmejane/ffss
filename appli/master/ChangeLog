@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 23th 2002
+                  Last Update : September, 3th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+September 3rd, 2002:
+  - Fixed bug in synchronization fix :)
 
 August 23th, 2002:
   - Fixed synchronization between masters

@@ -810,6 +810,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
     while(Ptr != NULL)
     {
       Que = (FM_PQueue) malloc(sizeof(FM_TQueue));
+      memset(Que,0,sizeof(FM_TQueue));
       Que->Domain = &FM_MyDomain;
       Que->Host = (FM_PHost)Ptr->Data;
       Queue = SU_AddElementHead(Queue,Que);
