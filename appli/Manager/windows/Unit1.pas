@@ -186,6 +186,7 @@ var
   OnFolder : Boolean;
   ConnInit : Boolean;
   Limited  : Boolean;
+  InitDone : Boolean;
 
 implementation
 
@@ -236,12 +237,12 @@ Var buf : Array[0..512] Of Char;
   HostEnt: PHostEnt;
   H : String;
 begin
-  ConnInit:=false;
-  Limited:=false;
-  If Not InitConnection Then
+//  ConnInit:=false;
+//  Limited:=false;
+  If Limited Then
   Begin
-    Application.MessageBox('FFSS server does not seem to be running. Executing in limited configuration mode','FFSS Share Info',MB_OK);
-    Limited:=true;
+//    Application.MessageBox('FFSS server does not seem to be running. Executing in limited configuration mode','FFSS Share Info',MB_OK);
+//    Limited:=true;
     TabSheet2.TabVisible:=False;
     TabSheet3.TabVisible:=False;
     H:='';
@@ -890,10 +891,10 @@ Begin
     Application.MessageBox('Le champ "Nom de partage" ne doit pas être vide','FFSS Share Error',MB_OK);
     Exit;
   End;
-  If Pos('#',Edit1.Text) <> 0 Then
+  If Pos('|',Edit1.Text) <> 0 Then
   Begin
     PageControl1.ActivePageIndex:=1;
-    Application.MessageBox('Le champ "Nom de partage" ne doit pas contenir de #','FFSS Share Error',MB_OK);
+    Application.MessageBox('Le champ "Nom de partage" ne doit pas contenir de |','FFSS Share Error',MB_OK);
     Exit;
   End;
   Try
@@ -931,6 +932,11 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
+  If Not InitDone Then
+  Begin
+    GetInitValues;
+    InitDone:=True;
+  End;
   If OnFolder And Not Limited Then
   Begin
     If Share = Nil Then
@@ -1058,7 +1064,14 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   ST1.ShowAppIcon:=False;
   ST1.Icon:=Application.Icon;
-  GetInitValues;
+  ConnInit:=false;
+  Limited:=false;
+  If Not InitConnection Then
+  Begin
+    Application.MessageBox('FFSS server does not seem to be running. Executing in limited configuration mode','FFSS Share Info',MB_OK);
+    Limited:=true;
+  End;
+  InitDone:=False;
 end;
 
 end.
