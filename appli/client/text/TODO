@@ -8,7 +8,7 @@ les plus importants.
 
 
 ----------------------------
-trier les machines, les classer par ordre alphabetique par exemple.
+login & pass aux partages
 
 ----------------------------
 proposer de desactiver la gestion des skins a la compil
@@ -151,12 +151,14 @@ rererevoir si on a ni master ni server, si server down pdant k'on le browse, etc
 et master down
 
 ----------------------------
-login/pass dans la connection aux partages
-
-----------------------------
 gestion du Ctrl-C intelligente, avec gestion des signaux
 quitter le sem_wait avec le Ctrl-C
 quitter avec 5 Ctrl-C
+
+----------------------------
+faire des key bindings avec readline
+genre F1 pour aide
+taper 'ls' puis F1 pour avoir help ls
 
 ---------------------------
 optimiser le nombre de tests de bons repertoire, par ex:

@@ -46,15 +46,20 @@
 #define FCA_broadcast_timeout	atoi(FCA_env[7])
 #define FCA_search_timeout	atoi(FCA_env[8])
 #define FCA_operation_timeout	atoi(FCA_env[9])
-#define FCA_sort_find		FCA_env[10]
-#define FCA_sort		FCA_env[11]
-#define FCA_sort_by		FCA_env[12]
-#define FCA_log			FCA_env[13]
-#define FCA_logfile		FCA_env[14]
-#define FCA_loglevel		FCA_env[15][0]
-#define FCA_useConnSock		FCA_env[16]
-	/* modify this each time you add a variable */
-#define FCA_skin_env_index	17
+#define FCA_sort		FCA_env[10]
+#define FCA_sort_descending	FCA_env[11]
+#define FCA_sort_files_by	FCA_env[12]
+#define FCA_sort_shares_by	FCA_env[13]
+#define FCA_sort_servers_by	FCA_env[14]
+#define FCA_log			FCA_env[15]
+#define FCA_logfile		FCA_env[16]
+#define FCA_loglevel		FCA_env[17][0]
+#define FCA_useConnSock		FCA_env[18]
+	/* 
+		WARNING !!!
+		modify this each time you add a variable
+	*/
+#define FCA_skin_env_index	19
 
 #define FCA_FIND_LOGLEVEL	'1'
 #define FCA_SHELL_LOGLEVEL	'2'
@@ -139,6 +144,11 @@ void FCA_dw_dir(char *path, char *dir, char *dest);
 
 unsigned int *FCA_pre_tabsort(int nbEl);
 void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels);
+SU_PList FCA_sort_hostlist(SU_PList l);
+SU_PList FCA_sort_dirlist(SU_PList l);
+bool FCA_hostlist_comp(SU_PList p1, SU_PList p2);
+bool FCA_dirlist_comp(SU_PList p1, SU_PList p2);
+SU_PList FCA_sort_list(SU_PList l, bool (*comp)(SU_PList,SU_PList) );
 
 	/* sendMessage redefinitions */
 bool FCA_list_dir(SU_PClientSocket Server,const char Path[], const char Dir[]);

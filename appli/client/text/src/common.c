@@ -67,9 +67,11 @@ const FCA_Tvar FCA_VARS[]= {
 	{"broadcast_timeout","timeout when listing domain None, in seconds","1-120",	NULL},
 	{"search_timeout","timeout when searching in all domains, in seconds","1-120",	NULL},
 	{"operation_timeout","timeout when doing something, in seconds","1-120",	NULL},
-	{"sort_find",	"if the search answers must be sorted",		"on/off",	NULL},
 	{"sort",	"if the listings must be sorted",		"on/off",	NULL},
-	{"sort_by",	"sort method for directory listings",		"name/size/date",NULL},
+	{"sort_descending","sort order",				"on/off",	NULL},
+	{"sort_files_by","sort method for directory listings",		"name/size/date",NULL},
+	{"sort_shares_by","sort method for shares",			"name/comment",NULL},
+	{"sort_servers_by","sort method for server listings",		"name/IP/comment",NULL},
 	{"log",		"if we must log",				"on/off",	FCA_upd_log},
 	{"log_file",	"the file used to log",				"filename",	FCA_upd_logfile},
 	{"log_level",	"1=find 2=downloads 3=browsing 4=arguments 5=cgi 6=commands 7=all",	"1-6",	NULL},
@@ -97,6 +99,8 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"on","off",NULL},
 	{"on","off",NULL},
 	{"name", "size", "date", NULL},
+	{"name", "comment", NULL},
+	{"name", "IP", "comment", NULL},
 	{"on","off",NULL},
 	{"", "ffss-client.log", NULL},
 	{"1", "2", "3", "4", "5", "6", "7", NULL},
@@ -118,7 +122,9 @@ char FCA_env[][FCA_VAR_MAX]={
 	"20",
 	"10",
 	"on",
-	"on",
+	"off",
+	"name",
+	"name",
 	"name",
 	"off",
 	"ffss-client.log",
@@ -1073,6 +1079,7 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 		/* sort search results */
 	bool modified=true;
 	unsigned int ir, sav;
+	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
 	
 	if(Nbels<2) {
 		FFSS_PrintDebug(1, "(client) 1 element, nothing to sort\n");
@@ -1084,7 +1091,7 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 			/* first, from left to right */
 		for(ir=0; ir<Nbels-1; ir++) {
 				/* answer > next answer.... */
-			if( strcmp(*(els+res[ir]), *(els+res[ir+1]))>0 ) {
+			if( strcmp(*(els+res[ir]), *(els+res[ir+1]))*ord>0 ) {
 				sav=res[ir];
 				res[ir]=res[ir+1];
 				res[ir+1]=sav;
@@ -1096,7 +1103,7 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 				/* second (if needed), from right to left */
 			for(ir=Nbels-2; ir>0; ir--) {
 					/* answer > next answer.... */
-				if( strcmp(*(els+res[ir]), *(els+res[ir+1]))>0 ) {
+				if( strcmp(*(els+res[ir]), *(els+res[ir+1]))*ord>0 ) {
 					sav=res[ir];
 					res[ir]=res[ir+1];
 					res[ir+1]=sav;
@@ -1107,6 +1114,92 @@ void FCA_sort_chartab(unsigned int *res, const char **els,int Nbels)
 	}
 	FFSS_PrintDebug(1, "(client) answers sorted\n");
 	return;
+}
+
+SU_PList FCA_sort_hostlist(SU_PList l)
+{
+	return FCA_sort_list(l, &FCA_hostlist_comp);
+}
+
+SU_PList FCA_sort_dirlist(SU_PList l)
+{
+	return FCA_sort_list(l, &FCA_dirlist_comp);
+}
+
+bool FCA_hostlist_comp(SU_PList p1, SU_PList p2)
+{
+	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
+	
+	if(!p1 || !p2)
+		return true;
+	switch(FCA_sort_servers_by[0]) {
+	case 'I':	/* by IP */
+		return (strcmp(
+			((FM_PHost)(p1->Data))->IP,
+			((FM_PHost)(p2->Data))->IP)*ord <0);
+	case 'c':	/* by comment */
+		return (strcmp(
+			((FM_PHost)(p1->Data))->Comment,
+			((FM_PHost)(p2->Data))->Comment)*ord <0);
+	default:	/* default, by name */
+		return (strcmp(
+			((FM_PHost)(p1->Data))->Name,
+			((FM_PHost)(p2->Data))->Name)*ord <0);
+	}
+}
+
+bool FCA_dirlist_comp(SU_PList p1, SU_PList p2)
+{
+	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
+	
+	if(!p1 || !p2)
+		return true;
+	switch(FCA_sort_files_by[0]) {
+	case 's':	/* by size */
+		return ((((FC_PEntry)(p1->Data))->Size-
+			((FC_PEntry)(p2->Data))->Size)*ord<0);
+	case 'd':	/* by date */
+		return ((((FC_PEntry)(p1->Data))->Stamp-
+			((FC_PEntry)(p2->Data))->Stamp)*ord<0);
+	default:	/* default, by name */
+		return (strcmp(
+			((FC_PEntry)(p1->Data))->Name,
+			((FC_PEntry)(p2->Data))->Name)*ord <0);
+	}
+}
+
+
+SU_PList FCA_sort_list(SU_PList l, bool (*comp)(SU_PList,SU_PList) )
+{
+		/* sort a list */
+	bool modified=true;
+	SU_PList res=l, p, pp, pn;
+	
+	if(!l) return l;
+
+	FFSS_PrintDebug(1, "(client) let's sort...\n");
+		/* while we have something to sort */
+	while(modified) {
+		modified=false;
+		pp=NULL;
+		for(p=res; p->Next; pp=p, p=p->Next) {
+				/* answer > next answer.... */
+			if( !comp(p, p->Next) ) {
+			 		/* p <-> p->Next */
+				pn=p->Next;
+				if(p==res)
+					res=pn;
+				if(pp)
+					pp->Next=pn;
+				p->Next=pn->Next;
+				pn->Next=p;
+				modified=true;
+				p=pn;
+			}
+		}
+	}
+	FFSS_PrintDebug(1, "(client) answers sorted\n");
+	return res;
 }
 
 

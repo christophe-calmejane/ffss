@@ -304,8 +304,12 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 	const char *States[]={"","on","off","quiet"};
 	int nbqu, nboff, nbdisp=0;
 	char tmp[128], tmp2[128];
-    
-	Ptr = HostList;
+
+	
+	if(FCA_VAR_IS_ON(FCA_sort))
+		Ptr = FCA_sort_hostlist(HostList);
+	else
+		Ptr = HostList;
 	       	/* prepare the listing structure */
 	snprintf(FCA_listed_dir, FFSS_MAX_FILEPATH_LENGTH, "/$/%s", Domain);
 	FCA_free_list();
@@ -478,7 +482,7 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	if(!FCA_quiet)
 		FCA_pre_search_ans(Query);
 	if(NbAnswers && !FCA_quiet) {
-		if(FCA_VAR_IS_ON(FCA_sort_find))
+		if(FCA_VAR_IS_ON(FCA_sort))
 			FCA_sort_chartab(res,Answers, NbAnswers);
 		FCA_tab_width=38;
 		FCA_tab_top();
@@ -567,8 +571,11 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 	char *timech;
 	unsigned int nbEl=0, nbFd=0, nbFl=0;
 	long long totSz=0;
-    
-	Ptr=Entries;
+	
+	if(FCA_VAR_IS_ON(FCA_sort))
+		Ptr=FCA_sort_dirlist(Entries);
+	else
+		Ptr=Entries;
 	    	/* prepare the internal structure */
 	SU_strcpy(FCA_listed_dir, FCA_tolist_dir, FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
@@ -707,8 +714,13 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 		FCA_pre_listing(FCA_listed_dir);
 	if(NbShares) {
 		if(! FCA_quiet) {
-			if(FCA_VAR_IS_ON(FCA_sort))
-				FCA_sort_chartab(itab, Names, NbShares);
+			if(FCA_VAR_IS_ON(FCA_sort)) {
+					/* by comment */
+				if(FCA_sort_shares_by[0]=='c')
+					FCA_sort_chartab(itab, Comments, NbShares);
+				else	/* by name */
+					FCA_sort_chartab(itab, Names, NbShares);
+			}
 			FCA_tab_width=33;
 			FCA_tab_top();
 			
