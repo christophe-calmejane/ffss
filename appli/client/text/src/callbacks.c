@@ -181,7 +181,7 @@ void FCA_OnIdleTimeout(SU_PClientSocket Client)
 	FCA_sem_post();
 }
 
-FFSS_PTransfer FCA_OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[])
+FFSS_PTransfer FCA_OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag)
 {
 	return FCA_Ptrans;
 }

@@ -28,7 +28,7 @@ void FCA_OnIdleTimeout(SU_PClientSocket Client);
 void FCA_OnTransfertActive(FFSS_PTransfer FT,long int Amount,bool Download);
 void FCA_OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
 void FCA_OnTransfertSuccess(FFSS_PTransfer FT,bool Download);
-FFSS_PTransfer FCA_OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[]);
+FFSS_PTransfer FCA_OnInitXFer(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag);
 FFSS_PTransfer FCA_OnData(SU_PClientSocket Server,FFSS_Field XFerTag);
     /* fatal error */
 void FCA_OnFatalError(void);
