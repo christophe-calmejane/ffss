@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# ffss-master.chk, v1.0 2002/08/02 Nicolas Babut
+#
+# put this line into your crontab (man crontab):
+# 0,10,20,30,40,50 * * * * /usr/local/ffss/ffss-master.chk >/dev/null 2>&1
+# this will check for a running ffss-master every 10 minutes
+#
+
+MASTERBIN=/usr/local/ffss/ffss-master
+FFSSPATH=/var/lib/ffss
+
+
+# you don't need to modify anything below
+
+PIDFILE=master.pid
+INDEXFILE=index.dat
+
+cd $FFSSPATH
+if test -r $PIDFILE; then
+  pid=`cat $PIDFILE`
+  if `kill -CHLD $pid >/dev/null 2>&1`; then
+    echo "ffss-master is already running (pid $pid)..."
+    exit 0
+  fi
+  rm -f $PIDFILE
+fi
+
+if test -x $MASTERBIN; then
+  echo "Restarting ffss-master..."
+  if test -e $INDEXFILE; then  
+    rm -f $INDEXFILE
+  fi
+  $MASTERBIN -l
+else
+  echo "Unable to restart ffss-master : file $MASTERBIN not found."
+  exit 0
+fi
+
+exit 1
+
