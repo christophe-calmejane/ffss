@@ -494,15 +494,15 @@ bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, b
 	char *all;
 	char dom[FFSS_MAX_FILEPATH_LENGTH];
 	
-	if(state==FFSS_STATE_OFF)
+	if(state & FFSS_STATE_OFF)
 		printf("<font color=gray>");
-	else if(state==FFSS_STATE_QUIET)
+	else if(state & FFSS_STATE_QUIET)
 		printf("<font color=brown>");
 	else
 		printf("<font color=black>");
 	
 	if(isName) {
-		if(state!=FFSS_STATE_OFF) {
+		if(!(state & FFSS_STATE_OFF)) {
 			all=strdup(path);
 			snprintf(dom, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s/", domain);
 			if(isSamba)
