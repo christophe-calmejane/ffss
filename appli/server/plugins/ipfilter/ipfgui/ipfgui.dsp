@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /I "../../../../../libffss-1.0.0/src" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_MBCS" /D "_USRDLL" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Zp4 /MT /W3 /GX /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /I "../../../../../libffss-1.0.0/src" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_MBCS" /D "_USRDLL" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
@@ -68,7 +68,7 @@ LINK32=link.exe
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /I "../../../../../libffss-1.0.0/src" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_MBCS" /D "_USRDLL" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /Yu"stdafx.h" /FD /GZ /c
+# ADD CPP /nologo /Zp4 /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /I "../../../../../libffss-1.0.0/src" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_MBCS" /D "_USRDLL" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /Yu"stdafx.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "_DEBUG"

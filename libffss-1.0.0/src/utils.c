@@ -119,6 +119,12 @@ void FFSS_handle_SIGNAL(int signal)
 }
 #endif /* !FFSS_DRIVER */
 
+bool FFSS_CheckSizeofTTransfer(int Size)
+{
+  int InternalSize = sizeof(FFSS_TTransfer);
+  return Size == InternalSize;
+}
+
 /* Unpacks a string from a message, checking if the string really terminates (prevents DoS attacks) */
 /*  Returns the string, or NULL if there is a problem */
 char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int *new_pos)

@@ -692,12 +692,20 @@ unsigned char FFSS_GetFileTags(const char *FileName);  /* <-- Full name of the f
  */
 unsigned char FFSS_GetWordTags(const char *Word);  /* <-- word to check for extension */
 
-
 /*
  * FFSS_GetOS
  *   Returns the tags of a word
  */
 char *FFSS_GetOS(void);
+
+/*
+ * FFSS_CheckSizeofTTransfer
+ *   Checks the size of structure in library and application.
+ *   Should be called in every application using FFSS library to check size of data types
+ *   If it returns false, you should check that struct member alignment is set to 4 (not the default in MSVC)
+ */
+bool FFSS_CheckSizeofTTransfer(int Size);
+
 
 #ifndef FFSS_DRIVER
 /* ************************************************ */

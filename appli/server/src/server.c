@@ -236,7 +236,7 @@ FS_PConn FS_GetConnFromTS(FS_PThreadSpecific ts,SU_PList Conns)
 /* Locks FS_SemGbl */
 void FS_DoRemoveConnectFromShare(FS_PConn Conn,FS_PShare Share,bool RemoveXFers)
 {
-  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE CONN %p FROM SHARE",Conn);
+  SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"REMOVE CONN %p FROM SHARE (%s)",Conn,RemoveXFers?"true":"false");
   context;
   FS_FreeConn(Conn,RemoveXFers);
   Share->Conns = SU_DelElementElem(Share->Conns,Conn);
@@ -259,7 +259,7 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
     /* If xfers are active, we don't really free connection. But if streamings are actives, we DO free it */
     if((Conn->XFers != NULL) && !RemoveXFers)
     {
-      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"NOT REMOVING CONN... SINCE XFERS ARE STILL ACTIVES");
+      SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"NOT REMOVING CONN %p SINCE XFERS ARE STILL ACTIVES (%p - %s)",Conn,Conn->XFers,RemoveXFers?"true":"false");
       Conn->ToRemove = true;
       Conn->ts = NULL;
     }
@@ -2719,7 +2719,7 @@ void handint(int sig)
     memset(&FFSS_CB.SCB,0,sizeof(FFSS_CB.SCB));
     /* Shutting down server */
     FS_ShutDown();
-    SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"exiting\n");
+    SU_DBG_PrintDebug(FS_DBGMSG_GLOBAL,"exiting");
     _exit(0);
   }
   else
@@ -2800,10 +2800,11 @@ int main(int argc,char *argv[])
   printf("FFSS Server v%s (c) Christophe Calmejane 2001'03\n",FFSS_SERVER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
-  SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
+  SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF | SU_DBG_OUTPUT_CONSOLE);
   SU_DBG_SetOptions(true,true);
 #ifdef DEBUG
   SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
+  SU_DBG_OUT_CONSOLE_SetOptions("");
 #endif /* DEBUG */
 
 #ifdef _WIN32
@@ -2881,6 +2882,11 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_ERR,"Cannot start WinSock\n");
   }
 #endif /* __unix__ */
+  if(!FFSS_CheckSizeofTTransfer(sizeof(FFSS_TTransfer)))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Sizeof TTransfer structure is different from FFSS library. Check that struct member alignment is set to 4 in compiler options\n");
+    return -3;
+  }
   if(!SU_CreateSem(&FS_SemGbl,1,1,"FFSSServerSemGbl"))
   {
     FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
