@@ -7,7 +7,6 @@ cd libffss-1.0.0
 libdir=`pwd`
 ./configure --libdir=$libdir/src/.libs
 make
-cp $libdir/skyutils-1.16/libskyutils.a $libdir/src/.libs
 cd ..
 echo
 echo -n "compile ffss client (to browse shares) ? (Y/n) "

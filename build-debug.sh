@@ -8,7 +8,6 @@ libdir=`pwd`
 ./configure --libdir=$libdir/src/.libs --enable-context --enable-debug --enable-malloc_trace
 #./configure --libdir=$libdir/src/.libs --enable-context --enable-debug
 make
-cp $libdir/skyutils-1.16/libskyutils.a $libdir/src/.libs
 cd ..
 echo
 echo -n "compile ffss client (to browse shares) ? (Y/n) "
