@@ -15,9 +15,9 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
   buf = (char *) malloc(len);
   pos = 0;
 
-  /* Flush number of entries */
-  *(FFSS_Field *)(buf+pos) = nb;
+  /* Keep space for number en entries */
   pos += sizeof(FFSS_Field);
+  nb = 0;
 
   /* Flush State Queue */
   Ptr = Queue;
@@ -72,8 +72,12 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
     pos += sizeof(FFSS_Field);
     FFSS_PackIP(buf+pos,((FM_PQueue)Ptr->Data)->Host->IP,FFSS_IP_TYPE);
     pos += FFSS_IP_FIELD_SIZE;
+    nb++;
     Ptr = Ptr->Next;
   }
+
+  /* Flush number of entries */
+  *(FFSS_Field *)(buf+0) = nb;
 
   /* Emptying Queue */
   SU_FreeListElem(Queue);
