@@ -9,7 +9,7 @@
 #define FMP_NAME "FFSS Multi Path Library"
 #define FMP_VERSION "v1.1"
 #define FMP_COPYRIGHT "(c) Christophe Calmejane 2003"
-#define FMP_DEFAULT_BLOC_SIZE 4*1024*1024
+#define FMP_DEFAULT_BLOC_SIZE 50*1024*1024
 #define FMP_BUFFER_SIZE 256*1024
 
 #define FMP_DELAY_RETRY_SEM  30
