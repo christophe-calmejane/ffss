@@ -20,6 +20,11 @@
 #include "cgi_args.h"
 #include "skin.h"
 
+	/* just for threads */
+#include <unistd.h>
+#include <signal.h>
+#include <readline/readline.h>
+
 	/* mkdir */
 #ifndef _WIN32
 #	include <sys/stat.h>
@@ -353,7 +358,7 @@ void FCA_sem_wait()
 			FCA_sem_locked=true;
 			FFSS_PrintDebug(1, "(client) launching timer\n");
 			FCA_wait_threading=true;
-			if( SU_CreateThread(&FCA_wait_thread, FCA_sem_timer, NULL, true) )
+			if( ! SU_CreateThread(&FCA_wait_thread, FCA_sem_timer, NULL, true) )
 				FFSS_PrintDebug(1,"(client) cannot create wait timer thread!\n");
 			else
 				FFSS_PrintDebug(1, "(client) timer thread created and detached\n");
@@ -418,7 +423,7 @@ void FCA_sem_post()
 		if(FCA_wait_threading) {
 
 			FFSS_PrintDebug(1, "(client) killing timer\n");
-//			pthread_kill(FCA_wait_thread, SIGUSR1);
+			pthread_kill(FCA_wait_thread, SIGUSR1);
 
 			FCA_wait_threading=false;
 		}
@@ -997,10 +1002,11 @@ char *FCA_strtolower(char *str)
 unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 {
 		/* sort search results */
-	bool modified=false;
+	bool modified=true;
 	unsigned int ir, sav;
 	unsigned int *res;
 	
+	FFSS_PrintDebug(1, "(client) sorting answers...\n");
 		/* prepare the index table */
 	res=malloc(NbAnswers*sizeof(int));
 	if(!res)
@@ -1034,6 +1040,7 @@ unsigned int *FCA_sort_res(const char **Answers,int NbAnswers)
 			}
 		}
 	}
+	FFSS_PrintDebug(1, "(client) answers sorted\n");
 	return res;
 }
 

@@ -41,7 +41,7 @@ char FCA_env[][FCA_VAR_MAX]={
 	"off",
 	"default",
 	"5",
-	"5",
+	"20",
 	"10",
 	FCA_SKIN_ENV_VALUES
 };
@@ -78,9 +78,9 @@ void FCA_init()
 	FCA_args.cfg_file=FCA_CONFIG_FILES[0];
 	SU_strcpy(FCA_pwd, "/$", sizeof(FCA_pwd));
 	    	/* to use same functions, pwd is like //... */
-/*
+
 	FCA_ignore_usr1();
-*/
+
 	FCA_err_stream=stderr;
 	FCA_exiting=false;
 	FCA_conSh[0]='\0';

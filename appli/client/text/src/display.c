@@ -457,9 +457,11 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	char tmp[128], tmp2[128];
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
 	const char *p;
+	int *res;
 
 	FCA_pre_search_ans(Query);
 	if(NbAnswers) {
+		res=FCA_sort_res(Answers, NbAnswers);
 		FCA_tab_width=38;
 		FCA_tab_top();
 		
@@ -486,15 +488,15 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	for(ia=0; ia<NbAnswers; ia++) {
 		FCA_tab_pre_item();
 		 FCA_pre_tab_item();
-		p=strrchr(Answers[ia], '/');
-		if(!p)	p=Answers[ia];
+		p=strrchr(Answers[res[ia]], '/');
+		if(!p)	p=Answers[res[ia]];
 		if(!strchr(p, '.')) {
-			  FCA_pre_dir(dom, Answers[ia], true);
-			   FCA_tab_item(Answers[ia],0);
+			  FCA_pre_dir(dom, Answers[res[ia]], true);
+			   FCA_tab_item(Answers[res[ia]],0);
 			  FCA_post_dir(true);
 		} else {
-			  FCA_pre_file(dom, Answers[ia], true);
-			   FCA_tab_item(Answers[ia],0);
+			  FCA_pre_file(dom, Answers[res[ia]], true);
+			   FCA_tab_item(Answers[res[ia]],0);
 			  FCA_post_file(true);
 		}
 		 FCA_post_tab_item();
@@ -800,7 +802,7 @@ void FCA_print_err(char *msg, ...)
 {
 	va_list argptr;
 
-	if(FCA_quiet)	return;
+		/* even if there's FCA_quiet to true, we must display this message */
 	FCA_pre_err();
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);

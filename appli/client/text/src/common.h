@@ -27,11 +27,10 @@
 #endif
 
 #include <readline/readline.h>
-	/* for different readline versions
+	/* for different readline versions */
 #ifndef rl_completion_matches
 #	define rl_completion_matches	completion_matches
 #endif
-*/
 
 	/* environment variables */
 #define FCA_can_ansi		FCA_env[0]
