@@ -1,4 +1,7 @@
 #!/bin/sh
+cd skyutils
+make distclean
+cd ..
 cd libffss-1.0.0
 make distclean
 cd ../appli/client/example

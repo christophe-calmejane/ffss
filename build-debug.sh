@@ -1,9 +1,16 @@
 #!/bin/sh
 
+archdir=`pwd`
+echo
+echo '############# BUILDING SKYUTILS LIBRARY ###############'
+echo
+cd skyutils
+./configure --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal
+make
+cd ..
 echo
 echo '############# BUILDING FFSS LIBRARY ###############'
 echo
-archdir=`pwd`
 cd libffss-1.0.0
 libdir=`pwd`
 ./configure --libdir=$libdir/src/.libs --enable-context --enable-debug --enable-malloc_trace --with-skyutils=$archdir/skyutils

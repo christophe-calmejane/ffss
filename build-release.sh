@@ -1,9 +1,16 @@
 #!/bin/sh
 
+archdir=`pwd`
+echo
+echo '############# BUILDING SKYUTILS LIBRARY ###############'
+echo
+cd skyutils
+./configure --libdir=$archdir/skyutils/src/.libs --enable-reentrant
+make
+cd ..
 echo
 echo '############# BUILDING FFSS LIBRARY ###############'
 echo
-archdir=`pwd`
 cd libffss-1.0.0
 libdir=`pwd`
 ./configure --libdir=$libdir/src/.libs --with-skyutils=$archdir/skyutils
@@ -40,6 +47,8 @@ then
 	cd appli/server
 	./configure --with-ffss=$libdir
 	make
+        strip src/ffss-server
+        strip src/ffsswho
         cd ../..
 fi
 echo
@@ -53,6 +62,7 @@ then
 	cd appli/master
 	./configure --with-ffss=$libdir
 	make
+        strip src/ffss-master
         cd ../..
 fi
 echo
