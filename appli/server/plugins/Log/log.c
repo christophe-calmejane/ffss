@@ -9,7 +9,7 @@
 */
 
 #define LOG_NAME      "Log Plugin"
-#define LOG_VERSION   "0.1"
+#define LOG_VERSION   "0.2"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define LOG_DESCRIPTION "Logs all successful connections and download requests."
 #define LOG_FILE_PREFIX "FS_Log"
@@ -41,6 +41,7 @@ void * (*PluginQueryFunc)(int Type,...);
 
 FILE *L_fp = NULL;
 int L_day = 0;
+SU_THREAD_HANDLE L_Thr;
 #ifdef _WIN32
 HWND L_hwnd;
 HINSTANCE L_hInstance;
@@ -209,7 +210,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   return FALSE;
 }
 
-void ThreadFunc(void *info)
+SU_THREAD_ROUTINE(ThreadFunc,info)
 {
   MSG msg;
   HWND dlg;
@@ -235,10 +236,8 @@ void ThreadFunc(void *info)
 /* This is the function called when plugin is requested to configure itself */
 FS_PLUGIN_EXPORT bool Plugin_Configure(void)
 {
-  DWORD tmp;
   /* Create a thread to manage messages */
-
-  if(CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)ThreadFunc,NULL,0,&tmp) == NULL)
+  if(!SU_CreateThread(&L_Thr,ThreadFunc,NULL,true))
     return false;
   return true;
 }
@@ -260,6 +259,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   memset(Pl,0,sizeof(FS_TPlugin));
 
   /* Setting plugin infos */
+  Pl->size = sizeof(FS_TPlugin);
   Pl->Name = LOG_NAME;
   Pl->Copyright = LOG_COPYRIGHT;
   Pl->Version = LOG_VERSION;
@@ -286,7 +286,8 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 /* This is the UnInit fonction (Name it CAREFULLY) called on each UnLoadPlugin call */
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
-  //SendMessage(L_hwnd,WM_DESTROY,0,0);
+  SendMessage(L_hwnd,WM_DESTROY,0,0);
+  SU_KillThread(L_Thr);
   SU_CloseLogFile(L_fp);
   if(L_Gbl.Path != NULL)
     free(L_Gbl.Path);

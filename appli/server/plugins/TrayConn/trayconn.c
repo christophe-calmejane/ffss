@@ -10,7 +10,7 @@
 */
 
 #define TRAYCONN_NAME      "Tray Conn Plugin"
-#define TRAYCONN_VERSION   "0.4"
+#define TRAYCONN_VERSION   "0.5"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define TRAYCONN_DESCRIPTION "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, set the server into quiet mode, and shutdown it."
 
@@ -27,6 +27,7 @@
 /* We have to declare a FS_PPlugin structure for our callbacks */
 FS_PPlugin Pl;
 FSP_TInfos TC_Infos;
+SU_THREAD_HANDLE TC_Thr;
 
 void * (*PluginQueryFunc)(int Type,...);
 
@@ -128,9 +129,9 @@ char *DrawBitmap(void)
   SU_PList Index,Ptr,Ptr2; /* FS_PShare */
   FS_PShare Shr;
   FS_PConn Conn;
-  int nb_shares = 0;
-  int max_xfers = 0,nb_xfers = 0;
-  int max_conns = 0,nb_conns = 0;
+  unsigned int nb_shares = 0;
+  unsigned int max_xfers = 0,nb_xfers = 0;
+  unsigned int max_conns = 0,nb_conns = 0;
 
   Index = (SU_PList) PluginQueryFunc(FSPQ_ACQUIRE_INDEX);
   Ptr = Index;
@@ -279,7 +280,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-void ThreadFunc(void *info)
+SU_THREAD_ROUTINE(ThreadFunc,info)
 {
   char *classname = "TrayConn.Plugin.hWnd";
   WNDCLASS wc;
@@ -358,8 +359,6 @@ void ThreadFunc(void *info)
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
 FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
 {
-  DWORD tmp;
-
   /* Get pointer to plugin query function */
   PluginQueryFunc = QueryFunc;
 
@@ -370,15 +369,13 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   memset(Pl,0,sizeof(FS_TPlugin));
 
   /* Setting plugin infos */
+  Pl->size = sizeof(FS_TPlugin);
   Pl->Name = TRAYCONN_NAME;
   Pl->Copyright = TRAYCONN_COPYRIGHT;
   Pl->Version = TRAYCONN_VERSION;
 
-  /* Setting our callbacks */
-  //Pl->OnCheckConfConn = OnCheckConfConn;
-
   /* Create a thread to manage messages */
-  if(CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)ThreadFunc,Info,0,&tmp) == NULL)
+  if(!SU_CreateThread(&TC_Thr,ThreadFunc,Info,true))
     return NULL;
   /* And finaly returning the FS_PPlugin structure to the server.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
@@ -391,6 +388,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
   SendMessage(TC_hwnd,WM_DESTROY,0,0);
+  SU_KillThread(TC_Thr);
 }
 
 FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
