@@ -3,10 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 28th 2002
+                  Last Update : May, 30th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+May, 30th 2002:
+  - Changed SearchAnswer prototype and protocol : Added a IP field in each answer string
 
 May, 28th 2002:
   - Cleaned message.c, and prepared for security (crypted) connections

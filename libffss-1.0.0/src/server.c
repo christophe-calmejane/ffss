@@ -22,11 +22,13 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   switch(Type)
   {
     case FFSS_MESSAGE_PING :
+      context;
       FFSS_PrintDebug(3,"Received a ping message\n");
       if(FFSS_CB.SCB.OnPing != NULL)
         FFSS_CB.SCB.OnPing(Client);
       break;
     case FFSS_MESSAGE_STATE_ANSWER :
+      context;
       FFSS_PrintDebug(3,"Received a state answer from master\n");
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -38,16 +40,19 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.SCB.OnStateAnswer(str);
       break;
     case FFSS_MESSAGE_SERVER_SEARCH :
+      context;
       FFSS_PrintDebug(3,"Received a server search from client\n");
       if(FFSS_CB.SCB.OnServerSearch != NULL)
         FFSS_CB.SCB.OnServerSearch(Client);
       break;
     case FFSS_MESSAGE_SHARES_LISTING :
+      context;
       FFSS_PrintDebug(3,"Received a shares listing request from client\n");
       if(FFSS_CB.SCB.OnSharesListing != NULL)
         FFSS_CB.SCB.OnSharesListing(Client);
       break;
     case FFSS_MESSAGE_INDEX_REQUEST :
+      context;
       FFSS_PrintDebug(3,"Received a index request\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
@@ -59,6 +64,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.SCB.OnIndexRequest(Client,val);
       break;
     case FFSS_MESSAGE_ERROR :
+      context;
       FFSS_PrintDebug(3,"Received an error message\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -71,6 +77,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.SCB.OnError(val,str);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -135,6 +142,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
     switch(Type)
     {
       case FFSS_MESSAGE_DIRECTORY_LISTING :
+        context;
         FFSS_PrintDebug(3,"Received a directory listing message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -147,6 +155,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnDirectoryListing(Client,str);
         break;
       case FFSS_MESSAGE_REC_DIR_LISTING :
+        context;
         FFSS_PrintDebug(3,"Received a recursive directory listing message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -159,6 +168,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnRecursiveDirectoryListing(Client,str);
         break;
       case FFSS_MESSAGE_DOWNLOAD :
+        context;
         FFSS_PrintDebug(3,"Received a download message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -173,6 +183,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnDownload(Client,str,lval,val2);
         break;
       case FFSS_MESSAGE_UPLOAD :
+        context;
         FFSS_PrintDebug(3,"Received an upload message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -187,6 +198,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnUpload(Client,str,lval,val2);
         break;
       case FFSS_MESSAGE_MOVE :
+        context;
         FFSS_PrintDebug(3,"Received a move message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -200,6 +212,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnRename(Client,str,str2);
         break;
       case FFSS_MESSAGE_COPY :
+        context;
         FFSS_PrintDebug(3,"Received a copy message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -213,6 +226,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnCopy(Client,str,str2);
         break;
       case FFSS_MESSAGE_DELETE :
+        context;
         FFSS_PrintDebug(3,"Received a delete message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -225,6 +239,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnDelete(Client,str);
         break;
       case FFSS_MESSAGE_MKDIR :
+        context;
         FFSS_PrintDebug(3,"Received a mkdir message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
@@ -237,18 +252,21 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           ret_val = FFSS_CB.SCB.OnMkDir(Client,str);
         break;
       case FFSS_MESSAGE_DISCONNECT :
+        context;
         FFSS_PrintDebug(3,"Received a disconnect message from client\n");
         ret_val = false;
         if(FFSS_CB.SCB.OnDisconnect != NULL)
           ret_val = FFSS_CB.SCB.OnDisconnect(Client);
         break;
       case FFSS_MESSAGE_CANCEL_XFER :
+        context;
         FFSS_PrintDebug(3,"Received a cancel xfer message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if(FFSS_CB.SCB.OnCancelXFer != NULL)
           FFSS_CB.SCB.OnCancelXFer(Client,val);
         break;
       case FFSS_MESSAGE_STREAMING_OPEN :
+        context;
         FFSS_PrintDebug(3,"Received a streaming OPEN message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -262,6 +280,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmOpen(Client,val,str);
         break;
       case FFSS_MESSAGE_STREAMING_CLOSE :
+        context;
         FFSS_PrintDebug(3,"Received a streaming CLOSE message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if(val == 0)
@@ -274,6 +293,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmClose(Client,val);
         break;
       case FFSS_MESSAGE_STREAMING_READ :
+        context;
         FFSS_PrintDebug(3,"Received a streaming READ message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -288,6 +308,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmRead(Client,val,lval,val3);
         break;
       case FFSS_MESSAGE_STREAMING_WRITE :
+        context;
         FFSS_PrintDebug(3,"Received a streaming WRITE message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
@@ -302,6 +323,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmWrite(Client,val,lval,Buf+pos,Length);
         break;
       case FFSS_MESSAGE_STREAMING_SEEK :
+        context;
         FFSS_PrintDebug(3,"Received a streaming SEEK message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);

@@ -468,7 +468,8 @@ typedef struct
   void (*OnEndServerListingAnswer)(void);
   void (*OnDomainListingAnswer)(const char **Domains,int NbDomains); /* First domain is assumed to be domain from the answering master */
   void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
-  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,int NbAnswers);
+  /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
+  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
   void (*OnUDPError)(int ErrNum);
   void (*OnMasterError)(int Code,const char Descr[]);
 

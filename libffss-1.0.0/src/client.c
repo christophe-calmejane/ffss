@@ -13,7 +13,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   int Type;
   char *str,*str2,*str3,*str4;
   char **Names,**Comments;
-  char **answers;
+  char **answers,**ips;
   long int pos;
   FFSS_Field val,val2,val3;
   FFSS_Field i,j,state,type_ip,type_ip2;
@@ -32,6 +32,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   switch(Type)
   {
     case FFSS_MESSAGE_NEW_STATES :
+      context;
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -95,6 +96,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       }
       break;
     case FFSS_MESSAGE_SHARES_LISTING_ANSWER :
+      context;
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
       if((type_ip == 0) || (IP[0] == 0))
@@ -133,6 +135,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       free(Comments);
       break;
     case FFSS_MESSAGE_SERVER_LISTING_ANSWER :
+      context;
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -225,6 +228,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.CCB.OnEndServerListingAnswer();
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
@@ -251,6 +255,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       free (Names);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -262,6 +267,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.CCB.OnMasterSearchAnswer(Client,val,str);
       break;
     case FFSS_MESSAGE_SEARCH_ANSWER :
+      context;
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -313,7 +319,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,0);
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0);
         break;
       }
       FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
@@ -330,27 +336,36 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         {
           FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,0);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0);
           continue;
         }
         answers = (char **) malloc(val2*sizeof(char *));
+        ips = (char **) malloc(val2*sizeof(char *));
         for(j=0;j<val2;j++)
         {
+          type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
           str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-          if(str3 == NULL)
+          if((str3 == NULL) || (type_ip == 0) || (IP[0] == 0))
           {
-            free (answers);
             FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+            error = true;
             break;
           }
+          ips[j] = strdup(IP);
           answers[j] = str3;
         }
-        if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,val2);
-        free (answers);
+        if(!error)
+        {
+          if(FFSS_CB.CCB.OnSearchAnswer != NULL)
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2);
+        }
+        free(ips);
+        free(answers);
       }
       break;
     case FFSS_MESSAGE_ERROR :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -394,6 +409,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   switch (Type)
   {
     case FFSS_MESSAGE_ERROR :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
@@ -407,6 +423,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = FFSS_CB.CCB.OnError(Server,val,str);
       break;
     case FFSS_MESSAGE_DIRECTORY_LISTING_ANSWER :
+      context;
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -483,6 +500,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       SU_FreeListElem(Ptr);
       break;
     case FFSS_MESSAGE_REC_DIR_LISTING_ANSWER :
+      context;
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -559,6 +577,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       SU_FreeListElem(Ptr);
       break;
     case FFSS_MESSAGE_INIT_XFER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -576,6 +595,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       break;
     case FFSS_MESSAGE_DATA :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       Length = Len-FFSS_MESSAGESIZE_DATA*sizeof(FFSS_Field);
       if(Length < 0)
@@ -593,6 +613,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       break;
     case FFSS_MESSAGE_STREAMING_OPEN_ANSWER :
+      context;
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -608,6 +629,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval);
       break;
     case FFSS_MESSAGE_STREAMING_READ_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       Length = Len-FFSS_MESSAGESIZE_STREAMING_READ_ANSWER*sizeof(FFSS_Field);
       if((val == 0) || (Length < 0))
@@ -621,6 +643,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         FFSS_CB.CCB.OnStrmReadAnswer(Server,val,Buf+pos,Length);
       break;
     case FFSS_MESSAGE_STREAMING_WRITE_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (val2 == 0))

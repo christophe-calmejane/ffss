@@ -412,7 +412,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   int Compression = FM_CurrentCompression,res,i;
   bool Samba = FM_CurrentSamba;
   FFSS_Field NbShares,Size,actual,length;
-  char *buf,*data;
+  char *buf,*data,*tmp_ip;
   bool error,free_it;
   FM_PFTControler Host;
   int NumHost;
@@ -423,15 +423,16 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
 #ifdef DEBUG
   printf("Starting index thread\n");
 #endif /* DEBUG */
+  tmp_ip = inet_ntoa(SAddr.sin_addr);
   memcpy(&SAddr,&FM_CurrentClient,sizeof(FM_CurrentClient));
   FM_CurrentIndexSize = 0;
   if(!Samba)
   {
-    Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(SAddr.sin_addr));
+    Hst = FM_SearchHostByIP(&FM_MyDomain,tmp_ip);
     if(Hst == NULL)
     {
 #ifdef DEBUG
-      printf("%s is not on my domain... rejecting index\n",inet_ntoa(SAddr.sin_addr));
+      printf("%s is not on my domain... rejecting index\n",tmp_ip);
 #endif /* DEBUG */
       SU_CLOSE_SOCKET(sock);
       SU_END_THREAD(NULL);
@@ -460,6 +461,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   }
   Host = (FM_PFTControler) malloc(sizeof(FM_TFTControler));
   memset(Host,0,sizeof(FM_TFTControler));
+  Host->IP = strdup(tmp_ip);
   if(!Samba)
   {
     Host->Name = strdup(Hst->Name);
@@ -549,7 +551,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         data = FFSS_UncompresseZlib(buf,Size,&length);
         if(data == NULL)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n",tmp_ip);
           error = true;
           break;
         }
@@ -559,14 +561,14 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         data = FFSS_UncompresseBZlib(buf,Size,&length);
         if(data == NULL)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n",tmp_ip);
           error = true;
           break;
         }
         free_it = true;
         break;
       default :
-        FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %d\n",Compression,inet_ntoa(SAddr.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %d\n",Compression,tmp_ip);
         error = true;
     }
     if(error)

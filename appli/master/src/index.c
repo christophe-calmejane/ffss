@@ -422,6 +422,8 @@ void FMI_FreeFTControler(FM_PFTControler Host)  /* <-- FTControler structure to 
     free(Host->FileTree);
   if(Host->NbNodes != 0)
     free(Host->FTNodes);
+  if(Host->IP != NULL)
+    free(Host->IP);
   free(Host->Name);
   free(Host);
 }

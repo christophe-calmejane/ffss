@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 20th 2002
+                  Last Update : May, 30th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+May, 30th 2002:
+  - Changed SearchAnswer protocol : Added IP of the server in each answer
 
 May, 20th 2002:
   - Fixed a bug in Index dumping function, which causes a corrupted dump

@@ -38,6 +38,7 @@ typedef struct /* 16 bytes */
 typedef struct /* 24 bytes */
 {
   char *Name;                  /* The name of the server              */
+  char *IP;                    /* IP of the server                    */
   char *FileTree;              /* Huge string with all names of nodes */
   long int FileTreeLength;     /* Length of the huge string           */
   FM_TFTNode *FTNodes;         /* Table of Nodes                      */
