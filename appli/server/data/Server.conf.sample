@@ -55,12 +55,14 @@
 # If you want to load plugins at startup time, define Plugin lines (one plugin per line)
 #Plugin "/usr/local/share/ffss/plugins/confconn.so"
 
-# Firewalling rules : Filter <type> <ip> <mask> <action> [<name>]
+# Firewalling rules :
+#      Filter <Type> <ip> <mask> <Action> [<name>]
+#    | Filter default <Type> <Action>
 #  Type = udp | tcp | tcp_ftp
 #  Action = accept | reject
-# ATTENTION : Rules are taken in the defined order. Thus, don't forget to define a default rule AT THE END ("0.0.0.0"/"255.255.255.255")
+# ATTENTION : Rules are taken in the defined order. Don't forget to define a default rule, or "accept" will be used if nothing matched
 #Filter tcp "172.17.64.0" "255.255.255.254" reject "Ban .0 and .1 IPs"
-#Filter tcp "0.0.0.0" "255.255.255.255" accept
+#Filter default tcp accept
 
 <End>
 
