@@ -730,8 +730,6 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     }
     else if(res == 0)
     {
-      if(FFSS_CB.CCB.OnError != NULL)
-        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR],0);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);
