@@ -789,10 +789,10 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
 bool FS_SendIndex(const char Host[],const char Port[])
 {
   char *buf;
-  SU_PList Ptr,Bufs,Sizes;
+  SU_PList Ptr,Bufs,Sizes,Plugs;
   long int pos,size,len,total,total_node;
   FS_PShare Share;
-  bool res;
+  bool res,do_it,checked;
   int comp;
   FM_TFTNode *TabNodes;
   long int NodePos;
@@ -810,7 +810,21 @@ bool FS_SendIndex(const char Host[],const char Port[])
   while(Ptr != NULL)
   {
     Share = (FS_PShare) Ptr->Data;
-    if(!Share->Private)
+    do_it = true;
+    checked = false;
+    SU_SEM_WAIT(FS_SemPlugin);
+    Plugs = FS_Plugins;
+    while(Plugs != NULL)
+    {
+      if(((FS_PPlugin)Plugs->Data)->OnCheckShowShare != NULL)
+      {
+        do_it &= ((FS_PPlugin)Plugs->Data)->OnCheckShowShare(Share);
+        checked = true;
+      }
+      Plugs = Plugs->Next;
+    }
+    SU_SEM_POST(FS_SemPlugin);
+    if((!Share->Private && !checked) || (checked && do_it))
     {
       NodeSize = sizeof(FM_TFTNode)*(Share->NbFiles+Share->NbDirs+1);
       TabNodes = (FM_TFTNode *) malloc(NodeSize);

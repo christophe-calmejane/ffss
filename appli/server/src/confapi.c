@@ -359,7 +359,7 @@ bool FSCA_RequestEject(SU_PClientSocket Client,const char ShareName[])
 }
 
 /* Set Infos */
-bool FSCA_SetGlobalInfo(SU_PClientSocket Client,FSCA_PGlobal Gbl)
+bool FSCA_SetGlobalInfo(SU_PClientSocket Client,const FSCA_PGlobal Gbl)
 {
   char Buf[10000];
   FFSS_Field Size;
@@ -416,7 +416,7 @@ bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[])
   return FSCA_Request(Client,Buf,&Size);
 }
 
-bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share,char Opcode)
+bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share,char Opcode)
 {
   char Buf[1000];
   FFSS_Field Size;
@@ -459,12 +459,12 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShar
   return true;
 }
 
-bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share)
+bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share)
 {
   return FSCA_AddUpdtShare(Client,SharePath,Share,FS_OPCODE_ADDSHARE);
 }
 
-bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share)
+bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share)
 {
   return FSCA_AddUpdtShare(Client,SharePath,Share,FS_OPCODE_UPDTSHARE);
 }

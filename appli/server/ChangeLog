@@ -3,9 +3,16 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 2th 2002
+                  Last Update : August, 9th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+August, 9th 2002:
+  - Added a new plugin callback, to check if a share is to be indexed or not
+  - Fixed a dead lock if a wrong value is sent in rescan share in conf socket
+
+August, 6th 2002:
+  - Added error codes in streaming functions
 
 August, 2nd 2002:
   - Fixed a segfault (and possible DoS) in download/strmOpen functions

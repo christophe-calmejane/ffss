@@ -112,8 +112,17 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         pos = 1;
         s_n = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         if(s_n == NULL)
-        {
+        { /* Attack */
           error = true;
+          break;
+        }
+        if(s_n[0] == 0)
+        { /* Empty name */
+          FFSS_PrintDebug(6,"Client from runtime configuration : Empty name... rejecting\n");
+          Size = 1;
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          buf[0] = FS_OPCODE_NACK;
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         SU_SEM_WAIT(FS_SemShr);
@@ -135,7 +144,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_m = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         if((s_p == NULL) || (s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
-        {
+        { /* Attack */
           error = true;
           break;
         }
@@ -518,7 +527,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_SEM_WAIT(FS_SemShr);
         Share = FS_GetShareFromName(s_n);
         if(Share == NULL)
+        {
+          error = true;
+          SU_SEM_POST(FS_SemShr);
           break;
+        }
         FS_EjectFromShare(Share,true);
         FS_RescanShare(Share);
         SU_SEM_POST(FS_SemShr);

@@ -83,13 +83,13 @@ SU_PList FSCA_RequestSharesList(SU_PClientSocket Client); /* FSCA_PShareLst */
 bool FSCA_RequestEject(SU_PClientSocket Client,const char ShareName[]);
 
 /* *************** Set Infos *************** */
-bool FSCA_SetGlobalInfo(SU_PClientSocket Client,FSCA_PGlobal Gbl);
+bool FSCA_SetGlobalInfo(SU_PClientSocket Client,const FSCA_PGlobal Gbl);
 bool FSCA_SetStateInfo(SU_PClientSocket Client,int State);
 bool FSCA_SetShareState(SU_PClientSocket Client,const char ShareName[],bool Active);
 bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[]);
-bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
+bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share);
 bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[]);
-bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
+bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share);
 
 /* ***************  Plugins  *************** */
 void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup);

@@ -187,7 +187,8 @@ typedef struct /* Allocated by Plugin / Freed by Server */
   bool Startup;    /* If plugin is loaded at server startup */
   SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;
-  bool (*OnCheckConfConn)(SU_PClientSocket Client);
+  bool (*OnCheckConfConn)(SU_PClientSocket Client); /* Returns false if Client is to be rejected. Defaults to true */
+  bool (*OnCheckShowShare)(FS_PShare Share); /* Returns false if Share is to be hidden. Defaults to true */
 } FS_TPlugin, *FS_PPlugin;
 
 #ifdef __cplusplus

@@ -104,6 +104,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
   if(Pl->size != sizeof(FS_TPlugin))
   {
     FFSS_PrintSyslog(LOG_ERR,"Plugin_Init function returned a wrong sized FS_PPlugin... rebuild plugin %s\n",Name);
+    SU_DL_CLOSE(handle);
     return NULL;
   }
   Pl->Handle = handle;

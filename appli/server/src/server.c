@@ -555,9 +555,10 @@ void OnServerSearch(struct sockaddr_in Client)
 
 void OnSharesListing(struct sockaddr_in Client,FFSS_LongField User)
 {
-  int nb,i;
+  int nb,i,count;
   char **Names,**Comments;
-  SU_PList Ptr;
+  SU_PList Ptr,Plugs;
+  bool checked,do_it;
 
   if(FS_MyState == FFSS_STATE_OFF)
     return;
@@ -574,15 +575,34 @@ void OnSharesListing(struct sockaddr_in Client,FFSS_LongField User)
   {
     Names = (char **) malloc(nb*sizeof(char *));
     Comments = (char **) malloc(nb*sizeof(char *));
+    count = 0;
     Ptr = FS_Index;
     for(i=0;i<nb;i++)
     {
-      Names[i] = ((FS_PShare)Ptr->Data)->ShareName;
-      Comments[i] = ((FS_PShare)Ptr->Data)->Comment;
+      do_it = true;
+      checked = false;
+      SU_SEM_WAIT(FS_SemPlugin);
+      Plugs = FS_Plugins;
+      while(Plugs != NULL)
+      {
+        if(((FS_PPlugin)Plugs->Data)->OnCheckShowShare != NULL)
+        {
+          do_it &= ((FS_PPlugin)Plugs->Data)->OnCheckShowShare((FS_PShare)Ptr->Data);
+          checked = true;
+        }
+        Plugs = Plugs->Next;
+      }
+      SU_SEM_POST(FS_SemPlugin);
+      if(!checked || (checked && do_it))
+      {
+        Names[count] = ((FS_PShare)Ptr->Data)->ShareName;
+        Comments[count] = ((FS_PShare)Ptr->Data)->Comment;
+        count++;
+      }
       Ptr = Ptr->Next;
     }
     SU_SEM_WAIT(FS_SemGbl);
-    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,(const char **)Names,(const char **)Comments,nb,User))
+    if(!FS_SendMessage_ServerSharesAnswer(Client,FS_MyGlobal.MyIP,(const char **)Names,(const char **)Comments,count,User))
       FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
     SU_SEM_POST(FS_SemGbl);
     free(Names);
@@ -1538,6 +1558,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
       SU_SEM_POST(FS_SemShr);
       printf("OnStrmRead : Bad handle or already closed : %ld\n",Handle);
       /* Error message */
+      FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0,FFSS_ERROR_BAD_HANDLE,User);
       return;
     }
     if(FS->Position != StartPos)
@@ -1548,6 +1569,8 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
     len = Length;
     if(len > sizeof(Buffer))
       len = sizeof(Buffer);
+    if(len < (sizeof(Buffer)/2))
+      len = sizeof(Buffer)/2;
 #ifdef DEBUG
     printf("Reading %ld bytes from file starting at %ld\n",len,StartPos);
 #endif /* DEBUG */
@@ -1559,18 +1582,19 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
 #ifdef DEBUG
         printf("OnStrmRead  : EOF\n");
 #endif /* DEBUG */
-        FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0,User);
+        FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0,FFSS_ERROR_END_OF_FILE,User);
       }
       else
       {
         printf("OnStrmRead : Error reading %ld bytes in file of handle %ld (%d:%s)\n",len,Handle,errno,strerror(errno));
         /* Error message */
+        FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,0,FFSS_ERROR_IO_ERROR,User);
       }
       SU_SEM_POST(FS_SemShr);
       return;
     }
     FS->Position += res;
-    FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,res,User);
+    FS_SendMessage_StrmReadAnswer(Client->sock,FS->Handle,Buffer,res,(feof(FS->fp)==0)?FFSS_ERROR_NO_ERROR:FFSS_ERROR_END_OF_FILE,User);
     SU_SEM_POST(FS_SemShr);
 
     SU_SEM_WAIT(FS_SemPlugin);
@@ -1611,10 +1635,14 @@ void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartP
     if(FS == NULL)
     {
       SU_SEM_POST(FS_SemShr);
+      printf("OnStrmWrite : Bad handle or already closed : %ld\n",Handle);
       /* Error message */
+      FS_SendMessage_StrmWriteAnswer(Client->sock,FS->Handle,FFSS_ERROR_BAD_HANDLE,User);
       return;
     }
     SU_SEM_POST(FS_SemShr);
+
+    FS_SendMessage_StrmWriteAnswer(Client->sock,FS->Handle,FFSS_ERROR_NOT_IMPLEMENTED,User);
 
     SU_SEM_WAIT(FS_SemPlugin);
     Ptr = FS_Plugins;
@@ -1868,7 +1896,10 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   FS_PThreadSpecific ts;
   char msg[10000];
   char tspath[FFSS_MAX_PATH_LENGTH];
-  char *p,*tmp;
+  char *p;
+#ifndef _WIN32
+  char *tmp;
+#endif /* !_WIN32 */
   char Tim[100];
   SU_PList Ptr;
   FS_PShare Share;
@@ -1976,7 +2007,10 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
 FS_PNode FS_GetNodeFromPath(FS_PShare Share,const char Path[]) /* Path in the share */
 {
   char tspath[FFSS_MAX_PATH_LENGTH];
-  char *p,*tmp;
+  char *p;
+#ifndef _WIN32
+  char *tmp;
+#endif /* !_WIN32 */
   FS_PNode Node;
   SU_PList Ptr;
 
@@ -2006,7 +2040,10 @@ FS_PNode FS_GetNodeFromPath(FS_PShare Share,const char Path[]) /* Path in the sh
 FS_PFile FS_GetFileFromPath(FS_PShare Share,const char Path[]) /* Path in the share */
 {
   char tspath[FFSS_MAX_PATH_LENGTH];
-  char *p,*q,*tmp;
+  char *p,*q;
+#ifndef _WIN32
+  char *tmp;
+#endif /* !_WIN32 */
   FS_PNode Node;
   SU_PList Ptr;
 
@@ -2050,7 +2087,10 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
   char msg[10000];
   char tspath[FFSS_MAX_PATH_LENGTH];
   char New[FFSS_MAX_PATH_LENGTH];
-  char *p,*q,*tmp;
+  char *p,*q;
+#ifndef _WIN32
+  char *tmp;
+#endif /* !_WIN32 */
   SU_PList Ptr;
   FS_PShare Share;
   FS_PNode Node;
@@ -2295,7 +2335,10 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
   FILE *fp;
   SU_THREAD_HANDLE Thread;
   FS_PThreadSpecific ts;
-  char *p,*q,*tmp;
+  char *p,*q;
+#ifndef _WIN32
+  char *tmp;
+#endif /* !_WIN32 */
   FS_PShare Share;
   FS_PFile File;
   char tspath[FFSS_MAX_PATH_LENGTH];
@@ -2664,6 +2707,8 @@ char *FS_CheckGlobal(void)
     if(ip == NULL)
     {
       FFSS_PrintSyslog(LOG_ERR,"Cannot find master's ip : %s\n",FS_MyGlobal.Master);
+      FS_UnLoadAllPlugin();
+      FS_ShuttingDown();
       exit(-2);
     }
     FS_MyGlobal.MasterIP = strdup(SU_AdrsOfPort(FS_MyGlobal.Master));
@@ -2789,7 +2834,9 @@ int main(int argc,char *argv[])
 #endif /* _WIN32 */
 {
   char *Error;
+#ifdef __unix__
   int i;
+#endif /* __unix__ */
   char ConfigFile[1024];
   bool daemonize = false;
 
