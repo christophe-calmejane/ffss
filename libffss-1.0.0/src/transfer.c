@@ -30,6 +30,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   char *RBuf;
   time_t t1,t2;
 
+  SU_ThreadBlockSigs();
   fseek(FT->fp,0,SEEK_END);
   fsize = ftell(FT->fp);
   rewind(FT->fp);
@@ -323,6 +324,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   bool error = false;
   time_t t1,t2;
 
+  SU_ThreadBlockSigs();
   context;
   Checksum = FFSS_ComputeChecksum(0,NULL,0);
 

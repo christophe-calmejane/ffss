@@ -2283,7 +2283,7 @@ else
 fi
 
 if test "$malloc_trace" = "true"; then
-  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE -DSU_TRACE_INTERNAL "
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
 fi
 
 # Check whether --enable-ftp or --disable-ftp was given.
@@ -2370,7 +2370,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  FFSS_PTHREAD_LIB="-pthread"
+  FFSS_PTHREAD_LIB="-lpthread" FFSS_PTHREAD_FLAGS="-pthread"
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -2410,7 +2410,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-  FFSS_PTHREAD_LIB="-pthread"
+  FFSS_PTHREAD_LIB="-lc_r" FFSS_PTHREAD_FLAGS="-pthread"
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -2604,6 +2604,7 @@ fi
 
 
 
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -2787,6 +2788,7 @@ s%@CPP@%$CPP%g
 s%@LIBOBJS@%$LIBOBJS%g
 s%@O_SKYUTILS_FLAGS@%$O_SKYUTILS_FLAGS%g
 s%@FFSS_PTHREAD_LIB@%$FFSS_PTHREAD_LIB%g
+s%@FFSS_PTHREAD_FLAGS@%$FFSS_PTHREAD_FLAGS%g
 s%@Z_LIB@%$Z_LIB%g
 s%@BZ_LIB@%$BZ_LIB%g
 s%@O_Z_LIB@%$O_Z_LIB%g

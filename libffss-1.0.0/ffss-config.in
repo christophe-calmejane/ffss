@@ -4,6 +4,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 exec_prefix_set=no
 pthread_lib=@FFSS_PTHREAD_LIB@
+pthread_flags=@FFSS_PTHREAD_FLAGS@
 z_lib=@Z_LIB@
 bz_lib=@BZ_LIB@
 with_bz_lib=@O_BZ_LIB@
@@ -88,16 +89,16 @@ if test "$echo_cflags" = "yes"; then
       if test @includedir@ != /usr/include ; then
         includes=-I@includedir@
       fi
-      echo $pthread_lib $includes
+      echo $pthread_flags $includes
 fi
 
 if test "$echo_libs" = "yes"; then
       libdirs=-L@libdir@
-      echo $libdirs -lffss -lskyutils $z_lib $bz_lib $solaris
+      echo $libdirs $pthread_lib -lffss -lskyutils $z_lib $bz_lib $solaris
 fi
 
 if test "$echo_libs_static" = "yes"; then
       libdirs=-L@libdir@
-      echo $libdirs @libdir@/libffss.a -lskyutils $z_lib $bz_lib $solaris
+      echo $libdirs $pthread_lib @libdir@/libffss.a -lskyutils $z_lib $bz_lib $solaris
 fi
 

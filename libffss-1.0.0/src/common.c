@@ -11,6 +11,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
 char *FFSS_MyIP = NULL;
 struct sockaddr_in FFSS_CurrentSIN;
 time_t FFSS_When;
+bool FFSS_ShuttingDown = false;
 
 SU_THREAD_ROUTINE(F_ThreadUDP,User)
 {
@@ -26,6 +27,7 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
   struct timeval tv;
   int retval;
 
+  SU_ThreadBlockSigs();
   context;
   switch((int)User)
   {
@@ -107,6 +109,11 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
     }
     if(res == SOCKET_ERROR)
     {
+      if(FFSS_ShuttingDown)
+      {
+        FFSS_PrintDebug(1,"UDP Routine : FFSS Library is been shut down...\n");
+        SU_END_THREAD(NULL);
+      }
       FFSS_PrintDebug(1,"Error on UDP port (SOCKET_ERROR : %d)\n",errno);
       if(FFSS_CB.CCB.OnUDPError != NULL)
         FFSS_CB.CCB.OnUDPError(errno);

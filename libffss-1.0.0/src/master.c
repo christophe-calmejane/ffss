@@ -230,6 +230,7 @@ bool FM_Init(int MasterPort)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+  FFSS_ShuttingDown = false;
   context;
   FM_SI_UDP = SU_CreateServer(MasterPort,SOCK_DGRAM,false);
   if(FM_SI_UDP == NULL)
@@ -274,6 +275,7 @@ bool FM_Init(int MasterPort)
 /* Returns true on success, false otherwise */
 bool FM_UnInit(void)
 {
+  FFSS_ShuttingDown = true;
   SU_TermThread(FM_THR_UDP);
   SU_ServerDisconnect(FM_SI_UDP);
   SU_ServerDisconnect(FM_SI_OUT_UDP);

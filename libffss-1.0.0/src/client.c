@@ -569,6 +569,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
   char *Buf;
   long int BufSize;
 
+  SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_CLIENT_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
   if(Buf == NULL)
@@ -684,6 +685,7 @@ bool FC_Init(void)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+  FFSS_ShuttingDown = false;
   FC_SI_OUT_UDP = SU_CreateServer(0,SOCK_DGRAM,false);
   if(FC_SI_OUT_UDP == NULL)
   {
@@ -718,6 +720,7 @@ bool FC_Init(void)
 /* Returns true on success, false otherwise */
 bool FC_UnInit(void)
 {
+  FFSS_ShuttingDown = true;
   SU_TermThread(FC_THR_UDP);
   SU_ServerDisconnect(FC_SI_OUT_UDP);
   free(FC_SI_OUT_UDP);

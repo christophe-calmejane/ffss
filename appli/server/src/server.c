@@ -230,7 +230,7 @@ void FS_RemoveConnectionFromShare(FS_PShare Share,FS_PThreadSpecific ts,bool Rem
     Share->Conns = SU_DelElementElem(Share->Conns,Conn);
   }
   else
-    printf("HUMMMMMMMMMMMM : Conn not found !!!!!!\n");
+    printf("HUMMMMMMMMMMMM : Conn matching ts %p not found in FS_RemoveConnectionFromShare !!!!!!\n",ts);
   SU_SEM_POST(FS_SemConn);
 
   SU_SEM_WAIT(FS_SemGbl);
@@ -742,7 +742,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   }
   SU_SEM_WAIT(FS_SemXFer);
 #ifdef DEBUG
-  printf("ADD XFER TO CONN\n");
+  printf("ADD XFER %p TO CONN\n",FT);
 #endif
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
   SU_SEM_POST(FS_SemXFer);
@@ -1671,6 +1671,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   long int total=0,rpos=0,rlen;
   FFSS_Field fsize;
 
+  SU_ThreadBlockSigs();
   fseek(FT->fp,0,SEEK_END);
   fsize = ftell(FT->fp);
   rewind(FT->fp);
@@ -1993,11 +1994,11 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     }
     if(Ptr != NULL)
     {
-      printf("REMOVE XFER FORM CONN\n");
+      printf("REMOVE XFER %p FORM CONN\n",FT);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
-      printf("HUMMMMMMMMMMMM : XFer not found !!!!!!\n");
+      printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferFailed !!!!!!\n",FT);
 #else
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif
@@ -2005,7 +2006,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
   }
 #ifdef DEBUG
   else
-    printf("REMOVE XFER\n");
+    printf("REMOVE XFER %p\n",FT);
 #endif
 }
 
@@ -2029,11 +2030,11 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     }
     if(Ptr != NULL)
     {
-      printf("REMOVE XFER FORM CONN\n");
+      printf("REMOVE XFER %p FORM CONN\n",FT);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
-      printf("HUMMMMMMMMMMMM : XFer not found !!!!!!\n");
+      printf("HUMMMMMMMMMMMM : XFer %p not found in OnTransferSuccess !!!!!!\n",FT);
 #else
     ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
 #endif
@@ -2041,7 +2042,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
   }
 #ifdef DEBUG
   else
-    printf("REMOVE XFER\n");
+    printf("REMOVE XFER %p\n",FT);
 #endif
 }
 
@@ -2120,7 +2121,10 @@ void handint(int sig)
     exit(0);
   }
   else
-    SU_SLEEP(5000);
+  {
+    SU_SLEEP(60);
+    exit(0);
+  }
 }
 
 #ifdef _WIN32

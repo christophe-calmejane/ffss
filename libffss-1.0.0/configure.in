@@ -105,7 +105,7 @@ AC_ARG_ENABLE(malloc_trace,
   *) AC_MSG_ERROR(bad value ${enableval} for --enable-malloc_trace) ;;
 esac],[malloc_trace=false])
 if test "$malloc_trace" = "true"; then
-  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE -DSU_TRACE_INTERNAL "
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
 fi
 
 AC_ARG_ENABLE(ftp,
@@ -143,8 +143,8 @@ fi
 
 dnl Checks for libraries.
 SOLARIS=""
-AC_CHECK_LIB(pthread, pthread_create,FFSS_PTHREAD_LIB="-pthread")
-AC_CHECK_LIB(c_r, pthread_create,FFSS_PTHREAD_LIB="-pthread")
+AC_CHECK_LIB(pthread, pthread_create,FFSS_PTHREAD_LIB="-lpthread" FFSS_PTHREAD_FLAGS="-pthread")
+AC_CHECK_LIB(c_r, pthread_create,FFSS_PTHREAD_LIB="-lc_r" FFSS_PTHREAD_FLAGS="-pthread")
 AC_CHECK_LIB(skyutils, $SU_FUNCTION,O_SKYUTILS_LIB="-lskyutils")
 AC_CHECK_LIB(z, adler32,Z_LIB="-lz")
 AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress,BZ_LIB="-lbz2")
@@ -172,6 +172,7 @@ fi
 
 AC_SUBST(O_SKYUTILS_FLAGS)
 AC_SUBST(FFSS_PTHREAD_LIB)
+AC_SUBST(FFSS_PTHREAD_FLAGS)
 AC_SUBST(Z_LIB)
 AC_SUBST(BZ_LIB)
 AC_SUBST(O_Z_LIB)

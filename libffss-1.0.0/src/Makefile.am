@@ -21,6 +21,7 @@ libffss_la_SOURCES = \
 
 libffss_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
-	-release $(LT_RELEASE)
+	-release $(LT_RELEASE) \
+        @FFSS_PTHREAD_LIB@
 
 CFLAGS = @CFLAGS@ @O_SKYUTILS_FLAGS@

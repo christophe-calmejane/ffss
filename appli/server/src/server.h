@@ -51,7 +51,8 @@ typedef struct
 typedef struct
 {
   char *DirName;  /* Name of the directory */
-  long int Flags; /* Flags of the file */
+  long int Flags; /* Flags of the dir */
+  long int Size;  /* Size of the dir */
   time_t Time;    /* Time of the dir */
   FS_TNode Files; /* Files/Dirs in this dir */
 } FS_TDir, *FS_PDir;

@@ -29,6 +29,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   fd_set rfds;
   struct timeval tv;
 
+  SU_ThreadBlockSigs();
   buf_len = 10000;
   buf = (char *) malloc(buf_len);
   while(1)
@@ -502,6 +503,7 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
 
+  SU_ThreadBlockSigs();
   while(1)
   {
     Client = SU_ServerAcceptConnection(SI);

@@ -10,7 +10,7 @@
 SU_PList FS_Index=NULL; /* FS_PShare */
 
 #ifdef __unix__
-void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
+long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
 {
   FS_PDir Dir;
   FS_PFile File;
@@ -18,6 +18,7 @@ void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
   DIR *dir;
   struct dirent *ent;
   struct stat st,st2;
+  long int total_dir_size = 0;
 
   FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
   /* List all files in Path, and fill Node with it */
@@ -25,7 +26,7 @@ void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
   if(dir == NULL)
   {
     FFSS_PrintDebug(4,"Error opening dir %s\n",Path);
-    return;
+    return 0;
   }
   ent = readdir(dir);
   while(ent != NULL)
@@ -45,7 +46,8 @@ void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
       Dir->DirName = strdup(ent->d_name);
       Dir->Flags = FFSS_FILE_DIRECTORY | ((st.st_mode&S_IXUSR)?FFSS_FILE_EXECUTABLE:0) | (S_ISLNK(st2.st_mode)?FFSS_FILE_LINK:0);
       Dir->Time = st.st_ctime;
-      FS_BuildIndex_rec(Share,&Dir->Files,name);
+      Dir->Size = FS_BuildIndex_rec(Share,&Dir->Files,name);
+      total_dir_size += Dir->Size;
       Node->Dirs = SU_AddElementHead(Node->Dirs,Dir);
       Share->NbDirs++;
       Node->NbDirs++;
@@ -58,6 +60,7 @@ void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
       File->Flags = ((st.st_mode&S_IXUSR)?FFSS_FILE_EXECUTABLE:0) | (S_ISLNK(st2.st_mode)?FFSS_FILE_LINK:0);
       File->Size = st.st_size;
       File->Time = st.st_ctime;
+      total_dir_size += File->Size;
       Node->Files = SU_AddElementHead(Node->Files,File);
       Share->NbFiles++;
       Node->NbFiles++;
@@ -65,6 +68,7 @@ void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
     ent = readdir(dir);
   }
   closedir(dir);
+  return total_dir_size;
 }
 #else
 
@@ -84,7 +88,7 @@ time_t FS_ConvertTime(FILETIME ft)
   return mktime(&t);
 }
 
-void FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
+long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
 {
   FS_PDir Dir;
   FS_PFile File;
@@ -141,7 +145,9 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
 {
   FS_PShare Share;
   SU_PList Ptr;
+#ifdef _WIN32
   char Pat[]="x:";
+#endif
 
   Share = (FS_PShare) malloc(sizeof(FS_TShare));
   memset(Share,0,sizeof(FS_TShare));
@@ -161,12 +167,14 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
   if(do_it_now)
   {
     FFSS_PrintDebug(5,"Start building index for share %s : %s\n",Share->ShareName,Share->Comment);
+#ifdef _WIN32
     if(strlen(Share->Path) == 3)
     {
       Pat[0] = Share->Path[0];
       FS_BuildIndex_rec(Share,&Share->Root,Pat);
     }
     else
+#endif
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
@@ -178,19 +186,23 @@ void FS_RealBuildIndex(void)
 {
   SU_PList Ptr;
   FS_PShare Share;
+#ifdef _WIN32
   char Pat[]="x:";
+#endif
 
   Ptr = FS_Index;
   while(Ptr != NULL)
   {
     Share = (FS_PShare) Ptr->Data;
     FFSS_PrintDebug(5,"Start building index for share %s : %s\n",Share->ShareName,Share->Comment);
+#ifdef _WIN32
     if(strlen(Share->Path) == 3)
     {
       Pat[0] = Share->Path[0];
       FS_BuildIndex_rec(Share,&Share->Root,Pat);
     }
     else
+#endif
       FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
     Ptr = Ptr->Next;
@@ -413,7 +425,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = 0;
+    *(FFSS_Field *)(buf+pos) = ((FS_PDir)Ptr->Data)->Size;
     pos += sizeof(FFSS_Field);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)

@@ -529,6 +529,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   long int BufSize;
   bool Ident = false;
 
+  SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_SERVER_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
   if(Buf == NULL)
@@ -668,6 +669,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
   char *Buf;
   long int BufSize;
 
+  SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_SERVER_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
 
@@ -790,6 +792,7 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
 
+  SU_ThreadBlockSigs();
   if(SU_ServerListen(FS_SI_TCP) == SOCKET_ERROR)
   {
     FFSS_PrintSyslog(LOG_ERR,"Couldn't listen on the TCP socket\n");
@@ -807,6 +810,13 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
         SU_FreeCS(Client);
         continue;
       }
+    }
+    if(FFSS_ShuttingDown)
+    {
+      FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
+      if(Client != NULL)
+        SU_FreeCS(Client);
+      SU_END_THREAD(NULL);
     }
     if(Client == NULL)
     {
@@ -828,6 +838,7 @@ SU_THREAD_ROUTINE(FS_ThreadTCP_FTP,User)
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
 
+  SU_ThreadBlockSigs();
   if(SU_ServerListen(FS_SI_TCP_FTP) == SOCKET_ERROR)
   {
     FFSS_PrintSyslog(LOG_ERR,"Couldn't listen on the TCP FTP socket\n");
@@ -837,12 +848,19 @@ SU_THREAD_ROUTINE(FS_ThreadTCP_FTP,User)
   while(1)
   {
     Client = SU_ServerAcceptConnection(FS_SI_TCP_FTP);
-    FFSS_PrintDebug(5,"Client connected on TCP FTP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
+    if(FFSS_ShuttingDown)
+    {
+      FFSS_PrintDebug(1,"TCP FTP Routine : FFSS Library is been shut down...\n");
+      if(Client != NULL)
+        SU_FreeCS(Client);
+      SU_END_THREAD(NULL);
+    }
     if(Client == NULL)
     {
       SU_SLEEP(1);
       continue;
     }
+    FFSS_PrintDebug(5,"Client connected on TCP FTP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP_FTP,(void *)Client,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating TCP FTP Client thread\n");
@@ -864,6 +882,7 @@ bool FS_Init(int ServerPort,bool FTP)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+  FFSS_ShuttingDown = false;
   FS_SI_UDP = SU_CreateServer(ServerPort,SOCK_DGRAM,false);
   if(FS_SI_UDP == NULL)
   {
@@ -956,6 +975,7 @@ bool FS_Init(int ServerPort,bool FTP)
 /* Returns true on success, false otherwise */
 bool FS_UnInit(void)
 {
+  FFSS_ShuttingDown = true;
   SU_TermThread(FS_THR_UDP);
   SU_TermThread(FS_THR_TCP);
   if(FS_FTP)

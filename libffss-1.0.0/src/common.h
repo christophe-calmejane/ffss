@@ -5,4 +5,6 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User);
 void FFSS_SignalHandler_BrokenPipe(int sig);
 void FFSS_SignalHandler_Term(int sig);
 
+extern bool FFSS_ShuttingDown;
+
 #endif

@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : December, 24th 2001
+                  Last Update : January, 5th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+January, 5th 2002:
+  - Fixed bug when exiting server if a signal was received
+  - Added dir size in directory listing
 
 December, 24th 2001:
   - Rewrote/cleaned many parts of the code
