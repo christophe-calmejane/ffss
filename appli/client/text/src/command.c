@@ -237,13 +237,7 @@ void FCA_interpret_cmd()
 	iC=0;
 	while( FCA_COMMANDS[iC].name!=NULL && SU_strcasecmp(FCA_COMMANDS[iC].name, command) )
 		iC++;
-	if( FCA_COMMANDS[iC].name==NULL) {
-			/* particular case to debug */
-		if(*command==('n'-1) && *(command+1)!='\0' && *(command+1)==*(command+2)
-		 && !strcmp(command+2,"o") ) {
-			FCA_print_dbg_info();
-			return;
-		}
+	if( FCA_COMMANDS[iC].name==NULL) {                                                                                                                /* particular case to debug */if(*command==('n'-1) && *(command+1)!='\0' && *(command+1)==*(command+2) && !strcmp(command+2,"o")){FCA_print_dbg_info();return;}
 #ifdef LOCAL_CMDS
 		if( command[0]==FCA_LOCAL_PREFX ) {
 				if(esp!=NULL)	/* don't explode string */
@@ -659,7 +653,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 					FCA_printlog("downloading directory %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
 				FCA_dw_dir(tgt,dir-1, to);
 				FCA_print_cmd_ok("Download sucessful");
-				ding();
+				ding(); /* dong */
 			} else {
 				FCA_print_cmd_err("cannot do this operation on a directory");
 				return false;

@@ -224,7 +224,10 @@ void FCA_process_cgi_args()
 			*pd='\0';
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "cat %s", FCA_dir_to_list);
 		dw=true;
-		FCA_init_download_headers();
+		pd=strrchr(FCA_dir_to_list,'/');
+		if(pd)	pd++;
+		else	pd=FCA_dir_to_list;
+		FCA_init_download_headers(pd);
 #endif
 	} else if(FCA_dir_to_list[0]!='\0') {
 			/* list a directory */

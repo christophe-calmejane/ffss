@@ -18,6 +18,10 @@ proposer de desactiver la gestion des skins a la compil
 proposer d'aller sur des machines off dans un domaine (avec confirmation)
 
 ----------------------------
+[23:40:32] <kiki> si lors d un download, tu recois ca "FFSS_ERROR_XFER_MODE_NOT_SUPPORTED" comme erreur
+[23:40:51] <kiki> faut que tu passes dans l autre mode  de download (le fameux UseConnSock)
+
+----------------------------
 =======
 voir le pb avec completion_matches et les versions de readline.
 
@@ -28,6 +32,12 @@ afficher un meilleur status du download: un numero de fichier en cours
 ----------------------------
 bug dans la completion locale: ne fait pas de \ devant les espaces
 -> TESTER A FLEM !!
+
+----------------------------
+faire un mode 'cache' ou on maximise l'utilisation du cache par rapport
+a la mise a jour des donnees.
+avec au demarrage, demander la liste de tout les servers de tout
+les domaines, puis rechercher dans ce cache quand on fait un ls.
 
 ----------------------------
 [21:14:40] <kiki> donc le set var servira a donne la taille des blocs
@@ -67,14 +77,9 @@ faire un choix all/none dans les questions
 portage sous win
 
 ----------------------------
-[23:40:32] <kiki> si lors d un download, tu recois ca "FFSS_ERROR_XFER_MODE_NOT_SUPPORTED" comme erreur
-[23:40:51] <kiki> faut que tu passes dans l autre mode  de download (le fameux UseConnSock)
-
-----------------------------
 bien tester l'optimisation des recherche de domaine && server
 
 ----------------------------
-
 quand on lance, qu'on fait cd /$/none/<un server> dont le nom
 n'est pas valide DNS-parlant, mais valide FFSS-parlant, il faut
 faire un truc intelligent.
@@ -124,6 +129,10 @@ calculer soi meme le taux de transfert,
 
 ----------------------------
 revoir la gestion des arguments
+
+----------------------------
+faire un dset et un sset, pour faire des options specifiques a
+chaque domaine et server
 
 ----------------------------
 reretester les cas suivants:

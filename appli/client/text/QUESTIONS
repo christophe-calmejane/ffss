@@ -1,6 +1,22 @@
 
 just for me, questions to ask to kiki...
 
+-
+/usr/lib/crt1.o: In function `_start':
+/usr/lib/crt1.o(.text+0x18): undefined reference to `main'
+collect2: ld returned 1 exit status
+make[2]: *** [log.so] Error 1
+
+
+- jarter tout les .gif du site
+
+
+
+
+
+---------------------------------------
+	ANCIENNES QUESTIONS
+---------------------------------------
 
 gcc -DHAVE_CONFIG_H -I. -I. -I.. -g -O2 -Wall -DDEBUG -DSU_MALLOC_TRACE
  -DHAVE_BZLIB -DPLUGINS  -I/usr/local/include -D_REENTRANT -pthread
@@ -26,9 +42,7 @@ alors que :
 checking for dlopen in -ldl... yes
 -> #include <dlfcn.h> au debut de arch_dep_unix.c = nikel
 
-
 2 x --enable-malloc-trace dans le configure du master
-
 le master me met mon server off au bout d'un moment...
 MASTER : Adding host bennyben (127.0.0.1) to domain Benny
 MASTER : Adding state to my queue : bennyben (127.0.0.1) 1
@@ -40,11 +54,6 @@ MASTER : Adding state to my queue : bennyben (127.0.0.1) 2
  j'ai mis le server et le master en localhost.
 
 
-
-
----------------------------------------
-	ANCIENNES QUESTIONS
----------------------------------------
 
 7) ca serait pas possible dans la recherche, de me renvoyer un moyen
 de faire la difference entre une reponse fichier et une reponse dossier.

@@ -151,7 +151,7 @@ printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>\n");
-FCA_form_hidden_args();
+FCA_form_hidden_args(true);
 }
 
 void FCA_html_pre_listing(char *path)
@@ -171,7 +171,7 @@ printf("address: <input type='text' name='dir' value='%s' tabindex=1>
 <input type='hidden' name='sdom' value=''>
 </form>
 <form name='search' action='");FCA_my_url(false);printf("' method=GET>");
-FCA_form_hidden_args();printf("
+FCA_form_hidden_args(false);printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
  <tr>
@@ -191,10 +191,14 @@ printf("   </select>&nbsp;<input type='submit' value='search'>
    <select name='skin'>
 ");
 	for(ps=FCA_SKINS; ps && ps->name; ps++) {
-		if(ps->canCGI)
-			printf("    <option>%s\n", ps->name);
+		if(ps->canCGI) {
+			printf("    <option");
+			if(!strcmp(ps->name, FCA_skin_name))
+				printf(" selected");
+			printf(">%s\n", ps->name);
+		}
 	}
-printf("   </select>
+printf("   </select>&nbsp;<input type='submit' value='ok'>
   </td>
  </tr>
 </table>
@@ -217,7 +221,7 @@ printf("address: <input type='text' name='dir' value='/$' tabindex=1>
 <input type='hidden' name='sdom' value=''>
 </form>
 <form name='search' action='");FCA_my_url(false);printf("' method=GET>");
-FCA_form_hidden_args();printf("
+FCA_form_hidden_args(true);printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
  <tr>
@@ -558,7 +562,7 @@ void FCA_post_link(bool firstArg)
 	printf("'>");
 }
 
-void FCA_form_hidden_args()
+void FCA_form_hidden_args(bool canskin)
 {
 	char *p;
 	
@@ -571,9 +575,11 @@ void FCA_form_hidden_args()
 	printf(" <input type='hidden' name='firstarg' value='%s'>\n",
 		p=FCA_cgi_escape_special_chars(FCA_html_firstarg) );
 	free(p);
-	printf(" <input type='hidden' name='skin' value='%s'>\n",
-		p=FCA_cgi_escape_special_chars(FCA_skin_name) );
-	free(p);
+	if(canskin) {
+		printf(" <input type='hidden' name='skin' value='%s'>\n",
+			p=FCA_cgi_escape_special_chars(FCA_skin_name) );
+		free(p);
+	}
 	printf(" <input type='hidden' name='master' value='%s'>\n",
 		p=FCA_cgi_escape_special_chars(FCA_master) );
 	free(p);

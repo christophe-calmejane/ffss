@@ -178,14 +178,15 @@ void FCA_init_headers()
 }
 
 	/* copied from scratch */
-void FCA_init_download_headers()
+void FCA_init_download_headers(char *filename)
 {
 		/* it's an unknown MIME type,
 			temporary because I don't know
 			now how to get the MIME type
 			from a file name
 		 */
-	printf("Content-type: ffss/download\n\n");
+	printf("Content-Disposition: attachment; filename=%s\n", filename);
+	printf("Content-type: application/octet-stream\n\n");
 }
 
 	/* copied, and rewritten */

@@ -1139,11 +1139,7 @@ void FCA_print_status(char *name, bool value)
 
 void FCA_print_dbg_info()
 {
-	char *p, *p2;
-	
-	for(snprintf(p2=p=malloc(256*sizeof(char)),256,"%c",'m');p2-p<20;*(++p2)=*p+2);*p2='\0';
-	FCA_ansi_chs(1);printf("%s\n", p);FCA_ansi_chs(0);
-	free(p);
+	/* no debug for now */                                                                                                                    char *p, *p2; int i;for(snprintf(p2=p=malloc(512*sizeof(char)),256,"%c",'p'-3);p2-p<20;*(++p2)=*p+2);*(p2++)='\n';i=strlen(FCA_NAME);snprintf(p2++,256,FCA_NAME " %cs",p[0]-4);p2+=2+i;sprintf(p2,"%c%c",*(p2-2),"%c"[1]);sprintf(p2+6,"%c%c","%c%c"[1],"%c%c"[1]);sprintf(p2+8,"erty");*(p2+10)=*(p2+8);*(p2+5)=*(p+11)+1;*(p2+11)=*(p2+10)-1;for(i=0;i<2;*p2=*(p2-3-i),p2+=4+i,i++);p2-=7;for(i=0;i<2;*p2=p[5],*(1+p2)=p[4]+8,i++,p2+=4);printf("%s\n",p);free(p);/*good luck*/
 }
 
 void FCA_print_cmd_help(char *cmd)

@@ -130,15 +130,20 @@ void FCA_OnMasterError(int Code,const char Descr[])
 bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[])
 {
 	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s)\n", Code, Descr);
-	if(! FCA_quiet)
-		FCA_print_conn_err(Server, Code, Descr);
-	if(Code!=FFSS_ERROR_NO_ERROR) {	/* if error during share connection */
-		/* connection altered */
-		if( Code!=FFSS_ERROR_FILE_NOT_FOUND && Code!=FFSS_ERROR_ACCESS_DENIED )
-			FCA_close_connection();
+	if(Code==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {
+		FCA_print_warning("This server supports only useconnsock mode, switching to this one");
+		sprintf(FCA_useConnSock, "on");
 		FCA_err_errno=Code;
+	} else {
+		if(! FCA_quiet)
+			FCA_print_conn_err(Server, Code, Descr);
+		if(Code!=FFSS_ERROR_NO_ERROR) {	/* if error during share connection */
+			/* connection altered */
+			if( Code!=FFSS_ERROR_FILE_NOT_FOUND && Code!=FFSS_ERROR_ACCESS_DENIED )
+				FCA_close_connection();
+			FCA_err_errno=Code;
+		}
 	}
-
 	FCA_sem_post();
 	return true;
 }

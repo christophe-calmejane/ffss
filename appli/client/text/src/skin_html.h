@@ -21,7 +21,7 @@ void FCA_file_link(const char *file);
 void FCA_dir_arg(const char *dir, bool isFile);
 void FCA_pre_link();
 void FCA_post_link(bool firstArg);
-void FCA_form_hidden_args();
+void FCA_form_hidden_args(bool canskin);
 void FCA_my_url(bool isDownload);
 void FCA_sep_link(char *path);
 

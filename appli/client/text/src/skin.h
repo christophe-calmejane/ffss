@@ -99,10 +99,12 @@ extern int FCA_tab_width;
 #include "skin_script.h"
 #include "skin_html.h"
 #include "skin_html_fleming.h"
+#include "skin_html_playlist.h"
 
 	/* 2) complete these defines */
-#define FCA_SKINLIST	"default", "script", "html", "html_fleming"
+#define FCA_SKINLIST	"default", "script", "html", "html_fleming", "html_playlist"
 
+	/* 3) complete skin-specific envrironment variables (optional) */
 	/*
 		variable's	description			values		on_var_change
 		name								 callback
@@ -125,7 +127,7 @@ extern int FCA_tab_width;
 	{"on","off",NULL}, \
 	{":", ",", "|", "/", "&", NULL}, \
 	{"", FCA_NAME, NULL},
-
+	/* default values */
 #define FCA_SKIN_ENV_VALUES \
 	"ffss-client", \
 	"", \

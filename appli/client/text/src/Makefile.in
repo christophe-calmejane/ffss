@@ -64,7 +64,7 @@ VERSION = @VERSION@
 
 bin_PROGRAMS = ffss-client
 
-ffss_client_SOURCES =  		args.c 		args.h 				cgi_args.c 		cgi_args.h 				client.c 		client.h 				command.c 		command.h 				config.c 		config.h 				datastruct.c 		datastruct.h 				callbacks.c 		callbacks.h 				common.c 		common.h 				display.c 		display.h 				skin.c 		skin.h 				skin_default.c 		skin_default.h 				skin_script.c 		skin_script.h 				skin_html.c 		skin_html.h 				skin_html_fleming.c 		skin_html_fleming.h
+ffss_client_SOURCES =  		args.c 		args.h 				cgi_args.c 		cgi_args.h 				client.c 		client.h 				command.c 		command.h 				config.c 		config.h 				datastruct.c 		datastruct.h 				callbacks.c 		callbacks.h 				common.c 		common.h 				display.c 		display.h 				skin.c 		skin.h 				skin_default.c 		skin_default.h 				skin_script.c 		skin_script.h 				skin_html.c 		skin_html.h 				skin_html_fleming.c 		skin_html_fleming.h 				skin_html_playlist.c 		skin_html_playlist.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -78,7 +78,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 ffss_client_OBJECTS =  args.o cgi_args.o client.o command.o config.o \
 datastruct.o callbacks.o common.o display.o skin.o skin_default.o \
-skin_script.o skin_html.o skin_html_fleming.o
+skin_script.o skin_html.o skin_html_fleming.o skin_html_playlist.o
 ffss_client_LDADD = $(LDADD)
 ffss_client_DEPENDENCIES = 
 ffss_client_LDFLAGS = 
@@ -96,7 +96,8 @@ GZIP_ENV = --best
 DEP_FILES =  .deps/args.P .deps/callbacks.P .deps/cgi_args.P \
 .deps/client.P .deps/command.P .deps/common.P .deps/config.P \
 .deps/datastruct.P .deps/display.P .deps/skin.P .deps/skin_default.P \
-.deps/skin_html.P .deps/skin_html_fleming.P .deps/skin_script.P
+.deps/skin_html.P .deps/skin_html_fleming.P .deps/skin_html_playlist.P \
+.deps/skin_script.P
 SOURCES = $(ffss_client_SOURCES)
 OBJECTS = $(ffss_client_OBJECTS)
 

@@ -1151,20 +1151,22 @@ bool FCA_hostlist_comp(SU_PList p1, SU_PList p2)
 bool FCA_dirlist_comp(SU_PList p1, SU_PList p2)
 {
 	int ord=FCA_VAR_IS_ON(FCA_sort_descending)?-1:1;
+	FC_PEntry e1=(FC_PEntry)(p1->Data),
+		e2=(FC_PEntry)(p2->Data);
 	
 	if(!p1 || !p2)
 		return true;
+		/* p1 is a directory and p2 is a file...we should not invert it */
+	if( (e1->Flags & FFSS_FILE_DIRECTORY) &&
+	 !(e2->Flags & FFSS_FILE_DIRECTORY))
+		return true;
 	switch(FCA_sort_files_by[0]) {
 	case 's':	/* by size */
-		return ((((FC_PEntry)(p1->Data))->Size-
-			((FC_PEntry)(p2->Data))->Size)*ord<0);
+		return ( (e1->Size-e2->Size)*ord <=0 );
 	case 'd':	/* by date */
-		return ((((FC_PEntry)(p1->Data))->Stamp-
-			((FC_PEntry)(p2->Data))->Stamp)*ord<0);
+		return ( (e1->Stamp-e2->Stamp)*ord <=0 );
 	default:	/* default, by name */
-		return (strcmp(
-			((FC_PEntry)(p1->Data))->Name,
-			((FC_PEntry)(p2->Data))->Name)*ord <0);
+		return ( strcmp(e1->Name,e2->Name)*ord <=0 );
 	}
 }
 

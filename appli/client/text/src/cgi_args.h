@@ -48,7 +48,7 @@ void FCA_read_cgi_args();
 
 	/* alternatives to libcgi */
 void FCA_init_headers();
-void FCA_init_download_headers();
+void FCA_init_download_headers(char *filename);
 
 #endif	/* CGI */
 
