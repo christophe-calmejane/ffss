@@ -1,0 +1,43 @@
+TO DO :
+ - OnShareConnection : We currently only check password, must check login/password
+
+ - Implementer le debit max par partage (fichier de conf / server.h)
+   Ensuite lors d un download, a chaque paquet envoye, on met a jour une variable globale du partage
+   Cette var globale peux soit etre dans la structure du share (mais donc une sem par share, bof...)
+                          soit etre dans une struct globale qui contient le pointeur du FS_PShare et un longint associe
+   On fait donc un 'var_global += ma_diff'
+     avec ma_diff etant la diff entre le debit precedent (donc garder la derniere val de debit qui a servi a calculer la diff envoyee a globale) et le courant
+     Ainsi au debut, ca vaut 0, donc on ajoute xx le debit du premier paquet
+     Au fur et a mesure, on ajoute ou retrait la diff de debit
+     A la fin, on retire la val du debit precedent (-0) et ca roule :)
+
+ - FTP : si File_year != Current_year, envoye le year au lieu de l heure !
+
+ - Ajouter une option dans les parametres d'un share pour empecher/autoriser le streaming sur ce share
+
+ - Modifier les scripts d install pour installer le fichier de conf.sample dans /usr/doc/ffss/server
+
+ - AJOUTER DANS LA CONF (win et nux) des regles pour limiter les ip qui se connectent !! (dans un plugin, avec le conf sock)
+
+ - Ajouter un callback de plugin pour la demande de connexion TCP, et l arrivee de message UDP (pour faire le filtre ci dessus)
+
+ - Dans le parser, qd on ajoute un share, regarder si le meme nom existe pas deja.. si oui.. print warning, et ignore le share
+
+ - Ajouter un MaxOpenFiles dans la conf globale -> OnDownload++ OnStrmOpen++ OnComplete-- OnFailed-- OnStrClose-- (ou mieux pour les --)
+
+ - QUAND ON RECOIT UN DISCONNECT, VERIFIER SI IL N'Y A PAS DE XFER (STRM) EN COURS... SINON, NE PAS FERMER !!
+
+ - OPTION NETEJECT : Detecter a intervale regulier (dans le OnPing) si le proc est idle (arch_dep)... si oui (et option auto-disable-neteject) et server quiet, passer en ON
+
+ - Si on choisit le mode 'Server envoie toutes les 2/3 min PING au master' (donc option dans config), faut appeler a ce moment le OnPing a la main
+   (Et si on choisit ca, le faire si y a pas de master defini.. l appel au OnPing)
+
+ - Detecter les infinite loops dans l index (Building index for sub-dir /usr/include/gnome-xml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml/libxml)
+
+ - Dans le OnStrmOpen... faire une verif du nombre de fichiers ouverts !!! (nouvelle var dans la conf)
+
+ - POSSIBLE BUG : Dans le onSelect et autres fonctions associes (xfer In conn).. aucun sem_wait/sem_post sur les xfers !!!
+
+ - Option pour chaque share : AutoRescan <interval>
+
+ - Ajouter un nouveau type de paquet 'MessageBox sous win, mail @root sous nux' uniquement depuis le master.. au moment de la connect (au moment du check du protocole par ex)

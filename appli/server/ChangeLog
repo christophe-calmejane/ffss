@@ -1,0 +1,62 @@
+                      The FFSS Server Historic
+                       Updated by Ze KiLleR
+
+                      Stable Version : 1.0.0
+                      Devel  Version : 1.0.0
+                  Last Update : December, 24th 2001
+
+VIRER LE -PREx DE SERVER.H
+
+December, 24th 2001:
+  - Rewrote/cleaned many parts of the code
+
+November, 18th 2001:
+  - Fixed a possible bug (on unixes) in automatic rescan
+  - Fixed a possible threaded bug (not locking a variable)
+
+November, 4th 2001:
+  - Added an automatic share rescan if a file is not here anymore
+  - Added xfer % in GetShareConns
+  - Updated ffsswho
+
+October, 14th 2001:
+  - Changed definition of idel timeout, and so the code.
+  - Changed some details in conf conn api
+  - Made ffsswho.c, that displays connections and transfers of local server
+
+October, 3rd 2001:
+  - Added new commands to conf sock
+  - Fixed minor bugs
+
+September, 12th 2001:
+  - Added a daemonize option to the server
+  - Added use of the syslog
+
+August, 27th 2001:
+  - Added signal hooks
+
+July, 24th 2001:
+  - Removed a memory leak
+
+July, 22th 2001:
+  - Added some command line options
+
+July, 17th 2001:
+  - Fixed bugs in indexing
+
+July, 16th 2001:
+  - Changed indexing method and structures
+
+June, 3rd 2001:
+  - Added plugin support
+  - Added ConfConn plugin beta version
+
+May, 4th 2001:
+  - Added a function to convert uppercase path to correct path case
+  - Added some parts of the streaming code
+
+March, 11th 2001:
+  - Fixed a bug with FTP compatibility
+  - Created configure script
+
+

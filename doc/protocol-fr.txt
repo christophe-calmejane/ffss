@@ -1,0 +1,439 @@
+PROTOCOLE DE FFSS
+-----------------
+
+Definitions :
+-------------
+ * Serveur : Le programme qui tourne en fond sur la machine d'un utilisateur, et qui gere les partages de cette machine.
+ * Client  : L'application qui veux parcourir un reseau a la recherche de partages, et telecharger des fichiers depuis un serveur.
+ * Master  : Le programme qui tourne en fond sur une machine centrale, et qui renseigne les clients et les serveurs sur ces derniers.
+
+
+Proprietes du Serveur :
+----------------------
+Le serveur est en ecoute sur le port 696 en TCP et UDP (et 697 en TCP pour compatibilite FTP).
+Le port UDP sert a repondre aux ping du master, et aux demandes des clients.
+Quand un serveur se lance, il envoie un message de login a son master (si il en a un) et un msg d'index et de stats.
+Quand un serveur se termine, il envoie un message de logout a son master.
+Si connexion ftp (anonymous), on voit a la racine tous les partages publiques.
+
+Proprietes du Client :
+----------------------
+Le client est en ecoute sur un port qcq qu'il ouvre au lancement en UDP.
+Pour rechercher les serveurs sur un sous-reseau, le client a deux solutions:
+ * Si il n'y a pas de master, ou que celui-ci ne repond pas, le client envoie un paquet en broadcast sur le port 696 (UDP).
+ * Si le master est la et qu'il repond, le client envoie une requete de listing des serveurs.
+Si la connexion d'un client a un serveur echoue, le client en informe son master (si celui-ci existe) sur le port 695 (UDP).
+
+Proprietes du Master :
+----------------------
+Le master est en ecoute sur le port 695 en UDP.
+Le master centralise la liste des serveurs actifs. Il peux aussi etre en contact avec d'autres serveurs (sur un autre sous reseau
+par exemple) pour leur communiquer la liste des serveurs actifs et recuperer leur liste.
+Quand un master demarre, il demande a la liste de ses co-masters leur liste.
+Regulierement, le master envoie des requetes de ping a sa liste de serveurs (serveurs locaux, pas ceux des autres masters) en UDP.
+-> Si un serveur en repond pas, il est retire de la liste des serveurs actifs.
+Si le master recoie un message de login, il previent tous les clients qu'un nouveau serveur est actif (broadcast UDP sur le port 697) et ses co-masters.
+Si le master recoie un message de logout, il previent tous les clients que ce serveur est down (broadcast UDP sur le port 697) et ses co-masters.
+Si le master recoie un message d'echec de connexion d'un client a un serveur, il previent tous les clients que le serveur est down (broadcast UDP sur le port 697) et ses co-masters.
+Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, en envoyant plusieurs changements dans le meme paquets (message de type 3)
+Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
+
+
+Detail du protocole (Version 1) :
+---------------------------------
+ * Message d'etat (Serveur->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 1 (etat)
+   DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
+   DWord : Version du Serveur
+   ZStr : Nom de la machine (a limiter a 15)
+   ZStr : OS (a limiter a 10)
+   ZStr : Commentaire (a limiter a 50)
+
+ * Message de reponse d'etat (Master->Serveur 696) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 2 (reponse d'etat)
+   ZStr : Nom du domain du master (a limiter a 20)
+  -> Messages d'erreur possibles
+    1 : Version du serveur trop ancienne
+
+ * Message d'etat d'un serveur (Master->Clients qcq) (Broadcast UDP) :
+ ou Message d'etat d'un serveur (Master->Master 695) (UDP) :
+ ou Message de reponse de recherche des serveurs (Serveur->Client 697) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 3 (etat serveurs)
+   DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
+   DWord : Nombre d'etats
+    DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
+    DWord : Type d'adresse du master dont depend le serveur (0=Neant,1=IPv4,2=IPv6)
+     DWord : IPv4 du master
+     DWord : Reserve
+     DWord : Reserve
+     DWord : Reserve
+    ZStr : Nom du domaine
+    ZStr : Nom de la machine
+    ZStr : OS
+    ZStr : Commentaire
+    DWord : Type d'adresse du serveur (0=Neant,1=IPv4,2=IPv6)
+     DWord : IPv4 du serveur
+     DWord : Reserve
+     DWord : Reserve
+     DWord : Reserve
+
+ * Message de demande d'index (Client->Serveur 696) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 4 (demande d'index)
+   DWord : Port à utiliser pour la reponse (697 pour Client - 695 pour Master - Autre pour autre :))
+
+ * Message de reponse d'index (Serveur->Client 697) (UDP) : NE LISTER QUE LES PARTAGES ACCESSIBLES PAR TOUT LE MONDE !!!
+ ou Message de reponse d'index (Serveur->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 5 (reponse d'index)
+   DWord : Type de compression (0=Néant 1=??) (Si compression, chaque buffer dans la connexion index sera compressee)
+   DWord : Taille de l'index (compressee)
+   DWord : Taille totale du FileTree
+   DWord : Taille totale des Nodes
+   DWord : Port ou se connecter
+
+ * Message d'index (connecte)
+   DWord : Nombre de partages
+    DWord : Taille du file tree
+    Data : FileTree
+    DWord : Taille de la liste des nodes
+    Data : Nodes
+    ...
+
+ * Message de listing des serveurs (Client->Master 695) (UDP) :
+ ou Message de listing des serveurs (Master->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 6 (listing serveurs)
+   DWord : Type de compressions authorisees pour la reponse
+   ZStr : OS demande ou chaine vide (0) si tout OS
+   ZStr : Domain demande ou chaine vide (0) si tous les groupes
+
+ * Message de reponse de listing des serveurs (Master->Client qcq) (UDP) :
+// ANNULE ou Message de reponse de listing des serveurs (Master->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 7 (reponse listing serveurs)
+   DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
+   DWord : Nombre de domaines
+     ZStr : Nom du domaine
+     DWord : Nombre de serveurs dans le domaine
+       DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
+       ZStr : Nom de la machine
+       ZStr : OS
+       ZStr : Commentaire
+       -------------- DES STATS A AJOUTER ICI ??? -------------------
+       DWord : Type d'adresse du serveur (0=Neant,1=IPv4,2=IPv6)
+         DWord : IPv4 du serveur
+         DWord : Reserve
+         DWord : Reserve
+         DWord : Reserve
+
+ * Message d'echec de connexion client-serveur (Client->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 8 (echec connexion client-serveur)
+   DWord : Type d'adresse du serveur (0=Neant,1=IPv4,2=IPv6)
+    DWord : IPv4 du serveur
+    DWord : Reserve
+    DWord : Reserve
+    DWord : Reserve
+
+ * Message de ping (Master->Serveur 696) (UDP)
+   DWord : Taille du message
+   DWord : Type de message = 9 (ping)
+
+ * Message de pong (Serveur->Master 695) (UDP)
+   DWord : Taille du message
+   DWord : Type de message = 10 (pong)
+   DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
+
+ * Message de recherche des serveurs (Client->Serveurs 696) (Broadcast UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 11 (recherche des serveurs actifs)
+
+ * Message de listing des partages (Client->Serveur 696) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 12 (listing partages)
+
+ * Message de reponse de listing des partages (Serveur->Client 697) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 13 (reponse listing partages)
+   DWord : Type d'adresse du serveur (0=Neant,1=IPv4,2=IPv6)
+    DWord : IPv4 du serveur
+    DWord : Reserve
+    DWord : Reserve
+    DWord : Reserve
+   DWord : Nombre de partages
+     ZStr : Nom du partage
+     ZStr : Commentaire
+
+ * Message de listing des domaines (Client->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 30 (listing domaines)
+
+ * Message de reponse de listing des domaines (Master->Client qcq) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 31 (reponse listing domaines)
+   DWord : Nombre de domaines
+     ZStr : Nom du domaine
+
+ * Message de connexion a un partage (Client->Serveur connecte 696) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 14 (connexion partage)
+   DWord : Type de compressions supportees
+   ZStr : Nom du partage
+   ZStr : Login de connexion (0 si neant)
+   ZStr : Password de connexion (0 si neant)
+  -> Messages d'erreur possibles
+    2 : Ressource indisponible
+    3 : Login/pwd necessaire
+    4 : Trop de connexions
+  -> Si aucune erreur, le serveur doit considerer qu'un message de listing du repertoire racine a ete demande + msg de stats
+
+ * Message de demande de listing d'un repertoire (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 15 (demande de listing d'un repertoire)
+   ZStr : Path du repertoire dans le partage
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+
+ * Message de listing du repertoire courant (Serveur->Client connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 16 (listing d'un repertoire)
+   ZStr : Path du repertoire dans le partage
+   DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
+   DWord : Nombre d'entrees
+    ZStr : Nom du fichier (lister le repertoire ..)
+    DWord : Flags du fichier (voir flags des fichiers ci-dessous)
+    DWord : Taille du fichier
+    DWord : TimeStamp du fichier
+
+ * Message de download de fichier (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 17 (download d'un fichier)
+   ZStr : Path du fichier dans le partage
+   DWord : Position a partir de laquelle il faut envoyer le fichier (resume si il y a eu une erreur) ou 0 si fichier complet
+   DWord : Port auquel se connecter pour envoyer le fichier
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+    8 : Echec de connexion vers client
+    9 : Erreur interne du serveur
+    10 : Trop de transfert en cours
+  -> Si aucune erreur, le serveur se connecte au port indique et envoie le fichier suivant le protocole de download de fichier decrit ci-dessous
+
+ * Message d'upload de fichier (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 18 (upload d'un fichier)
+   ZStr : Path du fichier dans le partage
+   DWord : Taille du fichier
+   DWord : Port auquel se connecter pour recuperer le fichier
+  -> Messages d'erreur possibles
+    6 : Acces refuse
+    7 : Espace disque insufisant
+    8 : Echec de connexion vers client
+    9 : Erreur interne du serveur
+    10 : Trop de transfert en cours
+    12 : Fichier deja existant
+  -> Si aucune erreur, le serveur se connecte au port indique et envoie le fichier suivant le protocole d'upload de fichier decrit ci-dessous
+
+ * Message de renomage/deplacement de fichier (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 19 (renomage/deplacement d'un fichier)
+   ZStr : Path du fichier dans le partage
+   ZStr : Nouveau Path du fichier
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+    12 : Fichier deja existant
+  -> Si aucune erreur, le serveur envoie un FFSS_ERROR_NO_ERROR
+
+ * Message de copie de fichier (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 20 (copie d'un fichier)
+   ZStr : Path du fichier dans le partage
+   ZStr : Path de la copie du fichier
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+    7 : Espace disque insufisant
+    12 : Fichier deja existant
+  -> Si aucune erreur, le serveur envoie un FFSS_ERROR_NO_ERROR
+
+ * Message d'effacement de fichier (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 21 (effacement d'un fichier)
+   ZStr : Path du fichier dans le partage
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+    11 : Repertoire non vide
+  -> Si aucune erreur, le serveur envoie un FFSS_ERROR_NO_ERROR
+
+ * Message de creation d'un repertoire (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 22 (creation d'un repertoire)
+   ZStr : Path du repertoire a creer
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+    12 : Fichier deja existant
+  -> Si aucune erreur, le serveur envoie un FFSS_ERROR_NO_ERROR
+
+* Message de deconnexion (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 100 (demande de deconnexion)
+
+* Message d'erreur (Serveur->Client connecte) (TCP) :
+ ou Message d'erreur (Master->Serveur 696) (UDP) :
+ ou Message d'erreur (Master->Client qcq) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 200 (message d'erreur)
+   DWord : Code de l'erreur
+   ZStr : Description de l'erreur
+
+ * Message de recherche (friandise) (Client->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 50 (recherche)
+   DWord : Port pour la reponse
+   DWord : Type de compressions authorisees pour la reponse
+   ZStr : Domain demande ou chaine vide (0) si tous les groupes
+   ZStr : Chaine contenant les mots cles
+
+ * Message de reponse de recherche (friandise) (Master->Client qcq) (UDP) :
+ ou Message de reponse de recherche forwarde (Master->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 51 (reponse de recherche)
+   DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
+   ZStr : Chaine contenant les mots cles que l'on renvoie pour identifier la requete
+   DWord : Nombre de domaines
+    ZStr : Nom du domaine
+    DWord : Nombre de reponses
+     ZStr : Chaine reponse contenant le nom du server et son domaine (suffit a identifier un serveur), le partage, le path dans le partage
+
+ * Message de recherche forwarde (Master->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 52 (recherche forwarde)
+   DWord : Port du client pour la reponse
+   DWord : Type de compressions authorisees pour la reponse
+   DWord : Type d'adresse du client (0=Neant,1=IPv4,2=IPv6)
+    DWord : IPv4 du client
+    DWord : Reserve
+    DWord : Reserve
+    DWord : Reserve
+   ZStr : Chaine contenant les mots cles
+
+ * Message de recherche d'un master (Client->Master 695) (UDP) :
+ ou Message de recherche d'un master (Serveur->Master 695) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 55 (recherche de master)
+   DWord : Type of requester (1=SERVER,2=CLIENT)
+
+ * Message de reponse de recherche d'un master (Master->Client qcq) (UDP) :
+ ou Message de reponse de recherche d'un master (Master->Serveur 696) (UDP) :
+   DWord : Taille du message
+   DWord : Type de message = 56 (reponse de recherche de master)
+   DWord : Version du protocole utilisé par le master
+   ZStr : Nom du domaine du master
+
+ * Message de streaming : open (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 80 (streaming open)
+   DWord : Flags d'ouverture
+   ZStr : Path du fichier
+
+ * Message de streaming : reponse open (Server->Client connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 81 (streaming reponse open)
+   ZStr : Path du fichier
+   DWord : Code de l'erreur
+   DWord : Handle du fichier (si pas d'erreur)
+   DWord : Taille du fichier
+
+ * Message de streaming : close (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 82 (streaming close)
+   DWord : Handle du fichier
+
+ * Message de streaming : read (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 83 (streaming read)
+   DWord : Handle du fichier
+   DWord : Position de lecture
+   DWord : Taille de lecture (Indicative uniquement)
+
+ * Message de streaming : reponse read (Server->Client connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 84 (streaming reponse read)
+   DWord : Handle du fichier
+    Datas
+
+ * Message de streaming : write (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 85 (streaming write)
+   DWord : Handle du fichier
+   DWord : Position d'ecriture
+    Datas
+
+ * Message de streaming : reponse write (Server->Client connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 86 (streaming reponse write)
+   DWord : Handle du fichier
+   DWord : Code de l'erreur
+
+ * Message de streaming : seek (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 87 (streaming open)
+   DWord : Handle du fichier
+   DWord : Flags du seek (SET/CUR/END)
+   DWord : Position du seek
+
+ * Message de debut de transfert (Server->Client connecte) (TCP) :
+ ou Message de debut de transfert (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 97 (debut transfert)
+   DWord : Handle du fichier
+   ZStr : Nom du fichier demande
+
+ * Message d'annulation de transfert (Server->Client connecte) (TCP) :
+ ou Message de debut de transfert (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 98 (annulation transfert)
+   DWord : Handle du fichier a annuler
+
+ * Message de data (transfert) (Server->Client connecte) (TCP) :
+ ou Message de data (transfert) (Client->Server connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 99 (data)
+   DWord : Handle du fichier
+    Datas
+
+Protocole de download d'un fichier :
+------------------------------------
+Le serveur se connecte au port indique par le client, et envoie la taille totale du fichier (DWORD), et le checksum du fichier complet (DWORD) calcule comme indique ci-dessous.
+Le serveur envoie ensuite le fichier a partir de la position specifiee dans la requete (si il s'agit d'un resume).
+L'envoi se fait par paquets de 4096 octets. Le client connait la taille du fichier a l'avance.
+Apres l'envoi du dernier paquet, le serveur ferme la connexion. Le client calcule le checksum, et si il n'est pas correct, renvoie une
+requete de download.
+
+Protocole d'upload d'un fichier :
+---------------------------------
+Le serveur se connecte au port indique par le client, et attends le checksum du fichier (DWORD).
+L'envoie se fait par paquets de 4096 octets. Le serveur connait la taille du fichier a l'avance.
+Lorsque la taille du fichier est atteinte, le serveur calcule le checksum du fichier et envoie au client soit
+ 1 : Si le checksum est correct
+ 0 : Si le checksum est incorrect
+Le serveur ferme ensuite la connexion. C'est au client de renvoyer une requete d'upload si le fichier est mal recu par le serveur.
+
+Flags des fichiers :
+--------------------
+DWord :
+ Bit 0 = Repertoire
+ Bit 1 = Executable
+ Bit 2 = Lien symbolique
+
+Calcul du checksum :
+--------------------
+Fonction adler de la libz

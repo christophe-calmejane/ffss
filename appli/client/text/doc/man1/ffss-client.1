@@ -1,0 +1,134 @@
+.TH FFSS-CLIENT 1 "2001 September 9"
+.SH NAME
+ffss-client \-  FFSS client
+.SH SYNOPSIS
+.hy 0
+.na
+.TP
+.B ffss-client
+[
+.B \-v
+|
+.B \-\-version
+]
+.br
+[
+.B \-h
+|
+.B \-\-help
+]
+.br
+[
+.B \-L
+.I server
+]
+.br
+[
+.B \-l
+.I directory
+]
+.br
+[
+.B \-c
+.I filename
+]
+.ad b
+.hy 1
+.SH DESCRIPTION
+.LP
+.B ffss-client 
+is a client for the 
+.B Fleming File Sharing System (FFSS).
+It allows you to browse domains, servers and shares using an intuitive interface.
+.LP
+If you launch it without any option, you get a command prompt. By default, you are on / directory (or in your domain), where are all the domains.
+In a domain (for example, /$/fleming), there are all this servers of this domain. Each server can share some directories.
+.br
+The path format is not unlike unix filesystem, or samba filesystem, but with a '$': /$/fleming, /$/ile/tahiti.
+.br
+You can use the command and paths completion, using the <tab> key.
+Commands are listed below.
+.br
+.I Client.conf
+is the configuration file. It can be in the current directory, in /etc/ffss, or in /usr/local/etc/ffss.
+It can be 
+.I ffss-client.conf
+ in the current directory too.
+For file's entries, see ffss-client.conf(5).
+
+.SH COMMANDS
+.TP
+.BI "ls, dir [ " directory " ]"
+List a (remote) directory, domain, a domain list or a share list. Can list a specified directory.
+.TP
+.BI "cd " directory
+Change the current (remote) directory.
+.TP
+.B pwd
+Show the current directory.
+.TP
+.BI "get " directory " | " file
+Download the file, or the directory recursively. Put it on the current local directory.
+.TP
+.BI "lcd " directory
+Change the current local directory.
+NOTE: don't use !cd, use lcd instead.
+.TP
+.BI lpwd
+Get the current local directory.
+.TP
+.BI "!" command
+Execute a local command, by using the system() system call.
+.TP
+.B !, local, sh
+Launch a shell on the current local directory.
+NOTE: In this shell, if you change your current directory (with local cd command), the new local directory won't change after exiting this shell.
+.TP
+.BI "help [ " command " ]"
+Get any help on specified or not commands.
+.TP
+.BI "find " keyword(s)
+Find a file over the network by using the correct master (of the domain).
+If your current directory is a domain (/$/fleming for example), the search is only done in this domain. If you're on /, it's in all domains.
+.TP
+.B close
+close the current connection to a share.
+.TP
+.B exit, close, bye, <Ctrl>-<D> key
+close the current connection, uninit FFSS library and exit.
+
+.SH OPTIONS
+\..PD 0
+.TP
+.B \-v, \-\-version
+Prints FFSS and FFSS-client's version.
+.TP
+.B \-h, \-\-help
+Prints the usage string to standard output and quit.
+.TP
+.BI "\-L " server
+List all shared directories of a server. For example, ffss-client -L orion
+.TP
+.BI "\-l " directory
+List a ffss directory. For example, ffss-client -l /$/fleming/orion.
+.TP
+.BI "\-c " filename
+Specify a configuration file to use.
+
+.SH FILES
+.I ffss-client.conf
+.br
+.I Client.conf
+.br
+.I /etc/ffss/Client.conf
+.br
+.I /usr/local/etc/ffss/Client.conf
+
+.SH AUTHOR
+The FFSS client were written by Benoit Bourdin (bennyben)
+<bennybben@caramail.com>. For further details, use IRC :
+server irc.u-psud.fr, channel #ffss
+.SH "SEE ALSO"
+.BR ffss-client.conf (5),
+.BR ffss-server (1),
+.BR ffss-master (1),

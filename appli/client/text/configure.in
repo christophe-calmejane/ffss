@@ -1,0 +1,191 @@
+	dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/client.c)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(ffss-client, 1.0.0)
+
+	dnl Needed version of ffss
+ffss_needed="1.0.0"
+
+	dnl skyutils 1.12 is needed
+SU_VERSION="skyutils-1.12"
+SU_FUNCTION=SU_Dummy112
+
+	dnl Change this if libffss is not installed in /usr/local
+FFSS_PREFIX=/usr/local/bin
+	dnl And change line bellow too (--with-ffss)
+
+	dnl Checks for programs.
+AC_PROG_CC
+AC_ISC_POSIX
+
+
+CFLAGS="$CFLAGS -D_REENTRANT"
+if test "$GCC" = "yes"
+then
+	CFLAGS="$CFLAGS -Wall"
+fi
+
+
+AC_ARG_ENABLE(debug,
+	[  --enable-debug	  Enables debug option (default=no)],
+	[case "${enableval}" in
+		yes) debug=true ;;
+		no)  debug=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
+	esac],[debug=false])
+	if test "$debug" = "true"; then
+		CFLAGS="$CFLAGS -DDEBUG"
+	fi
+
+
+AC_ARG_ENABLE(cgi,
+	[  --enable-cgi		  Enables CGI mode (default=no)],
+	[case "${enableval}" in
+		yes) cgi=true ;;
+		no)  cgi=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-cgi) ;;
+	esac],[cgi=false])
+	if test "$cgi" = "true"; then
+		CFLAGS="$CFLAGS -DCGI"
+	fi
+
+
+AC_ARG_ENABLE(cgi-downloads,
+	[  --enable-cgi-downloads  Enables downloads via the CGI interface (default=no)],
+	[case "${enableval}" in
+		yes) cgi_dw=true ;;
+		no)  cgi_dw=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-cgi-downloads) ;;
+	esac],[cgi_dw=false])
+	if test "$cgi_dw" = "true" && test "$cgi" = "false"; then
+		AC_MSG_ERROR([cannot enable CGI downloads if CGI mode is not enabled, use --enable-cgi])
+	fi
+	if test "$cgi_dw" = "true"; then
+		CFLAGS="$CFLAGS -DCGI_DOWNLOADS"
+	fi
+
+
+
+AC_ARG_ENABLE(aliases,
+	[  --enable-aliases	  Enables aliases (default=yes)],
+	[case "${enableval}" in
+		yes) aliases=true ;;
+		no)  aliases=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-aliases) ;;
+	esac],[aliases=true])
+	if test "$aliases" = "true"; then
+		CFLAGS="$CFLAGS -DALIASES"
+	fi
+	
+
+AC_ARG_ENABLE(local-commands,
+	[  --enable-local-commands Enables local commands (!<command> and !) (default=yes)],
+	[case "${enableval}" in
+		yes) local_cmds=true ;;
+		no)  local_cmds=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-local-commands) ;;
+	esac],[local_cmds=true])
+	if test "$local_cmds" = "true"; then
+		CFLAGS="$CFLAGS -DLOCAL_CMDS"
+	fi
+
+
+AC_ARG_WITH(ffss,
+ [  --with-ffss=DIR	  Bin path to uninstalled copy of libffss (default /usr/local/bin)])
+echo -n "checking for ffss-config... "
+if test x"$with_ffss" = x ; then
+	FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+	FFSS_GET_LIBS=--libs
+	if test -x "$FFSS_CONFIG"; then
+		:
+	else
+		AC_MSG_ERROR([ffss-config not found. Installed ? Try with configure --with-ffss option])
+	fi
+else
+	FFSS_CONFIG=$with_ffss/ffss-config
+	FFSS_GET_LIBS=--libs-static
+	FFSS_ADD_PATH=-L$with_ffss/src/.libs
+	FFSS_ADD_INCLUDE=-I$with_ffss/src
+	if test -x "$FFSS_CONFIG"; then
+		:
+	else
+		AC_MSG_ERROR([ffss-config not found in this directory ($with_ffss)])
+	fi
+fi
+
+echo "using $FFSS_CONFIG"
+dnl Check ffss Version
+ffss_vers=`$FFSS_CONFIG --version`
+ffss_vers2=`echo $ffss_vers | sed -e 's/\.//g'`
+ffss_needed2=`echo $ffss_needed | sed -e 's/\.//g'`
+if test "$ffss_vers2" -lt "$ffss_needed2"; then
+  AC_MSG_ERROR([Your version of libffss ($ffss_vers) is too old, this version of ffss-master needs libffss >= $ffss_needed])
+fi
+
+	dnl Get cflags and libs
+ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
+ffss_cflags=`$FFSS_CONFIG --cflags`
+
+LIBS="$LIBS $ffss_libs"
+CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
+
+
+
+	dnl for readline we need termcap
+AC_CHECK_LIB(termcap, tputs, FFSS_TERMCAP_LIB="-ltermcap")
+if test ! "$FFSS_TERMCAP_LIB"; then
+	AC_MSG_ERROR([Cannot find termcap functions, please compile libtermcap or install libtermcap-dev or -devel package])
+fi
+LIBS="$LIBS -ltermcap"
+
+	dnl Checks for readline.
+AC_CHECK_LIB(readline, readline, FFSS_READLINE_LIB="-lreadline")
+if test ! "$FFSS_READLINE_LIB"; then
+	AC_MSG_ERROR([Cannot find readline functions, please compile libreadline or install libreadline-dev or -devel package])
+fi
+LIBS="$LIBS -lreadline"
+
+	dnl we need libcgi for CGI
+dnl if test "$cgi" = "true"; then
+dnl 	AC_CHECK_LIB(cgi, cgi_init, FFSS_CGI_LIB="-lcgi")
+dnl 	if test ! "$FFSS_CGI_LIB"; then
+dnl 		AC_MSG_ERROR([Cannot find libcgi functions, please compile libcgi or install libcgi-dev or -devel package])
+dnl 	fi
+dnl 	CFLAGS="$CFLAGS -I/usr/include -L/usr/lib"
+dnl 	LIBS="$LIBS -L/usr/lib -lcgi"
+dnl fi
+
+
+dnl AC_SUBST(FFSS_PTHREAD_LIB)
+dnl AC_SUBST(FFSS_READLINE_LIB)
+dnl AC_SUBST(FFSS_TERMCAP_LIB)
+dnl AC_SUBST(O_SKYUTILS_FLAGS)
+dnl AC_SUBST(SU_VERSION)
+dnl AC_SUBST(O_SKYUTILS_LIB)
+dnl AC_SUBST(O_SKYUTILS_LIB_CONFIG)
+dnl AC_SUBST(O_LIB_SKYUTILS)
+dnl AC_SUBST(O_H_SKYUTILS)
+
+
+	dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h signal.h semaphore.h)
+
+	dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+
+	dnl Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS(strdup strstr strcasecmp sem_init sem_wait sem_post signal)
+
+
+AC_OUTPUT([
+	Makefile
+	src/Makefile
+	doc/Makefile
+	doc/man1/Makefile
+	doc/man5/Makefile
+	data/Makefile
+])

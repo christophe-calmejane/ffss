@@ -1,0 +1,44 @@
+
+Q: J'ai une fonction de download mais qui se trouve dans transfert.h, et cela
+ pose des problemes, le transfert.h n'est pas installe (make install)
+A: ne pas utiliser cette fonction, il y a juste besoin de ffss.h
+ voir le client exemple
+
+Q: Le taux de transfert est donne en debug par la lib, mais pas passe en
+ parametre.
+A: le calculer soi meme
+
+Q: pourquoi les listings donnes par le server ne sont pas du tout ordonnes ?
+ (alphabetiquement, etc)
+A: cela est donne par les primitives systemes...dans l'ordre de creation
+ des fichiers sur le disque
+
+Q: quand on essaie de lister un dossier trop gros (trop de fichiers), il y a
+un probleme de buffer
+A: suffit d'ajuster la taille max du buffer
+
+Q: MasterSearch c'est quoi
+A: ca sert a lancer une recherche de master si on en a pas specifie
+
+Q: OnBeginTCPThread ca doit me servir a quoi ?
+A: peut-etre a rien...voir s'il y a l'utilite.
+
+Q: comment savoir si un fichier existe et peut etre ouvert de facon portable ?
+A: fopen
+
+Q: getenv("PWD"); ca marche sous win ?
+A: a essayer...o pire recuperer le argv[0] et virer le nom de l'exe
+
+Q: system("command"); sous win ca marche sous NT & 9x ?
+A: a essayer...o pire disable sous win
+
+Q: a quoi servent les callback OnStrmOpenAnswer,OnStrmReadAnswer,OnStrmWriteAnswer ?
+A: c'est utilise en interne...ils ne sont pas a gerer par le client
+
+Q: comment on fait un printf("%3s",...); en remplacant 3 par une constante ?
+A: char format[256];
+sprintf(format, "%%%ds", CONSTANTE);
+printf(format, ...);
+
+Q: un printf("%10.10s", ...) me justifie a droite
+A: printf("%-10.10s", ...)

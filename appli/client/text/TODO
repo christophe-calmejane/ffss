@@ -1,0 +1,182 @@
+FCA (FFSS client application) by bennyben
+there's a lot of things to do.... :/
+
+
+Les todo sont classes par ordre de priorite, les premiers sont
+les plus importants.
+
+
+
+---------------------------
+semaphore: timeout a _faire_
+-> choper la commande handle a kiki/botnet
+c comme un process normal, si tu hook pas le signal, ca termine
+faut que tu ajoutes le hook du signal SIG_TERM
+man signal
+fait attention, faut faire un truc particulier si tu veux que ca soit actif QUE pour certains threads
+
+void BN_UnsetSigs(bool Fork)
+sigfillset(&mask);
+pthread_sigmask(SIG_BLOCK,&mask,NULL);
+sigset_t mask;
+-> voir les questions
+
+---------------------------
+revoir la compilation sans le CGI (ca compile pas...) et sans rien du
+tout, diverses combinaisons.
+
+----------------------------
+trier les machines, les classer par ordre alphabetique par exemple.
+
+----------------------------
+proposer de desactiver la gestion des skins a la compil
+(au configure)
+
+----------------------------
+afficher un meilleur status du download: un numero de fichier en cours
+
+----------------------------
+bug dans la completion locale: ne fait pas de \ devant les espaces
+-> TESTER A FLEM !!
+
+----------------------------
+[21:14:40] <kiki> donc le set var servira a donne la taille des blocs
+de checksum.... genre en automatique, si le fichier est inf a 50Mo,
+c sa taille sinon, tous les 10Mo
+[21:12:28] <kiki> a propos du timeout que tu init lors d un download ?
+
+----------------------------
+DEBUGGER le pompage recursif
+
+----------------------------
+aliaser la completion comme pour les commandes
+
+---------------------------
+bug: completion -> listing
+download recursif -> meme listing, regarde pas dans le cache
+
+---------------------------
+faire un more
+-> get !more !rm dans /tmp, avec le nom d'un fichier temporaire
+
+----------------------------
+mettre a jour les mans
+
+----------------------------
+faire un mget the*red*
+
+----------------------------
+faire un choix all/none dans les questions
+(pour get)
+
+----------------------------
+portage sous win
+
+----------------------------
+[23:40:32] <kiki> si lors d un download, tu recois ca "FFSS_ERROR_XFER_MODE_NOT_SUPPORTED" comme erreur
+[23:40:51] <kiki> faut que tu passes dans l autre mode  de download (le fameux UseConnSock)
+
+----------------------------
+bien tester l'optimisation des recherche de domaine && server
+
+----------------------------
+
+quand on lance, qu'on fait cd /$/none/<un server> dont le nom
+n'est pas valide DNS-parlant, mais valide FFSS-parlant, il faut
+faire un truc intelligent.
+revoir & tester le cd d'une machine inconnue dans un domaine
+rajouter une variable d'env pour controler si on l'autorise,
+idem pour le none.
+
+----------------------------
+boucler le tri et proposer au find de n'afficher que les machines
+off.
+
+----------------------------
+bug: aller n'importe ou, puis faire cd -> completion marche pu
+
+----------------------------
+utiliser FC_SendMessage_MasterSearch()
+-> Il faut l'utiliser si on m'a pas indique de master
+
+----------------------------
+pompage de dossiers a finir
+si erreur lors du pompage, redw automatiquement (3 essais max)
+
+--------------------------
+revoir le configure, checker bien toute les fonctions que j'utilise
+et le pb avec les nouvelles versions d'autoconf & automake
+
+----------------------------
+=============================
+si on recoit le message FFSS_ERROR_RESEND_LAST_UDP UDP -> il faut alors renvoyer
+le dernier message UDP...
+
+----------------------------
+=============================
+envoyer un message (OnConnectError) au master lorsqu'on arrive pas a se connecter
+a une machine consideree comme UP
+(mais pas l'inverse)
+
+---------------------------
+completion en cascade
+
+---------------------------
+calculer soi meme le taux de transfert,
+
+----------------------------
+revoir la gestion des arguments
+
+----------------------------
+tester les cas suivants:
+ si le master est down
+ si le master est up sans master (ServerList renvoie true)
+ si le server en cours est down
+ si le server en cours est up mais sans server
+
+----------------------------
+!cd <-> lcd.........
+supprimer le !cd ou le rendre valide
+faire un lls
+
+----------------------------
+proposer le changement de port, et essayer de tuneller
+via ssh
+
+----------------------------
+faire un ~
+pour aller dans notre domaine, celui dans lequel on tombe au depart
+mais aussi: cd ~/toto
+
+----------------------------
+revoir si on a ni master ni server, si server down pdant k'on le browse, etc...
+et master down
+
+----------------------------
+login/pass dans la connection aux partages
+
+----------------------------
+gestion du Ctrl-C intelligente, avec gestion des signaux
+quitter le sem_wait avec le Ctrl-C
+quitter avec 5 Ctrl-C
+
+---------------------------
+optimiser le nombre de tests de bons repertoire, par ex:
+cd ..
+ls
+
+----------------------------
+revoir la securite, surtout avec les commandes sh, local, ! et !... !!!
+on doit pouvoir aisement mettre le client SUID root au pire des cas,
+sans que cela soit une faille pour le systeme
+
+----------------------------
+get d'un partage		-> a faire
+get d'une machine entiere	-> interet ???
+get d'un domaine		-> pas bon
+get de la /			-> pas bon
+
+----------------------------
+nlles fonctions des commandes
+option des commandes, comme ls recursif
+

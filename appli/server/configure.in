@@ -1,0 +1,125 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/server.c)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(ffss-server, 1.0.0)
+
+dnl Needed version of ffss
+ffss_needed="1.0.0"
+
+dnl Change this if libffss is not installed in /usr/local
+FFSS_PREFIX=/usr/local/bin
+dnl And change line bellow too (--with-ffss)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_MAKE_SET
+AC_ISC_POSIX
+AC_PROG_YACC
+dnl Try to get headers on .l files
+YACC="$YACC -d"
+AC_SUBST(YACC)
+AM_PROG_LEX
+
+if test "$GCC" = "yes"
+then
+	CFLAGS="$CFLAGS -Wall"
+fi
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(sys/ioctl.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS(strdup strerror)
+
+AC_ARG_ENABLE(malloc_trace,
+[  --enable-malloc_trace   Enables malloc trace debug info (default=no)],
+[case "${enableval}" in
+  yes) malloc_trace=true ;;
+  no)  malloc_trace=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-malloc_trace) ;;
+esac],[malloc_trace=false])
+if test "$malloc_trace" = "true"; then
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
+fi
+
+AC_ARG_WITH(ffss, [  --with-ffss=DIR       Bin path to uninstalled copy of libffss (default /usr/local/bin)])
+AC_ARG_ENABLE(debug,
+[  --enable-debug          Enables debug option (default=no)],
+[case "${enableval}" in
+  yes) debug=true ;;
+  no)  debug=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
+esac],[debug=false])
+if test "$debug" = "true"; then
+  CFLAGS="$CFLAGS ""-DDEBUG "
+fi
+
+echo -n "checking for ffss-config... "
+if test x"$with_ffss" = x ; then
+  FFSS_CONFIG=$FFSS_PREFIX/ffss-config
+  FFSS_GET_LIBS=--libs
+  if test -x "$FFSS_CONFIG"; then
+    :
+  else
+    AC_MSG_ERROR([ffss-config not found. Installed ? Try with configure --with-ffss option])
+  fi
+else
+  FFSS_CONFIG=$with_ffss/ffss-config
+  FFSS_GET_LIBS=--libs-static
+  FFSS_ADD_PATH=-L$with_ffss/src/.libs
+  FFSS_ADD_INCLUDE=-I$with_ffss/src
+  if test -x "$FFSS_CONFIG"; then
+    :
+  else
+    AC_MSG_ERROR([ffss-config not found in this directory ($with_ffss)])
+  fi
+fi
+
+echo "using $FFSS_CONFIG"
+dnl Check ffss Version
+ffss_vers=`$FFSS_CONFIG --version`
+ffss_vers2=`echo $ffss_vers | sed -e 's/\.//g'`
+ffss_needed2=`echo $ffss_needed | sed -e 's/\.//g'`
+if test "$ffss_vers2" -lt "$ffss_needed2"; then
+  AC_MSG_ERROR([Your version of libffss ($ffss_vers) is too old, this version of ffss-master needs libffss >= $ffss_needed])
+fi
+
+dnl Get cflags and libs
+ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
+ffss_cflags=`$FFSS_CONFIG --cflags`
+ffss_bzlib=`$FFSS_CONFIG --with-bzlib`
+
+if test "$ffss_bzlib" = "yes" ; then
+  CFLAGS="$CFLAGS -DHAVE_BZLIB"
+fi
+
+dnl Checks for libraries.
+AC_CHECK_LIB(dl, dlopen,O_DL_LIB="-ldl")
+AC_CHECK_LIB(c_r, dlopen,O_DL_LIB="-lc_r")
+if test ! "$O_DL_LIB"; then
+	AC_MSG_WARN("Cannot find libdl... plugins not enabled")
+else
+	CFLAGS="$CFLAGS ""-DPLUGINS "
+        LIBS="$LIBS $O_DL_LIB"
+fi
+
+LIBS="$LIBS $ffss_libs"
+CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
+
+AC_OUTPUT([
+Makefile
+src/Makefile
+src/Windows/Makefile
+src/Windows/server/Makefile
+data/Makefile
+plugins/Makefile
+])
+

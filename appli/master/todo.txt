@@ -1,0 +1,22 @@
+ TO DO :
+
+ - Quand on retire un host de la liste (30 jours)... virer aussi son index
+ - Modifier les scripts de compilation pour que le fichier de conf par defaut soit copie dans /usr/doc/ffss/master
+ - Creer un fichier interunion.c dans lekel je met le BuildPath et mon IntersectAnswers
+
+INDEXATION :
+ - Ajouter les tags 'hst' et 'shr' qui sont utilises avec les autres tags
+
+POSSIBLE DoS :
+ - Checker qu'on n'envoie pas trop souvent des requetes de recherche d'une meme machine (garder une trace des requetes client) ! DoS Attack
+ - Interdire des index de plus de X nodes (se baser sur la valeur de celui de bennyben pour fixer la limite)
+
+ - AJOUTER DANS LA CONF (win et nux) des regles pour limiter les ip qui se connectent !!
+
+
+KNOW BUGS
+---------
+[2001/10/17-23:59:44] Search from 172.17.64.207 for domain * : mondes engloutis mpg
+Oct 17 23:59:57 gameboy Ffss Master: FFSS Crashed :-(. Check: search.c:290
+
+ - Tester une connexion tardive d'un des masters (eventuellement avec changement de dns..)

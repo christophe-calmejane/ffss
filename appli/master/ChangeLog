@@ -1,0 +1,81 @@
+                     The FFSS Master Historic
+                       Updated by Ze KiLleR
+
+                      Stable Version : 1.0.0
+                      Devel  Version : 1.0.0
+                  Last Update : September, 19th 2001
+
+VIRER LE -PREx DE MASTER.H
+
+September, 29th 2001:
+  - Added a debug purpose function to compute number of strings in index
+
+September, 20th 2001:
+  - Fixed a bug in search engine
+  - Added a --log option to log all search request
+  - Added a greedy algorithm for search intersect
+
+September, 19th 2001:
+  - Wrote the GarbageCollector function, to clean the unused entries in the index
+
+August, 31th 2001:
+  - Added use of setuid and setgid
+
+August, 30th 2001:
+  - Fixed a possible DoS attack
+  - Fixed a bug in search answer message
+
+August, 29th 2001:
+  - Added a --enable-static option to configure
+  - Added daemonize option to the master
+  - Added syslog support
+  - Cleaned printfs
+
+August, 27th 2001:
+  - Added Check index integrity functions (prevent DoS attacks)
+  - Added some command line options
+  - Added signal hooks
+
+August, 26th 2001:
+  - Added index load/store functions
+  - Optimized search engine (30% faster)
+
+August, 2nd 2001:
+  - Fixed other bugs in indexing engine.. now runs fine, with stability
+
+August, 1st 2001:
+  - Fixed some bugs in indexing engine (seg fault, or invalid results)
+
+July, 28th 2001:
+  - Added support of samba index message (use ScanMachine prog to send this kind of messages)
+
+July, 20th 2001:
+  - Fixed memory leak in indexing engine
+  - Fixed wrong search answer if nothing found
+  - Fixed bug in index free
+  - Fixed a bug in forwarded search message
+
+July, 19th 2001:
+  - Fixed a bug with indexing (seg fault) when a new server comes after old ones
+
+July, 17th 2001:
+  - Finished indexing engine (without intersect)
+  - Fixed bugs in index
+
+July, 16th 2001:
+  - Remove data-base search engine, now using own indexing engine
+  - Changed data structures for indexing
+
+April, 18th 2001:
+  - Added the possibility to forward search requests to foreign masters
+  - Optimized search requests
+
+April, 14th 2001:
+  - Added a new thread for search requests
+  - Updated data-base based search engine
+
+March, 12th 2001:
+  - Removed a non thread-safe variable
+
+March, 11th 2001:
+  - Created configure script

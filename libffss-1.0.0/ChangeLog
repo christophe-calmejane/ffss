@@ -1,0 +1,127 @@
+                         The FFSS Historic
+                       Updated by Ze KiLleR
+
+                      Stable Version : 1.0.0
+                      Devel  Version : 1.0.0
+                  Last Update : December, 30th 2001
+
+VIRER LE -PREx DE FFSS.H
+METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+December, 30th 2001:
+  - Added check for solaris build
+
+December, 27th 2001:
+  - Fixed a bug in uninit routines that may cause a seg fault
+
+December, 24th 2001:
+  - Rewrote/cleaned many parts of the code
+
+December, 22th 2001:
+  - Huge code cleanup
+  - Fixed bugs in shutdown routines
+
+December, 20th 2001:
+  - Fixed many bugs in socket section of skyutils
+  - Removed duplicated code in message.c
+
+November, 4th 2001:
+  - Added new variables in xfers, to get exact position of a xfer
+
+October, 15th 2001:
+  - Fixed a bug in upload resume
+  - Fixed a possible DoS in UDP thread
+  - Fixed a bug in UDP routine that may cause a seg fault
+
+October, 14th 2001:
+  - Changed definition of idle timeout (now, don't timeout if a transfer is active)... and the code
+
+October, 3rd 2001:
+  - Fixed a bug in server sockets that may cause a seg fault
+
+October, 1st 2001:
+  - Added a new callback to server (for easy authorized connection check)
+  - Fixed a buffer overflow in common.c routine
+
+September, 26th 2001:
+  - Fixed a bug in UDP reply if buffer is too bug
+
+September, 15th 2001:
+  - Added idea of gateway
+
+September, 4th 2001:
+  - Cleaned parts of the code
+
+August, 29th 2001:
+  - Added syslog logging
+  - Cleaned parts of the code
+
+August, 3rd 2001:
+  - Fixed a possible DoS attack with server if ShareConnection is not the first message sent over TCP connection
+
+July, 29th 2001:
+  - Removed all thread static buffer
+  - Added plugin support
+
+July, 28th 2001:
+  - Added the samba index message
+
+July, 24th 2001:
+  - Added malloc trace to skyutils and libffss
+  - Fixed mistakes in configure.in and ffss-config.in
+
+July, 20th 2001:
+  - Added a new callback for client (OnMasterError)
+  - Defined FFSS_PrintDebug to real nothing (macro) ifndef DEBUG
+
+July, 19th 2001:
+  - Changed some defines (TCP_BUFFER_SIZE) which cause seg fault on BSD systems
+
+July, 17th 2001:
+  - Fixed bugs in index sending message
+
+June, 2nd 2001:
+  - Added context infos mode (for debug purpose)
+  - Fixed a bug in transfer that may cause a seg fault
+
+May, 6th 2001:
+  - Fixed bug in streaming messages
+  - Fixed a possible DoS attack
+
+April, 18th 2001:
+  - Added the search forward message and callback to master
+
+April, 14th 2001:
+  - Added new compilation options in configure
+  - Fixed #define mistake in source files
+
+March, 18th 2001:
+  - Fixed a little path mistake in configure/ffss-config
+  - Updated to skyutils-1.12
+
+March, 13th 2001:
+  - Fixed a bug in Search message with UDP socket port
+
+March, 11th 2001:
+  - Fixed a bug with FTP compatibility
+
+March, 7th 2001:
+  - Added usage of compression for Index message
+
+March, 6th 2001:
+  - Added usage of BZlib for compressed message
+  - Added usage of Zlib for compressed message
+  - Added autodetection of compression type to use
+
+March, 5th 2001:
+  - Totally changed way index are sent to masters (now using a TCP connection)
+  - Optimized packet size value
+
+February, 26th 2001:
+  - Fixed a bug with data packet size
+  - Fixed a bug with BSD if a xfer is canceled
+  - Fixed configure.in and ffss-config.in
+  - Added the possibility to remove checksum calculation
+
+February, 15th 2001:
+  - Created configure script

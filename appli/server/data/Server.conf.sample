@@ -1,0 +1,85 @@
+### FFSS Server config file ###
+
+# Global section starts with a <Global> and ends with a <End>
+<Global>
+
+# Define the displayed name of your server
+#Name "My Lame Server"
+
+# Define the displayed comment of your server
+#Comment "My Lame Comment"
+
+# Define host name of your master (comment the line if not using master)
+#Master "ffss"
+
+# Define idle time out value (in seconds) for share connections (0 means never time out)
+#Idle 60
+
+# Define max number of simultaneous connections (0 is illimited) (except FTP connections) (defaults to 10)
+#MaxConnections 10
+
+# Define max number of simultaneous transfer with the same connection (0 is illimited) (except FTP connections) (defaults to 2)
+#MaxXFerConnections 2
+
+# Define if you want the FTP compatibility
+#FTP 1
+
+# Define max number of simultaneous FTP connections (0 is illimited)
+#FTP_MaxConnections 2
+
+# Define if you want to enable the local socket for runtime configuration
+#ConfSocket 1
+
+# Define if you want the tranfers to be achived using the same socket/thread the client connection is using
+#XFerInConn 0
+
+# Define debug level (0 if no debug)  (from 0 to 6)
+#Debug 6
+
+# If you have multiple interface, or you don't want to use eth0, define the following
+#Interface eth1
+
+# If you are using BSD, or if the autodetect of interface IP fails, manually define ip of your server
+#MyIP "172.17.64.15"
+
+# If you want to change default xfer packet size (defaults to 1460), change this value
+#XFerBufferSize 1460
+
+# If you want to change default file read buffer size (defaults to 64ko), change this value
+# Try to make it a multiple of XFerBufferSize
+#ReadBufferSize 65536
+
+# If you want to load plugins at startup time, define Plugin lines (one plugin per line)
+#Plugin "/usr/local/share/ffss/plugins/confconn.so"
+
+<End>
+
+
+# Each share starts with a <name of share>, and ends with a <End>
+<test>
+
+# Define the local path of the share
+Path "/tmp"
+
+# Define the displayed name of the share
+Comment "test of a share"
+
+# Define is the share is writeable
+Writeable 0
+
+# Define is the share is private (only registered users can connect)
+Private 0
+
+# Define max number of simultaneous connections (0 is illimited)
+MaxConnections 2
+
+# Define registered users
+# Each user is defined like that : (login,password,writeable)
+# Users are separated by , and are encapsuled by {}
+# Writeable is either 1 or 0 (read-write or read-only)
+Users {(lame,mypass,1),(lamest,hispass,0)}
+
+<End>
+
+
+### End of file ###

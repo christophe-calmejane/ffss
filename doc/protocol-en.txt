@@ -1,0 +1,441 @@
+FFSS 's PROTOCOL
+----------------
+
+Definitions:
+------------
+ * Server   : The application which runs as a deamon on the user's computer and handle shares for this computer.
+ * Client   : The application which seek shares on a network and download files from a server.
+ * Master   : The application which runs as a deamon on a central machine and which informs the clients and the servers.
+
+Properties of the Server :
+--------------------------
+The server is listening on port 696 in TCP and UDP mode (and port 697 in TCP for the ftp compatibilitie).
+The UDP port is used in answering the ping request of the master and handling client's requests.
+When a server launches out it sends a message of login has its master (if it has one of them) and a msg of index and stats.
+When a server come down it sends a logout message to its master.
+In case of an anonymous ftp connection one sees as root all the public shares.
+
+Properties of the Client :
+----------------------------
+The client is listening on a random UDP port which is open at the run time.
+To seek servers on a network, the client has two solution:
+ * If there is a master running then the client request it the list of the servers.
+ * If there is no master running on the network then the client sends a broadcast request on port 696 (UDP).
+If a client fails to connect to a server then the client report it to his master (if this one exists) on port 695 (UDP).
+
+Properties of Master :
+----------------------
+The master is listening on port 695 in UDP mode.
+The master build the list of the active servers. It can also be in contact with other masters (on another network for example)
+to share its list of the active servers and get their list.
+When a master comes up it requests to all his Co-masters their list.
+Regularly the master sends a UDP ping request to the servers which are in his list (local servers, not those of the others masters)
+- > If a server does not reply it's  withdrawed from the list of the active servers.
+ If the master receive a login message it notice all clients that a new server is up (UDP broadcast on port 697) and notice its Co-masters too.
+ If the master receive a logout message it notice all clients that this server is down (UDP broadcast on port 697) and notice its Co-masters too.
+ If the master receive a connection-failure message from a client about a server it notice all the clients that the server is down (UDP broadcast on port 697) and notice its Co-masters too.
+The master sends broadcast messages of status only all X seconds, by sending several changes at the same time (message of type 3)
+If the master receive a message as a friandise-like search then it sends the request to its Co-masters and waits the reply's before answering the client.
+
+Detail of the protocol (Version 1):
+---------------------------------
+ * Status message (Server->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message Type = 1 (status)
+   DWord : Status of the server (1=ON 2=OFF 3=QUIET)
+   DWord : Version of the Server
+   ZStr : Name of the computer (limit to 15 char)
+   ZStr : OS (limit to 10 char)
+   ZStr : Comment (limit to 50 char)
+
+ * Status message reply (Master->Server 696) (UDP) :
+   DWord : Size of the message
+   DWord : Massage Type = 2 (status reply)
+   ZStr : Name of the domain of the master (limit to 20)
+  -> Awaited error messages
+    1 : Server version is to old
+
+ * Status message from a server (Master->Clients Random) (Broadcast UDP) :
+ or Status message to a server  (Master->Master 695) (UDP) :
+ or Search of server reply message (Server->Client 697) (UDP) :
+   DWord : Size of the message
+   DWord : Message type  = 3 (servers status)
+   DWord : Compression type (0=Nil 1=??) (If compression then whateveer is below is compressed. Size is given by the message one)
+   DWord : Status number
+    DWord : Status of the server (1=ON 2=OFF 3=QUIET)
+    DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
+     DWord : IPv4 of the master
+     DWord : Reserved
+     DWord : Reserved
+     DWord : Reserved
+    ZStr : Domain name
+    ZStr : Computer name
+    ZStr : OS
+    ZStr : Comment
+    DWord : Version of the IP address of the server (0=Nil,1=IPv4,2=IPv6)
+     DWord : IPv4 of the server
+     DWord : Reserved
+     DWord : Reserved
+     DWord : Reserved
+
+ * Index request message (Client->Server 696) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 4 (index request)
+   DWord : Port to use for reply (697 for a client - 695 for a Master - any for the others :))
+
+ * Index request reply message (Server->Client 697) (UDP) : ONLY LIST THE PUBLIC SHARES !!!
+ ou Index request reply message (Server->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 5 (index reply)
+   DWord : Compression type (0=Nil 1=??) (If compressing then every buffer in the index's connection will be compressed)
+   DWord : Size of the index
+   DWord : Port to connect to
+
+ * Index message (connected)
+   DWord : Number of shares
+    DWord : Size of the share's buffer
+    ZStr  : Name of the share
+    DWord : Number of link at this level
+     ZStr : Filename
+     DWord : File flags (see below)
+     DWord : Size of the file
+     DWord : File's TimeStamp
+     If a folder then
+      DWord : Nmuber of linka this level
+      ...
+
+ * Server listing message (Client->Master 695) (UDP) :
+ ou Server listing message (Master->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 6 (listing servers)
+   DWord : Compression authorized in replying
+   ZStr : Wanted OS or nil string (0) if all wanted
+   ZStr : Wanted domain or nil string (0) if all wanted
+
+ * Server listing reply message (Master->Client Random) (UDP) :
+// ANNULED or Server listing reply message (Master->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 7 (listing servers reply)
+   DWord : Compression type (0=Nil 1=??)(If compressing then every buffer in the index's connection will be compressed)
+   DWord : Domain number
+     ZStr : Domain name
+     DWord : Number of server in this domain
+       DWord : Status of the server (1=ON 2=OFF 3=QUIET)
+       ZStr : Name of the computer
+       ZStr : OS
+       ZStr : Comment
+       -------------- STATS TO COMPLETE WITH ??? -------------------
+       DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
+         DWord : IPv4 of the server
+         DWord : Reserved
+         DWord : Reserved
+         DWord : Reserved
+
+ * Connection-failure message client-server (Client->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 8 ( connection failure client-server)
+   DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
+    DWord : IPv4 of the server
+    DWord : Reserved
+    DWord : Reserved
+    DWord : Reserved
+
+ * Ping message  (Master->Server 696) (UDP)
+   DWord : Size of the message
+   DWord : Message type = 9 (ping)
+
+ * Pong message (Server->Master 695) (UDP)
+   DWord : Size of the message
+   DWord : Message type = 10 (pong)
+   DWord : Status of the server (1=ON 2=OFF 3=QUIET)
+
+ * Server seeking message (Client->Servers 696) (Broadcast UDP) :
+   DWord : Size of the message
+   DWord : Message type = 11 (active servers seek)
+
+ * Shares listing message (Client->Server 696) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 12 (listing shares)
+
+ * Shares listing reply message (Server->Client 697) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 13 (listing shares reply)
+   DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
+    DWord : IPv4 of the server
+    DWord : Reserved
+    DWord : Reserved
+    DWord : Reserved
+   DWord : Number of shares
+     ZStr : Name of the share
+     ZStr : Comment
+
+ * Domain listing message (Client->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 30 (listing domaines)
+
+ * Domain listing reply message (Master->Client Random) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 31 (reponse listing domaines)
+   DWord : Number of domain
+     ZStr : Name of the domain
+
+ * Connection to a share message (Client->Server connecte 696) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 14 (share's connection)
+   DWord : Supported compression type
+   ZStr : Share name
+   ZStr : Login for connection (0 if nil)
+   ZStr : Password for connection (0 if nil)
+  -> Awaited error messages
+    2 : Ressource not available
+    3 : Login/pwd necessary
+    4 : Too much connection
+  -> If there is no errors then the server must react as if a listing of the root directory (shared)as been asked + stats msg
+
+ * Folders listing request message (Client->Server connecte) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 15 (Folders listing request)
+   ZStr : Path of the repertoire in the share
+  ->  Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+
+ * Actuel folder listing request message (Server->Client connecte) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 16 (Actuel folder listing)
+   ZStr : Path of the folder in the share
+   DWord : Compression type (0=Nil 1=??)(If compressing then every buffer in the index's connection will be compressed)
+   DWord : Number of entries
+    ZStr : Filename ( ls the folder)
+    DWord : Flags of the file (see below)
+    DWord : Size of the file
+    DWord : TimeStamp of the file
+
+ * File download message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 17 (file download)
+   ZStr : Path of the file in the share
+   DWord : Offset in a aresume case or 0 if the download is completed
+   DWord : Port to connected to for the file transfer
+  -> Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+    8 : Connection error with the client
+    9 : Internal error of th server
+    10 : Too much connection
+  -> If no error then the server connect to the indicated port and download the file using the protocol descripted below
+
+ * File upload message (Client->Server connecte) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 18 (file upload)
+   ZStr : Path of the file in the share
+   DWord : Size of the file
+   DWord :  Port to connected to for the file transfer
+  -> Awaited error messages
+    6 : Refused access
+    7 : No space on device
+    8 : Connection error with the client
+    9 : Erreur interne of the server
+    10 : Too much connection
+    12 : File already exists
+  -> If no error then the server connect to the indicated port and upload the file using the protocol descripted below
+
+ * Moving/rename a file message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 19 (Moving/rename a file)
+   ZStr : Path of the file in the share
+   ZStr : New Path of the file
+  -> Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+    12 : File already existing
+  -> If no error then the server send an FFSS_ERROR_NO_ERROR
+
+ * File copying message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 20 (file copy)
+   ZStr : Path of the fichier in the share
+   ZStr : Path of the file copy
+  -> Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+    7 : No space on device
+    12 :  File already existing
+  -> If no error then the server send an FFSS_ERROR_NO_ERROR
+
+ * File deleting message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 21 (deleting file)
+   ZStr : Path of the file in the share
+  -> Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+    11 : Folder not empty
+  -> If no error then the server send an FFSS_ERROR_NO_ERROR
+
+ * Folder creation message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 22 (folder creation)
+   ZStr : Path of the folder to create
+  -> Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+    12 : File already existing
+  -> If no error then the server send an FFSS_ERROR_NO_ERROR
+
+* Deconnection messages (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 100 (deconnection query)
+
+* Error message (Server->Client connected) (TCP) :
+ ou Error message (Master->Server 696) (UDP) :
+ ou Error message (Master->Client qcq) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 200 (Error message)
+   DWord : Errornum
+   ZStr : Error description
+
+ * Search message (friandise) (Client->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 50 (search)
+   DWord : Port for the reply
+   DWord : Compression types authorized in the reply
+   ZStr : Asked domain or nil string (0) if all domain
+   ZStr : String with the magic words
+
+ * Search reply message (friandise) (Master->Client qcq) (UDP) :
+ ou Forwarded search message (Master->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 51 (Search reply)
+   DWord : Compression type (0=Nil 1=??)(If compression then whateveer is below is compressed. Size is given by the message one)
+   ZStr : String with the magic words identifiyng the request
+   DWord : Number of domain
+    ZStr : Name of the domain
+    DWord : Number of replies
+     ZStr : Answer string giving name of the server and his domain (that identifies a server), the share and the path whithin it
+
+ * Forwarded search message (Master->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 52 (forwarded search)
+   DWord : Client's port for the reply
+   DWord : Compression types authorized in the reply
+   DWord : Version of the IP address of the server's master (0=Nil,1=IPv4,2=IPv6)
+    DWord : IPv4 of the server
+    DWord : Reserved
+    DWord : Reserved
+    DWord : Reserved
+   ZStr : String with the magic words
+
+ * Master seek message (Client->Master 695) (UDP) :
+ ou Master seek message (Server->Master 695) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 55 (Master seek)
+   DWord : Type of requester (1=SERVER,2=CLIENT)
+
+ * Master seek reply message (Master->Client Random) (UDP) :
+ ou Master seek reply message (Master->Server 696) (UDP) :
+   DWord : Size of the message
+   DWord : Message type = 56 (Master seek reply)
+   DWord : Protocol version used by the master
+   ZStr : Domain name of the master
+
+ * Streaming message : open (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 80 (streaming open)
+   DWord : Flags for the opening
+   ZStr : File Path
+
+ * Streaming message : open reply (Server->Client connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 81 (streaming open reply)
+   ZStr : File Path
+   DWord : Error code
+   DWord : File Handle (if no error occured)
+   DWord : File size
+
+ * Streaming message : close (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 82 (streaming close)
+   DWord : File Handle
+
+ * Streaming message : read (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 83 (streaming read)
+   DWord : File Handle
+   DWord : Read offset
+   DWord : Read Size (Indicative)
+
+ * Streaming message : read reply (Server->Client connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 84 (streaming read reply)
+   DWord : File Handle
+    Datas
+
+ * Streaming message : write (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 85 (streaming write)
+   DWord : File Handle
+   DWord : Write offset
+    Datas
+
+ * Streaming message : write reply (Server->Client connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 86 (streaming write reply)
+   DWord : File Handle
+   DWord : Error code
+
+ * Streaming message : seek (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 87 (streaming open)
+   DWord : File Handle
+   DWord : Flags for th seek  (SET/CUR/END)
+   DWord : Offset
+
+ * Transfert start message (Server->Client connected) (TCP) :
+ ou Transfert start message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 97 (Transfert start)
+   DWord : Handle of the file
+   ZStr : Name of the asked file
+
+ * Transfert cancelation message (Server->Client connected) (TCP) :
+ ou Transfert cancelation message (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 98 (Transfert cancelation)
+   DWord : Handle of the file to cancel
+
+ * Data message (transfert) (Server->Client connected) (TCP) :
+ ou Message de data (transfert) (Client->Server connected) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 99 (data)
+   DWord : Handle of the file
+    Datas
+
+File download protocol :
+------------------------
+The server is connected to the port indicated by the client and sends the total size of the file (DWORD),
+and the checksum of the complete file (DWORD) calculated as indicated below.
+The server then sends the file from the offset specified in the request (if it is about a resume).
+The sending is done per packets of 4096 bytes. The client already knows the size of the file.
+After the sending of the last packet, the server closes the connection.
+The client calculates the checksum, and if it is not correct, returns a request of download.
+
+File upload protocol :
+----------------------
+The server is connected to the port indicated by the client, and await the checksum of the file (DWORD).
+Sends is done per packets of 4096 bytes. The server already knows the size of the file.
+When the size of the file is reached, the server calculates the checksum of the file and sends to the client either
+  1: If the checksum is correct
+  0: If the checksum is incorrect
+The server closes then connection. It is to the client to return a request of upload if the file is badly received by the server.
+
+File Flags :
+------------
+DWord :
+ Bit 0 = Folder
+ Bit 1 = Executable
+ Bit 2 = Sym link
+
+Checksum :
+----------
+adler function from libz

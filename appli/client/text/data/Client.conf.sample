@@ -1,0 +1,38 @@
+###############################
+#   ffss client startup file  #
+###############################
+
+/*
+	this file is readen
+	at client's startup
+*/
+
+
+	// master's IP or name
+set master ffss
+
+	// indicates if can use ansi sequences (on or off)
+set color on
+
+	// the debug level: 0 for no message, 6 is the maximum
+set debug_level 0
+
+	// aliases
+alias ll=ls
+alias l=ls
+alias dir=ls
+
+alias s=cd ..
+alias cd..=cd ..
+
+alias sh=!
+alias local=!
+
+alias quit=exit
+alias bye=exit
+
+alias prompt=set prompt
+
+alias mget=get
+
+alias h=help

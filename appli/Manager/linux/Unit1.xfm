@@ -1,0 +1,584 @@
+object Form1: TForm1
+  Left = 355
+  Top = 205
+  Width = 298
+  Height = 426
+  ActiveControl = PageControl1
+  BorderIcons = [biSystemMenu]
+  Caption = 'FFSS Shares manager'
+  Color = clButton
+  Font.CharSet = fcsAnyCharSet
+  Font.Color = clText
+  Font.Height = 10
+  Font.Name = 'MS Sans Serif'
+  Font.Pitch = fpVariable
+  Font.Style = []
+  ParentFont = False
+  Position = poDefault
+  OnCreate = FormCreate
+  OnShow = FormShow
+  PixelsPerInch = 75
+  TextHeight = 13
+  TextWidth = 5
+  object PageControl1: TPageControl
+    Left = 5
+    Top = 10
+    Width = 284
+    Height = 371
+    ActivePage = TabSheet2
+    HotTrack = True
+    ParentShowHint = False
+    ShowHint = False
+    TabOrder = 0
+    object TabSheet1: TTabSheet
+      BorderWidth = 0
+      Caption = 'Global'
+      object Label3: TLabel
+        Left = 11
+        Top = 17
+        Width = 50
+        Height = 13
+        Hint = 'Your host name on FFSS network'
+        Caption = 'Host name'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Label4: TLabel
+        Left = 11
+        Top = 48
+        Width = 45
+        Height = 13
+        Hint = 'Comment of your host on FFSS network'
+        Caption = 'Comment'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Label5: TLabel
+        Left = 11
+        Top = 83
+        Width = 59
+        Height = 13
+        Hint = 'Name of the master of your domain'
+        Caption = 'Master name'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Label6: TLabel
+        Left = 11
+        Top = 114
+        Width = 42
+        Height = 13
+        Hint = 'Le d'
+        Caption = 'Idle delay'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Label7: TLabel
+        Left = 11
+        Top = 149
+        Width = 79
+        Height = 13
+        Hint = 'Max number of simltaneous connections'
+        Caption = 'Max connections'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Label10: TLabel
+        Left = 11
+        Top = 180
+        Width = 117
+        Height = 13
+        Hint = 'Max number of simultaneous transfers'
+        Caption = 'Max XFer per connection'
+        ParentShowHint = False
+        ShowHint = True
+        Layout = tlCenter
+      end
+      object Edit3: TEdit
+        Left = 138
+        Top = 13
+        Width = 86
+        Height = 21
+        Hint = 'Your host name on FFSS network'
+        MaxLength = 15
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        OnChange = Edit3Change
+      end
+      object Edit4: TEdit
+        Left = 138
+        Top = 45
+        Width = 129
+        Height = 21
+        Hint = 'Comment of your host on FFSS network'
+        MaxLength = 50
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        OnChange = Edit3Change
+      end
+      object Edit5: TEdit
+        Left = 138
+        Top = 79
+        Width = 86
+        Height = 21
+        Hint = 'Name of the master of your domain'
+        MaxLength = 32767
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        OnChange = Edit5Change
+      end
+      object Edit6: TEdit
+        Left = 138
+        Top = 110
+        Width = 28
+        Height = 21
+        Hint = 'Le d'
+        MaxLength = 32767
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+        Text = '0'
+        OnChange = Edit5Change
+      end
+      object Edit7: TEdit
+        Left = 138
+        Top = 145
+        Width = 28
+        Height = 21
+        Hint = 'Max number of simltaneous connections'
+        MaxLength = 32767
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 4
+        Text = '10'
+        OnChange = Edit5Change
+      end
+      object GroupBox2: TGroupBox
+        Left = 14
+        Top = 204
+        Width = 147
+        Height = 97
+        Hint = 'La compatibilit'
+        Caption = ' FTP compatibility '
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 6
+        object Label8: TLabel
+          Left = 8
+          Top = 55
+          Width = 79
+          Height = 13
+          Hint = 'Max number of simltaneous connections'
+          Caption = 'Max connections'
+          ParentShowHint = False
+          ShowHint = True
+          Layout = tlCenter
+        end
+        object CheckBox1: TCheckBox
+          Left = 8
+          Top = 24
+          Width = 69
+          Height = 15
+          Hint = 'Activate FTP compatibility'
+          Caption = 'Active'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+          OnClick = CheckBox1Click
+        end
+        object Edit8: TEdit
+          Left = 97
+          Top = 52
+          Width = 29
+          Height = 21
+          Hint = 'Max number of simltaneous connections'
+          MaxLength = 32767
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 1
+          Text = '0'
+          OnChange = Edit5Change
+        end
+      end
+      object Edit10: TEdit
+        Left = 138
+        Top = 176
+        Width = 29
+        Height = 21
+        Hint = 'Max number of simltaneous transfers'
+        MaxLength = 32767
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 5
+        Text = '2'
+        OnChange = Edit5Change
+      end
+    end
+    object TabSheet2: TTabSheet
+      BorderWidth = 0
+      Caption = 'Share'
+      ImageIndex = 1
+      object Panel1: TPanel
+        Left = 8
+        Top = 48
+        Width = 261
+        Height = 285
+        BevelInner = bvRaised
+        BevelOuter = bvLowered
+        ParentColor = True
+        TabOrder = 2
+        object Label1: TLabel
+          Left = 23
+          Top = 24
+          Width = 60
+          Height = 13
+          Hint = 'Name of the share'
+          Caption = 'Share name :'
+          ParentShowHint = False
+          ShowHint = True
+          Layout = tlCenter
+        end
+        object Label2: TLabel
+          Left = 23
+          Top = 64
+          Width = 54
+          Height = 13
+          Hint = 'Comment of the share'
+          Caption = 'Comment  :'
+          ParentShowHint = False
+          ShowHint = True
+          Layout = tlCenter
+        end
+        object Label9: TLabel
+          Left = 22
+          Top = 216
+          Width = 85
+          Height = 13
+          Hint = 'Max number of simltaneous connections'
+          Caption = 'Max connections :'
+          ParentShowHint = False
+          ShowHint = True
+          Layout = tlCenter
+        end
+        object Edit1: TEdit
+          Left = 100
+          Top = 24
+          Width = 92
+          Height = 21
+          Hint = 'Name of the share'
+          MaxLength = 20
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+          OnChange = Edit1Change
+        end
+        object Edit2: TEdit
+          Left = 100
+          Top = 64
+          Width = 120
+          Height = 21
+          Hint = 'Comment of the share'
+          MaxLength = 50
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 1
+          OnChange = Edit1Change
+        end
+        object GroupBox1: TGroupBox
+          Left = 19
+          Top = 111
+          Width = 222
+          Height = 82
+          Hint = 'R'
+          Caption = 'Access'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 2
+          object CheckBox2: TCheckBox
+            Left = 19
+            Top = 24
+            Width = 69
+            Height = 15
+            Hint = 'Tells if we can write on this share'
+            Caption = 'Read only'
+            Checked = True
+            Color = clButton
+            ParentColor = False
+            State = cbChecked
+            TabOrder = 0
+            OnClick = CheckBox2Click
+          end
+          object CheckBox3: TCheckBox
+            Left = 19
+            Top = 48
+            Width = 69
+            Height = 15
+            Hint = 'In private mode, only registered users can connect'
+            Caption = 'Private'
+            TabOrder = 1
+            OnClick = CheckBox2Click
+          end
+          object Button4: TButton
+            Left = 129
+            Top = 45
+            Width = 53
+            Height = 22
+            Hint = 'Edit registered users'
+            Caption = 'Users'
+            TabOrder = 2
+          end
+        end
+        object Edit9: TEdit
+          Left = 115
+          Top = 216
+          Width = 42
+          Height = 21
+          Hint = 'Max number of simltaneous connections'
+          MaxLength = 32767
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 3
+          Text = '0'
+          OnChange = Edit1Change
+        end
+      end
+      object RadioButton1: TRadioButton
+        Tag = 1
+        Left = 14
+        Top = 20
+        Width = 81
+        Height = 15
+        Caption = 'N&ot shared'
+        TabOrder = 0
+        OnClick = RadioButton1Click
+      end
+      object RadioButton2: TRadioButton
+        Tag = 1
+        Left = 14
+        Top = 41
+        Width = 59
+        Height = 15
+        Caption = '&Shared'
+        TabOrder = 1
+        OnClick = RadioButton2Click
+      end
+    end
+    object TabSheet3: TTabSheet
+      BorderWidth = 0
+      Caption = 'State'
+      ImageIndex = 2
+      object RadioGroup1: TRadioGroup
+        Left = 8
+        Top = 17
+        Width = 261
+        Height = 72
+        Hint = 'In quiet mode, no transfers are allowed, only share browsing'
+        Items.Strings = (
+          'Active'
+          'Quiet')
+        Caption = ' Server'#39's State '
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        OnClick = RadioGroup1Click
+      end
+      object GroupBox3: TGroupBox
+        Left = 8
+        Top = 93
+        Width = 261
+        Height = 240
+        Caption = ' Shares listing '
+        TabOrder = 1
+        object ListView1: TListView
+          Left = 5
+          Top = 20
+          Width = 252
+          Height = 185
+          BorderStyle = bsSunken3d
+          CheckBoxes = False
+          ColumnClick = False
+          ColumnMove = True
+          ColumnResize = False
+          Columns = <
+            item
+              AllowClick = False
+              AllowResize = False
+              AutoSize = False
+              Caption = 'Name'
+              MaxWidth = 1000
+              MinWidth = 0
+              Width = 65
+            end
+            item
+              AllowClick = False
+              AllowResize = False
+              AutoSize = False
+              Caption = 'Path'
+              MaxWidth = 1000
+              MinWidth = 0
+              Width = 85
+            end
+            item
+              AllowClick = False
+              AllowResize = False
+              AutoSize = False
+              Caption = 'Active'
+              MaxWidth = 1000
+              MinWidth = 0
+              Width = 45
+            end
+            item
+              AllowClick = False
+              AllowResize = False
+              AutoSize = False
+              Caption = 'Conns'
+              MaxWidth = 1000
+              MinWidth = 0
+              Width = 47
+            end>
+          RowSelect = True
+          PopupMenu = PopupMenu1
+          ReadOnly = True
+          SortColumn = 0
+          Sorted = False
+          TabOrder = 0
+          ViewStyle = vsReport
+        end
+        object Button5: TButton
+          Left = 104
+          Top = 211
+          Width = 53
+          Height = 22
+          Caption = '&Rescan'
+          TabOrder = 1
+          OnClick = Button5Click
+        end
+      end
+    end
+  end
+  object Button1: TButton
+    Left = 84
+    Top = 389
+    Width = 65
+    Height = 28
+    Caption = '&OK'
+    Default = True
+    TabOrder = 1
+    OnClick = Button1Click
+  end
+  object Button2: TButton
+    Left = 156
+    Top = 389
+    Width = 57
+    Height = 28
+    Cancel = True
+    Caption = '&Cancel'
+    TabOrder = 2
+    OnClick = Button2Click
+  end
+  object Button3: TButton
+    Left = 220
+    Top = 389
+    Width = 69
+    Height = 28
+    Caption = '&Apply'
+    Enabled = False
+    Font.CharSet = fcsAnyCharSet
+    Font.Color = clText
+    Font.Height = 10
+    Font.Name = 'MS Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 3
+    OnClick = Button3Click
+  end
+  object CS: TTcpClient
+    Active = False
+    RemoteHost = 'localhost'
+    OnError = CSError
+    Left = 32
+    Top = 412
+  end
+  object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
+    Left = 68
+    Top = 412
+    object Supprimer1: TMenuItem
+      Caption = '&Remove'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+      OnClick = Supprimer1Click
+    end
+    object Rescan1: TMenuItem
+      Caption = '&Rescan'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+      OnClick = Rescan1Click
+    end
+    object N1: TMenuItem
+      Caption = '-'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+    end
+    object Actif1: TMenuItem
+      Caption = '&Activate'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+      OnClick = Actif1Click
+    end
+    object Dsactiver1: TMenuItem
+      Caption = '&Disable'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+      OnClick = Dsactiver1Click
+    end
+    object N2: TMenuItem
+      Caption = '-'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+    end
+    object Ejecter1: TMenuItem
+      Caption = '&Eject everybody'
+      Checked = False
+      Enabled = True
+      HelpType = htKeyword
+      HelpContext = 0
+      ShortCut = 0
+      Visible = True
+      OnClick = Ejecter1Click
+    end
+  end
+end

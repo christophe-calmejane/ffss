@@ -1,0 +1,36 @@
+### FFSS Master config file ###
+
+# Interface Line :
+#  Defines interface name to use (defaults to 'eth0')
+# Syntaxe :
+#  Interface <Interface Name>
+#Interface eth1
+
+
+# IP Line :
+#  If you are using BSD, or if the autodetect of interface IP fails, manually define ip of your server
+# Syntaxe :
+#  MyIP <IP of the master>
+#MyIP 172.17.64.15
+
+
+# Domain Line :
+#  Defines the name of your domain
+# Syntaxe :
+#  Domain <Domain Name>
+#Domain Lamers
+
+
+# Master Line :
+#  Defines a foreign master
+# Syntaxe :
+#  Master <Domain Name>,<Master IP or HostName>
+#Master Lamers,lamers.lame.net
+
+# User/Group Lines :
+#  Defines the user and/or group to setid
+#  Defaults to User 'ffss' and group 'nogroup'
+User ffss
+Group nogroup
+
+### End of file ###

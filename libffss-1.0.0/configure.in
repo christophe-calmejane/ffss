@@ -1,0 +1,251 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/server.c)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_ISC_POSIX
+AC_ARG_PROGRAM
+
+dnl Version of SkyUtils and function to search
+SU_VERSION="skyutils-1.16"
+SU_FUNCTION=SU_Dummy117
+
+#
+# Making releases:
+#   FFSS_MICRO_VERSION += 1;
+#   FFSS_INTERFACE_AGE += 1;
+#   FFSS_BINARY_AGE += 1;
+# if any functions have been added, set FFSS_INTERFACE_AGE to 0.
+# if backwards compatibility has been broken,
+# set FFSS_BINARY_AGE _and_ FFSS_INTERFACE_AGE to 0.
+#
+FFSS_MAJOR_VERSION=1
+FFSS_MINOR_VERSION=0
+FFSS_MICRO_VERSION=0
+FFSS_INTERFACE_AGE=0
+FFSS_BINARY_AGE=0
+FFSS_VERSION=$FFSS_MAJOR_VERSION.$FFSS_MINOR_VERSION.$FFSS_MICRO_VERSION
+
+AC_SUBST(FFSS_MAJOR_VERSION)
+AC_SUBST(FFSS_MINOR_VERSION)
+AC_SUBST(FFSS_MICRO_VERSION)
+AC_SUBST(FFSS_VERSION)
+AC_SUBST(FFSS_INTERFACE_AGE)
+AC_SUBST(FFSS_BINARY_AGE)
+
+# libtool versioning
+LT_RELEASE=$FFSS_MAJOR_VERSION.$FFSS_MINOR_VERSION
+LT_CURRENT=`expr $FFSS_MICRO_VERSION - $FFSS_INTERFACE_AGE`
+LT_REVISION=$FFSS_INTERFACE_AGE
+LT_AGE=`expr $FFSS_BINARY_AGE - $FFSS_INTERFACE_AGE`
+AC_SUBST(LT_RELEASE)
+AC_SUBST(LT_CURRENT)
+AC_SUBST(LT_REVISION)
+AC_SUBST(LT_AGE)
+
+VERSION=$FFSS_VERSION
+PACKAGE=ffss
+
+# Auto Make
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
+AM_MAINTAINER_MODE
+
+AM_PROG_LIBTOOL
+
+CFLAGS="$CFLAGS -pthread -D_REENTRANT"
+if test "$GCC" = "yes"
+then
+  CFLAGS="$CFLAGS -Wall"
+fi
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h sys/ioctl.h sys/time.h unistd.h signal.h zlib.h bzlib.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(gethostname select socket strdup strerror strstr sem_init strtok_r signal)
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug          Enables debug option (default=no)],
+[case "${enableval}" in
+  yes) debug=true ;;
+  no)  debug=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
+esac],[debug=false])
+if test "$debug" = "true"; then
+  CFLAGS="$CFLAGS ""-DDEBUG "
+fi
+
+AC_ARG_ENABLE(context,
+[  --enable-context        Enables context debug info (default=no)],
+[case "${enableval}" in
+  yes) context=true ;;
+  no)  context=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-context) ;;
+esac],[context=false])
+if test "$context" = "true"; then
+  CFLAGS="$CFLAGS ""-DFFSS_CONTEXT "
+fi
+
+AC_ARG_ENABLE(malloc_trace,
+[  --enable-malloc_trace   Enables malloc trace debug info (default=no)],
+[case "${enableval}" in
+  yes) malloc_trace=true ;;
+  no)  malloc_trace=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-malloc_trace) ;;
+esac],[malloc_trace=false])
+if test "$malloc_trace" = "true"; then
+  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
+fi
+
+AC_ARG_ENABLE(ftp,
+[  --disable-ftp           Disables ftp compatibility (default=on)],
+[case "${enableval}" in
+  yes) ftp=true ;;
+  no)  ftp=false ;;
+  *) AC_MSG_ERROR(bad value ${disableval} for --disable-ftp) ;;
+esac],[ftp=true])
+if test "$ftp" = "true"; then
+  CFLAGS="$CFLAGS ""-DFFSS_FTP "
+fi
+
+AC_ARG_ENABLE(chksum,
+[  --disable-chksum        Disables checksum for xfers (default=on)],
+[case "${enableval}" in
+  yes) chksum=true ;;
+  no)  chksum=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --disable-chksum) ;;
+esac],[chksum=true])
+if test "$chksum" = "false"; then
+  CFLAGS="$CFLAGS ""-DDISABLE_CHECKSUM "
+fi
+
+AC_ARG_ENABLE(driver,
+[  --enable-driver         Builds ffss library for kernel driver use (default=no)],
+[case "${enableval}" in
+  yes) driver=true ;;
+  no)  driver=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-driver) ;;
+esac],[driver=false])
+if test "$driver" = "true"; then
+  CFLAGS="$CFLAGS ""-DFFSS_DRIVER "
+fi
+
+dnl Checks for libraries.
+SOLARIS=""
+AC_CHECK_LIB(pthread, pthread_create,FFSS_PTHREAD_LIB="-pthread")
+AC_CHECK_LIB(c_r, pthread_create,FFSS_PTHREAD_LIB="-pthread")
+AC_CHECK_LIB(skyutils, $SU_FUNCTION,O_SKYUTILS_LIB="-lskyutils")
+AC_CHECK_LIB(z, adler32,Z_LIB="-lz")
+AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress,BZ_LIB="-lbz2")
+AC_CHECK_LIB(socket, socket,SOLARIS="-lsocket -lnsl")
+
+if test ! "$FFSS_PTHREAD_LIB"; then
+  AC_MSG_ERROR("Cannot find pthread functions \(neither in libpthread nor in libc_r\)")
+fi
+
+if test ! "$Z_LIB"; then
+  AC_MSG_ERROR("Z lib not found...")
+fi
+
+if test ! "$BZ_LIB"; then
+  AC_MSG_WARN("BZ2 lib not found...")
+  O_BZ_LIB="no"
+else
+  O_BZ_LIB="yes"
+  CFLAGS="$CFLAGS -DHAVE_BZLIB"
+fi
+
+if test ! "$O_SKYUTILS_LIB"; then
+	AC_MSG_WARN("Cannot find libskyutils ... we will compile it")
+	O_SKYUTILS_FLAGS="-I `pwd`/$SU_VERSION -L`pwd`/$SU_VERSION"
+	O_SKYUTILS_LIB="../$SU_VERSION/libskyutils.a"
+	O_SKYUTILS_LIB_CONFIG="$libdir/libskyutils.a"
+	O_LIB_SKYUTILS="libskyutils.a"
+	O_H_SKYUTILS="skyutils.h"
+else
+  O_SKYUTILS_LIB_CONFIG=$O_SKYUTILS_LIB
+fi
+
+AC_SUBST(O_SKYUTILS_FLAGS)
+AC_SUBST(FFSS_PTHREAD_LIB)
+AC_SUBST(SU_VERSION)
+AC_SUBST(O_SKYUTILS_LIB)
+AC_SUBST(O_SKYUTILS_LIB_CONFIG)
+AC_SUBST(O_LIB_SKYUTILS)
+AC_SUBST(O_H_SKYUTILS)
+AC_SUBST(Z_LIB)
+AC_SUBST(BZ_LIB)
+AC_SUBST(O_Z_LIB)
+AC_SUBST(O_BZ_LIB)
+AC_SUBST(SOLARIS)
+
+AC_OUTPUT([
+skyutils-1.16/Makefile
+Makefile
+ffss-config
+src/Makefile
+src/Windows/Makefile
+src/Windows/ffss/Makefile
+], [chmod +x ffss-config])
+
+echo ""
+echo "***************************"
+echo "*   Compilation options   *"
+echo "***************************"
+if test "$debug" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Debug mode            : $tmp"
+if test "$context" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Context infos mode    : $tmp"
+if test "$malloc_trace" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Malloc trace mode     : $tmp"
+if test "$ftp" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "FTP compatibility     : $tmp"
+if test "$chksum" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Checksum for xfers    : $tmp"
+if test "$driver" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Driver mode           : $tmp"
+if test ! "$BZ_LIB"; then
+  tmp="OFF"
+else
+  tmp="ON"
+fi
+echo "BZlib for compression : $tmp"
+echo
+echo "Type 'make' to build ffss library"
+echo

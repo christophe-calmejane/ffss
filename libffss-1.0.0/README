@@ -1,0 +1,18 @@
+FFSS Library Version 1.0.0
+(c) Christophe CALMEJANE 'Ze KiLleR / SkyTech'
+URL    : http://zekiller.skytech.org
+mailto : zekiller@skytech.org
+
+
+COMPILATION & INSTALL :
+
+  ./configure
+  make
+  (become root)
+  make install
+  (do not forget to run a ldconfig. Check your /etc/ld.so.conf for the line /usr/local/lib before that !)
+
+
+UNISTALL :
+  make uninstall
+

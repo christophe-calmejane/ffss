@@ -1,0 +1,75 @@
+ffss client application
+by bennyben
+
+if you have any problem with this client, please contact bennyben (benoit bourdin):
+    <bennybben@caramail.com>
+    channel #ffss of irc.u-psud.fr
+
+table of content
+----------------
+
+1) libraries nedded
+2) compilation
+3) usage
+4) notes    
+
+
+
+
+1) libraries nedded
+--------------------
+
+to install this client, you need:
+	ffss lib (ffss/src)
+		<http://sourceforge.net/projects/ffss>
+	GNU readline lib
+		<http://cnswww.cns.cwru.edu/~chet/readline/rltop.html>
+	skyutils 1.11 or greater
+		<http://zekiller.skytech.org>
+	termcap lib (used by readline)
+
+
+2) compilation
+--------------
+
+After having installed all of this, you can compile:
+./configure
+make
+make install (as root)
+see INSTALL for details
+
+
+3) usage    
+--------
+
+so you will have an executable file in this directory named 'ffss-client'
+you can move it where you want.
+
+Usage:
+
+ffss client uses a configuration file named 'ffss-client.conf'
+It's by default in this directory, but you can specify a new location:
+ffss-client -c (config-file)
+for example: ffss-client -c /my/dir/ffss-client.conf
+
+There's some others command-line options, type ffss-client --help
+
+There's a 'help' command, if you want too :)
+
+there's a domain none, it's used to broadcast, and access to the shares
+even if a master cannot be reached.
+
+
+4) Notes
+--------
+
+- To execute a command from the command line, you have the '-e' option
+(ffss-client -e <command>). For a command with arguments, for example:
+find foo
+ffss-client -e "find foo"
+Otherwise, 'foo' will be interpreted as an ffss-client's option.
+
+- If there's too debug output, specify a 0 debuglevel :
+ffss-client -d 0
+or type this command :
+set debuglevel 0

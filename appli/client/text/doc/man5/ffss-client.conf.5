@@ -1,0 +1,75 @@
+.TH FFSS-CLIENT.CONF 5 "2001 September 10"
+
+.SH NAME
+ffss-client.conf \-  FFSS client configuration file
+
+.SH DESCRIPTION
+.LP
+The ffss-client.conf if the configuration file for
+.B ffss-client, 
+the client for the 
+.B Fleming File Sharing System (FFSS).
+This file can be named 
+.I ffss-client.conf
+ or 
+.I Client.conf
+in the current directory when launching ffss-client, or 
+.I /usr/local/etc/ffss/Client.conf
+ or 
+.I /etc/ffss/Client.conf.
+.br
+The syntax for the options is:
+.br
+.I   <option> <value>
+.br
+You can add comments, after the caracter '#'.
+NOTE: you can't add comments on the option value, like:
+.br
+ master ffss   # a comment
+
+
+.SH OPTIONS
+.TP
+.BI "master " IP " | " name
+Specify the FFSS'master of your domain. You can specify the IP or the name.
+.TP
+.BI "ansi " 0 " | " 1
+Specify if the ANSI sequences can be used. If the option is not specified, by default, the value is 0 for win32 and 1 for the others.
+The ANSI sequences are used for colors, work well on unix consoles, but not on win32.
+This option allows you to force the value.
+.TP
+.BI "debug " 0-6
+Specify the debug level. 0 provides no debug information, and 6 ius the maximum.
+
+.SH EXAMPLE
+
+# master's IP or name
+.br
+master ffss
+
+# indicates if can use ansi sequences (0 or 1)
+.br
+ansi 1
+
+# the debug level: 0 for no message, 6 is the maximum
+.br
+debug 0
+
+
+.SH FILES
+.I ffss-client.conf
+.br
+.I Client.conf
+.br
+.I /etc/ffss/Client.conf
+.br
+.I /usr/local/etc/ffss/Client.conf
+
+.SH AUTHOR
+The FFSS client were written by Benoit Bourdin (bennyben)
+<bennybben@caramail.com>. For further details, use IRC :
+server irc.u-psud.fr, channel #ffss
+.SH "SEE ALSO"
+.BR ffss-client (1),
+.BR ffss-server (1),
+.BR ffss-master (1)
