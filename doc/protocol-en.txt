@@ -43,7 +43,7 @@ Detail of the protocol (Version 1):
    DWord : Size of the message
    DWord : Message Type = 1 (status)
    DWord : Status of the server (1=ON 2=OFF 3=QUIET)
-   DWord : Version of the Server
+   DWord : Current protocol version of lib FFSS
    ZStr : Name of the computer (limit to 15 char)
    ZStr : OS (limit to 10 char)
    ZStr : Comment (limit to 50 char)
@@ -182,6 +182,7 @@ Detail of the protocol (Version 1):
  * Connection to a share message (Client->Server connecte 696) (TCP) :
    DWord : Size of the message
    DWord : Message type = 14 (share's connection)
+   DWord : Current protocol version of lib FFSS
    DWord : Supported compression type
    ZStr : Share name
    ZStr : Login for connection (0 if nil)
@@ -190,7 +191,7 @@ Detail of the protocol (Version 1):
     2 : Ressource not available
     3 : Login/pwd necessary
     4 : Too much connection
-  -> If there is no errors then the server must react as if a listing of the root directory (shared)as been asked + stats msg
+  -> If there is no errors then the server sends a NO_ERROR message
 
  * Folders listing request message (Client->Server connecte) (TCP) :
    DWord : Size of the message
@@ -336,7 +337,7 @@ Detail of the protocol (Version 1):
  ou Master seek reply message (Master->Server 696) (UDP) :
    DWord : Size of the message
    DWord : Message type = 56 (Master seek reply)
-   DWord : Protocol version used by the master
+   DWord : Current protocol version of lib FFSS
    ZStr : Domain name of the master
 
  * Streaming message : open (Client->Server connected) (TCP) :

@@ -15,4 +15,3 @@
 
  - Re-reflechir au check des versions -> Peut etre le faire aussi au nivo du server-client ?
 
- - Dans le handint_segfault, detecter le process qui a crasher, et suivant son pid, afficher la BONNE valeur de file:line (eventuellement toutes)

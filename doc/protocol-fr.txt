@@ -39,13 +39,13 @@ Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, 
 Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
 
 
-Detail du protocole (Version 1) :
+Detail du protocole (Version 0100) :
 ---------------------------------
  * Message d'etat (Serveur->Master 695) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 1 (etat)
    DWord : Etat du serveur (1=ON 2=OFF 3=QUIET)
-   DWord : Version du Serveur
+   DWord : Version courante du protocole de la lib FFSS
    ZStr : Nom de la machine (a limiter a 15)
    ZStr : OS (a limiter a 10)
    ZStr : Commentaire (a limiter a 50)
@@ -181,6 +181,7 @@ Detail du protocole (Version 1) :
  * Message de connexion a un partage (Client->Serveur connecte 696) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 14 (connexion partage)
+   DWord : Version courante du protocole de la lib FFSS
    DWord : Type de compressions supportees
    ZStr : Nom du partage
    ZStr : Login de connexion (0 si neant)
@@ -189,7 +190,7 @@ Detail du protocole (Version 1) :
     2 : Ressource indisponible
     3 : Login/pwd necessaire
     4 : Trop de connexions
-  -> Si aucune erreur, le serveur doit considerer qu'un message de listing du repertoire racine a ete demande + msg de stats
+  -> Si aucune erreur, le serveur envoie un message NO_ERROR
 
  * Message de demande de listing d'un repertoire (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
@@ -335,7 +336,7 @@ Detail du protocole (Version 1) :
  ou Message de reponse de recherche d'un master (Master->Serveur 696) (UDP) :
    DWord : Taille du message
    DWord : Type de message = 56 (reponse de recherche de master)
-   DWord : Version du protocole utilisé par le master
+   DWord : Version courante du protocole de la lib FFSS
    ZStr : Nom du domaine du master
 
  * Message de streaming : open (Client->Server connecte) (TCP) :

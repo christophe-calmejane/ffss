@@ -50,8 +50,6 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending State message to %s\n",Master);
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -114,8 +112,6 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Server search answer message to client\n");
   resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -161,8 +157,6 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Server shares answer message to client\n");
   resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -187,8 +181,6 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Pong message to master\n");
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,inet_ntoa(Master.sin_addr),FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,inet_ntoa(Master.sin_addr),FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -393,8 +385,6 @@ bool FS_SendMessage_MasterSearch()
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
   resp = SU_UDPSendBroadcast(FS_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendBroadcast(FS_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -529,11 +519,10 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending index answer message to %s:%s\n",Host,Port);
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Host,(char *)Port);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,(char *)Host,(char *)Port);*/
   free(msg);
   if(resp == SOCKET_ERROR)
   {
+    FFSS_PrintDebug(3,"Failed to connect master\n");
     SU_CLOSE_SOCKET(sock);
     return false;
   }
@@ -799,8 +788,6 @@ bool FC_SendMessage_ServerSearch(void)
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Servers Search message to broadcast\n");
   resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -822,8 +809,6 @@ bool FC_SendMessage_SharesListing(const char Server[])
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Shares Listing message to %s\n",Server);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -878,8 +863,6 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Server listing message to %s\n",Master);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -913,6 +896,8 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   *(FFSS_Field *)(msg+pos) = FFSS_MESSAGE_SHARE_CONNECTION;
+  pos += sizeof(FFSS_Field);
+  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOLE_VERSION;
   pos += sizeof(FFSS_Field);
 
   Comps = FFSS_COMPRESSION_NONE | FFSS_COMPRESSION_ZLIB;
@@ -1193,8 +1178,6 @@ bool FC_SendMessage_DomainListing(const char Master[])
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Domains listing message to %s\n",Master);
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1247,8 +1230,6 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Search message to %s - Reply to port %d\n",Master,ntohs(FC_SI_OUT_UDP->SAddr.sin_port));
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1271,9 +1252,7 @@ bool FC_SendMessage_MasterSearch()
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Master Search message to broadcast\n");
   resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendBroadcast(FC_SI_OUT_UDP,msg,pos,FFSS_MASTER_PORT_S);
-  free(msg);*/
+  free(msg);
   return (resp != SOCKET_ERROR);
 }
 
@@ -1535,8 +1514,6 @@ bool FM_SendMessage_Ping()
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Ping message to servers\n");
   resp = SU_UDPSendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1598,8 +1575,6 @@ bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long 
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending New States message to master\n");
   resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1661,8 +1636,6 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Server Listing message to client\n");
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1699,8 +1672,6 @@ bool FM_SendMessage_Error(const char Server[],FFSS_Field Code,const char Descr[]
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Error message (%d:%s) to server %s\n",Code,Descr,Server);
   resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Server,FFSS_SERVER_PORT_S);*/
   free(msg);
   return (resp == pos);
 }
@@ -1737,8 +1708,6 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Error message (%d:%s) to client\n",Code,Descr);
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp == pos);
 }
@@ -1768,8 +1737,6 @@ bool FM_SendMessage_ServerList(const char Master[])
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Server listing message to %s\n",Master);
   resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1808,8 +1775,6 @@ bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,SU_PList Domai
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Domains Listing message to client\n");
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1843,15 +1808,11 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
   {
     FFSS_PrintDebug(3,"Sending Master search answer message to server\n");
     resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,inet_ntoa(Client.sin_addr),FFSS_SERVER_PORT_S);
-    /*if(resp == SOCKET_ERROR)
-      resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,inet_ntoa(Client.sin_addr),FFSS_SERVER_PORT_S);*/
   }
   else
   {
     FFSS_PrintDebug(3,"Sending Master search answer message to client\n");
     resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
-    /*if(resp == SOCKET_ERROR)
-      resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);*/
   }
   free(msg);
   return (resp != SOCKET_ERROR);
@@ -1914,8 +1875,6 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Search Answer message to client (%s:%d)\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToSin(FM_SI_OUT_UDP,msg,pos,Client);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }
@@ -1959,8 +1918,6 @@ bool FM_SendMessage_SearchForward(const char Master[],struct sockaddr_in Client,
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Search Forward message to %s - Reply to %s:%d\n",Master,inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
   resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
-  /*if(resp == SOCKET_ERROR)
-    resp = SU_UDPSendToAddr(FM_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);*/
   free(msg);
   return (resp != SOCKET_ERROR);
 }

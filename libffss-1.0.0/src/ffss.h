@@ -50,11 +50,12 @@
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre68"
-#define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001"
+#define FFSS_VERSION "1.0.0-pre70"
+#define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOLE_VERSION 001
+#define FFSS_PROTOCOLE_VERSION                  0x0010001
+#define FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE 0x0010000
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -191,7 +192,7 @@
 #define FFSS_MESSAGESIZE_SERVER_SEARCH              2
 #define FFSS_MESSAGESIZE_SHARES_LISTING             2
 #define FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER      4
-#define FFSS_MESSAGESIZE_SHARE_CONNECTION           3
+#define FFSS_MESSAGESIZE_SHARE_CONNECTION           4
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING          2
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER   4
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER_2 3
@@ -242,7 +243,7 @@
 #define FFSS_THREAD_CLIENT 2
 #define FFSS_THREAD_MASTER 3
 
-#define FFSS_ERROR_SERVER_TOO_OLD             1
+#define FFSS_ERROR_PROTOCOL_VERSION_ERROR     1
 #define FFSS_ERROR_RESOURCE_NOT_AVAIL         2
 #define FFSS_ERROR_NEED_LOGIN_PASS            3
 #define FFSS_ERROR_TOO_MANY_CONNECTIONS       4
@@ -383,7 +384,7 @@ typedef struct
   void (*OnSharesListing)(struct sockaddr_in Client);
   void (*OnIndexRequest)(struct sockaddr_in Master,FFSS_Field Port);
   void (*OnError)(FFSS_Field ErrorCode,const char Description[]);
-  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[]);
+  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
 
   /* TCP callbacks */
   bool (*OnCheckConnection)(SU_PClientSocket Client);
@@ -435,7 +436,7 @@ typedef struct
   void (*OnServerListingAnswer)(const char Domain[],int NbHost,SU_PList HostList); /* SU_PList of FM_PHost */
   void (*OnEndServerListingAnswer)(void);
   void (*OnDomainListingAnswer)(const char **Domains,int NbDomains); /* First domain is assumed to be domain from the answering master */
-  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[]);
+  void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
   void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,int NbAnswers);
   void (*OnUDPError)(int ErrNum);
   void (*OnMasterError)(int Code,const char Descr[]);
@@ -462,7 +463,7 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
-  void (*OnState)(struct sockaddr_in Server,FFSS_Field State,FFSS_Field ServerVersion,const char Name[],const char OS[],const char Comment[]);
+  void (*OnState)(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[]);
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
   void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions);
 //  void (*OnServerListingAnswer)(const char Domain[],const char NbHost,SU_PList HostList); /* SU_PList of FM_PHost */ /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */

@@ -1,5 +1,5 @@
 /* This is the conf conn plugin for ffss server */
-/* (c) Christophe Calmejane - 2001              */
+/* (c) Christophe Calmejane - 2001'02           */
 /*     aka Ze KiLleR / SkyTech                  */
 /*                                              */
 /* http://zekiller.skytech.org                  */
@@ -7,7 +7,7 @@
 
 #define CONFCONN_NAME      "Conf Conn Plugin"
 #define CONFCONN_VERSION   "0.1"
-#define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2001"
+#define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2001'02"
 
 /* The only file we need to include is server.h */
 #include "../src/server.h"

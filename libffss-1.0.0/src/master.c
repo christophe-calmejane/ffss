@@ -39,8 +39,13 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
+      if((val > FFSS_PROTOCOLE_VERSION) || (val < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
+      {
+        FM_SendMessage_Error(inet_ntoa(Client.sin_addr),FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR]);
+        break;
+      }
       if(FFSS_CB.MCB.OnState != NULL)
-        FFSS_CB.MCB.OnState(Client,val,val2,str,str2,str3);
+        FFSS_CB.MCB.OnState(Client,val,str,str2,str3);
       break;
     case FFSS_MESSAGE_NEW_STATES :
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);

@@ -3,13 +3,18 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : January, 14th 2002
+                  Last Update : January, 15th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+January, 15th 2002:
+  - Sightly changed protocol message (Share connection Client->Server)
+  - Added protocol version check in all modules (server/client/master)
+
 January, 14th 2002:
   - Intgrated skyutils-config in configure scripts
+  - Added a per-thread context
 
 January, 5th 2002:
   - Fixed bug in configure script (pthread related)

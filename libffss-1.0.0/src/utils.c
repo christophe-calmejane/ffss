@@ -17,24 +17,58 @@ char *FFSS_DocExt[FFSS_DOC_NB_EXT] = {"htm","html","txt","doc","pdf","nfo","tex"
 char *FFSS_ExeExt[FFSS_EXE_NB_EXT] = {"exe","com","bat","sys","dll"} ; /* 5 */
 char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","bz2","deb","rpm"} ; /* 10 */
 
-int FFSS_ContextLine;
-char FFSS_ContextFile[512];
+SU_THREAD_KEY_HANDLE FFSS_Context_tskey;
+SU_THREAD_ONCE_HANDLE FFSS_Context_once = SU_THREAD_ONCE_INIT;
+
+typedef struct
+{
+  int Line;
+  char File[512];
+} FFSS_TContextSpecific, *FFSS_PContextSpecific;
 #ifdef _WIN32
 FILE *FFSS_LogFile = NULL;
 #endif /* _WIN32 */
 
+void FFSS_Context_destroyts(void *ptr)
+{
+  FFSS_PContextSpecific ts = (FFSS_PContextSpecific) ptr;
+
+  free(ts);
+}
+
+void FFSS_Context_tsinitkey(void)
+{
+  SU_CreateThreadKey(&FFSS_Context_tskey,&FFSS_Context_once,FFSS_Context_destroyts);
+}
+
+FFSS_PContextSpecific FFSS_Context_GetThreadSpecific(void)
+{
+  FFSS_PContextSpecific ts;
+
+  SU_THREAD_ONCE(FFSS_Context_once,FFSS_Context_tsinitkey);
+  ts = SU_THREAD_GET_SPECIFIC(FFSS_Context_tskey);
+  if(ts == NULL)
+  {
+    ts = malloc(sizeof(FFSS_TContextSpecific));
+    memset(ts,0,sizeof(FFSS_TContextSpecific));
+    SU_THREAD_SET_SPECIFIC(FFSS_Context_tskey,ts);
+  }
+  return ts;
+}
+
 void set_context(char *file, int line)
 {
-  FFSS_ContextLine = line;
-  strncpy(FFSS_ContextFile, file, sizeof(FFSS_ContextFile)-1);
-  FFSS_ContextFile[sizeof(FFSS_ContextFile)-1] = 0;
+  FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
+  ts->Line = line;
+  SU_strcpy(ts->File,file,sizeof(ts->File));
 }
 
 void FFSS_handle_SIGNAL(int signal)
 {
   if(signal == SIGSEGV)
   {
-    FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed :-(. Check: %s:%d\n", FFSS_ContextFile,FFSS_ContextLine);
+    FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %d :-(. Check: %s:%d\n",SU_THREAD_SELF,ts->File,ts->Line);
     abort();
   }
 }

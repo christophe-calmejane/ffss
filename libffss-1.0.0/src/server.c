@@ -8,7 +8,7 @@ bool FS_FTP;
 SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 
-char *FFSS_ErrorTable[]={"Nothing","Server too old","Resource not available","Need login/password for this share","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers"};
+char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Need login/password for this share","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers"};
 
 void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 {
@@ -103,6 +103,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
   {
     FFSS_PrintDebug(3,"Received a share connection message from client\n");
     val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+    val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
     str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
     str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
     str3 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -113,9 +114,17 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
     }
     else
     {
-      if(FFSS_CB.SCB.OnShareConnection != NULL)
-        ret_val = FFSS_CB.SCB.OnShareConnection(Client,str,str2,str3,val);
-      *ident = true;
+      if((val > FFSS_PROTOCOLE_VERSION) || (val < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
+      {
+        FS_SendMessage_Error(Client->sock,FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR]);
+        ret_val = false;
+      }
+      else
+      {
+        if(FFSS_CB.SCB.OnShareConnection != NULL)
+          ret_val = FFSS_CB.SCB.OnShareConnection(Client,str,str2,str3,val2);
+        *ident = true;
+      }
     }
   }
   else

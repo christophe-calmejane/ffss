@@ -188,8 +188,8 @@ int main(int argc,char *argv[])
     return -1;
   }
 #endif
-  printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001\n",FFSSWHO_VERSION);
-  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001\n\n",FFSS_SERVER_VERSION);
+  printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSSWHO_VERSION);
+  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n\n",FFSS_SERVER_VERSION);
 
   Server = "localhost";
   Client = SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);

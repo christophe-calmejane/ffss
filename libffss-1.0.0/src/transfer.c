@@ -297,12 +297,12 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     if(FFSS_CB.CCB.OnTransferSuccess != NULL)
       FFSS_CB.CCB.OnTransferSuccess(FT,false);
   }
-  FFSS_FreeTransfer(FT);
-  free(RBuf);
   t2 = time(NULL);
   if(t1 == t2)
     t2 = t1+1;
-  FFSS_PrintDebug(1,"Successfully uploaded the file in %d sec (%.2f ko/s)\n",((int)(t2-t1)),fsize/1024.0/(t2-t1));
+  FFSS_PrintDebug(1,"Successfully uploaded the file %s in %d sec (%.2f ko/s) (%ld)\n",FT->LocalPath,((int)(t2-t1)),fsize/1024.0/(t2-t1),SU_THREAD_SELF);
+  FFSS_FreeTransfer(FT);
+  free(RBuf);
   SU_END_THREAD(NULL);
 }
 

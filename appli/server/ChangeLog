@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : January, 5th 2002
+                  Last Update : January, 15th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+January, 15th 2002:
+  - Added few retries when OnDownload fail because of TooManyActiveConnections
+  - Added better protocol version check
 
 January, 5th 2002:
   - Fixed bug when exiting server if a signal was received

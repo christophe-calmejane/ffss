@@ -59,8 +59,7 @@ then
 	echo '############# BUILDING FFSS MASTER ###############'
 	echo
 	cd appli/master
-#	./configure --with-ffss=$libdir --enable-debug --enable-context --enable-malloc_trace
-	./configure --with-ffss=$libdir --enable-debug --enable-context
+	./configure --with-ffss=$libdir --enable-debug --enable-context --enable-malloc_trace
 	make
 	cd ../..
 fi

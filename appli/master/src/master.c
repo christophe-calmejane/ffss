@@ -283,25 +283,17 @@ FM_PDomain FM_SearchDomainByIP(const char IP[])
 
 /* UDP callbacks */
 /* OnState is raised only by local hosts */
-void OnState(struct sockaddr_in Server,FFSS_Field State,FFSS_Field ServerVersion,const char Name[],const char OS[],const char Comment[])
+void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[])
 {
   FM_PHost Hst;
 
   context;
-  if(ServerVersion < FFSS_PROTOCOLE_VERSION)
-  {
-    if(!FM_SendMessage_Error(inet_ntoa(Server.sin_addr),FFSS_ERROR_SERVER_TOO_OLD,FFSS_ErrorTable[FFSS_ERROR_SERVER_TOO_OLD]))
-      printf("MASTER : Error sending error to server : %s\n",strerror(errno));
-  }
+  Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
+  if(Hst == NULL)
+    Hst = FM_AddHostToDomain(&FM_MyDomain,Name,OS,Comment,inet_ntoa(Server.sin_addr),State);
   else
-  {
-    Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
-    if(Hst == NULL)
-      Hst = FM_AddHostToDomain(&FM_MyDomain,Name,OS,Comment,inet_ntoa(Server.sin_addr),State);
-    else
-      FM_UpdateHost(Hst,Name,OS,Comment,State);
-    FM_AddStateToMyQueue(&FM_MyDomain,Hst);
-  }
+    FM_UpdateHost(Hst,Name,OS,Comment,State);
+  FM_AddStateToMyQueue(&FM_MyDomain,Hst);
 }
 
 /* OnNewState is raised by foreign masters */
@@ -1024,7 +1016,7 @@ int main(int argc,char *argv[])
   unsigned long Thread;
 #endif /* __unix__ */
 
-  printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001\n",FFSS_MASTER_VERSION);
+  printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_MASTER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
   SU_strcpy(ConfigFile,CONFIG_FILE_NAME,sizeof(ConfigFile));

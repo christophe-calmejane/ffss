@@ -252,7 +252,7 @@ void tsinitkey(void)
   SU_CreateThreadKey(&FS_tskey,&FS_once,destroyts);
 }
 
-FS_PThreadSpecific FS_GetThreadSpecific(void)
+FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
 {
   FS_PThreadSpecific ts;
 
@@ -260,6 +260,8 @@ FS_PThreadSpecific FS_GetThreadSpecific(void)
   ts = SU_THREAD_GET_SPECIFIC(FS_tskey);
   if(ts == NULL)
   {
+    if(DontCreate)
+      return NULL;
     ts = malloc(sizeof(FS_TThreadSpecific));
     memset(ts,0,sizeof(FS_TThreadSpecific));
     SU_THREAD_SET_SPECIFIC(FS_tskey,ts);
@@ -298,7 +300,7 @@ void OnEndTCPThread(void)
 {
   FS_PThreadSpecific ts;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(true);
 
   if(ts != NULL)
   {
@@ -484,19 +486,26 @@ void OnError(long int ErrorCode,const char Description[])
   FS_UnInit();
 }
 
-void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
+void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[])
 {
   SU_PList Ptr;
 
-  FFSS_PrintDebug(1,"Server received a master search answer from %s (%s) using version %d for domain %s\n",inet_ntoa(Master.sin_addr),SU_NameOfPort(inet_ntoa(Master.sin_addr)),MasterVersion,Domain);
+  FFSS_PrintDebug(1,"Server received a master search answer from %s (%s) using version %x for domain %s\n",inet_ntoa(Master.sin_addr),SU_NameOfPort(inet_ntoa(Master.sin_addr)),ProtocolVersion,Domain);
 
   FS_SendMessage_Pong(Master,FS_MyState);
   if(FS_MyGlobal.Master == NULL)
   {
-    if(FFSS_PROTOCOLE_VERSION == MasterVersion)
+    if((ProtocolVersion <= FFSS_PROTOCOLE_VERSION) && (ProtocolVersion >= FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
     {
       FS_MyGlobal.MasterIP = inet_ntoa(Master.sin_addr);
       FS_MyGlobal.Master = SU_NameOfPort(FS_MyGlobal.MasterIP);
+    }
+    else
+    {
+      if(ProtocolVersion > FFSS_PROTOCOLE_VERSION)
+        FFSS_PrintSyslog(LOG_WARNING,"Master %s uses a superior FFSS protocol version (%x), maybe you should upgrade your server\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
+      if(ProtocolVersion < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE)
+        FFSS_PrintSyslog(LOG_WARNING,"Master %s uses an inferior FFSS protocol version (%x), maybe you should contact ffss-master administrator for upgrade\n",inet_ntoa(Master.sin_addr),ProtocolVersion);
     }
   }
 
@@ -504,7 +513,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,con
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer(Master,MasterVersion,Domain);
+      ((FS_PPlugin)Ptr->Data)->CB.OnMasterSearchAnswer(Master,ProtocolVersion,Domain);
     Ptr = Ptr->Next;
   }
 }
@@ -521,7 +530,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   FFSS_PrintDebug(1,"Received a SHARE CONNECTION message (%s)\n",ShareName);
 
   /* Creates a new ts */
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   ts->ShareName = strdup(ShareName);
   ts->Client = Client;
   ts->Comps = Compressions;
@@ -622,7 +631,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
 
   FFSS_PrintDebug(1,"Received a DIRECTORY LISTING message\n");
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   if(!FS_SendDirectoryListing(Client,ts->Share,Path,ts->Comps))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
@@ -664,7 +673,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
     return FS_SendMessage_Error(Client->sock,FFSS_ERROR_SERVER_IS_QUIET,FFSS_ErrorTable[FFSS_ERROR_SERVER_IS_QUIET]);
   }
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
   {
@@ -674,8 +683,24 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   if(FS_MyGlobal.MaxXFerPerConn != 0)
   {
     if(FS_XFersCount(Conn) >= FS_MyGlobal.MaxXFerPerConn)
-    { /* Too many connections */
-      return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS]);
+    { /* Too many connections - Retry */
+      int retries = 0;
+      bool accepted = false;
+      while(retries < FS_ON_DOWNLOAD_MAX_RETRIES)
+      {
+        if(FS_XFersCount(Conn) < FS_MyGlobal.MaxXFerPerConn)
+        {
+          accepted = true;
+          break;
+        }
+        SU_USLEEP(FS_ON_DOWNLOAD_SLEEP_RETRY);
+        retries++;
+      }
+      if(!accepted) /* Still too many connections */
+      {
+        FFSS_PrintDebug(6,"Too many active connections : %d\n",FS_XFersCount(Conn));
+        return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS]);
+      }
     }
   }
   if(FS_MyGlobal.XFerInConn)
@@ -747,7 +772,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
     }
   }
 #ifdef DEBUG
-  printf("ADD XFER %p TO CONN\n",FT);
+  printf("ADD XFER %p TO CONN (%ld)\n",FT,SU_THREAD_SELF);
 #endif
   Conn->XFers = SU_AddElementHead(Conn->XFers,FT);
   SU_SEM_POST(FS_SemXFer); /* Unlock */
@@ -766,7 +791,7 @@ bool OnUpload(SU_PClientSocket Client,const char Path[],long int Size,int Port) 
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FFSS_PrintDebug(1,"Received an UPLOAD message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -784,7 +809,7 @@ bool OnRename(SU_PClientSocket Client,const char Path[],const char NewPath[]) /*
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FFSS_PrintDebug(1,"Received a RENAME message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -802,7 +827,7 @@ bool OnCopy(SU_PClientSocket Client,const char Path[],const char NewPath[]) /* P
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FFSS_PrintDebug(1,"Received a COPY message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -820,7 +845,7 @@ bool OnDelete(SU_PClientSocket Client,const char Path[]) /* Path IN the share (w
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FFSS_PrintDebug(1,"Received a DELETE message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -838,7 +863,7 @@ bool OnMkDir(SU_PClientSocket Client,const char Path[]) /* Path IN the share (wi
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FFSS_PrintDebug(1,"Received a MKDIR message\n");
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_NOT_IMPLEMENTED,"Command not yet implemented");
 
@@ -856,7 +881,7 @@ void OnIdleTimeout(SU_PClientSocket Client)
 {
   SU_PList Ptr;
 
-  FS_GetThreadSpecific(); /* Get ts to check if conn to be removed */
+  FS_GetThreadSpecific(false); /* Get ts to check if conn to be removed */
   FS_SendMessage_Error(Client->sock,FFSS_ERROR_IDLE_TIMEOUT,FFSS_ErrorTable[FFSS_ERROR_IDLE_TIMEOUT]);
   /* OnEndThread will be called just after returning this function */
 
@@ -876,10 +901,10 @@ int OnSelect(void) /* 0=Do timed-out select ; 1=don't do timed-out select, but s
   FS_PConn Conn;
   bool res;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(true);
   /* Getting PConn structure */
-  if(ts->Share == NULL)
-    return 0;
+  if(ts == NULL) return 0;
+  if(ts->Share == NULL) return 0;
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
   {
@@ -915,7 +940,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 
   if(!FS_MyGlobal.XFerInConn)
     return;
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   /* Getting PConn structure */
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn == NULL)
@@ -959,7 +984,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   char FilePath[2048];
   SU_PList Ptr;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   if(FS_MyState != FFSS_STATE_ON)
   { /* Quiet mode - Sending error message */
     FS_SendMessage_StrmOpenAnswer(Client->sock,Path,FFSS_ERROR_SERVER_IS_QUIET,0,0);
@@ -1037,7 +1062,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
   FS_PThreadSpecific ts;
   SU_PList Ptr;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1073,7 +1098,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,long int StartPos,long i
   long int res,len;
   SU_PList Ptr;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1136,7 +1161,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,long int StartPos,const
   FS_PThreadSpecific ts;
   SU_PList Ptr;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1171,7 +1196,7 @@ void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,long int 
   if(FS_MyState != FFSS_STATE_ON)
     return;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   Conn = FS_GetConnFromTS(ts,ts->Share->Conns);
   if(Conn != NULL)
   {
@@ -1233,7 +1258,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
     return false;
 
   /* Creates a new ts */
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
 
 #ifdef DEBUG
   printf("ADD FTP CONN\n");
@@ -1271,7 +1296,7 @@ void OnPWDFTP(SU_PClientSocket Client)
 
   FFSS_PrintDebug(1,"Received a FTP PWD message\n");
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   SU_strcpy(tspath,ts->Path,sizeof(tspath));
   if(tspath[1] != 0)
   {
@@ -1313,7 +1338,7 @@ void OnTypeFTP(SU_PClientSocket Client,const char Type)
       send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
       return;
   }
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   ts->Type = Type;
 
   Ptr = FS_Plugins;
@@ -1344,7 +1369,7 @@ void OnModeFTP(SU_PClientSocket Client,const char Mode)
       send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
       return;
   }
-/*  ts = FS_GetThreadSpecific();
+/*  ts = FS_GetThreadSpecific(false);
   ts->Type = Type;*/
 
   Ptr = FS_Plugins;
@@ -1370,7 +1395,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
 
   FFSS_PrintDebug(1,"Received a LIST message for %s\n",(Path == NULL)?"cwd":Path);
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 ." CRLF);
   send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 .." CRLF);
@@ -1534,7 +1559,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
 
   FFSS_PrintDebug(1,"Received a CWD message for %s\n",Path);
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
   if(Path[0] == '/') /* Absolute Path */
   {
     SU_strcpy(New,Path,sizeof(New));
@@ -1766,7 +1791,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],long int StartPos,c
   char FPath[FFSS_MAX_PATH_LENGTH];
   SU_PList Ptr;
 
-  ts = FS_GetThreadSpecific();
+  ts = FS_GetThreadSpecific(false);
 
   if(Path[0] == '/') /* Absolute Path */
   {
@@ -1999,7 +2024,7 @@ void OnTransferFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],
     }
     if(Ptr != NULL)
     {
-      printf("REMOVE XFER %p FORM CONN\n",FT);
+      printf("REMOVE XFER %p FORM CONN %d (%ld)\n",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
@@ -2038,7 +2063,8 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     }
     if(Ptr != NULL)
     {
-      printf("REMOVE XFER %p FORM CONN\n",FT);
+      printf("REMOVE XFER %p FORM CONN (%ld)\n",FT,SU_THREAD_SELF);
+      //printf("REMOVE XFER %p FORM CONN %d (%ld)\n",FT,SU_ListCount(((FS_PConn)FT->User)->XFers),SU_THREAD_SELF);
       ((FS_PConn)FT->User)->XFers = SU_DelElementElem(((FS_PConn)FT->User)->XFers,FT);
     }
     else
@@ -2156,7 +2182,7 @@ int main(int argc,char *argv[])
   char ConfigFile[1024];
   bool daemonize = false;
 
-  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001\n",FFSS_SERVER_VERSION);
+  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_SERVER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
 #ifdef __unix__
