@@ -8,6 +8,7 @@
 #define CONFCONN_NAME      "Conf Conn Plugin"
 #define CONFCONN_VERSION   "0.1"
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2001'02"
+#define CONFCONN_DESCRIPTION "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
 #define CONFCONN_PLUGIN_REG_KEY FSP_BASE_REG_KEY CONFCONN_NAME "\\"
 
 /* The only file we need to include is server.h */
@@ -25,6 +26,7 @@ typedef struct
 /* We have to declare a FS_PPlugin structure for our callbacks */
 FS_PPlugin Pl;
 SU_PList CC_Confs = NULL; /* CC_PConf */
+FSP_TInfos CC_Infos;
 void CC_AddConf(const char IP[],const char Login[],const char Pwd[]);
 
 /* ******************** */
@@ -243,3 +245,11 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
   CC_Confs = NULL;
 }
 
+FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
+{
+  CC_Infos.Name = CONFCONN_NAME;
+  CC_Infos.Version = CONFCONN_VERSION;
+  CC_Infos.Copyright = CONFCONN_COPYRIGHT;
+  CC_Infos.Description = CONFCONN_DESCRIPTION;
+  return &CC_Infos;
+}

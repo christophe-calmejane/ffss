@@ -12,8 +12,11 @@
 #define TRAYCONN_NAME      "Tray Conn Plugin"
 #define TRAYCONN_VERSION   "0.1"
 #define TRAYCONN_COPYRIGHT "(c) Ze KiLleR - 2002"
+#define TRAYCONN_DESCRIPTION "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, and set the server into quiet mode."
 
 #define MANAGER_PATH_REG_KEY "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\ManagerPath"
+#define TIMER_DELAY 5*1000 /* Every 5 sec */
+#define TIMER_KEY 0x29a
 #include "TrayConn\\resource.h"
 
 /* The only file we need to include is server.h */
@@ -23,6 +26,7 @@
 
 /* We have to declare a FS_PPlugin structure for our callbacks */
 FS_PPlugin Pl;
+FSP_TInfos TC_Infos;
 
 void * (*PluginQueryFunc)(int Type,...);
 
@@ -129,8 +133,6 @@ char *DrawBitmap(void)
   int max_conns = 0,nb_conns = 0;
 
   Index = (SU_PList) PluginQueryFunc(FSPQ_ACQUIRE_INDEX);
-  PluginQueryFunc(FSPQ_LOCK_CONNS);
-  PluginQueryFunc(FSPQ_LOCK_XFERS);
   Ptr = Index;
   while(Ptr != NULL)
   {
@@ -146,8 +148,6 @@ char *DrawBitmap(void)
     nb_shares++;
     Ptr = Ptr->Next;
   }
-  PluginQueryFunc(FSPQ_UNLOCK_XFERS);
-  PluginQueryFunc(FSPQ_UNLOCK_CONNS);
   PluginQueryFunc(FSPQ_RELEASE_INDEX);
 
   Gbl = (FS_PGlobal) PluginQueryFunc(FSPQ_ACQUIRE_GLOBAL);
@@ -199,7 +199,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
   switch (message) {
     case WM_CREATE:
-      SetTimer(hwnd, 0x29a, 10000, NULL);
+      SetTimer(hwnd,TIMER_KEY,TIMER_DELAY,NULL);
       return TRUE;
 
     case WM_TIMER:
@@ -216,7 +216,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       DeleteObject(TC_bmp);
       DeleteObject(TC_bmp_and);
       PostQuitMessage(0);
-      KillTimer(hwnd, 0x29a);
+      KillTimer(hwnd,TIMER_KEY);
       return TRUE;
 
     case UWM_SYSTRAY: /* We are being notified of mouse activity over the icon */
@@ -387,4 +387,13 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 {
   SendMessage(TC_hwnd,WM_DESTROY,0,0);
+}
+
+FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
+{
+  TC_Infos.Name = TRAYCONN_NAME;
+  TC_Infos.Version = TRAYCONN_VERSION;
+  TC_Infos.Copyright = TRAYCONN_COPYRIGHT;
+  TC_Infos.Description = TRAYCONN_DESCRIPTION;
+  return &TC_Infos;
 }

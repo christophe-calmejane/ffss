@@ -11,6 +11,7 @@
 #define LOG_NAME      "Log Plugin"
 #define LOG_VERSION   "0.1"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
+#define LOG_DESCRIPTION "Logs all successful connections and download requests."
 #define LOG_FILE_PREFIX "FS_Log"
 #define LOG_PLUGIN_REG_KEY FSP_BASE_REG_KEY LOG_NAME
 
@@ -34,6 +35,7 @@ typedef struct
 /* We have to declare a FS_PPlugin structure for our callbacks */
 FS_PPlugin Pl;
 L_TGlobal L_Gbl;
+FSP_TInfos L_Infos;
 
 void * (*PluginQueryFunc)(int Type,...);
 
@@ -256,6 +258,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.
   */
+  Plugin_Configure();
   return Pl;
 }
 
@@ -266,4 +269,13 @@ FS_PLUGIN_EXPORT void Plugin_UnInit(void)
   SU_CloseLogFile(L_fp);
   if(L_Gbl.Path != NULL)
     free(L_Gbl.Path);
+}
+
+FS_PLUGIN_EXPORT FSP_PInfos Plugin_QueryInfos(void)
+{
+  L_Infos.Name = LOG_NAME;
+  L_Infos.Version = LOG_VERSION;
+  L_Infos.Copyright = LOG_COPYRIGHT;
+  L_Infos.Description = LOG_DESCRIPTION;
+  return &L_Infos;
 }
