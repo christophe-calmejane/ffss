@@ -19,7 +19,6 @@ CFG=ffss - Win32 Debug
 !MESSAGE 
 !MESSAGE "ffss - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "ffss - Win32 Debug" (based on "Win32 (x86) Static Library")
-!MESSAGE "ffss - Win32 Release Intel" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -75,36 +74,12 @@ LIB32=xilink6.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
-!ELSEIF  "$(CFG)" == "ffss - Win32 Release Intel"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "ffss___Win32_Release_Intel"
-# PROP BASE Intermediate_Dir "ffss___Win32_Release_Intel"
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 0
-# PROP Output_Dir "ffss___Win32_Release_Intel"
-# PROP Intermediate_Dir "ffss___Win32_Release_Intel"
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /G7 /O3 /QxiM /Qip /Qwp_ipo /c
-# ADD BASE RSC /l 0x40c /d "NDEBUG"
-# ADD RSC /l 0x40c /i "../../../../misc/windows/lib" /d "NDEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LIB32=xilink6.exe -lib
-# ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
-
 !ENDIF 
 
 # Begin Target
 
 # Name "ffss - Win32 Release"
 # Name "ffss - Win32 Debug"
-# Name "ffss - Win32 Release Intel"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
