@@ -1,3 +1,18 @@
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 // ChainPageDlg.cpp : implementation file
 //
 
@@ -51,11 +66,11 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CChainPageDlg message handlers
 
-void CChainPageDlg::OnMovedown() 
+void CChainPageDlg::OnMovedown()
 {
 	// TODO: Add your control notification handler code here
 	int			nItem=m_Rules.GetItemCount();
-	
+
 	while( nItem>=0 ) {
 
 		if( m_Rules.GetItemState(nItem,LVIS_SELECTED)==LVIS_SELECTED ) {
@@ -64,22 +79,22 @@ void CChainPageDlg::OnMovedown()
 			if( nItem==m_Rules.GetItemCount()-1 ) {
 				return;
 			}
-			SwapRules(nItem,nItem+1);			
+			SwapRules(nItem,nItem+1);
 			m_Rules.SetItemState(nItem+1,LVIS_SELECTED,LVIS_SELECTED);
 			m_Rules.SetItemState(nItem, 0, LVIS_SELECTED);
 		}
-		
+
 		nItem--;
 	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void CChainPageDlg::OnMoveup() 
+void CChainPageDlg::OnMoveup()
 {
 	// TODO: Add your control notification handler code here
 	POSITION	pos = m_Rules.GetFirstSelectedItemPosition();
 	int			nItem;
-	
+
 	while( pos!=NULL ) {
 		nItem=m_Rules.GetNextSelectedItem(pos);
 
@@ -91,14 +106,14 @@ void CChainPageDlg::OnMoveup()
 		SwapRules(nItem,nItem-1);
 		m_Rules.SetItemState(nItem-1,LVIS_SELECTED,LVIS_SELECTED);
 		m_Rules.SetItemState(nItem, 0, LVIS_SELECTED);
-	}	
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-BOOL CChainPageDlg::OnInitDialog() 
+BOOL CChainPageDlg::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
-	
+
 	// TODO: Add extra initialization here
 	Localize();
 	m_Rules.InsertColumn(0,CurST[ST_R_IP],LVCFMT_LEFT,95);
@@ -114,7 +129,7 @@ BOOL CChainPageDlg::OnInitDialog()
 	g_pFAPI->EnumRulesOfChain(m_nChainNumber,OnEnumRulesOfChain);
 
 	UpdateData(FALSE);
-	
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -182,7 +197,7 @@ void CChainPageDlg::SetRules(void)
 		strIP=m_Rules.GetItemText(nItem,0);
 		strMask=m_Rules.GetItemText(nItem,1);
 		strAction=m_Rules.GetItemText(nItem,2);
-		strName=m_Rules.GetItemText(nItem,3);		
+		strName=m_Rules.GetItemText(nItem,3);
 
 		g_pFAPI->AddRuleToChain_Tail(m_nChainNumber,(LPCTSTR)strIP,(LPCTSTR)strMask,
 			GetActionFromString((LPCTSTR)strAction),(LPCTSTR)strName);
@@ -193,7 +208,7 @@ void CChainPageDlg::SetRules(void)
 void OnEnumRulesOfChain(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[])
 {
 	int	nItem=g_pCurrentPage->m_Rules.GetItemCount();
-	
+
 	g_pCurrentPage->m_Rules.InsertItem(nItem,IP);
 	g_pCurrentPage->m_Rules.SetItemText(nItem,1,Mask);
 	g_pCurrentPage->m_Rules.SetItemText(nItem,2,GetStringFromAction(Action));

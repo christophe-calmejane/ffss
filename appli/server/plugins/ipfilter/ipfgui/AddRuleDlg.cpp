@@ -1,3 +1,18 @@
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 // AddRuleDlg.cpp : implementation file
 //
 
@@ -47,14 +62,14 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CAddRuleDlg message handlers
 
-void CAddRuleDlg::OnOK() 
+void CAddRuleDlg::OnOK()
 {
 	// TODO: Add extra validation here
 	BYTE b0,b1,b2,b3;
 
 	if( UpdateData()==FALSE )
 		return;
-	
+
 	if ( m_pRule!=NULL ) {
 		m_pRule->m_strName=m_strRuleName;
 		m_pRule->m_nAction=m_nAction+1;
@@ -77,7 +92,7 @@ void CAddRuleDlg::SetRule(CFilterRule *pRule)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-BOOL CAddRuleDlg::OnInitDialog() 
+BOOL CAddRuleDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -90,7 +105,7 @@ BOOL CAddRuleDlg::OnInitDialog()
 	CheckRadioButton(IDC_CHAIN_THIS,IDC_CHAIN_ALL,IDC_CHAIN_THIS);
 
 	UpdateData(FALSE);
-	
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }

@@ -1,3 +1,18 @@
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 // ipfinstall.cpp : Defines the entry point for the DLL application.
 //
 
@@ -54,8 +69,8 @@ typedef bool (*procGUI)(HWND);
 typedef void (*procSetAPIPointer)(FFSS_Filter_PApi);
 
 /*****************************************************************************/
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
+BOOL APIENTRY DllMain( HANDLE hModule,
+                       DWORD  ul_reason_for_call,
                        LPVOID lpReserved
 					 )
 {
@@ -96,11 +111,11 @@ extern "C" FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)
 	if( InstallPlugin()==false ) {
 		return(NULL);
 	}
-	
+
 	/* Load and install rules */
 	ReadChains();
 
-	return(g_Pl);	
+	return(g_Pl);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -123,7 +138,7 @@ DWORD WINAPI ThreadFunc( LPVOID lpParam )
 	} else {
 		fnGUI=(procGUI)GetProcAddress(hInstance, "GUI");
 		fnSetAPIPointer=(procSetAPIPointer)GetProcAddress(hInstance, "SetAPIPointer");
-		
+
 		if( fnGUI==NULL || fnSetAPIPointer==NULL ) {
 			MessageBox((HWND)hWnd,Error_Messages[g_Language],"IP Filter",MB_OK|MB_ICONERROR);
 			FreeLibrary(hInstance);
@@ -132,12 +147,12 @@ DWORD WINAPI ThreadFunc( LPVOID lpParam )
 
 		fnSetAPIPointer(g_pFAPI);
 		fnGUI((HWND)hWnd);
-		
+
 		FreeLibrary(hInstance);
 	}
 
 	g_hThread=0;
-	return 0; 
+	return 0;
 }
 
 
@@ -148,15 +163,15 @@ extern "C" FS_PLUGIN_EXPORT SU_BOOL Plugin_Configure(void* hWnd)
 		return(true);
 	}
 
-	g_hThread = CreateThread( 
-        NULL,               // no security attributes 
-        0,                  // use default stack size  
-        ThreadFunc,         // thread function 
-        hWnd,				// argument to thread function 
-        0,                  // use default creation flags 
-        NULL);		// returns the thread identifier 
- 
-   // Check the return value for success. 
+	g_hThread = CreateThread(
+        NULL,               // no security attributes
+        0,                  // use default stack size
+        ThreadFunc,         // thread function
+        hWnd,				// argument to thread function
+        0,                  // use default creation flags
+        NULL);		// returns the thread identifier
+
+   // Check the return value for success.
    if (g_hThread == NULL) {
 	   return(false);
    } else {
@@ -202,9 +217,9 @@ void ReadChains()
 	// Enumerate keys (each key is a chain)
 	retCode=ERROR_SUCCESS;
 	while( retCode==ERROR_SUCCESS || retCode==ERROR_MORE_DATA ) {
-			
+
 		dwSize=sizeof(szhKey);
-		retCode=RegEnumKeyEx( hKey, nKeyIndex, szhKey, &dwSize, 
+		retCode=RegEnumKeyEx( hKey, nKeyIndex, szhKey, &dwSize,
 					NULL,NULL,NULL,&ftLastWriteTime);
 		if( retCode==ERROR_SUCCESS || retCode==ERROR_MORE_DATA ) {
 			if( RegOpenKeyEx( hKey, szhKey,0,KEY_READ, &hKeyRules )==ERROR_SUCCESS ) {
@@ -232,10 +247,10 @@ void ReadRules(HKEY hKey)
 
 	nBufSize=sizeof(nChainNumber);
 	if( RegQueryValueEx(hKey,NULL,NULL,NULL,(unsigned char*)&nChainNumber,&nBufSize)==ERROR_SUCCESS ) {
-		
+
 		// flush chain and install new rules
 		g_pFAPI->ClearChain(nChainNumber);
-		
+
 		// set policy
 		nBufSize=sizeof(buffer);
 		if( RegQueryValueEx(hKey,"Policy",NULL,NULL,(unsigned char*)buffer,&nBufSize)==ERROR_SUCCESS ) {
@@ -331,8 +346,8 @@ void OnListRules(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,con
 	char	szRuleName[255];
 
 	sprintf(szRuleName,"%s\\Rule%d",g_ChainKey,g_nRule);
-	sprintf(szRule,"%s/%s/%s/%s",IP,Mask,GetStringFromAction(Action),Name);	
-	SU_RB_SetStrValue(szRuleName,szRule);	
+	sprintf(szRule,"%s/%s/%s/%s",IP,Mask,GetStringFromAction(Action),Name);
+	SU_RB_SetStrValue(szRuleName,szRule);
 	g_nRule++;
 }
 

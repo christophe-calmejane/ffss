@@ -4,9 +4,24 @@
 /*                                              */
 /* http://zekiller.skytech.org                  */
 /* mailto : zekiller@skytech.org                */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
-/* TODO : dblclic gauche : ouvre manager
-          clic droit : menu contextuel : eject tout le monde...
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+/* TODO :
+
 */
 
 #define TRAYCONN_NAME      "Tray Conn"
@@ -187,7 +202,7 @@ char *DrawBitmap(void)
   max_conns = max(Gbl->MaxConn,max_conns);
   nb_conns = Gbl->Conn;
   PluginQueryFunc(FSPQ_RELEASE_GLOBAL);
-  
+
   memcpy(&TC_img,&TC_img_orig,sizeof(TC_img)); /* Reset icon */
   DrawJauge(JAUGE_OFS_LEFT,(int)(nb_conns/(float)max_conns*JAUGE_HEIGHT));
   DrawJauge(JAUGE_OFS_RIGHT,(int)(nb_xfers/(float)max_xfers*JAUGE_HEIGHT));

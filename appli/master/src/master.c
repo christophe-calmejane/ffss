@@ -1,3 +1,18 @@
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 /* INFOS :
  - Hosts in a domain are kept during 30 days of OFF state
 */
@@ -907,21 +922,17 @@ int main(int argc,char *argv[])
     i = 1;
     while(i<argc)
     {
-      if(strcmp(argv[i],"--help") == 0)
+      if((strcmp(argv[i],"--help") == 0) || (strcmp(argv[i],"-h") == 0))
         PrintHelp();
-      else if(strcmp(argv[i],"-h") == 0)
-        PrintHelp();
-      else if(strcmp(argv[i],"--version") == 0)
+      else if((strcmp(argv[i],"--version") == 0) || (strcmp(argv[i],"-v") == 0))
+      {
+        printf("This is free software; see the source for copying conditions.  There is NO\n");
+        printf("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
         return 0;
-      else if(strcmp(argv[i],"-v") == 0)
-        return 0;
-      else if(strcmp(argv[i],"-d") == 0)
+      }
+      else if((strcmp(argv[i],"-d") == 0) || (strcmp(argv[i],"--daemon") == 0))
         daemonize = true;
-      else if(strcmp(argv[i],"--daemon") == 0)
-        daemonize = true;
-      else if(strcmp(argv[i],"-l") == 0)
-        log = true;
-      else if(strcmp(argv[i],"--log") == 0)
+      else if((strcmp(argv[i],"-l") == 0) || (strcmp(argv[i],"--log") == 0))
         log = true;
       else if(strcmp(argv[i],"-c") == 0)
       {

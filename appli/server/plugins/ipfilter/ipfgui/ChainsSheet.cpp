@@ -1,3 +1,18 @@
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 // ChainsSheet.cpp : implementation file
 //
 
@@ -55,10 +70,10 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CChainsSheet message handlers
 
-BOOL CChainsSheet::OnInitDialog() 
+BOOL CChainsSheet::OnInitDialog()
 {
 	BOOL bResult = CPropertySheet::OnInitDialog();
-	
+
 	// TODO: Add your specialized code here
 	int	i=0;
 	TC_ITEM		item;
@@ -68,7 +83,7 @@ BOOL CChainsSheet::OnInitDialog()
 	CRect		rect;
     int			nOffset = 6;
 	list<CChainPageDlg*>::iterator	it;
-	
+
 	SetRedraw(FALSE);
 
 	/* Set Tab labels ***********************/
@@ -82,7 +97,7 @@ BOOL CChainsSheet::OnInitDialog()
 		SetActivePage(i);
 	}
 	SetActivePage(0);	// Activate first page
-	
+
 	/* Add my own buttons *******************/
 	pWnd->GetClientRect(&rectOK);
     GetClientRect(&rect);
@@ -92,14 +107,14 @@ BOOL CChainsSheet::OnInitDialog()
     rect.top = rect.bottom-rectOK.Height()-nOffset;
 	rect.right = rect.left+rectOK.Width();
 	rect.bottom = rect.top+rectOK.Height();
-    
+
 	/* Create them */
     m_btnAddRule.Create(CurST[ST_BTN_ADDRULE],BS_PUSHBUTTON|WS_VISIBLE|WS_TABSTOP|WS_CHILD,rect,this,IDC_BTN_ADDRULE );
 	m_btnAddRule.SetFont( GetFont() );
 	rect.left=rect.right+nOffset;
 	rect.right=rect.left+rectOK.Width();
-	m_btnDelRule.Create(CurST[ST_BTN_DELRULE],BS_PUSHBUTTON|WS_VISIBLE|WS_TABSTOP|WS_CHILD,rect,this,IDC_BTN_DELRULE );	
-	m_btnDelRule.SetFont( GetFont() );	
+	m_btnDelRule.Create(CurST[ST_BTN_DELRULE],BS_PUSHBUTTON|WS_VISIBLE|WS_TABSTOP|WS_CHILD,rect,this,IDC_BTN_DELRULE );
+	m_btnDelRule.SetFont( GetFont() );
 
 	SetDlgItemText(IDOK,CurST[ST_A_OK]);
 	SetDlgItemText(IDCANCEL,CurST[ST_A_CANCEL]);
@@ -124,7 +139,7 @@ void CChainsSheet::Init()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-BOOL CChainsSheet::OnCommand(WPARAM wParam, LPARAM lParam) 
+BOOL CChainsSheet::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	// TODO: Add your specialized code here and/or call the base class
     // crack message parameters
@@ -146,7 +161,7 @@ BOOL CChainsSheet::OnCommand(WPARAM wParam, LPARAM lParam)
 	if( nCode == BN_CLICKED && nID==IDOK ) {
 		OnOK();
 	}
-	
+
 	return CPropertySheet::OnCommand(wParam, lParam);
 }
 
@@ -159,7 +174,7 @@ void CChainsSheet::OnAddRuleClicked()
 	CFilterRule	Rule;
 	int			nIndex=0;
 	int			nPageCount;
-	
+
 	dlg.SetRule(&Rule);
 	if( dlg.DoModal()==IDOK ) {
 		if( Rule.m_bGlobal==false ) {
@@ -191,7 +206,7 @@ void CChainsSheet::OnDelRuleClicked()
 	CString				strMessage;
 
 	pPage=(CChainPageDlg*)GetActivePage();
-	pos=pPage->m_Rules.GetFirstSelectedItemPosition();	
+	pos=pPage->m_Rules.GetFirstSelectedItemPosition();
 
 	while( pos!=NULL ) {
 		nItem = pPage->m_Rules.GetNextSelectedItem(pos);
@@ -252,13 +267,13 @@ void CChainsSheet::AddRuleToPage(int nIndex, CFilterRule* pRule)
 	int		nItem;
 
 	pPage=(CChainPageDlg*)GetPage(nIndex);
-	
+
 	nItem=pPage->m_Rules.GetItemCount();
-	
+
 	pPage->m_Rules.InsertItem(nItem,(LPCTSTR)pRule->m_strIP);
 	pPage->m_Rules.SetItemText(nItem,1,(LPCTSTR)pRule->m_strNetMask);
 	pPage->m_Rules.SetItemText(nItem,3,(LPCTSTR)pRule->m_strName);
-	pPage->m_Rules.SetItemText(nItem,2,GetStringFromAction(pRule->m_nAction));	
+	pPage->m_Rules.SetItemText(nItem,2,GetStringFromAction(pRule->m_nAction));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -278,13 +293,13 @@ void OnEnumChains(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILTER_ACTION D
 	}
 
 	pChainPage->Construct(IDD_CHAIN_PAGE);
-	
+
 	/* Remove Help button from all pages and sheet */
 	pChainPage->m_psp.dwFlags &= ~PSP_HASHELP;
 	pChainPage->m_nChainNumber=Chain;
 	pChainPage->m_nAction=Default;
 	pChainPage->m_strName=Name;
-	
+
 	// Add this page to list
 	g_pChainsSheet->m_pChainPages.push_back(pChainPage);
 
