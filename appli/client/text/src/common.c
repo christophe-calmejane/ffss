@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <readline/readline.h>
+#include <time.h>
 
 	/* mkdir */
 #ifndef _WIN32
@@ -44,7 +45,7 @@ bool FCA_sem_timeout;
 
 	/* for logs */
 FILE *FCA_logf;
-
+	
 	/* environment variables */
 	/* WARNING for these 2 tables :
 		if you modify the variable order,
@@ -140,9 +141,15 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	FILE *fd;
 	FFSS_LongField oldsize;
 	FFSS_LongField start;
-		/* TODO: and parameter 'use same thread ?' (=true) */
+	
 	FCA_Ptrans = NULL;
+	FCA_dw_amount=0;
+	FCA_dw_size=size;
+	time(&FCA_dw_begin);
 	start=0;
+	FCA_dw_file=strrchr(RemotePath, '/');
+	if(!FCA_dw_file || !(FCA_dw_file++))
+		FCA_dw_file=(char*)RemotePath;
 	
 		/* only if it's not a cat */
 	if(LocalPath && LocalPath[0]!='\0') {
@@ -1253,7 +1260,7 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 			FCA_dw_dir(tgt, next, ndest);
 		} else {		/* it's a file */
 			FCA_posted=false;
-
+			FCA_quiet=false;
 			code=FCA_RequestDownload(FCA_shrSkt, next, ndest, E->Size);
 			if(code>0)
 				FCA_print_cmd_err("Download failed");
@@ -1261,9 +1268,11 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 				if(! FCA_posted) {
 					FFSS_PrintDebug(5, "(client) waiting transfert of %s\n",E->Name);
 					FCA_sem_wait_no_timeout();
+					FCA_progr_bar();
 					FFSS_PrintDebug(5, "(client) transfert ended for file %s\n",E->Name);
 				}
 			}
+			FCA_quiet=true;
 		}
 		free(next);
 		free(ndest);

@@ -12,7 +12,10 @@
 #include <skyutils.h>
 #include <ffss.h>
 
-extern int FCA_progr_bar;
+extern char *FCA_dw_file;
+extern FFSS_LongField FCA_dw_amount;
+extern FFSS_LongField FCA_dw_size;
+extern time_t FCA_dw_begin;
 extern int FCA_nb_states;
 extern FILE *FCA_err_stream;
 
@@ -63,5 +66,6 @@ void FCA_print_nb(int nb, const char name[]);
 
 void FCA_ansi_chs(unsigned short int style);
 void FCA_ansi_chs_err(unsigned short int style);
+void FCA_ansi_clrl();
 
 #endif	/* _FCA_DISPLAY_H_ */

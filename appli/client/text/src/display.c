@@ -24,7 +24,10 @@
 #include "skin.h"
 #include "cgi_args.h"
 
-int FCA_progr_bar;
+char *FCA_dw_file;
+FFSS_LongField FCA_dw_amount;
+FFSS_LongField FCA_dw_size;
+time_t FCA_dw_begin;
 int FCA_nb_states;
 FILE *FCA_err_stream;
 
@@ -815,18 +818,6 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 		free(itab);
 }
 
-void FCA_print_prog_bar()
-{
-	if(FCA_quiet)	return;
-	FCA_progr_bar++;
-	if(FCA_progr_bar>25) {
-		FCA_progr_bar=0;
-		printf(".");
-			/* we must flush the buffer */
-		fflush(stdout);
-	}
-}
-
 void FCA_print_info(char *Txt, ...)
 {
 	va_list argptr;
@@ -1303,13 +1294,20 @@ void FCA_print_nb(int nb, const char name[])
 void FCA_ansi_chs(unsigned short int style)
 {
 		/* change ansi style */
-	if(! SU_strcasecmp(FCA_can_ansi, "on") )
+	if( FCA_VAR_IS_ON(FCA_can_ansi) )
 		printf("\033[%dm", style);
 }
 
 void FCA_ansi_chs_err(unsigned short int style)
 {
 		/* change ansi style */
-	if(! SU_strcasecmp(FCA_can_ansi, "on") )
+	if( FCA_VAR_IS_ON(FCA_can_ansi) )
 		fprintf(FCA_err_stream, "\033[%dm", style);
+}
+
+void FCA_ansi_clrl()
+{
+		/* clear current line from the cursor */
+	if( FCA_VAR_IS_ON(FCA_can_ansi) )
+		printf("\033[K");
 }

@@ -80,6 +80,9 @@ typedef struct
 	void (*post_listing)(char *path);
 	void (*post_search_ans)(const char *query);
 	
+	void (*progr_bar)();
+	void (*dw_ok)(char *file, float rate);
+	
 	void (*prog_end)();
 } FCA_Tps, *FCA_Pps;	/* paint structure */
 
@@ -216,6 +219,9 @@ void FCA_post_path(bool isName);
 
 void FCA_post_listing(char *path);
 void FCA_post_search_ans(const char *query);
+
+void FCA_progr_bar();
+void FCA_print_dw_ok(char *file, float rate);
 
 void FCA_prog_end();
 

@@ -47,7 +47,6 @@ void FCA_load_skins()
 	}
 }
 
-
 void FCA_prog_begin()
 {
 	if(FCA_skin->ps->prog_begin)
@@ -348,6 +347,18 @@ void FCA_post_search_ans(const char *query)
 {
 	if(FCA_skin->ps->post_search_ans)
 		FCA_skin->ps->post_search_ans(query);
+}
+
+void FCA_progr_bar()
+{
+	if(FCA_skin->ps->progr_bar)
+		FCA_skin->ps->progr_bar();
+}
+
+void FCA_print_dw_ok(char *file, float rate)
+{
+	if(FCA_skin->ps->dw_ok)
+		FCA_skin->ps->dw_ok(file,rate);
 }
 	
 void FCA_prog_end()

@@ -678,6 +678,7 @@ or get /$/none/127.0.0.1/tmp/toto/
 			else if(!code) {
 				if(!FCA_posted)
 					FCA_sem_wait_no_timeout();
+				FCA_progr_bar();
 				FCA_quiet=false;
 				return false;
 			}

@@ -89,7 +89,9 @@ void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answ
 
 void FCA_OnTransfertActive(FFSS_PTransfer FT,long int Amount,bool Download)
 {
-	FCA_print_prog_bar();
+	FCA_dw_amount+=Amount;
+	if(!FCA_quiet)
+		FCA_progr_bar();
 }
 
 void FCA_OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download)
@@ -106,10 +108,8 @@ void FCA_OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Err
 
 void FCA_OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
-	if(!FCA_quiet)
-		printf("\n");
 	FFSS_PrintDebug(3, "(client) download ended without any error\n");
-	FCA_print_cmd_ok("download sucessfull.");
+	FCA_print_dw_ok(FCA_dw_file, 12.2);
 	FCA_Ptrans=NULL;
 
 /*FFSS_PrintDebug(3, "(client) sleeeeeeeep\n");

@@ -11,7 +11,9 @@
 
 #include "display.h"
 #include "skin.h"
+#include "client.h"
 
+int FCA_progr;
 
 void FCA_def_tab_top();
 void FCA_def_tab_title(const char title[]);
@@ -66,6 +68,9 @@ void FCA_def_post_path(bool isName);
 
 void FCA_def_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_def_post_file_exec(bool isName);
+
+void FCA_def_progr_bar();
+void FCA_def_dw_ok(char *file, float rate);
 
 
 FCA_Tps FCA_def_ps;
@@ -125,6 +130,9 @@ void FCA_default_init()
 	
 	FCA_def_ps.pre_file_exec=FCA_def_pre_file_exec;
 	FCA_def_ps.post_file_exec=FCA_def_post_file_exec;
+	
+	FCA_def_ps.progr_bar=FCA_def_progr_bar;
+	FCA_def_ps.dw_ok=FCA_def_dw_ok;
 }
 
 
@@ -407,4 +415,47 @@ void FCA_def_post_file_exec(bool isName)
 {
 	printf("*");
 	FCA_ansi_chs(0);
+}
+
+void FCA_def_progr_bar()
+{
+	int i, s;
+	
+		/* download progress bar */
+	FCA_progr++;
+	if(FCA_progr>50) {
+		FCA_progr=0;
+		if( FCA_VAR_IS_ON(FCA_can_ansi) ) {
+				/* hardcoded size: 80 caracters */
+			printf("\r");
+			FCA_ansi_chs(32);FCA_ansi_chs(1);
+			printf("[");
+			FCA_ansi_chs(0);FCA_ansi_chs(44);
+			s=64*FCA_dw_amount/FCA_dw_size;
+			for(i=0; i<s; i++)
+				printf(" ");
+			FCA_ansi_chs(0);
+			for(; i<64; i++)
+				printf(" ");
+			FCA_ansi_chs(32);FCA_ansi_chs(1);
+			printf("]");
+			FCA_ansi_chs(0);
+			printf(" %d%% ", (int)(100*FCA_dw_amount/FCA_dw_size));
+			FCA_print_size(12.3,"%4d");
+			printf("B/s");
+			FCA_ansi_clrl();
+		} else
+			printf(".");
+			/* we must flush the buffer */
+		fflush(stdout);
+	}
+}
+
+void FCA_def_dw_ok(char *file, float rate)
+{
+	printf("\r ");
+	FCA_print_size((int)rate,"%4d");
+	printf("B/s  %s", file);
+	FCA_ansi_clrl();
+	printf("\n");
 }
