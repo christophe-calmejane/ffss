@@ -837,6 +837,16 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
       return false;
     }
   }
+  if(FT->ThreadType == FFSS_THREAD_SERVER)
+  {
+    if(FFSS_CB.SCB.OnTransferActive != NULL)
+      FFSS_CB.SCB.OnTransferActive(FT,len,false);
+  }
+  else
+  {
+    if(FFSS_CB.CCB.OnTransferActive != NULL)
+      FFSS_CB.CCB.OnTransferActive(FT,len,false);
+  }
   free(msg);
   return true;
 }
@@ -863,6 +873,16 @@ void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
     if(FT->fp != NULL)
       fwrite(Buf,1,Len,FT->fp);
     FT->XI.Checksum = FFSS_ComputeChecksum(FT->XI.Checksum,Buf,Len);
+    if(FT->ThreadType == FFSS_THREAD_SERVER)
+    {
+      if(FFSS_CB.SCB.OnTransferActive != NULL)
+        FFSS_CB.SCB.OnTransferActive(FT,Len,false);
+    }
+    else
+    {
+      if(FFSS_CB.CCB.OnTransferActive != NULL)
+        FFSS_CB.CCB.OnTransferActive(FT,Len,false);
+    }
   }
   if(FT->XI.total == (FT->XI.fsize+sizeof(FFSS_Field))) /* Compares checksum */
   {

@@ -465,7 +465,7 @@ typedef struct
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
   void (*OnTransferSuccess)(FFSS_PTransfer FT,bool Download);
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
-  FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[]); /* Returns PTransfer from RequestedFileName */
+  FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag); /* Returns PTransfer from RequestedFileName */
   FFSS_PTransfer (*OnData)(SU_PClientSocket Server,FFSS_Field XFerTag); /* Returns PTransfer from XFerTag */
   void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,long int Handle,FFSS_LongField FileSize);
   void (*OnStrmReadAnswer)(SU_PClientSocket Client,long int Handle,const char Bloc[],long int BlocSize);

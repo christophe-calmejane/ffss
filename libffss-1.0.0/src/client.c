@@ -494,7 +494,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       FFSS_PrintDebug(3,"Received a init xfer message (%s)\n",str);
       if(FFSS_CB.CCB.OnInitXFer != NULL)
       {
-        FT = FFSS_CB.CCB.OnInitXFer(Server,str);
+        FT = FFSS_CB.CCB.OnInitXFer(Server,str,val);
         if(FT != NULL)
           FFSS_InitXFerDownload(FT,val);
       }
