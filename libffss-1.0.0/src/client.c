@@ -625,7 +625,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a streaming open answer message (%s)\n",val);
+      FFSS_PrintDebug(3,"Received a streaming open answer message (%d)\n",val);
       if(FFSS_CB.CCB.OnStrmOpenAnswer != NULL)
         FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval);
       break;
