@@ -584,7 +584,8 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   FS_PInterThreadTmp Tmp = (FS_PInterThreadTmp) User;
   SU_PClientSocket Client;
   void *Info;
-  int len,res;
+  unsigned int len;
+  int res;
   FFSS_Field Size;
   bool analyse;
   int do_not_do;
@@ -592,7 +593,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   struct timeval tv;
   int retval;
   char *Buf;
-  long int BufSize;
+  unsigned long int BufSize;
 
   SU_ThreadBlockSigs();
   Client = Tmp->Client;
@@ -724,14 +725,15 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
 {
   SU_PClientSocket Client = (SU_PClientSocket) User;
   char *p;
-  int len,res;
+  unsigned int len;
+  int res;
   FFSS_Field Size;
   bool analyse,ret_val;
   fd_set rfds;
   struct timeval tv;
   int retval;
   char *Buf;
-  long int BufSize;
+  unsigned long int BufSize;
 
   SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_SERVER_BUFFER_SIZE;
@@ -1055,7 +1057,7 @@ bool FS_Init(int ServerPort,bool FTP)
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
-  if(!FFSS_Filter_Init())
+  if(!FFSS_Filter_Init(FFSS_THREAD_SERVER))
   {
     FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
     return false;

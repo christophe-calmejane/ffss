@@ -8,6 +8,10 @@
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+June, 10th 2002:
+  - Removed many warnings, by defining SU_SOCKET
+  - Version 2 of the FFSS Filter Engine
+
 June, 6th 2002:
   - Fixed free bugs in message.C
   - Moved FFSS_MyIp to utils.c

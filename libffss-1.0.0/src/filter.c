@@ -1,13 +1,5 @@
 #include "ffss.h"
 
-#define FFSS_FILTER_CHAINS_COUNT 3
-SU_PList FFSS_Chains[FFSS_FILTER_CHAINS_COUNT] = {NULL,}; /* FFSS_PRule */
-SU_SEM_HANDLE FFSS_SemFilter;   /* Semaphore to protect the use of FFSS_Chains */
-bool FFSS_Filter_Created = false;
-
-#define FFSS_FILTER_CHECK_CHAIN(x,y) if((x) >= FFSS_FILTER_CHAINS_COUNT) return (y);
-#define FFSS_FILTER_CHECK_INIT if(!FFSS_Filter_Created) { if(!FFSS_Filter_Init()) return false; }
-
 typedef struct
 {
   unsigned long IP;          /* IP base of the rule */
@@ -17,6 +9,22 @@ typedef struct
   FFSS_FILTER_ACTION Action; /* Action to perform if rule matches */
   char *Name;                /* Optional name of the rule */
 } FFSS_TRule, *FFSS_PRule;
+
+typedef struct
+{
+  SU_PList Rules;             /* List of rules */ /* FFSS_PRule */
+  char *Name;                 /* Name of the chain */
+  FFSS_FILTER_ACTION Default; /* Default action if no rule matched */
+} FFSS_TChain, *FFSS_PChain;
+
+#define FFSS_FILTER_CHAINS_COUNT 3
+FFSS_PChain FFSS_Chains[FFSS_FILTER_CHAINS_COUNT] = {NULL,};
+SU_SEM_HANDLE FFSS_SemFilter;   /* Semaphore to protect the use of FFSS_Chains */
+bool FFSS_Filter_Created = false;
+
+#define FFSS_FILTER_CHECK_CHAIN(x,y) if((x) >= FFSS_FILTER_CHAINS_COUNT) return (y);
+#define FFSS_FILTER_CHECK_CHAIN_2(x,y) if(FFSS_Chains[x] == NULL) { SU_SEM_POST(FFSS_SemFilter);return (y); }
+#define FFSS_FILTER_CHECK_INIT(x) if(!FFSS_Filter_Created) return (x);
 
 /* FFSS Filter Internal Functions */
 void FFSS_Filter_FreeRule(FFSS_PRule Rule)
@@ -58,7 +66,27 @@ FFSS_PRule FFSS_Filter_CreateRule(const char IP[],const char Mask[],FFSS_FILTER_
   return Rule;
 }
 
-bool FFSS_Filter_Init(void)
+bool FFSS_Filter_CreateChain(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILTER_ACTION Default)
+{
+  FFSS_PChain Ch;
+
+  FFSS_FILTER_CHECK_CHAIN(Chain,false);
+  SU_SEM_WAIT(FFSS_SemFilter);
+  if(FFSS_Chains[Chain] != NULL) /* Chain already exists */
+  {
+    SU_SEM_POST(FFSS_SemFilter);
+    return false;
+  }
+  Ch = (FFSS_PChain) malloc(sizeof(FFSS_TChain));
+  memset(Ch,0,sizeof(FFSS_TChain));
+  FFSS_Chains[Chain] = Ch;
+  Ch->Name = strdup(Name);
+  Ch->Default = Default;
+  SU_SEM_POST(FFSS_SemFilter);
+  return true;
+}
+
+bool FFSS_Filter_Init(int Type)
 {
   if(FFSS_Filter_Created)
     return true;
@@ -66,6 +94,23 @@ bool FFSS_Filter_Init(void)
   /* Create semaphore */
   if(!SU_CreateSem(&FFSS_SemFilter,1,1,"FFSSFilterSem"))
     return false;
+  switch(Type)
+  {
+    case FFSS_THREAD_SERVER :
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_SERVER_UDP_PACKET,"UDP Packet",FFSS_FILTER_ACTION_ACCEPT);
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION,"TCP Connection",FFSS_FILTER_ACTION_ACCEPT);
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION,"TCP FTP Connection",FFSS_FILTER_ACTION_ACCEPT);
+      break;
+    case FFSS_THREAD_CLIENT :
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_CLIENT_UDP_PACKET,"UDP Packet",FFSS_FILTER_ACTION_ACCEPT);
+      break;
+    case FFSS_THREAD_MASTER :
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_MASTER_UDP_PACKET,"UDP Packet",FFSS_FILTER_ACTION_ACCEPT);
+      FFSS_Filter_CreateChain(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,"TCP Connection Master",FFSS_FILTER_ACTION_ACCEPT);
+      break;
+    default :
+      return false;
+  }
   return true;
 }
 
@@ -75,13 +120,14 @@ bool FFSS_Filter_AddRuleToChain_Head(FFSS_FILTER_CHAIN Chain,const char IP[],con
 {
   FFSS_PRule Rule;
 
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   Rule = FFSS_Filter_CreateRule(IP,Mask,Action,Name);
   if(Rule == NULL)
     return false;
   SU_SEM_WAIT(FFSS_SemFilter);
-  FFSS_Chains[Chain] = SU_AddElementHead(FFSS_Chains[Chain],Rule);
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  FFSS_Chains[Chain]->Rules = SU_AddElementHead(FFSS_Chains[Chain]->Rules,Rule);
   SU_SEM_POST(FFSS_SemFilter);
   return true;
 }
@@ -90,13 +136,14 @@ bool FFSS_Filter_AddRuleToChain_Tail(FFSS_FILTER_CHAIN Chain,const char IP[],con
 {
   FFSS_PRule Rule;
 
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   Rule = FFSS_Filter_CreateRule(IP,Mask,Action,Name);
   if(Rule == NULL)
     return false;
   SU_SEM_WAIT(FFSS_SemFilter);
-  FFSS_Chains[Chain] = SU_AddElementTail(FFSS_Chains[Chain],Rule);
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  FFSS_Chains[Chain]->Rules = SU_AddElementTail(FFSS_Chains[Chain]->Rules,Rule);
   SU_SEM_POST(FFSS_SemFilter);
   return true;
 }
@@ -105,36 +152,50 @@ bool FFSS_Filter_AddRuleToChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,con
 {
   FFSS_PRule Rule;
 
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   Rule = FFSS_Filter_CreateRule(IP,Mask,Action,Name);
   if(Rule == NULL)
     return false;
   SU_SEM_WAIT(FFSS_SemFilter);
-  FFSS_Chains[Chain] = SU_AddElementPos(FFSS_Chains[Chain],Pos,Rule);
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  FFSS_Chains[Chain]->Rules = SU_AddElementPos(FFSS_Chains[Chain]->Rules,Pos,Rule);
   SU_SEM_POST(FFSS_SemFilter);
   return true;
 }
 
-bool FFSS_Filter_AddDefaultRuleToChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action)
+bool FFSS_Filter_SetDefaultActionOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action)
 {
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
-  return FFSS_Filter_AddRuleToChain_Tail(Chain,"0.0.0.0","255.255.255.255",Action,"Default Rule Of Chain");
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  FFSS_Chains[Chain]->Default = Action;
+  return true;
+}
+
+bool FFSS_Filter_GetDefaultActionOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION *Action)
+{
+  FFSS_FILTER_CHECK_INIT(false);
+  FFSS_FILTER_CHECK_CHAIN(Chain,false);
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  if(Action != NULL)
+    *Action = FFSS_Chains[Chain]->Default;
+  return true;
 }
 
 bool FFSS_Filter_DelRuleFromChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos)
 {
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  if(Pos >= SU_ListCount(FFSS_Chains[Chain]))
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  if(Pos >= SU_ListCount(FFSS_Chains[Chain]->Rules))
   {
     SU_SEM_POST(FFSS_SemFilter);
     return false;
   }
-  FFSS_Filter_FreeRule(SU_GetElementPos(FFSS_Chains[Chain],Pos));
-  FFSS_Chains[Chain] = SU_DelElementPos(FFSS_Chains[Chain],Pos);
+  FFSS_Filter_FreeRule(SU_GetElementPos(FFSS_Chains[Chain]->Rules,Pos));
+  FFSS_Chains[Chain]->Rules = SU_DelElementPos(FFSS_Chains[Chain]->Rules,Pos);
   SU_SEM_POST(FFSS_SemFilter);
   return true;
 }
@@ -146,10 +207,11 @@ bool FFSS_Filter_DelRuleFromChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[]
 
   if(Name == NULL)
     return false;
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  Ptr = FFSS_Chains[Chain];
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
     Rule = (FFSS_PRule) Ptr->Data;
@@ -172,17 +234,18 @@ bool FFSS_Filter_ClearChain(FFSS_FILTER_CHAIN Chain)
 {
   SU_PList Ptr;
 
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  Ptr = FFSS_Chains[Chain];
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
     FFSS_Filter_FreeRule(Ptr->Data);
     Ptr = Ptr->Next;
   }
-  SU_FreeList(FFSS_Chains[Chain]);
-  FFSS_Chains[Chain] = NULL;
+  SU_FreeList(FFSS_Chains[Chain]->Rules);
+  FFSS_Chains[Chain]->Rules = NULL;
   SU_SEM_POST(FFSS_SemFilter);
   return true;
 }
@@ -191,15 +254,16 @@ bool FFSS_Filter_GetRuleOfChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,cha
 {
   FFSS_PRule Rule;
 
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  if(Pos >= SU_ListCount(FFSS_Chains[Chain]))
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  if(Pos >= SU_ListCount(FFSS_Chains[Chain]->Rules))
   {
     SU_SEM_POST(FFSS_SemFilter);
     return false;
   }
-  Rule = (FFSS_PRule) SU_GetElementPos(FFSS_Chains[Chain],Pos);
+  Rule = (FFSS_PRule) SU_GetElementPos(FFSS_Chains[Chain]->Rules,Pos);
   if(Rule == NULL)
   {
     SU_SEM_POST(FFSS_SemFilter);
@@ -224,10 +288,11 @@ bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],c
 
   if(Name == NULL)
     return false;
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  Ptr = FFSS_Chains[Chain];
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
     Rule = (FFSS_PRule) Ptr->Data;
@@ -251,6 +316,23 @@ bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],c
   return false;
 }
 
+bool FFSS_Filter_EnumChains(FFSS_CHAINS_ENUM_CB EnumCB)
+{
+  int i;
+
+  if(EnumCB == NULL)
+    return false;
+  FFSS_FILTER_CHECK_INIT(false);
+  SU_SEM_WAIT(FFSS_SemFilter);
+  for(i=0;i<FFSS_FILTER_CHAINS_COUNT;i++)
+  {
+    if(FFSS_Chains[i] != NULL)
+      EnumCB(i,FFSS_Chains[i]->Name,FFSS_Chains[i]->Default);
+  }
+  SU_SEM_POST(FFSS_SemFilter);
+  return true;
+}
+
 bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB)
 {
   SU_PList Ptr;
@@ -258,10 +340,11 @@ bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB Enu
 
   if(EnumCB == NULL)
     return false;
-  FFSS_FILTER_CHECK_INIT;
+  FFSS_FILTER_CHECK_INIT(false);
   FFSS_FILTER_CHECK_CHAIN(Chain,false);
   SU_SEM_WAIT(FFSS_SemFilter);
-  Ptr = FFSS_Chains[Chain];
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,false);
+  Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
     Rule = (FFSS_PRule) Ptr->Data;
@@ -276,23 +359,26 @@ FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAIN Chain,un
 {
   SU_PList Ptr;
   FFSS_PRule Rule;
+  FFSS_FILTER_ACTION res;
 
   if(Chain >= FFSS_FILTER_CHAINS_COUNT)
     return FFSS_FILTER_ACTION_REJECT;
 
   SU_SEM_WAIT(FFSS_SemFilter);
-  Ptr = FFSS_Chains[Chain];
+  FFSS_FILTER_CHECK_CHAIN_2(Chain,FFSS_FILTER_ACTION_REJECT);
+  res = FFSS_Chains[Chain]->Default; /* If nothing matches... return default */
+  Ptr = FFSS_Chains[Chain]->Rules;
   while(Ptr != NULL)
   {
     Rule = (FFSS_PRule) Ptr->Data;
     if(((IP & Rule->Mask) & Rule->IP) == Rule->IP) /* Match */
     {
-      SU_SEM_POST(FFSS_SemFilter);
-      return Rule->Action;
+      res = Rule->Action;
+      break;
     }
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FFSS_SemFilter);
 
-  return FFSS_FILTER_ACTION_ACCEPT; /* Nothing matched... no default rule... accept */
+  return res; 
 }

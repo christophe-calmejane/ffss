@@ -6,9 +6,9 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 /* ************************************ */
 /*        GENERAL SENDING FUNCTIONS     */
 /* ************************************ */
-bool FFSS_SendTcpPacket(int Client,char *msg,long int len,bool FreeMsg)
+bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
 {
-  long int resp,retval;
+  int resp,retval;
   fd_set rfds;
   struct timeval tv;
 
@@ -192,7 +192,7 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
 /*  Code : The error code to send               */
 /*  Descr : The description of the error code   */
 /*  Value : Extra value depending on error code */
-bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value)
+bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
@@ -224,7 +224,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_Lon
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
+bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
 {
   char *msg;
   long int len,size,pos;
@@ -233,7 +233,7 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
   context;
   if((Buffer == NULL) || (BufSize == 0))
     return true;
-  CompSize = BufSize*1.05+6000;
+  CompSize = (long int)(BufSize*1.05+6000);
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER + FFSS_MAX_PATH_LENGTH+1 + CompSize;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -291,7 +291,7 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
 {
   char *msg;
   long int len,size,pos;
@@ -300,7 +300,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[]
   context;
   if((Buffer == NULL) || (BufSize == 0))
     return true;
-  CompSize = BufSize*1.05+6000;
+  CompSize = (long int)(BufSize*1.05+6000);
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER + FFSS_MAX_PATH_LENGTH+1 + CompSize;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -356,7 +356,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[]
 /*  Client : The socket of the client                      */
 /*  Tag : The xfer tag that will be used when sending data */
 /*  FileName : The name of the requested file              */
-bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[])
+bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_INIT_XFER + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
@@ -413,7 +413,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   int resp;
   long int partial,current,slen;
   char *data;
-  int sock=0,len,client;
+  SU_SOCKET sock=0,len,client;
   struct sockaddr_in SAddr;
   fd_set rfds;
   struct timeval tv;
@@ -469,7 +469,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         break;
 #ifndef DISABLE_ZLIB
       case FFSS_COMPRESSION_ZLIB :
-        partial = ((long int) Ptr2->Data)*1.05+12;
+        partial = (long int)(((long int) Ptr2->Data)*1.05+12);
         data = (char *)Ptr->Data;
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
@@ -485,7 +485,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 #endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
       case FFSS_COMPRESSION_BZLIB :
-        partial = ((long int) Ptr2->Data)*1.05+1600;
+        partial = (long int)(((long int) Ptr2->Data)*1.05+1600);
         data = (char *)Ptr->Data;
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseBZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
@@ -627,7 +627,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,FFSS_LongField FileSize)
+bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER + FFSS_MAX_FILEPATH_LENGTH+1];
   long int len,pos;
@@ -660,7 +660,7 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
-bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int BlocLen)
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen)
 {
   char *msg;
   long int size,pos;
@@ -684,7 +684,7 @@ bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int
 /*  Client : The socket of the client                  */
 /*  Handle : The handle of the file                    */
 /*  Code : The error code to send                      */
-bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code)
+bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER];
   long int pos;
@@ -927,7 +927,7 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOWNLOAD + FFSS_MAX_FILEPATH_LENGTH+1];
   long int pos;
   int resp,len;
-  int sock=0;
+  SU_SOCKET sock=0;
   struct sockaddr_in SAddr;
 
   context;
@@ -1148,7 +1148,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
 /* Sends an STREAMING CLOSE message to a server          */
 /*  Server : The Server's structure we are connected to  */
 /*  Handle : The handle of the file to close             */
-bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
+bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_CLOSE];
   long int pos;
@@ -1170,7 +1170,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,long int Length)
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_READ];
   long int pos;
@@ -1195,7 +1195,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongFi
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen)
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen)
 {
   char *msg;
   long int size,pos;
@@ -1224,7 +1224,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongF
 /*  Handle : The handle of the file to close            */
 /*  Flags : The flags for the seek operation            */
 /*  StartPos : The position of the seek                 */
-bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,FFSS_LongField StartPos)
+bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags,FFSS_LongField StartPos)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_SEEK];
   long int pos;
@@ -1277,7 +1277,7 @@ SU_PClientSocket FM_SendMessage_Connect(const char Master[])
 /* Sends a MASTER CONNECTION message to a master  */
 /* Must be the first message sent upon connection */
 /*  Master : The socket of the Master             */
-bool FM_SendMessage_MasterConnection(int Master)
+bool FM_SendMessage_MasterConnection(SU_SOCKET Master)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_MASTER_CONNECTION];
   long int pos;
@@ -1315,7 +1315,7 @@ bool FM_SendMessage_Ping()
 /*  Buffer : The buffer containing the nb of states, and the states */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSize,int Compression)
+bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int BufSize,int Compression)
 {
   char *msg;
   long int size,pos;
@@ -1324,7 +1324,7 @@ bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSi
   context;
   if((Buffer == NULL) || (BufSize == 0))
     return true;
-  CompSize = BufSize*1.05+6000;
+  CompSize = (long int)(BufSize*1.05+6000);
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES + CompSize;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -1385,7 +1385,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
   context;
   if((Buffer == NULL) || (BufSize == 0))
     return true;
-  CompSize = BufSize*1.05+6000;
+  CompSize = (long int)(BufSize*1.05+6000);
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER + CompSize;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -1501,7 +1501,7 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
 /*  Master : The socket of the Master         */
 /*  Code : The error code to send             */
 /*  Descr : The description of the error code */
-bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
+bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Descr[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_ERROR + FFSS_MAX_ERRORMSG_LENGTH+1];
   long int len,pos;
@@ -1528,7 +1528,7 @@ bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
 /*  Master : The socket of the Master              */
-bool FM_SendMessage_ServerList(int Master)
+bool FM_SendMessage_ServerList(SU_SOCKET Master)
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_DOMAIN_LENGTH+1];
   long int pos;
@@ -1628,7 +1628,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
   context;
   if((Buffer == NULL) || (BufSize == 0))
     return true;
-  CompSize = BufSize*1.05+6000;
+  CompSize = (long int)(BufSize*1.05+6000);
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER + CompSize;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -1682,7 +1682,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compression,const char Key[])
+bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[])
 {
   char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_FW + FFSS_IP_FIELD_SIZE + FFSS_MAX_KEYWORDS_LENGTH+1];
   long int len,pos;

@@ -15,13 +15,14 @@ bool FFSS_ShuttingDown = false;
 SU_THREAD_ROUTINE(F_ThreadUDP,User)
 {
   struct sockaddr_in Client;
-  int len,res=SOCKET_ERROR;
+  unsigned int len;
+  int res = SOCKET_ERROR;
   FFSS_Field Size;
   bool analyse;
   int err;
   char whom[150];
   char *Buf;
-  long int BufSize = 0;
+  unsigned long int BufSize = 0;
   fd_set rfds;
   struct timeval tv;
   int retval = 0;

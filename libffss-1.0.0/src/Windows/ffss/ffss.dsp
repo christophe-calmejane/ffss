@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "_REENTRANT" /D "_WIN32" /D "FFSS_CONTEXT" /YX /FD /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /i "../../../../skyutils/src/windows/skyutils/release" /i "../../../../misc/windows/lib" /d "NDEBUG"
 BSC32=bscmake.exe
@@ -90,6 +90,10 @@ SOURCE=..\..\client.c
 # Begin Source File
 
 SOURCE=..\..\common.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\filter.c
 # End Source File
 # Begin Source File
 

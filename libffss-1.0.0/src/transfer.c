@@ -22,7 +22,7 @@ void FFSS_FreeTransfer(FFSS_PTransfer T)
 SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
-  long int rpos=0,rlen;
+  unsigned long int rpos=0,rlen;
   FFSS_LongField fsize,total=0;
   FFSS_Field Checksum;
   fd_set rfds;
@@ -317,8 +317,9 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
   struct sockaddr sad;
-  long int len,res;
-  int client;
+  unsigned long int len;
+  int res;
+  SU_SOCKET client;
   char Buf[FFSS_TRANSFER_BUFFER_SIZE*2];
   fd_set rfds;
   struct timeval tv;
@@ -516,8 +517,8 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     {
       context;
       len = sizeof(Buf);
-      if(len > (long int)(Size-total)) /* WARNING HERE !!! This may bug, depending on the cast policy */
-        len = (long int)(Size-total);
+      if(len > (unsigned long int)(Size-total)) /* WARNING HERE !!! This may bug, depending on the cast policy */
+        len = (unsigned long int)(Size-total);
       if(len == 0) /* End of file, getting checksum */
         res = recv(FT->sock,(char *)&ChkSum,sizeof(Checksum),SU_MSG_NOSIGNAL);
       else
@@ -578,7 +579,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
         if(len != 0)
         {
           total += res;
-          if(fwrite(Buf,1,res,fp) != res)
+          if(fwrite(Buf,1,res,fp) != (unsigned int)res)
           {
             FFSS_PrintDebug(1,"Disk full ?\n");
             /* Remove or not file from disk (ask user) */
@@ -684,7 +685,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
   FILE *fp;
   SU_THREAD_HANDLE Thread;
   struct sockaddr_in SAddr;
-  int sock=0;
+  SU_SOCKET sock=0;
   FFSS_PTransfer FT;
 
   context;
@@ -742,7 +743,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongFiel
 
 bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
 {
-  int sock;
+  SU_SOCKET sock;
   struct sockaddr_in saddr;
   int i;
   SU_THREAD_HANDLE Thread;

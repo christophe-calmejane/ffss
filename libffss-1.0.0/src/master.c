@@ -307,13 +307,14 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
 SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
 {
   SU_PClientSocket Master = (SU_PClientSocket) User;
-  int len,res;
+  unsigned int len;
+  int res;
   FFSS_Field Size;
   bool analyse;
   fd_set rfds;
   int retval;
   char *Buf;
-  long int BufSize;
+  unsigned long int BufSize;
   bool Ident = false;
 
   context;
@@ -498,7 +499,7 @@ bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Inter
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
-  if(!FFSS_Filter_Init())
+  if(!FFSS_Filter_Init(FFSS_THREAD_MASTER))
   {
     FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
     return false;

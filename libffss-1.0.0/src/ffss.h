@@ -375,9 +375,9 @@ extern char FFSS_WinServerVersion[20];
 /* ************************************************ */
 /*                   DATA STRUCTURE                 */
 /* ************************************************ */
-typedef long int FFSS_Field;
+typedef unsigned long int FFSS_Field;
 #ifdef __unix__
-typedef long long FFSS_LongField;
+typedef unsigned long long FFSS_LongField;
 #else /* !__unix__ */
 typedef __int64 FFSS_LongField;
 #endif /* __unix__ */
@@ -414,7 +414,7 @@ typedef struct
 
 typedef struct
 {
-  int  sock;                  /* Opened socket for file transfer */
+  SU_SOCKET sock;             /* Opened socket for file transfer */
   int  Port;                  /* Port sock is listening to (download) */
   FILE *fp;                   /* Opened file for reading/writing */
   char *FileName;             /* Remote file name */ /* NULL on server side */
@@ -460,10 +460,10 @@ typedef struct
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   void (*OnCancelXFer)(SU_PClientSocket Server,FFSS_Field XFerTag);
   void (*OnStrmOpen)(SU_PClientSocket Client,long int Flags,const char Path[]); /* Path IN the share (without share name) */
-  void (*OnStrmClose)(SU_PClientSocket Client,long int Handle);
-  void (*OnStrmRead)(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,long int Length);
-  void (*OnStrmWrite)(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize);
-  void (*OnStrmSeek)(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_LongField Pos);
+  void (*OnStrmClose)(SU_PClientSocket Client,FFSS_Field Handle);
+  void (*OnStrmRead)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length);
+  void (*OnStrmWrite)(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize);
+  void (*OnStrmSeek)(SU_PClientSocket Client,FFSS_Field Handle,long int Flags,FFSS_LongField Pos);
 
   /* FTP callbacks */
   bool (*OnConnectionFTP)(SU_PClientSocket Client);
@@ -510,9 +510,9 @@ typedef struct
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[],FFSS_Field XFerTag); /* Returns PTransfer from RequestedFileName */
   FFSS_PTransfer (*OnData)(SU_PClientSocket Server,FFSS_Field XFerTag); /* Returns PTransfer from XFerTag */
-  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,long int Handle,FFSS_LongField FileSize);
-  void (*OnStrmReadAnswer)(SU_PClientSocket Client,long int Handle,const char Bloc[],long int BlocSize);
-  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,long int Handle,int Code);
+  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize);
+  void (*OnStrmReadAnswer)(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize);
+  void (*OnStrmWriteAnswer)(SU_PClientSocket Client,FFSS_Field Handle,int Code);
 
   /* Fatal error */
   void (*OnFatalError)(void);
@@ -548,7 +548,7 @@ typedef struct
 
 typedef struct
 {
-  long int Handle;
+  FFSS_Field Handle;
   char *Buf;
   long int BufSize;
 } FC_THandle, *FC_PHandle;
@@ -715,7 +715,7 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State);
 /*  Code : The error code to send               */
 /*  Descr : The description of the error code   */
 /*  Value : Extra value depending on error code */
-bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value);
+bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FFSS_LongField Value);
 
 /* FS_SendMessage_DirectoryListingAnswer Function                     */
 /* Sends a DIRECTORY LISTING ANSWER message to a client               */
@@ -724,7 +724,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[],FFSS_Lon
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
+bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
 
 /* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
 /* Sends a RECURSIVE DIRECTORY LISTING ANSWER message to a client     */
@@ -733,14 +733,14 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
 /*  Buffer : The buffer containing the nb of entries, and the entries */
 /*  BufSize : The size of the buffer                                  */
 /*  Compression : The type of compression to be applied to Buffer     */
-bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
 
 /* FS_SendMessage_InitXFer Function                        */
 /* Sends an INIT XFER message to a client                  */
 /*  Client : The socket of the client                      */
 /*  Tag : The xfer tag that will be used when sending data */
 /*  FileName : The name of the requested file              */
-bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[]);
+bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName[]);
 
 /* FS_SendMessage_MasterSearch Function      */
 /* Sends a MASTER SEARCH message to broadcast */
@@ -762,7 +762,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,FFSS_LongField FileSize);
+bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field Code,FFSS_Field Handle,FFSS_LongField FileSize);
 
 /* FS_SendMessage_StrmReadAnswer Function             */
 /* Sends an STREAMING READ answer message to a client */
@@ -770,14 +770,14 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
 /*  Handle : The handle of the file                   */
 /*  Buf : The buffer of datas                         */
 /*  BlocLen : The length of the datas                 */
-bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int BlocLen);
+bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,long int BlocLen);
 
 /* FS_SendMessage_StrmWriteAnswer Function             */
 /* Sends an STREAMING WRITE answer message to a client */
 /*  Client : The socket of the client                  */
 /*  Handle : The handle of the file                    */
 /*  Code : The error code to send                      */
-bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code);
+bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Field Code);
 
 
 /* ************************************************ */
@@ -866,7 +866,7 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
 /* Sends an STREAMING CLOSE message to a server          */
 /*  Server : The Server's structure we are connected to  */
 /*  Handle : The handle of the file to close             */
-bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle);
+bool FC_SendMessage_StrmClose(SU_PClientSocket Server,FFSS_Field Handle);
 
 /* FC_SendMessage_StrmRead Function                     */
 /* Sends an STREAMING READ message to a server          */
@@ -874,7 +874,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle);
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,long int Length);
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,long int Length);
 
 /* FC_SendMessage_StrmWrite Function                    */
 /* Sends an STREAMING WRITE message to a server         */
@@ -883,7 +883,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongFi
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen);
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,FFSS_Field Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen);
 
 /* FC_SendMessage_StrmSeek Function                     */
 /* Sends an STREAMING SEEK message to a server          */
@@ -891,7 +891,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongF
 /*  Handle : The handle of the file to close            */
 /*  Flags : The flags for the seek operation            */
 /*  StartPos : The position of the seek                 */
-bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,FFSS_LongField StartPos);
+bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags,FFSS_LongField StartPos);
 
 
 /* ************************************************ */
@@ -907,7 +907,7 @@ SU_PClientSocket FM_SendMessage_Connect(const char Master[]);
 /* Sends a MASTER CONNECTION message to a master  */
 /* Must be the first message sent upon connection */
 /*  Master : The socket of the Master             */
-bool FM_SendMessage_MasterConnection(int Master);
+bool FM_SendMessage_MasterConnection(SU_SOCKET Master);
 
 /* FM_SendMessage_Ping Function    */
 /* Sends a PING message to servers */
@@ -919,7 +919,7 @@ bool FM_SendMessage_Ping();
 /*  Buffer : The buffer containing the nb of states, and the states */
 /*  BufSize : The size of the buffer                                */
 /*  Compression : The type of compression to be applied to Buffer   */
-bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSize,int Compression);
+bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int BufSize,int Compression);
 
 /* FM_SendMessage_ServerListing Function                            */
 /* Sends a NEW STATES message to client                             */
@@ -948,12 +948,12 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
 /*  Master : The socket of the Master         */
 /*  Code : The error code to send             */
 /*  Descr : The description of the error code */
-bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[]);
+bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Descr[]);
 
 /* FM_SendMessage_ServerList Function              */
 /* Sends a SERVER LIST message to a foreign master */
 /*  Master : The socket of the Master              */
-bool FM_SendMessage_ServerList(int Master);
+bool FM_SendMessage_ServerList(SU_SOCKET Master);
 
 /* FM_SendMessage_DomainListingAnswer Function   */
 /* Sends a DOMAIN ANSWER message to client       */
@@ -983,7 +983,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 /*  Client : The sin of the client                       */
 /*  Compression   : Compressions supported by the client */
 /*  Keys   : A String of keywords                        */
-bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compression,const char Key[]);
+bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int Compression,const char Key[]);
 
 
 /* ************************************************************************* */
@@ -1045,19 +1045,22 @@ int FFSS_GetFFSSOptions(void);
 typedef unsigned int FFSS_FILTER_CHAIN;
 typedef unsigned int FFSS_FILTER_ACTION;
 /* Do NOT call any Filter function within the callback, or it will result as a dead lock */
+typedef void (*FFSS_CHAINS_ENUM_CB)(FFSS_FILTER_CHAIN Chain,const char Name[],FFSS_FILTER_ACTION Default); /* Strings are temporary buffers... copy them */
 typedef void (*FFSS_RULES_ENUM_CB)(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]); /* Strings are temporary buffers... copy them */
 bool FFSS_Filter_AddRuleToChain_Head(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
 bool FFSS_Filter_AddRuleToChain_Tail(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
 bool FFSS_Filter_AddRuleToChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
-bool FFSS_Filter_AddDefaultRuleToChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action);
+bool FFSS_Filter_SetDefaultActionOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action);
+bool FFSS_Filter_GetDefaultActionOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION *Action);
 bool FFSS_Filter_DelRuleFromChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos);
 bool FFSS_Filter_DelRuleFromChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[]);
 bool FFSS_Filter_ClearChain(FFSS_FILTER_CHAIN Chain);
 bool FFSS_Filter_GetRuleOfChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_FILTER_ACTION *Action,char **Name); /* You must free returned strings */
 bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_FILTER_ACTION *Action); /* You must free returned strings */
+bool FFSS_Filter_EnumChains(FFSS_CHAINS_ENUM_CB EnumCB);
 bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB);
 FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(unsigned int Chain,unsigned long IP);
-bool FFSS_Filter_Init(void);
+bool FFSS_Filter_Init(int Type);
 
 extern char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT];
 extern char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT];

@@ -386,7 +386,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 
 bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
 {
-  int Type, i;
+  unsigned int Type,i;
   long int pos;
   FFSS_Field val,val2,val4;
   FFSS_LongField lval;
@@ -671,14 +671,15 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
 {
   SU_PClientSocket Client = (SU_PClientSocket) User;
-  int len,res;
+  unsigned int len;
+  int res;
   FFSS_Field Size;
   bool analyse;
   fd_set rfds;
   struct timeval tv;
   int retval;
   char *Buf;
-  long int BufSize;
+  unsigned long int BufSize;
 
   SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_CLIENT_BUFFER_SIZE;
@@ -815,7 +816,7 @@ bool FC_Init(void)
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
-  if(!FFSS_Filter_Init())
+  if(!FFSS_Filter_Init(FFSS_THREAD_CLIENT))
   {
     FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
     return false;

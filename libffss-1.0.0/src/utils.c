@@ -72,7 +72,7 @@ void FFSS_handle_SIGNAL(int signal)
   {
     FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
     FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %d (%d) :-(. Check: %s:%d\n",SU_THREAD_SELF,getpid(),ts->File,ts->Line);
-    if(FFSS_MainThread != SU_THREAD_SELF)
+    if(FFSS_MainThread != (SU_THREAD_HANDLE)SU_THREAD_SELF)
     {
       FFSS_PrintSyslog(LOG_ERR,"I (%d) am not the main thread (%d). Signaling the main thread\n",SU_THREAD_SELF,FFSS_MainThread);
 #ifdef __linux__
@@ -109,10 +109,10 @@ char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int
 /*  Returns the FFSS_Field, or 0 if there is a problem */
 FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long int *new_pos)
 {
-  int pos = buf - beginning;
+  unsigned int pos = buf - beginning;
   FFSS_Field ret = 0;
 
-  if((pos+sizeof(FFSS_Field)) <= len)
+  if((pos+sizeof(FFSS_Field)) <= (unsigned int)len)
   {
     *new_pos = pos + sizeof(FFSS_Field);
 #ifdef WORDS_BIGENDIAN
@@ -140,10 +140,10 @@ FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long
 /*  Returns the FFSS_Field, or 0 if there is a problem */
 FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos)
 {
-  int pos = buf - beginning;
+  unsigned int pos = buf - beginning;
   FFSS_LongField ret = 0;
 
-  if((pos+sizeof(FFSS_LongField)) <= len)
+  if((pos+sizeof(FFSS_LongField)) <= (unsigned int)len)
   {
     *new_pos = pos + sizeof(FFSS_LongField);
 #ifdef WORDS_BIGENDIAN
@@ -525,7 +525,7 @@ void *FFSS_malloc(size_t size)
   if(ptr == NULL)
   {
     FFSS_PrintSyslog(LOG_ERR,"Malloc of size %d failed ! Not enough memory... exiting\n",size);
-    if(FFSS_MainThread != SU_THREAD_SELF)
+    if(FFSS_MainThread != (SU_THREAD_HANDLE)SU_THREAD_SELF)
     {
 #ifdef __linux__
       pthread_kill_other_threads_np();
