@@ -169,6 +169,20 @@ FFSS(1) : Too many consecutive errors on UDP port, exiting
 It's a little bug, just upgrade.
 
 **********************************
+problems in debug mode (ffss built with build-debug.sh or with
+--enable-malloc-trace options) :
+it does seg faults (or 'aborded') after any command.
+----------------------------------
+do export MALLOC_CHECK=0 or 1 before launching the client.
+
+**********************************
+In CGI mode, we can search and have answers that are directories,
+but is like a file (when you click, it downloads).
+There's the same problem with files, and not in cgi mode (the color is bad)
+----------------------------------
+no solution found.
+
+**********************************
 I would like to launch the client, and just lauch a find. The client
 must exit after.
 I've tryed ffss-client -e find foo, but it doesn't work.
