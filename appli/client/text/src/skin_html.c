@@ -580,12 +580,12 @@ void FCA_my_url(bool isDownload)
 	if(isDownload)
 		printf("%s%s",
 			FCA_html_dw_prefix,
-			FCA_NAME
+			FCA_me
 		);
 	else
 		printf("%s%s",
 			FCA_html_prefix,
-			FCA_NAME
+			FCA_me
 		);
 }
 

@@ -112,7 +112,8 @@ extern int FCA_tab_width;
 	{"html_img_prefix",	"to add before image locations","url",		NULL}, \
 	{"html_firstarg",	"if in a link we can use '?', otherwise we use '&'","on/off",NULL}, \
 	{"html_dw_prefix",	"to add before download links",	"url",		NULL}, \
-	{"script_delim",	"fields delimiter",		"character",	NULL},
+	{"script_delim",	"fields delimiter",		"character",	NULL}, \
+	{"me",			"my name",			"name",		NULL},
 
 	/* list of possible values to variables */
 #define FCA_SKIN_VAR_VALUES \
@@ -120,14 +121,16 @@ extern int FCA_tab_width;
 	{"", "http://localhost/ffss/img/", NULL}, \
 	{"on","off",NULL}, \
 	{"", "http://localhost/ffss/", NULL}, \
-	{":", ",", "|", "/", "&", NULL},
+	{":", ",", "|", "/", "&", NULL}, \
+	{"", FCA_NAME, NULL},
 
 #define FCA_SKIN_ENV_VALUES \
 	"", \
 	"", \
 	"on", \
 	"", \
-	":"
+	":", \
+	FCA_NAME
 
 	/* defines for environment variables */
 #define FCA_html_prefix		FCA_env[FCA_skin_env_index  ]
@@ -135,6 +138,7 @@ extern int FCA_tab_width;
 #define FCA_html_firstarg	FCA_env[FCA_skin_env_index+2]
 #define FCA_html_dw_prefix	FCA_env[FCA_skin_env_index+3]
 #define FCA_script_delim	FCA_env[FCA_skin_env_index+4][0]
+#define FCA_me			FCA_env[FCA_skin_env_index+5]
 
 
 void FCA_load_skins();

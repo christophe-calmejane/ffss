@@ -34,6 +34,9 @@
 #ifndef FCA_html_dw_prefix
 #	error "to use CGI, you must have the HTML skin. FCA_html_dw_prefix is not defined in skin.h"
 #endif /* FCA_html_dw_prefix */
+#ifndef FCA_me
+#	error "to use CGI, you must have the HTML skin. FCA_me is not defined in skin.h"
+#endif /* FCA_html_dw_prefix */
 #endif /* CGI */
 
 
@@ -72,6 +75,7 @@ const FCA_TCGI_arg FCA_CGI_ARGS[]={
 #ifdef CGI_DOWNLOADS
 	{"dw_prefix",	FCA_html_dw_prefix,	FCA_VAR_MAX,		-1	},
 #endif
+	{"me",		FCA_me,			FCA_VAR_MAX,		-1	},
 	{NULL,		NULL,			FCA_VAR_MAX,		-1	}
 };
 
