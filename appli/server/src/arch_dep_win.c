@@ -1,5 +1,5 @@
 /* WARNINGS
- *  - No '#' in share name
+ *  - No '|' in share names
  *  - No ',' in login or password of users
  */
 
@@ -43,7 +43,7 @@ bool FS_LoadConfig(const char FileName[])
   else
   {
     p = Shares;
-    s = strchr(Shares,'#');
+    s = strchr(Shares,'|');
     if(s != NULL)
     {
       s[0] = 0;
@@ -110,7 +110,7 @@ bool FS_LoadConfig(const char FileName[])
     else
     {
       p = s;
-      s = strchr(s,'#');
+      s = strchr(s,'|');
       if(s != NULL)
       {
         s[0] = 0;
@@ -164,7 +164,7 @@ bool FS_SaveConfig(const char FileName[])
     Share = (FS_PShare) Ptr->Data;
     SU_strcat(Shares,Share->ShareName,sizeof(Shares));
     if(Ptr->Next != NULL)
-      SU_strcat(Shares,"#",sizeof(Shares));
+      SU_strcat(Shares,"|",sizeof(Shares));
 
     /* Set Share Path */
     _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH,Share->ShareName);
