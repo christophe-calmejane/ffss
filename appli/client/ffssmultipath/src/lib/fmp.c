@@ -9,8 +9,7 @@
 #define FMP_NAME "FFSS Multi Path Library"
 #define FMP_VERSION "v1.1"
 #define FMP_COPYRIGHT "(c) Christophe Calmejane 2003"
-#define FMP_DEFAULT_BLOC_SIZE 50*1024*1024
-#define FMP_BUFFER_SIZE 256*1024
+#define FMP_DEFAULT_BLOC_SIZE 5*1024*1024
 
 #define FMP_DELAY_RETRY_SEM  30
 #define FMP_DELAY_RETRY_RECO 2*60
@@ -483,6 +482,11 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_REMOTE_CLOSED);
       Error = true;
       break;
+    case FFSS_ERROR_SHARE_EJECTED :
+      if(FMP_CB.OnError != NULL)
+        FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_SHARE_EJECTED);
+      Error = true;
+      break;
     default :
       if(FMP_CB.OnError != NULL)
         FMP_CB.OnError(Path->File,Path->File->UserTag,Path->IP,Path->FullPath,Path->File->Name,FMP_ERRCODE_UNKNOWN_ERROR);
@@ -503,7 +507,7 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
       Path->HaveIdx = false;
     }
     SU_SEM_POST(FMP_Sem_Blocs);
-  }
+  }
 
   if(Path->Locked)
     SU_SEM_POST(Path->Sem);
@@ -650,7 +654,8 @@ bool FFSS_OnTransferFileWrite(FFSS_PTransfer FT,const char Buf[],FFSS_Field Size
     return false;
   }
   SU_SEM_WAIT(FMP_Sem_Blocs);
-  Path->State = FMP_PATH_STATE_TRANSFERING;
+  if(Path->State != FMP_PATH_STATE_NOT_CONNECTED)
+    Path->State = FMP_PATH_STATE_TRANSFERING;
   fseek(Path->File->fp,FT->StartingPos+Offset,SEEK_SET);
   if(fwrite(Buf,1,Size,Path->File->fp) != Size)
   {
@@ -801,9 +806,12 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
         SU_SEM_WAIT(FMP_Sem_Blocs);
         Path->File->Blocs[Path->Idx].State = FMP_BLOC_STATE_NOT_GOT;
         Path->File->Blocs[Path->Idx].Pos = 0;
-        if(FMP_CB.OnUnAssignBloc != NULL)
-          FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
-        Path->HaveIdx = false;
+        if(Path->HaveIdx)
+        {
+          if(FMP_CB.OnUnAssignBloc != NULL)
+            FMP_CB.OnUnAssignBloc(Path->File,Path->File->UserTag,Path->Idx);
+          Path->HaveIdx = false;
+        }
         SU_SEM_POST(FMP_Sem_Blocs);
         break;
       }
@@ -963,7 +971,7 @@ bool FMP_GetBlocInfos(struct FMP_SFile *File,FFSS_Field Idx,FFSS_Field *State,FF
   return true;
 }
 
-FFSS_Field FMP_GetPathState(struct FMP_SPath *Path) /* Returns current Path state */
+FFSS_Field FMP_GetPathState(struct FMP_SPath *Path)
 {
   return Path->State;
 }
@@ -1095,3 +1103,4 @@ void FMP_ResumePath(struct FMP_SPath *Path)
   Path->MustPause = false;
   Path->State = FMP_PATH_STATE_NOT_CONNECTED;
 }
+

@@ -43,6 +43,7 @@
 #define FMP_ERRCODE_TRANSFER_CANCELED       27
 #define FMP_ERRCODE_TRANSFER_SUSPENDED      28
 #define FMP_ERRCODE_REMOTE_CLOSED           29
+#define FMP_ERRCODE_SHARE_EJECTED           30
 
 #ifdef __cplusplus
 extern "C" {
