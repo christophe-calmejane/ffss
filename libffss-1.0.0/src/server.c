@@ -10,6 +10,12 @@ SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 
 char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack"};
 
+typedef struct
+{
+  SU_PClientSocket Client;
+  void *Info;
+} FS_TInterThreadTmp, *FS_PInterThreadTmp;
+
 void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 {
   int Type;
@@ -93,7 +99,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   }
 }
 
-bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
+bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool ident,void **Info)
 {
   int Type;
   long int pos;
@@ -109,6 +115,11 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
 
   if(Type == FFSS_MESSAGE_SHARE_CONNECTION)
   {
+    if(ident) /* Already identified */
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"From %s : Already identified... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+      return false;
+    }
     FFSS_PrintDebug(3,"Received a share connection message from client\n");
     val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
     val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -130,15 +141,22 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
       else
       {
         if(FFSS_CB.SCB.OnShareConnection != NULL)
-          ret_val = FFSS_CB.SCB.OnShareConnection(Client,str,str2,str3,val2);
-        *ident = true;
+        {
+          *Info = FFSS_CB.SCB.OnShareConnection(Client,str,str2,str3,val2);
+          return (*Info) != NULL;
+        }
+        else
+          return false;
       }
     }
   }
   else
   {
-    if(*ident != true)
-      return ret_val;
+    if(ident == false)
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"From %s : First message was NOT a ShareConnection message... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+      return false;
+    }
     switch(Type)
     {
       case FFSS_MESSAGE_DIRECTORY_LISTING :
@@ -563,7 +581,9 @@ bool FS_AnalyseTCP_FTP(SU_PClientSocket Client,char Buf[],long int Len)
 
 SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
 {
-  SU_PClientSocket Client = (SU_PClientSocket) User;
+  FS_PInterThreadTmp Tmp = (FS_PInterThreadTmp) User;
+  SU_PClientSocket Client;
+  void *Info;
   int len,res;
   FFSS_Field Size;
   bool analyse;
@@ -573,9 +593,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
   int retval;
   char *Buf;
   long int BufSize;
-  bool Ident = false;
 
   SU_ThreadBlockSigs();
+  Client = Tmp->Client;
+  Info = Tmp->Info;
+  free(Tmp);
+
   BufSize = FFSS_TCP_SERVER_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
   if(Buf == NULL)
@@ -585,6 +608,8 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     SU_END_THREAD(NULL);
   }
 
+  if(FFSS_CB.SCB.OnBeginTCPThread != NULL)
+    FFSS_CB.SCB.OnBeginTCPThread(Client,Info);
   len = 0;
   while(1)
   {
@@ -670,18 +695,11 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       }
       else
       {
-        if(!FS_AnalyseTCP(Client,Buf,Size,&Ident))
+        if(!FS_AnalyseTCP(Client,Buf,Size,true,NULL))
         {
           if(FFSS_CB.SCB.OnEndTCPThread != NULL)
             FFSS_CB.SCB.OnEndTCPThread();
           SU_FreeCS(Client);
-          free(Buf);
-          SU_END_THREAD(NULL);
-        }
-        if(!Ident) /* First message was NOT a share connection DoS Attack ? */
-        {
-          SU_FreeCS(Client);
-          /* Must not call OnEndTCPThread here, because no callback of the server was raised */
           free(Buf);
           SU_END_THREAD(NULL);
         }
@@ -838,6 +856,14 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
   char *IP;
+  char Buf[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARE_CONNECTION + FFSS_MAX_SHARENAME_LENGTH+1 + FFSS_MAX_LOGIN_LENGTH+1 + FFSS_MAX_PASSWORD_LENGTH+1];
+  FFSS_Field MsgSize,Pos;
+  fd_set rfds;
+  struct timeval tv;
+  int retval,res;
+  bool Error;
+  FS_PInterThreadTmp TmpStruct;
+  void *Info;
 
   SU_ThreadBlockSigs();
   if(SU_ServerListen(FS_SI_TCP) == SOCKET_ERROR)
@@ -871,8 +897,76 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
         continue;
       }
     }
-    FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... creating new thread\n",IP,SU_NameOfPort(IP));
-    if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP,(void *)Client,true))
+
+    FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... checking connection\n",IP,SU_NameOfPort(IP));
+    /* Getting Size of first message */
+    FD_ZERO(&rfds);
+    FD_SET(Client->sock,&rfds);
+    tv.tv_sec = 5; /* 5 sec to send share connection message size */
+    tv.tv_usec = 0;
+    retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+    if(!retval)
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"Client %s didn't send ShareConnection message size within 5 secondes... DoS attack ?\n",IP);
+      SU_FreeCS(Client);
+      continue;
+    }
+    res = recv(Client->sock,(char *)&MsgSize,sizeof(MsgSize),SU_MSG_NOSIGNAL);
+    if(res != sizeof(MsgSize))
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"Error getting client's (%s) ShareConnection message size : res = %d : %s\n",IP,res,(res >= 0)?"No error":strerror(errno));
+      SU_FreeCS(Client);
+      continue;
+    }
+    if((MsgSize > sizeof(Buf)) || (MsgSize <= (sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARE_CONNECTION)))
+    {
+      FFSS_PrintSyslog(LOG_WARNING,"From %s : Size of message is bigger than ShareConnection message max size : %ld - %d... DoS attack ?\n",IP,MsgSize,sizeof(Buf));
+      SU_FreeCS(Client);
+      continue;
+    }
+
+    /* Getting message - Must be a ShareConnection message */
+    Pos = sizeof(MsgSize);
+    Error = false;
+    while(Pos != MsgSize)
+    {
+      FD_ZERO(&rfds);
+      FD_SET(Client->sock,&rfds);
+      tv.tv_sec = 5; /* 5 sec to send share connection message */
+      tv.tv_usec = 0;
+      retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+      if(!retval)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"Client %s didn't send ShareConnection message within 5 secondes... DoS attack ?\n",IP);
+        SU_FreeCS(Client);
+        Error = true;
+        break;
+      }
+      /* While buffer is not filled with message */
+      res = recv(Client->sock,Buf+Pos,MsgSize-Pos,SU_MSG_NOSIGNAL);
+      if(res <= 0)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"Error getting client's (%s) ShareConnection message : res = %d : %s\n",IP,res,(res == 0)?"Socket closed":strerror(errno));
+        SU_FreeCS(Client);
+        Error = true;
+        break;
+      }
+      Pos += res;
+    }
+    if(Error)
+      continue;
+    if(!FS_AnalyseTCP(Client,Buf,MsgSize,false,&Info)) /* Connection not accepted by server... */
+    {
+      FFSS_PrintDebug(5,"Connection from %s was refused by the server\n",IP);
+      SU_FreeCS(Client);
+      continue;
+    }
+
+    FFSS_PrintDebug(5,"Connection from %s (%s) accepted by server ... creating new thread\n",IP,SU_NameOfPort(IP));
+    TmpStruct = (FS_PInterThreadTmp) malloc(sizeof(FS_TInterThreadTmp));
+    TmpStruct->Client = Client;
+    TmpStruct->Info = Info;
+    if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP,(void *)TmpStruct,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating TCP Client thread\n");
       SU_FreeCS(Client);

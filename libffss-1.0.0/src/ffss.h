@@ -421,7 +421,8 @@ typedef struct
 
   /* TCP callbacks */
   bool (*OnCheckConnection)(const char IP[]);
-  bool (*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
+  void *(*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
+  void (*OnBeginTCPThread)(SU_PClientSocket Client,void *Info); /* Info is the (void *) returned by OnShareConnection */
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port); /* Path IN the share (without share name) */

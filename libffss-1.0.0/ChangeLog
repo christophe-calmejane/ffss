@@ -12,6 +12,7 @@ June, 6th 2002:
   - Fixed free bugs in message.C
   - Moved FFSS_MyIp to utils.c
   - Added DISABLE_BZLIB define to remove bzlib from win32 compilation
+  - Rewrote server connection thread... now, thread is created only when server has accepted the connection
 
 June, 2nd 2002:
   - Added support for firewalling
