@@ -10,7 +10,7 @@
 #define CONFCONN_COPYRIGHT "(c) Ze KiLleR - 2001'02"
 
 /* The only file we need to include is server.h */
-#include "../src/server.h"
+#include "../../src/server.h"
 #undef malloc
 #undef strdup
 

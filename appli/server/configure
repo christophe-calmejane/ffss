@@ -2177,6 +2177,11 @@ src/Windows/Makefile
 src/Windows/server/Makefile
 data/Makefile
 plugins/Makefile
+plugins/ConfConn/Makefile
+plugins/Log/Makefile
+plugins/Log/Log/Makefile
+plugins/TrayConn/Makefile
+plugins/TrayConn/TrayConn/Makefile
  config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
@@ -2273,6 +2278,11 @@ src/Windows/Makefile
 src/Windows/server/Makefile
 data/Makefile
 plugins/Makefile
+plugins/ConfConn/Makefile
+plugins/Log/Makefile
+plugins/Log/Log/Makefile
+plugins/TrayConn/Makefile
+plugins/TrayConn/TrayConn/Makefile
 "}
 EOF
 cat >> $CONFIG_STATUS <<\EOF

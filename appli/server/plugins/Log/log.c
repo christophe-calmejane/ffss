@@ -5,7 +5,7 @@
 /* http://zekiller.skytech.org            */
 /* mailto : zekiller@skytech.org          */
 
-/* TODO : - Configuration : Chemin des logs, tableau indiquant quoi logge
+/* TODO :
 */
 
 #define LOG_NAME      "Log Plugin"
@@ -16,8 +16,11 @@
 
 /* The only file we need to include is server.h */
 #include "../../src/plugin.h"
+#ifdef _WIN32
 #include "Log\\resource.h"
 #include <Shlobj.h>
+#endif /* _WIN32 */
+#include <stdarg.h>
 #undef malloc
 #undef strdup
 
@@ -36,24 +39,30 @@ void * (*PluginQueryFunc)(int Type,...);
 
 FILE *L_fp = NULL;
 int L_day = 0;
+#ifdef _WIN32
 HWND L_hwnd;
 HINSTANCE L_hInstance;
+#endif /* _WIN32 */
 
 void LoadConfig()
 {
+#ifdef _WIN32
   char Path[1024];
 
   SU_RB_GetStrValue(LOG_PLUGIN_REG_KEY "\\LogsPath",Path,sizeof(Path),".");
   L_Gbl.Path = strdup(Path);
   L_Gbl.Log_Conn = SU_RB_GetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Conn",1) == 1;
   L_Gbl.Log_Dwl = SU_RB_GetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Dwl",1) == 1;
+#endif /* _WIN32 */
 }
 
 void StoreConfig()
 {
+#ifdef _WIN32
   SU_RB_SetStrValue(LOG_PLUGIN_REG_KEY "\\LogsPath",L_Gbl.Path);
   SU_RB_SetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Conn",L_Gbl.Log_Conn);
   SU_RB_GetIntValue(LOG_PLUGIN_REG_KEY "\\Log_Dwl",L_Gbl.Log_Dwl);
+#endif /* _WIN32 */
 }
 
 void WriteLog(char *Txt,...)
@@ -107,7 +116,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   return true;
 }
 
-
+#ifdef _WIN32
 char *GetDirectoryPath(HWND hwnd,char *Buf)
 {
   LPITEMIDLIST pidlRoot = NULL;
@@ -200,6 +209,7 @@ FS_PLUGIN_EXPORT bool Plugin_Configure(void)
     return false;
   return true;
 }
+#endif /* _WIN32 */
 
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
 FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
@@ -210,7 +220,9 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 
   /* Get pointer to plugin query function */
   PluginQueryFunc = QueryFunc;
+#ifdef _WIN32
   L_hInstance = (HINSTANCE)Info;
+#endif /* _WIN32 */
 
   /* Setting all callbacks to NULL */
   Pl = (FS_PPlugin) malloc(sizeof(FS_TPlugin));
@@ -244,7 +256,6 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
    * If something goes wrong during this init function, free everything you have allocated and return NULL.
    * UnInit function will not be called in this case.
   */
-  Plugin_Configure();
   return Pl;
 }
 

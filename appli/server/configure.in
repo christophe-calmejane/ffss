@@ -141,5 +141,10 @@ src/Windows/Makefile
 src/Windows/server/Makefile
 data/Makefile
 plugins/Makefile
+plugins/ConfConn/Makefile
+plugins/Log/Makefile
+plugins/Log/Log/Makefile
+plugins/TrayConn/Makefile
+plugins/TrayConn/TrayConn/Makefile
 ])
 
