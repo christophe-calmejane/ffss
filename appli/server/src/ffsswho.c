@@ -202,7 +202,7 @@ int main(int argc,char *argv[])
       while(Plugins != NULL)
       {
         FSCA_PPluginInfo Pl = (FSCA_PPluginInfo) Plugins->Data;
-        printf("\t%s %s v%s\n",Pl->Name,Pl->Author,Pl->Version);
+        printf("\t%s %s v%s\n",Pl->Name,Pl->Copyright,Pl->Version);
         Plugins = Plugins->Next;
       }
     }
