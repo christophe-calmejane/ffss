@@ -142,7 +142,7 @@ printf("<html>
 </head>
  
 <body>
-<form name='browsing' action='");FCA_my_url();printf("' method=GET>");
+<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
 printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
@@ -167,7 +167,7 @@ printf("address: <input type='text' name='dir' value='%s' tabindex=1>
 <input type='hidden' name='s' value=''>
 <input type='hidden' name='sdom' value=''>
 </form>
-<form name='search' action='");FCA_my_url();printf("' method=GET>");
+<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
 FCA_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
@@ -213,7 +213,7 @@ printf("address: <input type='text' name='dir' value='/$' tabindex=1>
 <input type='hidden' name='s' value=''>
 <input type='hidden' name='sdom' value=''>
 </form>
-<form name='search' action='");FCA_my_url();printf("' method=GET>");
+<form name='search' action='");FCA_my_url(false);printf("' method=GET>");
 FCA_form_hidden_args();printf("
 <input type='hidden' name='dir' value=''>
 <table border=0 width='100%%'>
@@ -493,7 +493,7 @@ printf("</center>
 void FCA_dir_link(const char *dir)
 {
 	FCA_pre_link();
-	FCA_dir_arg(dir);
+	FCA_dir_arg(dir, false);
 	FCA_post_link(false);
 }
 
@@ -501,18 +501,18 @@ void FCA_file_link(const char *file)
 {
 #ifdef CGI_DOWNLOADS
 	FCA_pre_link();
-	FCA_dir_arg(file);
+	FCA_dir_arg(file, true);
 	printf("&download=1");
 	FCA_post_link(false);
 #endif
 }
 
-void FCA_dir_arg(const char *dir)
+void FCA_dir_arg(const char *dir, bool isFile)
 {
 	char *tl;
 	
 	tl=FCA_cgi_escape_special_chars(dir);
-	FCA_my_url();
+	FCA_my_url(isFile);
 	printf("%cdir=%s",
 		FCA_html_firstarg[1]=='n'?'?':'&',
 		tl);
@@ -575,12 +575,18 @@ void FCA_form_hidden_args()
 	free(p);
 }
 
-void FCA_my_url()
+void FCA_my_url(bool isDownload)
 {
-	printf("%s%s",
-		FCA_html_prefix,
-		FCA_NAME
-	);
+	if(isDownload)
+		printf("%s%s",
+			FCA_html_dw_prefix,
+			FCA_NAME
+		);
+	else
+		printf("%s%s",
+			FCA_html_prefix,
+			FCA_NAME
+		);
 }
 
 void FCA_sep_link(char *path)
@@ -592,7 +598,7 @@ void FCA_sep_link(char *path)
 		p=strchr(path+1, '/');
 	if(!p) {
 		FCA_pre_link();
-		FCA_dir_arg(path);
+		FCA_dir_arg(path, false);
 		FCA_post_link(true);
 		printf("%s</a>", path);
 		return;
@@ -600,7 +606,7 @@ void FCA_sep_link(char *path)
 	while(p) {
 		*p='\0';
 		FCA_pre_link();
-		FCA_dir_arg(path);
+		FCA_dir_arg(path, false);
 		FCA_post_link(false);
 		printf("%s</a>", begin);
 		
@@ -610,7 +616,7 @@ void FCA_sep_link(char *path)
 		printf("/");
 	}
 	FCA_pre_link();
-	FCA_dir_arg(path);
+	FCA_dir_arg(path, false);
 	FCA_post_link(false);
 	printf("%s</a>", begin);
 }

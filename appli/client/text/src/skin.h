@@ -98,9 +98,10 @@ extern int FCA_tab_width;
 #include "skin_default.h"
 #include "skin_script.h"
 #include "skin_html.h"
+#include "skin_html_fleming.h"
 
 	/* 2) complete these defines */
-#define FCA_SKINLIST	"default", "script", "html"
+#define FCA_SKINLIST	"default", "script", "html", "html_fleming"
 
 	/*
 		variable's	description			values		on_var_change
@@ -110,6 +111,7 @@ extern int FCA_tab_width;
 	{"html_prefix",		"to add before links",		"url",		NULL}, \
 	{"html_img_prefix",	"to add before image locations","url",		NULL}, \
 	{"html_firstarg",	"if in a link we can use '?', otherwise we use '&'","on/off",NULL}, \
+	{"html_dw_prefix",	"to add before download links",	"url",		NULL}, \
 	{"script_delim",	"fields delimiter",		"character",	NULL},
 
 	/* list of possible values to variables */
@@ -117,19 +119,22 @@ extern int FCA_tab_width;
 	{"", "http://localhost/ffss/", NULL}, \
 	{"", "http://localhost/ffss/img/", NULL}, \
 	{"on","off",NULL}, \
+	{"", "http://localhost/ffss/", NULL}, \
 	{":", ",", "|", "/", "&", NULL},
 
 #define FCA_SKIN_ENV_VALUES \
 	"", \
 	"", \
 	"on", \
+	"", \
 	":"
 
 	/* defines for environment variables */
 #define FCA_html_prefix		FCA_env[FCA_skin_env_index  ]
 #define FCA_html_img_prefix	FCA_env[FCA_skin_env_index+1]
 #define FCA_html_firstarg	FCA_env[FCA_skin_env_index+2]
-#define FCA_script_delim	FCA_env[FCA_skin_env_index+3][0]
+#define FCA_html_dw_prefix	FCA_env[FCA_skin_env_index+3]
+#define FCA_script_delim	FCA_env[FCA_skin_env_index+4][0]
 
 
 void FCA_load_skins();

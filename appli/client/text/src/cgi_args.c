@@ -31,6 +31,12 @@
 #ifndef FCA_html_firstarg
 #	error "to use CGI, you must have the HTML skin. FCA_html_firstarg is not defined in skin.h"
 #endif /* FCA_html_firstarg */
+#ifndef FCA_html_dw_prefix
+#	error "to use CGI, you must have the HTML skin. FCA_html_dw_prefix is not defined in skin.h"
+#endif /* FCA_html_dw_prefix */
+#ifndef html_can_header
+#	error "to use CGI, you must have the HTML skin. html_can_header is not defined in skin.h"
+#endif /* html_can_header */
 #endif /* CGI */
 
 
@@ -41,6 +47,7 @@ bool FCA_CGI_mode;
 #ifdef CGI_DOWNLOADS
 bool FCA_must_download;
 #endif
+bool FCA_can_header;
 char FCA_dir_to_list[FFSS_MAX_PATH_LENGTH];
 char FCA_search[FFSS_MAX_KEYWORDS_LENGTH];
 char FCA_search_dom[FFSS_MAX_DOMAIN_LENGTH];
@@ -65,6 +72,9 @@ const FCA_TCGI_arg FCA_CGI_ARGS[]={
 	{"sdom",	FCA_search_dom,		FFSS_MAX_DOMAIN_LENGTH,	-1	},
 	{"master",	FCA_master,		FCA_VAR_MAX,		-1	},
 	{"debug",	FCA_debuglevel,		FCA_VAR_MAX,		1	},
+#ifdef CGI_DOWNLOADS
+	{"dw_prefix",	FCA_html_dw_prefix,	FCA_VAR_MAX,		-1	},
+#endif
 	{NULL,		NULL,			FCA_VAR_MAX,		-1	}
 };
 
@@ -75,6 +85,7 @@ const FCA_TCGI_bool_arg FCA_CGI_BOOL_ARGS[]={
 #ifdef CGI_DOWNLOADS
 	{"download",	&FCA_must_download	},
 #endif
+	{"can_header",	&FCA_can_header,	},
 	{NULL,		NULL			}
 };
 
@@ -109,6 +120,7 @@ void FCA_read_cgi_args()
 #ifdef CGI_DOWNLOADS
 	FCA_must_download=false;
 #endif
+	FCA_can_header=true;
 	FCA_dir_to_list[0]='\0';
 	FCA_search[0]='\0';
 	FCA_search_dom[0]='\0';
@@ -161,7 +173,8 @@ void FCA_read_cgi_args()
 	/* copied/rewritten, as you want */
 void FCA_init_headers()
 {
-	printf("Content-type: text/html\n\n");
+	if(FCA_can_header)
+		printf("Content-type: text/html\n\n");
 }
 
 	/* copied from scratch */
