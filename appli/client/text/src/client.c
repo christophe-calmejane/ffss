@@ -246,7 +246,7 @@ f=fopen("/tmp/ffsstest", "w");
 if(f) {
 	if(!FCA_logf)
 		fprintf(f, "le descripteur est vide !\n");
-	fprintf(f, "log=%s, log_file=%s\n", FCA_log, FCA_log_file);
+	fprintf(f, "log=%s, log_file=%s\n", FCA_log, FCA_logfile);
 	fprintf(f, "cmd=%s\n", dw);
 	fclose(f);
 }
