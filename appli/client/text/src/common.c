@@ -77,6 +77,7 @@ const FCA_Tvar FCA_VARS[]= {
 	{"log_file",	"the file used to log",				"filename",	FCA_upd_logfile},
 	{"log_level",	"1=find 2=downloads 3=browsing 4=arguments 5=cgi 6=commands 7=all",	"1-6",	NULL},
 	{"useconnsock",	"if we must use the same connection for downloads","on/off",	NULL},
+	{"broadcast_address","address used for broadcast",		"255.255.255.255",FCA_upd_broadcaddr},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
@@ -106,6 +107,7 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"", "ffss-client.log", NULL},
 	{"1", "2", "3", "4", "5", "6", "7", NULL},
 	{"on","off",NULL},
+	{"", "255.255.255.255", NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
@@ -131,6 +133,7 @@ char FCA_env[][FCA_VAR_MAX]={
 	"ffss-client.log",
 	"3",
 	"off",
+	"255.255.255.255",
 	FCA_SKIN_ENV_VALUES
 };
 
@@ -1473,4 +1476,35 @@ void FCA_upd_logfile()
 			FCA_printlog("restarting to log");
 		}
 	}
+}
+
+void FCA_upd_broadcaddr()
+{
+	char *p=FCA_broadcaaddr;
+	int nbp=0, nbi=0;
+	
+	if(!p)
+		return;
+	while(*p) {
+		if(*p>='0' && *p<='9')
+			nbi++;
+		else if(*p=='.' && nbi) {
+			nbp++;
+			nbi=0;
+		} else {
+			FCA_print_cmd_err("invalid IP address");
+			return;
+		}
+		if(nbi>3 || nbp>3) {
+			FCA_print_cmd_err("invalid IP address");
+			return;
+		}
+		p++;
+	}
+	if(nbp<3 || !nbi) {
+		FCA_print_cmd_err("invalid IP address");
+		return;
+	}
+	FFSS_AddBroadcastAddr(FCA_broadcaaddr);
+	FFSS_PrintDebug(5, "(client) broadcast address added\n");
 }

@@ -60,11 +60,12 @@
 #define FCA_logfile		FCA_env[16]
 #define FCA_loglevel		FCA_env[17][0]
 #define FCA_useConnSock		FCA_env[18]
+#define FCA_broadcaaddr		FCA_env[19]
 	/* 
 		WARNING !!!
 		modify this each time you add a variable
 	*/
-#define FCA_skin_env_index	19
+#define FCA_skin_env_index	20
 
 #define FCA_FIND_LOGLEVEL	'1'
 #define FCA_SHELL_LOGLEVEL	'2'
@@ -173,5 +174,6 @@ void FCA_upd_debuglevel();
 void FCA_upd_skin();
 void FCA_upd_log();
 void FCA_upd_logfile();
+void FCA_upd_broadcaddr();
 
 #endif	/* _FCA_COMMON_H_ */
