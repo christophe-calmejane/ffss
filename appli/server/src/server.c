@@ -2259,22 +2259,24 @@ void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
 #ifdef PLUGINS
   void (*Fonc)(void);
   SU_PList Ptr;
+  FS_PPlugin Pl;
   int i;
 
-  Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_UnInit");
-  SU_DL_CLOSE(Handle);
   SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   i = 0;
   while(Ptr != NULL)
   {
-    if(Handle == ((FS_PPlugin)Ptr->Data)->Handle)
+    Pl = (FS_PPlugin) Ptr->Data;
+    if(Handle == Pl->Handle)
     {
-      if(((FS_PPlugin)Ptr->Data)->Path != NULL)
-        free(((FS_PPlugin)Ptr->Data)->Path);
+      if(Pl->Path != NULL)
+        free(Pl->Path);
       /* Do not free anything else.... freed by the plugin itself */
+      Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_UnInit");
       if(Fonc != NULL)
         Fonc();
+      SU_DL_CLOSE(Handle);
       FS_Plugins = SU_DelElementPos(FS_Plugins,i);
       break;
     }

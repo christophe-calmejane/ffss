@@ -34,6 +34,8 @@ bool FS_LoadConfig(const char FileName[])
   char GBL_Master[1024];
   HKEY HK;
 
+  GetCurrentDirectory(sizeof(Path),Path);
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "ServerDirectory",Path);
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH "ProcessId",GetCurrentProcessId());
   N_DebugLevel = 6;
   FS_MyGlobal.ConfSock = true;

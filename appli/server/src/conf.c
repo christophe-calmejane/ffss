@@ -594,7 +594,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         pos = 1;
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         Plugin = FS_LoadPlugin(s_p);
-        if(Plugin != NULL)
+        if(Plugin == NULL)
         {
           Size = 1;
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -620,11 +620,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Size = 1;
         if(FS_IsPluginValid(Plugin))
         {
-          FS_UnLoadPlugin(Plugin->Handle);
           if(buf[pos]) /* Remove plugin from server startup */
           {
             FS_RemovePluginFromStartup(Plugin);
           }
+          FS_UnLoadPlugin(Plugin->Handle);
           buf[0] = FS_OPCODE_ACK;
         }
         else
