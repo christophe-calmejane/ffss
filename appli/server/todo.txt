@@ -43,3 +43,5 @@ TO DO :
  - Si pas de master defini lors du Startup, creer un thread 'timer' qui simule les pings du master
 
 [23:32:23] <kiki>  hum.. d ailleurs, faut que j ajoute un callback OnShutdown et OnStartup
+
+ - Checker toutes les valeurs envoyees par la confsocket (-1 pour MaxConn, entre autre)

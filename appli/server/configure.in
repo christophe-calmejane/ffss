@@ -107,7 +107,12 @@ fi
 dnl Get cflags and libs
 ffss_libs=`$FFSS_CONFIG $FFSS_GET_LIBS`
 ffss_cflags=`$FFSS_CONFIG --cflags`
+ffss_zlib=`$FFSS_CONFIG --with-zlib`
 ffss_bzlib=`$FFSS_CONFIG --with-bzlib`
+
+if test "$ffss_zlib" = "no" ; then
+  CFLAGS="$CFLAGS -DDISABLE_ZLIB"
+fi
 
 if test "$ffss_bzlib" = "yes" ; then
   CFLAGS="$CFLAGS -DHAVE_BZLIB"

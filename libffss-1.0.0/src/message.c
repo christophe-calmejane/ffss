@@ -277,6 +277,7 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
       memcpy(msg+pos,Buffer,BufSize);
       pos += BufSize;
       break;
+#ifndef DISABLE_ZLIB
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
@@ -286,6 +287,7 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
       }
       pos += CompSize;
       break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
@@ -464,6 +466,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
     {
       case FFSS_COMPRESSION_NONE :
         break;
+#ifndef DISABLE_ZLIB
       case FFSS_COMPRESSION_ZLIB :
         partial = ((long int) Ptr2->Data)*1.05+12;
         data = (char *)Ptr->Data;
@@ -479,6 +482,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         free(data);
         Ptr2->Data = (void *) partial;
         break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
       case FFSS_COMPRESSION_BZLIB :
         partial = ((long int) Ptr2->Data)*1.05+1600;
@@ -837,7 +841,10 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
   *(FFSS_Field *)(msg+pos) = FFSS_MESSAGE_SERVER_LISTING;
   pos += sizeof(FFSS_Field);
 
-  Comps = FFSS_COMPRESSION_NONE | FFSS_COMPRESSION_ZLIB;
+  Comps = FFSS_COMPRESSION_NONE;
+#ifndef DISABLE_ZLIB
+  Comps |= FFSS_COMPRESSION_ZLIB;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
   Comps |= FFSS_COMPRESSION_BZLIB;
 #endif
@@ -904,7 +911,10 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOL_VERSION;
   pos += sizeof(FFSS_Field);
 
-  Comps = FFSS_COMPRESSION_NONE | FFSS_COMPRESSION_ZLIB;
+  Comps = FFSS_COMPRESSION_NONE;
+#ifndef DISABLE_ZLIB
+  Comps |= FFSS_COMPRESSION_ZLIB;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
   Comps |= FFSS_COMPRESSION_BZLIB;
 #endif
@@ -1209,7 +1219,10 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
   *(FFSS_Field *)(msg+pos) = ntohs(FC_SI_OUT_UDP->SAddr.sin_port);
   pos += sizeof(FFSS_Field);
 
-  Comps = FFSS_COMPRESSION_NONE | FFSS_COMPRESSION_ZLIB;
+  Comps = FFSS_COMPRESSION_NONE;
+#ifndef DISABLE_ZLIB
+  Comps |= FFSS_COMPRESSION_ZLIB;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
   Comps |= FFSS_COMPRESSION_BZLIB;
 #endif
@@ -1550,6 +1563,7 @@ bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long 
       memcpy(msg+pos,Buffer,BufSize);
       pos += BufSize;
       break;
+#ifndef DISABLE_ZLIB
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
@@ -1559,6 +1573,7 @@ bool FM_SendMessage_NewStatesMaster(const char Master[],const char *Buffer,long 
       }
       pos += CompSize;
       break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
@@ -1611,6 +1626,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
       memcpy(msg+pos,Buffer,BufSize);
       pos += BufSize;
       break;
+#ifndef DISABLE_ZLIB
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
@@ -1620,6 +1636,7 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
       }
       pos += CompSize;
       break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
@@ -1850,6 +1867,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
       memcpy(msg+pos,Buffer,BufSize);
       pos += BufSize;
       break;
+#ifndef DISABLE_ZLIB
     case FFSS_COMPRESSION_ZLIB :
       if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
       {
@@ -1859,6 +1877,7 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
       }
       pos += CompSize;
       break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
     case FFSS_COMPRESSION_BZLIB :
       if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))

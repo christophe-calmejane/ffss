@@ -36,9 +36,9 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#ifndef NO_ZLIB_INCLUDE
+#ifndef DISABLE_ZLIB
 #include <zlib.h>
-#endif /* NO_ZLIB_INCLUDE */
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
 #include <bzlib.h>
 #endif /* HAVE_BZLIB */
@@ -55,7 +55,7 @@ extern "C" {
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre73"
+#define FFSS_VERSION "1.0.0-pre74"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
@@ -924,8 +924,10 @@ FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int 
 void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,char buf_out[],int Type);
 void FFSS_PackIP(char *buf,const char IP[],int Type);
 
+#ifndef DISABLE_ZLIB
 bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out);
 char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out);
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
 bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out);
 char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out);

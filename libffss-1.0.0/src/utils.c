@@ -264,6 +264,7 @@ int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port)
   return res;
 }
 
+#ifndef DISABLE_ZLIB
 bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
 {
   int res;
@@ -309,6 +310,7 @@ char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out)
   }
   return out;
 }
+#endif /* !DISABLE_ZLIB */
 
 #ifdef HAVE_BZLIB
 bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out)

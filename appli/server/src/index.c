@@ -664,9 +664,11 @@ bool FS_SendIndex(const char Host[],const char Port[])
     comp = FFSS_COMPRESSION_BZLIB;
   else
 #endif /* HAVE_BZLIB */
+#ifndef DISABLE_ZLIB
   if(total >= FS_COMPRESSION_TRIGGER_ZLIB)
     comp = FFSS_COMPRESSION_ZLIB;
   else
+#endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
   res = FS_SendMessage_IndexAnswer(Host,Port,Bufs,Sizes,comp);
 /*  FS_MyState = SaveState;*/

@@ -39,6 +39,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         case FFSS_COMPRESSION_NONE:
           u_pos = pos;
           break;
+#ifndef DISABLE_ZLIB
         case FFSS_COMPRESSION_ZLIB:
           u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
           if(u_Buf == NULL)
@@ -50,6 +51,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           free_it = true;
           u_pos = 0;
           break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
         case FFSS_COMPRESSION_BZLIB:
           u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
@@ -138,6 +140,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         case FFSS_COMPRESSION_NONE:
           u_pos = pos;
           break;
+#ifndef DISABLE_ZLIB
         case FFSS_COMPRESSION_ZLIB:
           u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER,&u_Len);
           if(u_Buf == NULL)
@@ -150,6 +153,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           free_it = true;
           u_pos = 0;
           break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
         case FFSS_COMPRESSION_BZLIB:
           u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER,&u_Len);
@@ -265,6 +269,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         case FFSS_COMPRESSION_NONE:
           u_pos = pos;
           break;
+#ifndef DISABLE_ZLIB
         case FFSS_COMPRESSION_ZLIB:
           u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER,&u_Len);
           if(u_Buf == NULL)
@@ -276,6 +281,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           free_it = true;
           u_pos = 0;
           break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
         case FFSS_COMPRESSION_BZLIB:
           u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER,&u_Len);
@@ -414,6 +420,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         case FFSS_COMPRESSION_NONE:
           u_pos = pos;
           break;
+#ifndef DISABLE_ZLIB
         case FFSS_COMPRESSION_ZLIB:
           u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);
           if(u_Buf == NULL)
@@ -425,6 +432,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
           free_it = true;
           u_pos = 0;
           break;
+#endif /* !DISABLE_ZLIB */
 #ifdef HAVE_BZLIB
         case FFSS_COMPRESSION_BZLIB:
           u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);

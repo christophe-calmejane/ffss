@@ -358,6 +358,7 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
   }
   else
 #endif /* HAVE_BZLIB */
+#ifndef DISABLE_ZLIB
   if((len+strlen(Path)) >= FS_COMPRESSION_TRIGGER_ZLIB)
   {
     if(Comps & FFSS_COMPRESSION_ZLIB)
@@ -366,6 +367,7 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
       comp = FFSS_COMPRESSION_NONE;
   }
   else
+#endif /* !DISABLE_ZLIB */
     comp = FFSS_COMPRESSION_NONE;
   ans = FS_SendMessage_DirectoryListingAnswer(Client->sock,Path,buf,len,comp);
   free(buf);

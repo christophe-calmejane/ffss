@@ -145,6 +145,18 @@ if test "$driver" = "true"; then
   CFLAGS="$CFLAGS ""-DFFSS_DRIVER "
 fi
 
+AC_ARG_ENABLE(zlib,
+[  --disable-zlib          Disables use of zlib (NOT suggested). Auto disables checksum (default=no)],
+[case "${enableval}" in
+  yes) zlib=true ;;
+  no)  zlib=false ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --disable-zlib) ;;
+esac],[zlib=true])
+if test "$zlib" = "false"; then
+  CFLAGS="$CFLAGS ""-DDISABLE_ZLIB -DDISABLE_CHECKSUM "
+  chksum=false
+fi
+
 AC_ARG_WITH(skyutils, [  --with-skyutils=DIR       Bin path to uninstalled copy of libskyutils (default /usr/local/bin)])
 
 echo -n "checking for skyutils-config... "
@@ -188,13 +200,17 @@ fi
 
 
 dnl Checks for libraries.
+O_Z_LIB="no"
+if test "$zlib" = "true"; then
 AC_CHECK_LIB(z, adler32,Z_LIB="-lz")
-AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress,BZ_LIB="-lbz2")
-
 if test ! "$Z_LIB"; then
-  AC_MSG_ERROR("Z lib not found...")
+  AC_MSG_ERROR([Z lib not found... override with --disable-zlib, but NOT suggested])
+else
+  O_Z_LIB="yes"
+fi
 fi
 
+AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress,BZ_LIB="-lbz2")
 if test ! "$BZ_LIB"; then
   AC_MSG_WARN("BZ2 lib not found...")
   O_BZ_LIB="no"
@@ -261,6 +277,12 @@ else
   tmp="OFF"
 fi
 echo "Driver mode           : $tmp"
+if test "$zlib" = "true"; then
+  tmp="ON"
+else
+  tmp="OFF"
+fi
+echo "Zlib for compression  : $tmp"
 if test ! "$BZ_LIB"; then
   tmp="OFF"
 else
