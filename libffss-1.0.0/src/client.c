@@ -697,7 +697,10 @@ bool FC_Init(void)
 #endif
 #if !defined(DEBUG) && defined(_WIN32)
   if(FFSS_LogFile == NULL)
-    FFSS_LogFile = SU_OpenLogFile("FFSS_Client.log");
+  {
+    if(getenv("FFSS_LOG_FILE") != NULL)
+      FFSS_LogFile = SU_OpenLogFile("FFSS_Client.log");
+  }
 #endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
 #ifdef _WIN32
