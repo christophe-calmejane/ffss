@@ -12,3 +12,5 @@
  - Ajouter une option dans les fonctions de transfert : Taille des blocs de checksum (0=fichier complet, x=chksum envoye tous les x octets pour check)
 
  - TRANSFORMER LES CONSTANTES DES PORTS en variables (enfin, garder les 2, par defaut, on assigne les constantes au var) et mettre les var en globales
+
+ - Re-reflechir au check des versions -> Peut etre le faire aussi au nivo du server-client ?

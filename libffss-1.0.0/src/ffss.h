@@ -928,6 +928,7 @@ extern char *FFSS_ExeExt[FFSS_EXE_NB_EXT];
 extern char *FFSS_ZipExt[FFSS_ZIP_NB_EXT];
 
 extern int N_DebugLevel;
+extern bool N_SyslogOn;
 extern SU_PServerInfo FS_SI_UDP,FS_SI_OUT_UDP,FS_SI_TCP,FS_SI_TCP_FTP;
 extern SU_PServerInfo FC_SI_OUT_UDP;
 extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP;
@@ -945,7 +946,6 @@ extern FILE *FFSS_LogFile;
 #endif /* __unix__ */
 #else /* DEBUG */
 #define SYSLOG_FN(x,y) printf(y)
-extern bool N_SyslogOn;
 #endif /* DEBUG */
 
 #ifdef FFSS_CONTEXT

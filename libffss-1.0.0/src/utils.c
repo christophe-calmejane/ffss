@@ -8,6 +8,7 @@ int N_DebugLevel = 6;
 #else
 int N_DebugLevel = 0;
 #endif
+bool N_SyslogOn = true;
 
 char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT] = {"mp3","wav","au","wma","snd","xm","mid","mod","ra"} ; /* 9 */
 char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT] = {"mpg","mpeg","avi","vob","asf","rm","ram","mov"} ; /* 8 */
@@ -327,9 +328,6 @@ unsigned char FFSS_GetWordTags(const char *Word)  /* <-- word to check for exten
   return FFSS_FILE_TAGS_NOTHING;
 }
 
-#ifdef DEBUG
-bool N_SyslogOn = true;
-#endif
 void FFSS_PrintSyslog(int Level,char *Txt, ...)
 {
   va_list argptr;
