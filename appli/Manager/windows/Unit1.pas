@@ -251,7 +251,7 @@ begin
     Begin
       H:=HostEnt.h_name;
       If Pos('.',HostEnt.h_name) <> 0 Then
-      Begin                           
+      Begin
         H:=HostEnt.h_name;
       End;
     End;
@@ -931,7 +931,6 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-  GetInitValues;
   If OnFolder And Not Limited Then
   Begin
     If Share = Nil Then
@@ -1059,6 +1058,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   ST1.ShowAppIcon:=False;
   ST1.Icon:=Application.Icon;
+  GetInitValues;
 end;
 
 end.
