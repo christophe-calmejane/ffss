@@ -510,7 +510,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       break;
     case FFSS_MESSAGE_REC_DIR_LISTING_ANSWER :
       context;
-      lval2 = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
+      lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
@@ -726,7 +726,14 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
 
     if(len >= BufSize)
     {
-      FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message !!\n");
+      FFSS_PrintSyslog(LOG_INFO,"WARNING : Client's buffer too short for this message (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
+      SU_FreeCS(Client);
+      if(FFSS_CB.CCB.OnEndTCPThread != NULL)
+        FFSS_CB.CCB.OnEndTCPThread(Client);
+      free(Buf);
+      SU_END_THREAD(NULL);
     }
     res = recv(Client->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)

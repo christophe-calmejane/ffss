@@ -893,11 +893,11 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   TDI_ADDRESS_IP addr = {htons(FFSS_SERVER_PORT),inet_addr(Server)};
   CTDI_CONNECTION_INFORMATION server(addr);
 
-  CS = new FfssTCP;
+  CS = new FfssTCP(Server,ShareName);
   if(CS == NULL)
     return NULL;
-   if(!CS->IsCreated())
-     return NULL;
+  if(!CS->IsCreated())
+    return NULL;
   CS->SetEvents(TRUE);
   CS->connect(server);
   if(!CS->IsConnected())
@@ -1011,7 +1011,7 @@ bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char
   FFSS_PrintDebug(3,"Sending Recursive Directory Listing message to server for %s\n",Path);
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,true);
 }
-
+#ifndef FFSS_DRIVER
 /* FC_SendMessage_Download Function                                 */
 /* Sends a DOWNLOAD message to a server                             */
 /*  Server : The Server's structure we are connected to             */
@@ -1122,7 +1122,7 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
   SU_FreeCS(Server);
 }
-
+#endif /* !FFSS_DRIVER */
 /* FC_SendMessage_DomainListing Function           */
 /* Sends a DOMAIN LIST message to a master         */
 /*  Master : The name of my master                 */
@@ -1145,7 +1145,7 @@ bool FC_SendMessage_DomainListing(const char Master[],FFSS_LongField User)
   resp = SU_UDPSendToAddr(FC_SI_OUT_UDP,msg,pos,(char *)Master,FFSS_MASTER_PORT_S);
   return (resp != SOCKET_ERROR);
 }
-
+#ifndef FFSS_DRIVER
 /* FC_SendMessage_Search Function                          */
 /* Sends a SEARCH message to a master                      */
 /*  Master : The name of my master                         */
@@ -1352,7 +1352,7 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,FFSS_Field Handle,int Flags
   FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");
   return FFSS_SendTcpPacketCS(Server,msg,pos,false,false);
 }
-
+#endif /* !FFSS_DRIVER */
 
 #ifndef FFSS_DRIVER
 /* ************************************ */

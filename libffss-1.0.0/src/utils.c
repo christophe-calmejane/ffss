@@ -11,9 +11,8 @@
 #define sscanf FFSS_sscanf
 void FFSS_sscanf(const char IP[],const char [],int *a,int *b,int *c,int *d)
 {
-  int i, tt[4];
+  int tt[4],nbp=0,nbi=0;
   char *p=(char *)IP;
-  int nbp=0, nbi=0;
 
   if(!p)
     return;
@@ -22,23 +21,17 @@ void FFSS_sscanf(const char IP[],const char [],int *a,int *b,int *c,int *d)
   {
     if(*p>='0' && *p<='9')
 	{
-      nbi++;
-      tt[nbp]*=10;
-      tt[nbp]+=*p-'0';
+      nbi++;tt[nbp]*=10;tt[nbp]+=*p-'0';
 	}
     else if(*p=='.' && nbi)
 	{
-      nbp++;
-      nbi=0;
+      nbp++;nbi=0;
 	}
     if(nbi>3 || nbp>3)
       break;
     p++;
   }
-  *a = tt[0];
-  *b = tt[1];
-  *c = tt[2];
-  *d = tt[3];
+  *a = tt[0];*b = tt[1];*c = tt[2];*d = tt[3];
 }
 #endif /* !FFSS_DRIVER */
 
@@ -57,6 +50,8 @@ char *FFSS_ImageExt[FFSS_IMAGE_NB_EXT] = {"bmp","tiff","jpg","jpeg","png","gif",
 char *FFSS_DocExt[FFSS_DOC_NB_EXT] = {"htm","html","txt","doc","pdf","nfo","tex","ps"} ; /* 8 */
 char *FFSS_ExeExt[FFSS_EXE_NB_EXT] = {"exe","com","bat","sys","dll"} ; /* 5 */
 char *FFSS_ZipExt[FFSS_ZIP_NB_EXT] = {"zip","arj","rar","tar","gz","jar","ace","bz2","deb","rpm"} ; /* 10 */
+
+char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack"};
 
 #ifndef FFSS_DRIVER
 SU_THREAD_HANDLE FFSS_MainThread;

@@ -8,8 +8,6 @@ bool FS_FTP;
 SU_PServerInfo FS_SI_UDP=NULL,FS_SI_OUT_UDP=NULL,FS_SI_TCP=NULL,FS_SI_TCP_FTP=NULL;
 SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 
-char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack"};
-
 typedef struct
 {
   SU_PClientSocket Client;
@@ -673,7 +671,12 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
 
     if(len >= BufSize)
     {
-      FFSS_PrintSyslog(LOG_INFO,"WARNING : Server's buffer too short for this message !!\n");
+      FFSS_PrintSyslog(LOG_INFO,"WARNING : Server's buffer too short for this message (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
+      if(FFSS_CB.SCB.OnEndTCPThread != NULL)
+        FFSS_CB.SCB.OnEndTCPThread();
+      SU_FreeCS(Client);
+      free(Buf);
+      SU_END_THREAD(NULL);
     }
     res = recv(Client->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)

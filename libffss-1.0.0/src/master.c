@@ -354,7 +354,12 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
     context;
     if(len >= BufSize)
     {
-      FFSS_PrintSyslog(LOG_INFO,"WARNING : Master's buffer too short for this message !!\n");
+      FFSS_PrintSyslog(LOG_INFO,"WARNING : Master's buffer too short for this message (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
+      if(FFSS_CB.MCB.OnMasterDisconnected != NULL)
+        FFSS_CB.MCB.OnMasterDisconnected(Master);
+      SU_FreeCS(Master);
+      free(Buf);
+      SU_END_THREAD(NULL);
     }
     res = recv(Master->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
