@@ -78,6 +78,29 @@ bool FSCA_Request(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   return true;
 }
 
+/* authentification */
+bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[])
+{
+  FFSS_Field Length;
+  int res;
+
+  Length = strlen(Login);
+  res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
+  if((res <= 0) || (res != sizeof(Length)))
+    return false;
+  res = send(Client->sock,Login,Length,SU_MSG_NOSIGNAL);
+  if((res <= 0) || (res != (int)Length))
+    return false;
+  Length = strlen(Pwd);
+  res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
+  if((res <= 0) || (res != sizeof(Length)))
+    return false;
+  res = send(Client->sock,Pwd,Length,SU_MSG_NOSIGNAL);
+  if((res <= 0) || (res != (int)Length))
+    return false;
+  return true;
+}
+
 /* Get Infos */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
 {

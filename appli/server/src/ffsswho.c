@@ -153,25 +153,7 @@ int main(int argc,char *argv[])
   }
   if(Login != NULL) /* Not connecting to localhost... send login/pwd */
   {
-    FFSS_Field Length;
-    Length = strlen(Login);
-    if(send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL) != sizeof(Length))
-    {
-      printf("Error sending login/pwd to %s\n",Server);
-      return -3;
-    }
-    if(send(Client->sock,Login,Length,SU_MSG_NOSIGNAL) != Length)
-    {
-      printf("Error sending login/pwd to %s\n",Server);
-      return -3;
-    }
-    Length = strlen(Pwd);
-    if(send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL) != sizeof(Length))
-    {
-      printf("Error sending login/pwd to %s\n",Server);
-      return -3;
-    }
-    if(send(Client->sock,Pwd,Length,SU_MSG_NOSIGNAL) != Length)
+    if(!FSCA_RequestAuth(Client,Login,Pwd))
     {
       printf("Error sending login/pwd to %s\n",Server);
       return -3;

@@ -69,6 +69,9 @@ typedef struct
 extern "C" {
 #endif /* __cplusplus */
 
+/* *************** Authentification *************** */
+bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[]);
+
 /* *************** Get Infos *************** */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client);
 FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]);
