@@ -578,14 +578,12 @@ void FCA_form_hidden_args()
 void FCA_my_url(bool isDownload)
 {
 	if(isDownload)
-		printf("%s%s",
-			FCA_html_dw_prefix,
-			FCA_me
+		printf("%s",
+			FCA_html_dw_prefix
 		);
 	else
-		printf("%s%s",
-			FCA_html_prefix,
-			FCA_me
+		printf("%s",
+			FCA_html_prefix
 		);
 }
 

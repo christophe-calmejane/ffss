@@ -117,18 +117,18 @@ extern int FCA_tab_width;
 
 	/* list of possible values to variables */
 #define FCA_SKIN_VAR_VALUES \
-	{"", "http://localhost/ffss/", NULL}, \
+	{"", "ffss-client", NULL}, \
 	{"", "http://localhost/ffss/img/", NULL}, \
 	{"on","off",NULL}, \
-	{"", "http://localhost/ffss/", NULL}, \
+	{"", "ffss-client", NULL}, \
 	{":", ",", "|", "/", "&", NULL}, \
 	{"", FCA_NAME, NULL},
 
 #define FCA_SKIN_ENV_VALUES \
-	"", \
+	"ffss-client", \
 	"", \
 	"on", \
-	"", \
+	"ffss-client", \
 	":", \
 	FCA_NAME
 
@@ -138,7 +138,6 @@ extern int FCA_tab_width;
 #define FCA_html_firstarg	FCA_env[FCA_skin_env_index+2]
 #define FCA_html_dw_prefix	FCA_env[FCA_skin_env_index+3]
 #define FCA_script_delim	FCA_env[FCA_skin_env_index+4][0]
-#define FCA_me			FCA_env[FCA_skin_env_index+5]
 
 
 void FCA_load_skins();
