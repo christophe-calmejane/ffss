@@ -102,11 +102,13 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
 /*  NbShares : The number of shares of my server             */
 bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[],const char **ShareNames,const char **ShareComments,int NbShares)
 {
-  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER + FFSS_IP_FIELD_SIZE + (FFSS_MAX_SHARENAME_LENGTH+1)*NbShares + (FFSS_MAX_SHARECOMMENT_LENGTH+1)*NbShares];
-  long int len,pos;
+  char *msg;
+  long int size,len,pos;
   int resp;
   int i;
 
+  size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER + FFSS_IP_FIELD_SIZE + (FFSS_MAX_SHARENAME_LENGTH+1)*NbShares + (FFSS_MAX_SHARECOMMENT_LENGTH+1)*NbShares;
+  msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING_ANSWER);
   pos = FFSS_PackField(msg,pos,FFSS_IP_TYPE);
@@ -128,6 +130,7 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Server shares answer message to client\n");
   resp = SU_UDPSendToSin(FS_SI_OUT_UDP,msg,pos,Client);
+  free(msg);
   return (resp != SOCKET_ERROR);
 }
 
