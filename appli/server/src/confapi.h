@@ -53,6 +53,14 @@ typedef struct
   char *Pct;
 } FSCA_TFileInfo, *FSCA_PFileInfo;
 
+typedef struct
+{
+  void *Handle;
+  char *Name;
+  char *Author;
+  char *Version;
+} FSCA_TPluginInfo, *FSCA_PPluginInfo;
+
 /* *************** Get Infos *************** */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client);
 FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]);
@@ -70,6 +78,12 @@ bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[]);
 bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
 bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[]);
 bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share);
+
+/* ***************  Plugins  *************** */
+void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup);
+bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStartup);
+bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle);
+SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client); /* FSCA_PPluginInfo */
 
 #ifdef __cplusplus
 }

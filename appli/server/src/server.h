@@ -5,6 +5,9 @@
 #ifdef __unix__
 #include <sys/ioctl.h>
 #include <net/if.h>
+#define FS_PLUGIN_EXPORT
+#else /* !__unix__ */
+#define FS_PLUGIN_EXPORT __declspec(dllexport)
 #endif /* __unix__ */
 
 #ifdef USE_CRYPT
@@ -28,6 +31,11 @@
 #define FS_OPCODE_GETNAMEAVAIL  15
 #define FS_OPCODE_ACK           20
 #define FS_OPCODE_NACK          21
+#define FS_OPCODE_PL_LOAD       30
+#define FS_OPCODE_PL_UNLOAD     31
+#define FS_OPCODE_PL_CONFIGURE  32
+#define FS_OPCODE_PL_ENUM       33
+
 
 #define FS_AVERAGE_FILE_LENGTH 25
 #define FS_COMPRESSION_TRIGGER_ZLIB 1400
@@ -37,7 +45,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre81"
+#define FFSS_SERVER_VERSION "1.0-pre82"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
@@ -169,7 +177,9 @@ typedef struct
 typedef struct
 {
   char *Name;
-  void *Handle;
+  char *Author;
+  char *Version;
+  SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;
   bool (*OnCheckConfConn)(SU_PClientSocket Client);
 } FS_TPlugin, *FS_PPlugin;
@@ -178,6 +188,7 @@ extern SU_SEM_HANDLE FS_SemConn;  /* Semaphore to protect the use of Conns in a 
 extern SU_SEM_HANDLE FS_SemGbl;   /* Semaphore to protect the use of MyGlobal */
 extern SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index */
 extern SU_SEM_HANDLE FS_SemXFer;  /* Semaphore to protect the use of FFSS_PTransfer */
+extern SU_SEM_HANDLE FS_SemPlugin;/* Semaphore to protect the use of FS_Plugins */
 extern SU_THREAD_KEY_HANDLE FS_tskey;
 extern SU_THREAD_ONCE_HANDLE FS_once;
 
@@ -187,7 +198,7 @@ extern char *FS_MyDomain;
 extern char *FS_MyIntName;
 extern int FS_MyState;
 extern char *FS_TimeTable[];
-extern SU_PList FS_Plugins;
+extern SU_PList FS_Plugins; /* FS_PPlugin */
 
 void FS_RealBuildIndex(void);
 /* Assumes FS_SemShr semaphore is locked */
@@ -207,14 +218,16 @@ FS_PShare FS_GetShareFromName(const char Name[]);
 FS_PShare FS_GetShareFromPath(const char Path[]);
 void FS_EjectFromShare(FS_PShare Share,bool EjectXFers);
 void FS_EjectFromShareByIP(FS_PShare Share,const char IP[],bool EjectXFers);
+FS_PPlugin FS_LoadPlugin(const char Name[]);
+void FS_UnLoadPlugin(SU_DL_HANDLE Handle);
+bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
+bool FS_IsPluginValid(FS_PPlugin Plugin);
 
 /* Functions from arch dependant file */
 bool FS_LoadConfig(const char FileName[]);
 bool FS_SaveConfig(const char FileName[]);
 void FS_MainThread(void);
 void FS_RemoveShare(FS_PShare Share);
-bool FS_LoadPlugin(const char Name[]);
-void FS_UnLoadPlugin(void *Handle);
 bool FS_CheckDirectoryChanged(FS_PShare Share);
 
 

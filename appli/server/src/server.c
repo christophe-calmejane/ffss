@@ -4,6 +4,7 @@ SU_SEM_HANDLE FS_SemConn;  /* Semaphore to protect the use of Conns in a FS_PSha
 SU_SEM_HANDLE FS_SemGbl;   /* Semaphore to protect the use of MyGlobal */
 SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index */
 SU_SEM_HANDLE FS_SemXFer;  /* Semaphore to protect the use of FFSS_PTransfer */
+SU_SEM_HANDLE FS_SemPlugin;/* Semaphore to protect the use of FS_Plugins */
 SU_THREAD_KEY_HANDLE FS_tskey;
 SU_THREAD_ONCE_HANDLE FS_once = SU_THREAD_ONCE_INIT;
 
@@ -17,7 +18,7 @@ char *FS_MyIntName = "eth0";
 int FS_MyState;
 char *FS_TimeTable[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 long int FS_CurrentStrmTag = 1;
-SU_PList FS_Plugins;
+SU_PList FS_Plugins; /* FS_PPlugin */
 
 void FS_FreeStreaming(FS_PStreaming FS)
 {
@@ -2211,6 +2212,113 @@ void OnTransferActive(FFSS_PTransfer FT,long int Amount,bool Download)
 {
 }
 
+FS_PPlugin FS_LoadPlugin(const char Name[])
+{
+#ifdef PLUGINS
+  SU_DL_HANDLE handle;
+  FS_PPlugin (*fonc)(void);
+  FS_PPlugin Pl;
+
+  handle = SU_DL_OPEN(Name);
+  if(!handle)
+  {
+#ifdef _WIN32
+    FFSS_PrintSyslog(LOG_ERR,"Couldn't open %s (%d)\n",Name,GetLastError());
+#else /* !_WIN32 */
+    FFSS_PrintSyslog(LOG_ERR,"Couldn't open %s (%s)\n",Name,dlerror());
+#endif /* _WIN32 */
+    return NULL;
+  }
+
+  fonc = (FS_PPlugin(*)(void) )SU_DL_SYM(handle,"Plugin_Init");
+  if(fonc == NULL)
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Couldn't find Plugin_Init function for %s\n",Name);
+    return NULL;
+  }
+  Pl = fonc();
+  if(Pl == NULL)
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error in Plugin_Init function for %s\n",Name);
+    return NULL;
+  }
+  Pl->Handle = handle;
+  SU_SEM_WAIT(FS_SemPlugin);
+  FS_Plugins = SU_AddElementHead(FS_Plugins,(void *)Pl);
+  SU_SEM_POST(FS_SemPlugin);
+#ifdef DEBUG
+  printf("Successfully loaded %s\n",Pl->Name);
+#endif /* DEBUG */
+#endif /* PLUGINS */
+  return Pl;
+}
+
+void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
+{
+#ifdef PLUGINS
+  void (*Fonc)(void);
+  SU_PList Ptr;
+  int i;
+
+  Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_UnInit");
+  if(Fonc != NULL)
+    Fonc();
+  SU_DL_CLOSE(Handle);
+  SU_SEM_WAIT(FS_SemPlugin);
+  Ptr = FS_Plugins;
+  i = 0;
+  while(Ptr != NULL)
+  {
+    if(Handle == ((FS_PPlugin)Ptr->Data)->Handle)
+    {
+      if(((FS_PPlugin)Ptr->Data)->Name != NULL)
+        free(((FS_PPlugin)Ptr->Data)->Name);
+      free(Ptr->Data);
+      FS_Plugins = SU_DelElementPos(FS_Plugins,i);
+      break;
+    }
+    i++;
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_POST(FS_SemPlugin);
+#endif /* PLUGINS */
+}
+
+bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
+{
+  bool ret = true;
+#ifdef PLUGINS
+  void (*Fonc)(void);
+ 
+  Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
+  if(Fonc != NULL)
+    Fonc();
+  else
+    ret = false;
+#endif /* PLUGINS */
+  return ret;
+}
+
+bool FS_IsPluginValid(FS_PPlugin Plugin)
+{
+  SU_PList Ptr;
+
+  SU_SEM_WAIT(FS_SemPlugin);
+  Ptr = FS_Plugins;
+  while(Ptr != NULL)
+  {
+    if((void *)Plugin == Ptr->Data)
+    {
+      SU_SEM_POST(FS_SemPlugin);
+      return true;
+    }
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_POST(FS_SemPlugin);
+  return false;
+}
+
+
 SU_THREAD_ROUTINE(FS_ConfFunc,Info);
 
 char *FS_CheckGlobal(void)
@@ -2379,6 +2487,11 @@ int main(int argc,char *argv[])
     return -3;
   }
   if(!SU_CreateSem(&FS_SemXFer,1,1,"FFSSServerSemXFer"))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
+    return -3;
+  }
+  if(!SU_CreateSem(&FS_SemPlugin,1,1,"FFSSServerSemPlugin"))
   {
     FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
     return -3;

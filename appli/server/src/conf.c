@@ -26,6 +26,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   FS_PShare Share,shr2;
   FS_PConn Conn;
   FS_PUser Usr;
+  FS_PPlugin Plugin;
   int res,nb,nb2,retval,c1,c2;
   bool error;
   SU_PList Ptr,Ptr2;
@@ -589,6 +590,79 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           break;
         FS_EjectFromShareByIP(Share,s_n,true);
         break;
+      case FS_OPCODE_PL_LOAD :
+        pos = 1;
+        s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        Plugin = FS_LoadPlugin(s_p);
+        if(Plugin != NULL)
+        {
+          Size = 1;
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          buf[0] = FS_OPCODE_NACK;
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        }
+        else
+        {
+          if(buf[pos]) /* Add plugin at server startup */
+          {
+          }
+          Size = 1;
+          buf[0] = FS_OPCODE_ACK;
+          Size = FFSS_PackField(buf,Size,(FFSS_Field)Plugin);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        }
+        break;
+      case FS_OPCODE_PL_UNLOAD :
+        pos = 1;
+        Plugin = (FS_PPlugin) FFSS_UnpackField(buf,buf+pos,Size,&pos);
+        Size = 1;
+        if(FS_IsPluginValid(Plugin))
+        {
+          FS_UnLoadPlugin(Plugin->Handle);
+          if(buf[pos]) /* Remove plugin from server startup */
+          {
+          }
+          buf[0] = FS_OPCODE_ACK;
+        }
+        else
+          buf[0] = FS_OPCODE_NACK;
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        break;
+      case FS_OPCODE_PL_CONFIGURE :
+        pos = 1;
+        Plugin = (FS_PPlugin) FFSS_UnpackField(buf,buf+pos,Size,&pos);
+        Size = 1;
+        if(FS_IsPluginValid(Plugin))
+        {
+          if(FS_ConfigurePlugin(Plugin->Handle))
+            buf[0] = FS_OPCODE_ACK;
+          else
+            buf[0] = FS_OPCODE_NACK;
+        }
+        else
+          buf[0] = FS_OPCODE_NACK;
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
+        break;
+      case FS_OPCODE_PL_ENUM :
+        Size = 0;
+        SU_SEM_WAIT(FS_SemPlugin);
+        Size = FFSS_PackField(buf,Size,SU_ListCount(FS_Plugins));
+        Ptr = FS_Plugins;
+        while(Ptr != NULL)
+        {
+          Plugin = (FS_PPlugin) Ptr->Data;
+          Size = FFSS_PackField(buf,Size,(FFSS_Field)Plugin);
+          Size = FFSS_PackString(buf,Size,Plugin->Name,strlen(Plugin->Name)+1);
+          Size = FFSS_PackString(buf,Size,Plugin->Author,strlen(Plugin->Author)+1);
+          Size = FFSS_PackString(buf,Size,Plugin->Version,strlen(Plugin->Version)+1);
+          Ptr = Ptr->Next;
+        }
+        SU_SEM_POST(FS_SemPlugin);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
       default :
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (unknown opcode : %d)\n",buf[0]);
         error = true;

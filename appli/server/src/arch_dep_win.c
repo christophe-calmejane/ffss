@@ -17,10 +17,10 @@ void FS_MainThread(void)
 
 bool FS_LoadConfig(const char FileName[])
 {
-  char Shares[10000];
+  char Shares[4096];
   char *p,*q,*r,*s;
   char *u_l,*u_p,*u_w;
-  char key[10000];
+  char key[4096];
   char Path[1024];
   char Comment[FFSS_MAX_SHARECOMMENT_LENGTH+1];
   char Users[2048];
@@ -32,6 +32,7 @@ bool FS_LoadConfig(const char FileName[])
   char GBL_Name[FFSS_MAX_SERVERNAME_LENGTH+1];
   char GBL_Comment[FFSS_MAX_SERVERCOMMENT_LENGTH+1];
   char GBL_Master[1024];
+  HKEY HK;
 
   SU_RB_SetIntValue(FFSS_REGISTRY_PATH "ProcessId",GetCurrentProcessId());
   N_DebugLevel = 6;
@@ -144,6 +145,27 @@ bool FS_LoadConfig(const char FileName[])
   FFSS_TransferReadBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_ReadBufferSize",FFSS_TRANSFER_READ_BUFFER_SIZE);
   /* Get global BufferSize */
   FFSS_TransferBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_XFerBufferSize",FFSS_TRANSFER_BUFFER_SIZE);
+
+  /* Load plugins */
+  _snprintf(key,sizeof(key),"%sPlugins\\",FFSS_REGISTRY_PATH);
+  HK = SU_RB_OpenKeys(key,KEY_READ);
+  if(HK != NULL)
+  {
+    int idx = 0;
+    char buf[4096];
+    LONG ret = ERROR_SUCCESS;
+    DWORD len,len2;
+
+    while(ret != ERROR_NO_MORE_ITEMS)
+    {
+      len = sizeof(key);
+      len2 = sizeof(buf);
+      ret = RegEnumValue(HK,idx,key,&len,NULL,NULL,buf,&len2);
+      if(ret == ERROR_SUCCESS)
+        FS_LoadPlugin(buf);
+      idx++;
+    }
+  }
   return true;
 }
 
@@ -256,15 +278,6 @@ void FS_RemoveShare(FS_PShare Share)
   /* Del Share Users */
   _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH,Share->ShareName);
   SU_RB_DelValue(key);
-}
-
-bool FS_LoadPlugin(const char Name[])
-{
-  return true;
-}
-
-void FS_UnLoadPlugin(void *Handle)
-{
 }
 
 bool FS_CheckDirectoryChanged(FS_PShare Share)

@@ -460,3 +460,87 @@ bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[])
     return false;
   return true;
 }
+
+void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup)
+{
+  char Buf[10000];
+  FFSS_Field Size,Pos;
+  void *ret;
+
+  Buf[0] = FS_OPCODE_PL_CONFIGURE;
+  Size = 1;
+  SU_strcpy(Buf+Size,Path,sizeof(Buf)-Size);
+  Size += strlen(Path) + 1;
+  Buf[Size++] = (char) AddToStartup;
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return NULL;
+
+  Pos = 1;
+  ret = (void *) FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
+  return ret;
+}
+
+bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStartup)
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_PL_UNLOAD;
+  Size = 1;
+  Size = FFSS_PackField(Buf,Size,(FFSS_Field)Handle);
+  Buf[Size++] = (char) RemoveFromStartup;
+
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return false;
+  return true;
+}
+
+bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle)
+{
+  char Buf[1000];
+  FFSS_Field Size;
+
+  Buf[0] = FS_OPCODE_PL_CONFIGURE;
+  Size = 1;
+  Size = FFSS_PackField(Buf,Size,(FFSS_Field)Handle);
+
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return false;
+  return true;
+}
+
+SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
+{
+  SU_PList Plugins = NULL;
+  FSCA_PPluginInfo Pl;
+  int nb;
+  char Buf[10000],*tmp1,*tmp2,*tmp3;
+  FFSS_Field Size,Pos;
+
+  Buf[0] = FS_OPCODE_PL_ENUM;
+  Size = 1;
+  if(!FSCA_RequestAndReceive(Client,Buf,&Size))
+    return NULL;
+
+  Pos = 1;
+  nb = FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
+  for(nb=0;nb<nb;nb++)
+  {
+    Pl = (FSCA_PPluginInfo) malloc(sizeof(FSCA_TPluginInfo));
+    memset(Pl,0,sizeof(FSCA_TPluginInfo));
+    Pl->Handle = (void *) FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
+    tmp1 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);
+    tmp2 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);
+    tmp3 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);
+    if((tmp1 == NULL) || (tmp2 == NULL) || (tmp3 == NULL))
+    {
+      free(Pl);
+      return Plugins;
+    }
+    Pl->Name = strdup(tmp1);
+    Pl->Author = strdup(tmp2);
+    Pl->Version = strdup(tmp3);
+    Plugins = SU_AddElementHead(Plugins,Pl);
+  }
+  return Plugins;
+}

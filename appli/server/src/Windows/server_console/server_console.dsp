@@ -39,9 +39,10 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "PLUGINS" /D "SU_USE_DL" /YX /FD /c
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
 BSC32=bscmake.exe
@@ -49,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=xilink6.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 ffss.lib skyutils.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /libpath:"../../../../../libffss-1.0.0/src/windows/ffss/debug" /libpath:"../../../../../skyutils/src/windows/skyutils/release"
+# ADD LINK32 ffss.lib skyutils.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /nodefaultlib:"LIBCMTD" /libpath:"../../../../../libffss-1.0.0/src/windows/ffss/debug" /libpath:"../../../../../skyutils/src/windows/skyutils/release"
 
 !ELSEIF  "$(CFG)" == "server_console - Win32 Debug"
 
@@ -65,7 +66,7 @@ LINK32=xilink6.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "DEBUG" /D "_REENTRANT" /D "_WIN32" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../../../../libffss-1.0.0/src" /I "../../../../../skyutils/src" /I "../../../../../misc/windows/include" /D "_DEBUG" /D "DEBUG" /D "_REENTRANT" /D "_WIN32" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "PLUGINS" /D "SU_USE_DL" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /d "_DEBUG"
 BSC32=bscmake.exe
