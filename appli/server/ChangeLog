@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : February, 3th 2002
+                  Last Update : February, 10th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+February, 10th 2002:
+  - Disable a share when rescaning it
+  - Added file change detection in a directory, and auto-rescan
 
 February, 3rd 2002:
   - Added limited bind option in config file

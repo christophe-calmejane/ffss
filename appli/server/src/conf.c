@@ -339,6 +339,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_SEM_WAIT(FS_SemConn);
         buf[0] = FS_OPCODE_ACK;
         pos = 1;
+        SU_SEM_WAIT(FS_SemShr);
         snprintf(buf+pos,buf_len-pos,"%d",SU_ListCount(FS_Index));
         pos += FS_GetIntLen(SU_ListCount(FS_Index)) + 1;
         Ptr = FS_Index;
@@ -363,6 +364,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           pos += FS_GetIntLen(Share->Disabled) + FS_GetIntLen(nb) + FS_GetIntLen(nb2) + 3;
           Ptr = Ptr->Next;
         }
+        SU_SEM_POST(FS_SemShr);
         SU_SEM_POST(FS_SemConn);
         Size = pos;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);

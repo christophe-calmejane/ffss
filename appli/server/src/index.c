@@ -33,6 +33,13 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   {
     if((strcmp(ent->d_name,".") == 0) || (strcmp(ent->d_name,"..") == 0))
     {
+      if(strcmp(Share->Path,Path) == 0)
+      {
+        snprintf(name,sizeof(name),"%s/.",Share->Path);
+        stat(name,&st);
+        Share->Time = st.st_ctime;
+        FFSS_PrintDebug(5,"\tStating share main directory... time = %s",ctime(&Share->Time));
+      }
       ent = readdir(dir);
       continue;
     }
@@ -179,7 +186,9 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
   }
 
+  SU_SEM_WAIT(FS_SemShr);
   FS_Index = SU_AddElementHead(FS_Index,Share);
+  SU_SEM_POST(FS_SemShr);
 }
 
 void FS_RealBuildIndex(void)
@@ -190,6 +199,7 @@ void FS_RealBuildIndex(void)
   char Pat[]="x:";
 #endif /* _WIN32 */
 
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   while(Ptr != NULL)
   {
@@ -207,16 +217,18 @@ void FS_RealBuildIndex(void)
     FFSS_PrintDebug(5,"Done building %s (%ld files, %ld directories)\n",Share->ShareName,Share->NbFiles,Share->NbDirs);
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemShr);
 }
 
-void FS_FreeFiles(FS_PFile File)
+void FS_FreeFiles(FS_PShare Share,FS_PFile File)
 {
   if(File->FileName != NULL)
     free(File->FileName);
   free(File);
+  Share->NbFiles--;
 }
 
-void FS_FreeDirs(FS_PDir Dir)
+void FS_FreeDirs(FS_PShare Share,FS_PDir Dir)
 {
   SU_PList Ptr;
 
@@ -225,18 +237,19 @@ void FS_FreeDirs(FS_PDir Dir)
   Ptr = Dir->Files.Dirs;
   while(Ptr != NULL)
   {
-    FS_FreeDirs(Ptr->Data);
+    FS_FreeDirs(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Dir->Files.Dirs);
   Ptr = Dir->Files.Files;
   while(Ptr != NULL)
   {
-    FS_FreeFiles(Ptr->Data);
+    FS_FreeFiles(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Dir->Files.Files);
   free(Dir);
+  Share->NbDirs--;
 }
 
 void FS_FreeUser(FS_PUser Usr)
@@ -276,14 +289,14 @@ void FS_FreeShare(FS_PShare Share)
   Ptr = Share->Root.Dirs;
   while(Ptr != NULL)
   {
-    FS_FreeDirs(Ptr->Data);
+    FS_FreeDirs(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Share->Root.Dirs);
   Ptr = Share->Root.Files;
   while(Ptr != NULL)
   {
-    FS_FreeFiles(Ptr->Data);
+    FS_FreeFiles(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Share->Root.Files);
@@ -294,6 +307,7 @@ void FS_FreeIndex(void)
 {
   SU_PList Ptr;
 
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   while(Ptr != NULL)
   {
@@ -302,26 +316,30 @@ void FS_FreeIndex(void)
   }
   SU_FreeList(FS_Index);
   FS_Index = NULL;
+  SU_SEM_POST(FS_SemShr);
 }
 
 void FS_RescanShare(FS_PShare Share)
 {
   SU_PList Ptr;
+  bool Old;
 #ifdef _WIN32
   char Pat[]="x:";
 #endif /* _WIN32 */
 
+  Old = Share->Disabled;
+  Share->Disabled = true;
   Ptr = Share->Root.Dirs;
   while(Ptr != NULL)
   {
-    FS_FreeDirs(Ptr->Data);
+    FS_FreeDirs(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Share->Root.Dirs);
   Ptr = Share->Root.Files;
   while(Ptr != NULL)
   {
-    FS_FreeFiles(Ptr->Data);
+    FS_FreeFiles(Share,Ptr->Data);
     Ptr = Ptr->Next;
   }
   SU_FreeList(Share->Root.Files);
@@ -339,6 +357,7 @@ void FS_RescanShare(FS_PShare Share)
   else
 #endif /* _WIN32 */
     FS_BuildIndex_rec(Share,&Share->Root,Share->Path);
+  Share->Disabled = Old;
 }
 
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
@@ -593,6 +612,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
 
   Bufs = NULL;
   Sizes = NULL;
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   total = 0;
   total_node = 0;
@@ -631,6 +651,7 @@ bool FS_SendIndex(const char Host[],const char Port[])
 
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemShr);
 
 /*  SaveState = FS_MyState;
   FS_MyState = FFSS_STATE_OFF;*/

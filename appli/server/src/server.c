@@ -103,13 +103,18 @@ FS_PShare FS_GetShareFromName(const char Name[])
 
   if(Name == NULL)
     return NULL;
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   while(Ptr != NULL)
   {
     if(SU_strcasecmp(Name,((FS_PShare)Ptr->Data)->ShareName))
+    {
+      SU_SEM_POST(FS_SemShr);
       return (FS_PShare) Ptr->Data;
+    }
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemShr);
   return NULL;
 }
 
@@ -119,13 +124,18 @@ FS_PShare FS_GetShareFromPath(const char Path[])
 
   if(Path == NULL)
     return NULL;
+  SU_SEM_WAIT(FS_SemShr);
   Ptr = FS_Index;
   while(Ptr != NULL)
   {
     if(SU_strcasecmp(Path,((FS_PShare)Ptr->Data)->Path))
+    {
+      SU_SEM_POST(FS_SemShr);
       return (FS_PShare) Ptr->Data;
+    }
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemShr);
   return NULL;
 }
 
@@ -366,10 +376,26 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
 void OnPing(struct sockaddr_in Master)
 {
   SU_PList Ptr;
+  static int Count = 0;
 
   if(FS_MyState == FFSS_STATE_OFF)
     return;
   FS_SendMessage_Pong(Master,FS_MyState);
+
+  /* Checking for change in shares */
+  Count++;
+  if(Count >= FS_CHECK_EVERY_X_PING)
+  {
+    Count = 0;
+    SU_SEM_WAIT(FS_SemShr);
+    Ptr = FS_Index;
+    while(Ptr != NULL)
+    {
+      FS_CheckDirectoryChanged((FS_PShare)Ptr->Data);
+      Ptr = Ptr->Next;
+    }
+    SU_SEM_POST(FS_SemShr);
+  }
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -421,6 +447,7 @@ void OnSharesListing(struct sockaddr_in Client)
 
   if(FS_MyState == FFSS_STATE_OFF)
     return;
+  SU_SEM_WAIT(FS_SemShr);
   nb = SU_ListCount(FS_Index);
   if(nb == 0)
   {
@@ -443,6 +470,7 @@ void OnSharesListing(struct sockaddr_in Client)
     free(Names);
     free(Comments);
   }
+  SU_SEM_POST(FS_SemShr);
 
   Ptr = FS_Plugins;
   while(Ptr != NULL)
@@ -1409,6 +1437,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   if(strcmp(ts->Path,"/") == 0)
   {
     /* FTP root directory requested - Listing all shares */
+    SU_SEM_WAIT(FS_SemShr);
     Ptr = FS_Index;
     while(Ptr != NULL)
     {
@@ -1416,6 +1445,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
       send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
       Ptr = Ptr->Next;
     }
+    SU_SEM_POST(FS_SemShr);
 
     Ptr = FS_Plugins;
     while(Ptr != NULL)
@@ -2261,6 +2291,27 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_ERR,"Cannot start WinSock\n");
   }
 #endif /* __unix__ */
+  if(!SU_CreateSem(&FS_SemConn,1,1,"FFSSServerSem"))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
+    return -3;
+  }
+  if(!SU_CreateSem(&FS_SemGbl,1,1,"FFSSServerSemGbl"))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
+    return -3;
+  }
+  if(!SU_CreateSem(&FS_SemShr,1,1,"FFSSServerSemShr"))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
+    return -3;
+  }
+  if(!SU_CreateSem(&FS_SemXFer,1,1,"FFSSServerSemXFer"))
+  {
+    FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
+    return -3;
+  }
+
   FS_MyState = FFSS_STATE_OFF;
   FS_Plugins = NULL;
   memset(&FS_MyGlobal,0,sizeof(FS_MyGlobal));
@@ -2323,27 +2374,6 @@ int main(int argc,char *argv[])
     FFSS_CB.SCB.OnCWDFTP = OnCWDFTP;
     FFSS_CB.SCB.OnDownloadFTP = OnDownloadFTP;
     FFSS_CB.SCB.OnIdleTimeoutFTP = OnIdleTimeoutFTP;
-
-    if(!SU_CreateSem(&FS_SemConn,1,1,"FFSSServerSem"))
-    {
-      FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
-      return -3;
-    }
-    if(!SU_CreateSem(&FS_SemGbl,1,1,"FFSSServerSemGbl"))
-    {
-      FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
-      return -3;
-    }
-    if(!SU_CreateSem(&FS_SemShr,1,1,"FFSSServerSemShr"))
-    {
-      FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
-      return -3;
-    }
-    if(!SU_CreateSem(&FS_SemXFer,1,1,"FFSSServerSemXFer"))
-    {
-      FFSS_PrintSyslog(LOG_ERR,"FFSS Server Error : Couldn't allocate semaphore\n");
-      return -3;
-    }
 
     if(!FS_PowerUp(FS_MyIntName))
       return -4;

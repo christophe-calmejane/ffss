@@ -34,8 +34,9 @@
 
 #define FS_ON_DOWNLOAD_MAX_RETRIES 5
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
+#define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre72"
+#define FFSS_SERVER_VERSION "1.0-pre73"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
@@ -88,6 +89,7 @@ typedef struct
   FS_TNode Root;      /* Files/Dirs in the root dir of the share */
   FFSS_Field NbFiles; /* Total number of files in the share */
   FFSS_Field NbDirs;  /* Total number of directories in the share */
+  time_t Time;        /* Time of Shared directory (Path/.) */
   SU_PList Conns;     /* FS_PConn */
   bool Disabled;      /* Temporarly disable the share */
   bool Remove;        /* If the share is to be removed (close all active connections) */
@@ -205,11 +207,12 @@ void FS_MainThread(void);
 void FS_RemoveShare(FS_PShare Share);
 bool FS_LoadPlugin(const char Name[]);
 void FS_UnLoadPlugin(void *Handle);
+bool FS_CheckDirectoryChanged(FS_PShare Share);
+
 
 extern FFSS_Field FS_CurrentXFerTag;
 bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path[],bool Download);
 bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn); /* False on END OF TRANSFER */
-
 
 
 /* Included from MASTER's index.h */
