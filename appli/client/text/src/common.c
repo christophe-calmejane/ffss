@@ -380,6 +380,7 @@ void FCA_sem_wait()
 void handusr1()
 {
 	printf("recu SIGUSR1 dans la fille...\n");
+	
 }
 
 #ifdef _WIN32
