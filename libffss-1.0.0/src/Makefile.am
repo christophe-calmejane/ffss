@@ -17,6 +17,7 @@ libffss_la_SOURCES = \
 	transfer.h \
 	utils.c \
 	utils.h \
+	filter.c \
         driver.c
 
 libffss_la_LDFLAGS = \

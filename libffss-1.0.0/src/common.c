@@ -17,7 +17,7 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
   struct sockaddr_in Client;
   int len,res=SOCKET_ERROR;
   FFSS_Field Size;
-  bool analyse,keep_it;
+  bool analyse;
   int err;
   char whom[150];
   char *Buf;
@@ -25,6 +25,7 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
   fd_set rfds;
   struct timeval tv;
   int retval = 0;
+  FFSS_FILTER_ACTION filter_res;
 
   SU_ThreadBlockSigs();
   context;
@@ -159,31 +160,33 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
       }
     }
     /* Check for packet reject */
-    keep_it = true;
     switch((int)User)
     {
       case FFSS_THREAD_SERVER :
-        if(FFSS_CB.SCB.OnCheckPacket != NULL)
-          keep_it = FFSS_CB.SCB.OnCheckPacket(whom);
+        filter_res = FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_SERVER_UDP_PACKET,INADDR_GET_IP(Client.sin_addr));
         break;
       case FFSS_THREAD_CLIENT :
-        if(FFSS_CB.CCB.OnCheckPacket != NULL)
-          keep_it = FFSS_CB.CCB.OnCheckPacket(whom);
+        filter_res = FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_CLIENT_UDP_PACKET,INADDR_GET_IP(Client.sin_addr));
         break;
       case FFSS_THREAD_MASTER :
-        if(FFSS_CB.MCB.OnCheckPacket != NULL)
-          keep_it = FFSS_CB.MCB.OnCheckPacket(whom);
+        filter_res = FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_MASTER_UDP_PACKET,INADDR_GET_IP(Client.sin_addr));
         break;
       default :
         FFSS_PrintDebug(1,"Error in UDP common thread, unknown thread type !\n");
         SU_END_THREAD(NULL);
     }
-    if(!keep_it)
+    switch(filter_res)
     {
-      len = 0;
-      FFSS_CurrentSIN.sin_port = 0;
-      FFSS_PrintDebug(1,"UDP packet from %s has been rejected\n",whom);
-      continue;
+      case FFSS_FILTER_ACTION_ACCEPT :
+        break;
+      case FFSS_FILTER_ACTION_REJECT :
+        len = 0;
+        FFSS_CurrentSIN.sin_port = 0;
+        FFSS_PrintDebug(1,"UDP packet from %s has been rejected\n",whom);
+        continue;
+      default :
+        FFSS_PrintDebug(1,"Error in UDP common thread, unknown filter action\n");
+        SU_END_THREAD(NULL);
     }
     /* If size of message won't fit in the buffer */
     if((len == 0) && ((*(FFSS_Field *)Buf) > BufSize))

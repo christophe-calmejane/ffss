@@ -78,7 +78,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
 #define FFSS_PROTOCOL_VERSION                  0x0010005
-#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010004
+#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010005
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -153,6 +153,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_DEFAULT_MAX_CONN 10
 #define FFSS_DEFAULT_MAX_XFER_PER_CONN 2
 
+/* FFSS Message types */
 #define FFSS_MESSAGE_STATE                      1
 #define FFSS_MESSAGE_STATE_ANSWER               2
 #define FFSS_MESSAGE_NEW_STATES                 3
@@ -201,6 +202,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGE_ERROR                    200
 #define FFSS_MESSAGE_GATEWAY                 1000
 
+/* FFSS Message minimal size */
 #define FFSS_MESSAGESIZE_STATE                      4
 #define FFSS_MESSAGESIZE_STATE_ANSWER               2
 #define FFSS_MESSAGESIZE_NEW_STATES                 3
@@ -255,6 +257,11 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_DISCONNECT                 2
 #define FFSS_MESSAGESIZE_ERROR                      5
 
+#define FFSS_THREAD_SERVER 1
+#define FFSS_THREAD_CLIENT 2
+#define FFSS_THREAD_MASTER 3
+
+/* FFSS State and Search answer defines */
 #define FFSS_STATE_ON     1
 #define FFSS_STATE_OFF    2
 #define FFSS_STATE_QUIET  4
@@ -262,19 +269,16 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_SEARCH_IS_FILE  32
 #define FFSS_SEARCH_IS_SAMBA 64
 
+/* FFSS Streaming defines */
 #define FFSS_SEEK_SET  1
 #define FFSS_SEEK_CUR  2
 #define FFSS_SEEK_END  3
-
 #define FFSS_STRM_OPEN_READ    1
 #define FFSS_STRM_OPEN_WRITE   2
 #define FFSS_STRM_OPEN_TEXT    4
 #define FFSS_STRM_OPEN_BINARY  8
 
-#define FFSS_THREAD_SERVER 1
-#define FFSS_THREAD_CLIENT 2
-#define FFSS_THREAD_MASTER 3
-
+/* FFSS Error defines */
 #define FFSS_ERROR_PROTOCOL_VERSION_ERROR     1
 #define FFSS_ERROR_RESOURCE_NOT_AVAIL         2
 #define FFSS_ERROR_NEED_LOGIN_PASS            3
@@ -301,6 +305,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_ERROR_NOT_IMPLEMENTED          100
 #define FFSS_ERROR_NO_ERROR                 666
 
+/* FFSS Transfer Error defines */
 #define FFSS_ERROR_TRANSFER_MALLOC       1
 #define FFSS_ERROR_TRANSFER_TIMEOUT      2
 #define FFSS_ERROR_TRANSFER_SEND         3
@@ -314,17 +319,19 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_ERROR_TRANSFER_CHECKSUM    11
 #define FFSS_ERROR_TRANSFER_CANCELED    12
 
+/* FC_PEntry->Flags defines */
 #define FFSS_FILE_DIRECTORY  1
 #define FFSS_FILE_EXECUTABLE 2
 #define FFSS_FILE_LINK       4
 
+/* FFSS Compression defines */
 #define FFSS_COMPRESSION_NONE  0
 #define FFSS_COMPRESSION_ZLIB  1
 #define FFSS_COMPRESSION_BZLIB 2
-
 #define FFSS_BZLIB_BLOCK100K 4
 #define FFSS_BZLIB_SMALL 1
 
+/* FFSS Master index defines */
 #define FFSS_FILE_TAGS_NOTHING  0
 #define FFSS_FILE_TAGS_MUSIC    1
 #define FFSS_FILE_TAGS_VIDEO    2
@@ -340,12 +347,27 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_EXE_NB_EXT    5
 #define FFSS_ZIP_NB_EXT   10
 
+/* FFSS_GetFFSSOptions defines */
 #define FFSS_OPTIONS_DEBUG        1
 #define FFSS_OPTIONS_BZLIB        2
 #define FFSS_OPTIONS_CONTEXT      4
 #define FFSS_OPTIONS_MALLOC_TRACE 8
 #define FFSS_OPTIONS_FTP          16
 #define FFSS_OPTIONS_NO_CHECKSUM  32
+
+/* Filter defines */
+  /* Server */
+#define FFSS_FILTER_CHAINS_SERVER_UDP_PACKET          0
+#define FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION      1
+#define FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION  2
+  /* Client */
+#define FFSS_FILTER_CHAINS_CLIENT_UDP_PACKET      0
+  /* Master */
+#define FFSS_FILTER_CHAINS_MASTER_UDP_PACKET            0
+#define FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER 1
+  /* Actions */
+#define FFSS_FILTER_ACTION_ACCEPT   1
+#define FFSS_FILTER_ACTION_REJECT   2
 
 #define CRLF "\xD\xA"
 #define FFSS_SUPER_MAGIC 0xFF55
@@ -410,7 +432,6 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
-  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnPing)(struct sockaddr_in Master);
   void (*OnStateAnswer)(const char Domain[]);
   void (*OnServerSearch)(struct sockaddr_in Client);
@@ -420,7 +441,6 @@ typedef struct
   void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[]);
 
   /* TCP callbacks */
-  bool (*OnCheckConnection)(const char IP[]);
   void *(*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
   void (*OnBeginTCPThread)(SU_PClientSocket Client,void *Info); /* Info is the (void *) returned by OnShareConnection */
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
@@ -465,7 +485,6 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
-  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
   void (*OnSharesListing)(const char IP[],const char **Names,const char **Comments,int NbShares);
   /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
@@ -502,7 +521,6 @@ typedef struct
 typedef struct
 {
   /* UDP callbacks */
-  bool (*OnCheckPacket)(const char IP[]); /* False to reject packet */
   void (*OnState)(struct sockaddr_in Server,FFSS_Field State,const char Name[],const char OS[],const char Comment[]);
   void (*OnServerListing)(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions);
   void (*OnClientServerFailed)(const char IP[]);
@@ -514,7 +532,6 @@ typedef struct
   void (*OnIndexAnswerSamba)(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port);
 
   /* TCP callbacks */
-  bool (*OnCheckConnection)(SU_PClientSocket Master);
   void (*OnMasterConnected)(SU_PClientSocket Master);
   void (*OnMasterDisconnected)(SU_PClientSocket Master);
   void (*OnNewState)(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
@@ -969,7 +986,6 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
 bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compression,const char Key[]);
 
 
-
 /* ************************************************************************* */
 /* TRANSFER.H                                                                */
 /* ************************************************************************* */
@@ -980,6 +996,7 @@ void FFSS_InitXFerDownload(FFSS_PTransfer FT,FFSS_Field XFerTag);
 extern char *FFSS_TransferErrorTable[];
 extern long int FFSS_TransferBufferSize;
 extern long int FFSS_TransferReadBufferSize;
+
 
 /* ************************************************************************* */
 /* UTILS.H                                                                   */
@@ -1015,6 +1032,32 @@ char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out);
 void FFSS_AddBroadcastAddr(const char Addr[]);
 /* Returns FFSS library compilation options (FFSS_OPTIONS_xx) */
 int FFSS_GetFFSSOptions(void);
+
+
+/* ************************************************************************* */
+/* FILTER.H                                                                  */
+/* ************************************************************************* */
+#ifdef _WIN32
+#define INADDR_GET_IP(x) x.S_un.S_addr
+#else /* !_WIN32 */
+#define INADDR_GET_IP(x) x.s_addr
+#endif /* _WIN32 */
+typedef unsigned int FFSS_FILTER_CHAIN;
+typedef unsigned int FFSS_FILTER_ACTION;
+/* Do NOT call any Filter function within the callback, or it will result as a dead lock */
+typedef void (*FFSS_RULES_ENUM_CB)(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]); /* Strings are temporary buffers... copy them */
+bool FFSS_Filter_AddRuleToChain_Head(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+bool FFSS_Filter_AddRuleToChain_Tail(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+bool FFSS_Filter_AddRuleToChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+bool FFSS_Filter_AddDefaultRuleToChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action);
+bool FFSS_Filter_DelRuleFromChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos);
+bool FFSS_Filter_DelRuleFromChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[]);
+bool FFSS_Filter_ClearChain(FFSS_FILTER_CHAIN Chain);
+bool FFSS_Filter_GetRuleOfChain_Pos(FFSS_FILTER_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_FILTER_ACTION *Action,char **Name); /* You must free returned strings */
+bool FFSS_Filter_GetRuleOfChain_Name(FFSS_FILTER_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_FILTER_ACTION *Action); /* You must free returned strings */
+bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB);
+FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(unsigned int Chain,unsigned long IP);
+bool FFSS_Filter_Init(void);
 
 extern char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT];
 extern char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT];

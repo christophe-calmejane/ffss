@@ -888,14 +888,18 @@ SU_THREAD_ROUTINE(FS_ThreadTCP,User)
       continue;
     }
     IP = inet_ntoa(Client->SAddr.sin_addr);
-    if(FFSS_CB.SCB.OnCheckConnection != NULL)
+    /* Check for packet reject */
+    switch(FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_SERVER_TCP_CONNECTION,INADDR_GET_IP(Client->SAddr.sin_addr)))
     {
-      if(FFSS_CB.SCB.OnCheckConnection(IP) == false)
-      {
+      case FFSS_FILTER_ACTION_ACCEPT :
+        break;
+      case FFSS_FILTER_ACTION_REJECT :
         FFSS_PrintSyslog(LOG_WARNING,"Rejecting client %s\n",IP);
         SU_FreeCS(Client);
         continue;
-      }
+      default :
+        FFSS_PrintDebug(1,"Error in FS_ThreadTCP, unknown filter action\n");
+        SU_END_THREAD(NULL);
     }
 
     FFSS_PrintDebug(5,"Client connected on TCP port of the server from %s (%s) ... checking connection\n",IP,SU_NameOfPort(IP));
@@ -1002,6 +1006,20 @@ SU_THREAD_ROUTINE(FS_ThreadTCP_FTP,User)
       SU_SLEEP(1);
       continue;
     }
+    /* Check for packet reject */
+    switch(FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_SERVER_TCP_FTP_CONNECTION,INADDR_GET_IP(Client->SAddr.sin_addr)))
+    {
+      case FFSS_FILTER_ACTION_ACCEPT :
+        break;
+      case FFSS_FILTER_ACTION_REJECT :
+        FFSS_PrintSyslog(LOG_WARNING,"Rejecting ftp client %s\n",inet_ntoa(Client->SAddr.sin_addr));
+        SU_FreeCS(Client);
+        continue;
+      default :
+        FFSS_PrintDebug(1,"Error in FS_ThreadTCP_FTP, unknown filter action\n");
+        SU_END_THREAD(NULL);
+    }
+
     FFSS_PrintDebug(5,"Client connected on TCP FTP port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!SU_CreateThread(&ClientThr,FS_ClientThreadTCP_FTP,(void *)Client,true))
     {
@@ -1037,6 +1055,11 @@ bool FS_Init(int ServerPort,bool FTP)
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
+  if(!FFSS_Filter_Init())
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
+    return false;
+  }
   FS_SI_UDP = SU_CreateServer(ServerPort,SOCK_DGRAM,false);
   if(FS_SI_UDP == NULL)
   {

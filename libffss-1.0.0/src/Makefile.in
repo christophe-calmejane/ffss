@@ -95,7 +95,7 @@ lib_LTLIBRARIES = libffss.la
 
 include_HEADERS = ffss.h
 
-libffss_la_SOURCES =  	client.c  	common.c  	common.h  	ffss.h  	master.c  	message.c  	server.c  	transfer.c 	transfer.h 	utils.c 	utils.h         driver.c
+libffss_la_SOURCES =  	client.c  	common.c  	common.h  	ffss.h  	master.c  	message.c  	server.c  	transfer.c 	transfer.h 	utils.c 	utils.h 	filter.c         driver.c
 
 
 libffss_la_LDFLAGS =  	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) 	-release $(LT_RELEASE)
@@ -114,7 +114,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libffss_la_LIBADD = 
 libffss_la_OBJECTS =  client.lo common.lo master.lo message.lo server.lo \
-transfer.lo utils.lo driver.lo
+transfer.lo utils.lo filter.lo driver.lo
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -128,8 +128,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = tar
 GZIP_ENV = --best
-DEP_FILES =  .deps/client.P .deps/common.P .deps/driver.P .deps/master.P \
-.deps/message.P .deps/server.P .deps/transfer.P .deps/utils.P
+DEP_FILES =  .deps/client.P .deps/common.P .deps/driver.P .deps/filter.P \
+.deps/master.P .deps/message.P .deps/server.P .deps/transfer.P \
+.deps/utils.P
 SOURCES = $(libffss_la_SOURCES)
 OBJECTS = $(libffss_la_OBJECTS)
 

@@ -450,14 +450,18 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
       SU_SLEEP(1);
       continue;
     }
-    if(FFSS_CB.MCB.OnCheckConnection != NULL)
+    /* Check for packet reject */
+    switch(FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,INADDR_GET_IP(Master->SAddr.sin_addr)))
     {
-      if(FFSS_CB.MCB.OnCheckConnection(Master) == false)
-      {
+      case FFSS_FILTER_ACTION_ACCEPT :
+        break;
+      case FFSS_FILTER_ACTION_REJECT :
         FFSS_PrintSyslog(LOG_WARNING,"Rejecting connection from %s\n",inet_ntoa(Master->SAddr.sin_addr));
         SU_FreeCS(Master);
         continue;
-      }
+      default :
+        FFSS_PrintDebug(1,"Error in FM_ThreadTCP, unknown filter action\n");
+        SU_END_THREAD(NULL);
     }
     context;
     FFSS_PrintDebug(5,"Master connected from %s (%s) ...\n",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
@@ -494,6 +498,11 @@ bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Inter
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
+  if(!FFSS_Filter_Init())
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
+    return false;
+  }
   FM_SI_UDP = SU_CreateServer(MasterPort,SOCK_DGRAM,false);
   if(FM_SI_UDP == NULL)
   {

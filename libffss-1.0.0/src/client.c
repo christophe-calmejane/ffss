@@ -815,6 +815,11 @@ bool FC_Init(void)
   if(!SU_WSInit(2,2))
     return false;
 #endif /* _WIN32 */
+  if(!FFSS_Filter_Init())
+  {
+    FFSS_PrintSyslog(LOG_ERR,"Error initializing FFSS Filter engine\n");
+    return false;
+  }
   FC_SI_OUT_UDP = SU_CreateServer(0,SOCK_DGRAM,false);
   if(FC_SI_OUT_UDP == NULL)
   {
