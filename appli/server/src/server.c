@@ -708,7 +708,18 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
 
 
 /* TCP callbacks */
-bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
+void OnBeginTCPThread(SU_PClientSocket Client,void *Info)
+{ /* This is the first callback in the new client-server connection thread */
+  FS_PThreadSpecific ts = (FS_PThreadSpecific) Info;
+  
+  SU_SEM_WAIT(FS_SemShr);
+  FS_GetThreadSpecific(true); /* Only called to create the ts key */
+  SU_THREAD_SET_SPECIFIC(FS_tskey,ts); /* Now, really set the struct in the key */
+  FFSS_PrintDebug(1,"Begining client's thread for %s\n",inet_ntoa(Client->SAddr.sin_addr));
+  SU_SEM_POST(FS_SemShr);
+}
+
+void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions)
 {
   SU_PList Ptr;
   FS_PShare Share;
@@ -722,13 +733,11 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   FFSS_PrintDebug(1,"Received a SHARE CONNECTION message (%s)\n",ShareName);
 
   /* Creates a new ts */
-  SU_SEM_WAIT(FS_SemShr);
-  ts = FS_GetThreadSpecific(false);
+  ts = (FS_PThreadSpecific) malloc(sizeof(FS_TThreadSpecific));
+  memset(ts,0,sizeof(FS_TThreadSpecific));
   if(ts == NULL)
-  {
-    SU_SEM_POST(FS_SemShr);
-    return false;
-  }
+    return NULL;
+  SU_SEM_WAIT(FS_SemShr);
   ts->ShareName = strdup(ShareName);
   ts->Client = Client;
   ts->Comps = Compressions;
@@ -738,7 +747,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   { /* Server is off */
     SU_SEM_POST(FS_SemShr);
     FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
-    return false;
+    return NULL;
   }
 
   /* Retrieve Share structure */
@@ -747,7 +756,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   { /* Share not found - Sending error message */
     SU_SEM_POST(FS_SemShr);
     FS_SendMessage_Error(Client->sock,FFSS_ERROR_RESOURCE_NOT_AVAIL,FFSS_ErrorTable[FFSS_ERROR_RESOURCE_NOT_AVAIL],0);
-    return false;
+    return NULL;
   }
 
   /* Check if share is enabled */
@@ -755,7 +764,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   { /* Share disabled - Sending error message */
     SU_SEM_POST(FS_SemShr);
     FS_SendMessage_Error(Client->sock,FFSS_ERROR_SHARE_DISABLED,FFSS_ErrorTable[FFSS_ERROR_SHARE_DISABLED],0);
-    return false;
+    return NULL;
   }
 
   /* Check Global's MaxConnection value */
@@ -767,7 +776,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
       SU_SEM_POST(FS_SemShr);
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],FS_MyGlobal.MaxConn);
       SU_SEM_POST(FS_SemGbl);
-      return false;
+      return NULL;
     }
   }
   Idle = FS_MyGlobal.Idle;
@@ -780,7 +789,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     { /* Too many connections */
       SU_SEM_POST(FS_SemShr);
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_CONNECTIONS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_CONNECTIONS],Share->MaxConnections);
-      return false;
+      return NULL;
     }
   }
   ts->Writeable = Share->Writeable;
@@ -793,7 +802,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     {
       SU_SEM_POST(FS_SemShr);
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
-      return false;
+      return NULL;
     }
     Ptr = Share->Users;
     while(Ptr != NULL)
@@ -806,7 +815,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     {
       SU_SEM_POST(FS_SemShr);
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
-      return false;
+      return NULL;
     }
     /* Now check password */
     FFSS_PrintDebug(3,"Found user %s... checking password\n",Login);
@@ -828,7 +837,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
       SU_SEM_POST(FS_SemShr);
       FFSS_PrintDebug(3,"Tadam... wrong password !!\n");
       FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
-      return false;
+      return NULL;
     }
     FFSS_PrintDebug(3,"Ok, user accepted\n");
     ts->Writeable = Usr->Writeable;
@@ -837,7 +846,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   {
     SU_SEM_POST(FS_SemShr);
     FS_SendMessage_Error(Client->sock,FFSS_ERROR_NEED_LOGIN_PASS,FFSS_ErrorTable[FFSS_ERROR_NEED_LOGIN_PASS],0);
-    return false;
+    return NULL;
   }
 
   /* Set Idle time out value */
@@ -850,7 +859,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
   if(!FS_SendMessage_Error(Client->sock,FFSS_ERROR_NO_ERROR,NULL,0))
   {
     FFSS_PrintDebug(1,"Error replying to client : %d\n",errno);
-    return false;
+    return NULL;
   }
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -862,7 +871,7 @@ bool OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);
-  return true;
+  return ts;
 }
 
 bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN the share (without share name) */
@@ -2933,6 +2942,7 @@ int main(int argc,char *argv[])
     FFSS_CB.SCB.OnError = OnError;
     FFSS_CB.SCB.OnMasterSearchAnswer = OnMasterSearchAnswer;
     /* TCP callbacks */
+    FFSS_CB.SCB.OnBeginTCPThread = OnBeginTCPThread;
     FFSS_CB.SCB.OnShareConnection = OnShareConnection;
     FFSS_CB.SCB.OnDirectoryListing = OnDirectoryListing;
     FFSS_CB.SCB.OnRecursiveDirectoryListing = OnRecursiveDirectoryListing;
