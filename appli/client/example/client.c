@@ -42,8 +42,8 @@ void OnNewState(long int State,const char IP[],const char Domain[],const char Na
 
 void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
 {
-  int i;
-  SU_PClientSocket CS;
+  /*int i;
+  SU_PClientSocket CS;*/
 
   printf("Received shares listing of %s (%d shares) :\n",IP,NbShares);
 /*  for(i=0;i<NbShares;i++)
@@ -126,7 +126,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
   while(Ptr != NULL)
   {
     Ent = (FC_PEntry) Ptr->Data;
-    printf("\t%s : %ld (%s) %s",Ent->Name,Ent->Size,(Ent->Flags & FFSS_FILE_DIRECTORY)?"dir":"file",ctime((time_t *)&Ent->Stamp));
+    printf("\t%s : %lld (%s) %s",Ent->Name,Ent->Size,(Ent->Flags & FFSS_FILE_DIRECTORY)?"dir":"file",ctime((time_t *)&Ent->Stamp));
 
     if(Ent->Flags & FFSS_FILE_DIRECTORY)
       tmp = Ent->Name;
@@ -197,6 +197,11 @@ int main()
     if(!FC_Init())
       return -1;
     printf("Client running...\n");
+
+    FC_SendMessage_ShareConnect("172.17.64.15","test","kiki","toto");
+    //FC_SendMessage_ShareConnect("172.17.64.15","test",NULL,NULL);
+    sleep(2);
+    return 0;
 
     /* Sending server request message to broadcast */
 #ifdef HAVE_MASTER
