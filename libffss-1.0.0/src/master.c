@@ -28,6 +28,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   switch(Type)
   {
     case FFSS_MESSAGE_STATE :
+      context;
       FFSS_PrintDebug(3,"Received a state message from server\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -39,7 +40,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
-      if((val > FFSS_PROTOCOLE_VERSION) || (val < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
+      if((val2 > FFSS_PROTOCOL_VERSION) || (val2 < FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE))
       {
         FM_SendMessage_Error(inet_ntoa(Client.sin_addr),FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR]);
         break;
@@ -48,6 +49,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnState(Client,val,str,str2,str3);
       break;
     case FFSS_MESSAGE_NEW_STATES :
+      context;
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       error = false;
       switch(val2)
@@ -109,6 +111,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       }
       break;
     case FFSS_MESSAGE_SERVER_LISTING:
+      context;
       FFSS_PrintDebug(3,"Received a server listing message\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -122,6 +125,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnServerListing(Client,str,str2,val);
       break;
     case FFSS_MESSAGE_CLIENT_SERVER_FAILED:
+      context;
       FFSS_PrintDebug(3,"Received a client/server failed message from client\n");
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
@@ -134,6 +138,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnClientServerFailed(IP);
       break;
     case FFSS_MESSAGE_PONG :
+      context;
       FFSS_PrintDebug(3,"Received a pong message from server\n");
       state = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(state == 0)
@@ -145,11 +150,13 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnPong(Client,state);
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING :
+      context;
       FFSS_PrintDebug(3,"Received a domains listing message from client\n");
       if(FFSS_CB.MCB.OnDomainListing != NULL)
         FFSS_CB.MCB.OnDomainListing(Client);
       break;
     case FFSS_MESSAGE_SEARCH :
+      context;
       FFSS_PrintDebug(3,"Received a friandise search message from client\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -164,6 +171,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnSearch(Client,val,str,str2,val2);
       break;
     case FFSS_MESSAGE_SEARCH_FW :
+      context;
       FFSS_PrintDebug(3,"Received a forwarded friandise search message from master\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -184,6 +192,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnSearchForward(Client,IP,val,str,val2);
       break;
     case FFSS_MESSAGE_SEARCH_MASTER :
+      context;
       FFSS_PrintDebug(3,"Received a master search message from client or server\n");
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
@@ -195,6 +204,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnMasterSearch(Client,val == FFSS_THREAD_SERVER);
       break;
     case FFSS_MESSAGE_INDEX_ANSWER :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -206,6 +216,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         FFSS_CB.MCB.OnIndexAnswer(Client,val,val2,val3,val4,val5);
       break;
     case FFSS_MESSAGE_INDEX_ANSWER_SAMBA :
+      context;
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -235,6 +246,10 @@ bool FM_Init(int MasterPort)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+#if !defined(DEBUG) && defined(_WIN32)
+  if(FFSS_LogFile == NULL)
+    FFSS_LogFile = SU_OpenLogFile("FFSS_Master.log");
+#endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
   context;
   FM_SI_UDP = SU_CreateServer(MasterPort,SOCK_DGRAM,false);

@@ -686,6 +686,10 @@ bool FC_Init(void)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+#if !defined(DEBUG) && defined(_WIN32)
+  if(FFSS_LogFile == NULL)
+    FFSS_LogFile = SU_OpenLogFile("FFSS_Client.log");
+#endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
   FC_SI_OUT_UDP = SU_CreateServer(0,SOCK_DGRAM,false);
   if(FC_SI_OUT_UDP == NULL)

@@ -22,10 +22,10 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
   int err;
   char whom[150];
   char *Buf;
-  long int BufSize;
+  long int BufSize = 0;
   fd_set rfds;
   struct timeval tv;
-  int retval;
+  int retval = 0;
 
   SU_ThreadBlockSigs();
   context;

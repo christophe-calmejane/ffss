@@ -519,7 +519,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
       if(len > (long int)(Size-total)) /* WARNING HERE !!! This may bug, depending on the cast policy */
         len = (long int)(Size-total);
       if(len == 0) /* End of file, getting checksum */
-        res = recv(FT->sock,&ChkSum,sizeof(Checksum),SU_MSG_NOSIGNAL);
+        res = recv(FT->sock,(char *)&ChkSum,sizeof(Checksum),SU_MSG_NOSIGNAL);
       else
         res = recv(FT->sock,Buf,len,SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)

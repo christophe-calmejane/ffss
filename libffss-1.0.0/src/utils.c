@@ -69,6 +69,9 @@ void FFSS_handle_SIGNAL(int signal)
   {
     FFSS_PContextSpecific ts = FFSS_Context_GetThreadSpecific();
     FFSS_PrintSyslog(LOG_ERR,"FFSS Crashed in thread %d :-(. Check: %s:%d\n",SU_THREAD_SELF,ts->File,ts->Line);
+#ifdef _WIN32
+    SU_CloseLogFile(FFSS_LogFile);
+#endif /* _WIN32 */
     abort();
   }
 }

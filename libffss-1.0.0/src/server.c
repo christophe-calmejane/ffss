@@ -115,7 +115,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
     }
     else
     {
-      if((val > FFSS_PROTOCOLE_VERSION) || (val < FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE))
+      if((val > FFSS_PROTOCOL_VERSION) || (val < FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE))
       {
         FS_SendMessage_Error(Client->sock,FFSS_ERROR_PROTOCOL_VERSION_ERROR,FFSS_ErrorTable[FFSS_ERROR_PROTOCOL_VERSION_ERROR]);
         ret_val = false;
@@ -892,6 +892,10 @@ bool FS_Init(int ServerPort,bool FTP)
 #ifdef __unix__
   signal(SIGPIPE,FFSS_SignalHandler_BrokenPipe);
 #endif
+#if !defined(DEBUG) && defined(_WIN32)
+  if(FFSS_LogFile == NULL)
+    FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");
+#endif /* !DEBUG && _WIN32 */
   FFSS_ShuttingDown = false;
   FS_SI_UDP = SU_CreateServer(ServerPort,SOCK_DGRAM,false);
   if(FS_SI_UDP == NULL)

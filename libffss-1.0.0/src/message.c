@@ -33,7 +33,7 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg+pos) = State;
   pos += sizeof(FFSS_Field);
-  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOLE_VERSION;
+  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOL_VERSION;
   pos += sizeof(FFSS_Field);
 
   len = strlen(Name)+1;
@@ -482,7 +482,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 #ifdef HAVE_BZLIB
       case FFSS_COMPRESSION_BZLIB :
         partial = ((long int) Ptr2->Data)*1.05+1600;
-        data = Ptr->Data;
+        data = (char *)Ptr->Data;
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseBZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
         {
@@ -901,7 +901,7 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   pos = sizeof(FFSS_Field);
   *(FFSS_Field *)(msg+pos) = FFSS_MESSAGE_SHARE_CONNECTION;
   pos += sizeof(FFSS_Field);
-  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOLE_VERSION;
+  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOL_VERSION;
   pos += sizeof(FFSS_Field);
 
   Comps = FFSS_COMPRESSION_NONE | FFSS_COMPRESSION_ZLIB;
@@ -1799,7 +1799,7 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
   pos = sizeof(FFSS_Field);
   *(FFSS_Field *)(msg+pos) = FFSS_MESSAGE_SEARCH_MASTER_ANSWER;
   pos += sizeof(FFSS_Field);
-  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOLE_VERSION;
+  *(FFSS_Field *)(msg+pos) = FFSS_PROTOCOL_VERSION;
   pos += sizeof(FFSS_Field);
   len = strlen(Domain)+1;
   if(len > FFSS_MAX_DOMAIN_LENGTH)

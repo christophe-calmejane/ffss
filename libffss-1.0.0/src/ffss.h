@@ -49,12 +49,12 @@
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre71"
+#define FFSS_VERSION "1.0.0-pre72"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOLE_VERSION                  0x0010002
-#define FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE 0x0010002
+#define FFSS_PROTOCOL_VERSION                  0x0010002
+#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010002
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
