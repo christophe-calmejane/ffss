@@ -188,6 +188,10 @@ typedef struct
   bool (*OnCheckConfConn)(SU_PClientSocket Client);
 } FS_TPlugin, *FS_PPlugin;
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /* Order of Semaphore locking */
 extern SU_SEM_HANDLE FS_SemGbl;   /* Semaphore to protect the use of MyGlobal */
 extern SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index and all sub structs */
@@ -283,5 +287,9 @@ typedef struct /* 16 bytes */
 #undef SU_SEM_POST
 #define SU_SEM_WAIT(x) { printf("Locking %d (%s:%d)\n",x,__FILE__,__LINE__);WaitForSingleObject(x,INFINITE);printf("Got %d\n",x); }
 #define SU_SEM_POST(x) { printf("Releasing %d (%s:%d)\n",x,__FILE__,__LINE__);ReleaseSemaphore(x,1,NULL); }*/
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* !__SERVER_H__ */

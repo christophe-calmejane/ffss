@@ -1,12 +1,11 @@
 #ifndef __CONFAPI_H__
 #define __CONFAPI_H__
 
-#ifdef __cplusplus
 /* Undefine c++ bool type (unsigned char ?)
    Use SU_BOOL type in your appli, every time you use a ffss prototype
  */
+#ifdef __cplusplus
 #define bool SU_BOOL
-extern "C" {
 #endif /* __cplusplus */
 
 #include "server.h"
@@ -65,6 +64,10 @@ typedef struct
   char *Version;   /* Free it */
   bool Startup;    /* If plugin is loaded at server startup */
 } FSCA_TPluginInfo, *FSCA_PPluginInfo;
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* *************** Get Infos *************** */
 FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client);
