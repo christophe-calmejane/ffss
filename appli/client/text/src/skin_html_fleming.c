@@ -136,11 +136,13 @@ void FCA_htmlfl_init()
 
 void FCA_htmlfl_prog_begin()
 {
+if(!FCA_included_doc)
 printf("<html>
 <head>
  <title>ffss client</title>
 </head>
- 
+ ");
+printf("
 <body>
 <form name='browsing' action='");FCA_my_url(false);printf("' method=GET class='small'>");
 printf("<center>\n");
@@ -485,7 +487,9 @@ printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</font></center>
 </form>
-</body>
+");
+if(!FCA_included_doc)
+printf("</body>
 </html>
 ");
 }

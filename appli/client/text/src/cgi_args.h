@@ -18,6 +18,7 @@ extern char FCA_prefx[FFSS_MAX_PATH_LENGTH];
 extern char FCA_img_prefx[FFSS_MAX_PATH_LENGTH];
 extern bool FCA_farg;	/* if we must use '?' or '&' to give arguments */
 extern bool FCA_can_header;	/* if we can send HTTP headers */
+extern bool FCA_included_doc;	/* if we must put <html>...<body> and </body></html> */
 
 #ifdef CGI
 

@@ -45,6 +45,7 @@ bool FCA_CGI_mode;
 bool FCA_must_download;
 #endif
 bool FCA_can_header;
+bool FCA_included_doc;
 char FCA_dir_to_list[FFSS_MAX_PATH_LENGTH];
 char FCA_search[FFSS_MAX_KEYWORDS_LENGTH];
 char FCA_search_dom[FFSS_MAX_DOMAIN_LENGTH];
@@ -82,7 +83,8 @@ const FCA_TCGI_bool_arg FCA_CGI_BOOL_ARGS[]={
 #ifdef CGI_DOWNLOADS
 	{"download",	&FCA_must_download	},
 #endif
-	{"can_header",	&FCA_can_header,	},
+	{"can_header",	&FCA_can_header		},
+	{"included_doc",&FCA_included_doc	},
 	{NULL,		NULL			}
 };
 
@@ -118,6 +120,7 @@ void FCA_read_cgi_args()
 	FCA_must_download=false;
 #endif
 	FCA_can_header=true;
+	FCA_included_doc=false;
 	FCA_dir_to_list[0]='\0';
 	FCA_search[0]='\0';
 	FCA_search_dom[0]='\0';
