@@ -686,9 +686,11 @@ Var Buf : Array[0..1000] Of Char;
 begin
   Result:=False;
   Buf[0]:=Char(FS_OPCODE_PL_CONFIGURE);
-  Size:=5;
+  Size:=9;
   p:=@(Buf[1]);
   p^:=Handle;
+  p:=@(Buf[5]);
+  p^:=Form1.Handle;
   CS.Socket.SendBuf(Size,sizeof(Size));
   CS.Socket.SendBuf(Buf,Size);
   Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
