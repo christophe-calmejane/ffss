@@ -179,14 +179,19 @@ void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const cha
 }
 
 /* Download successfully started */
-bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User)
+bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,FFSS_LongField EndingPos,int Port,FFSS_LongField User)
 {
   if(!L_Gbl.Log_Dwl)
     return true;
   if(StartPos == 0)
     WriteLog("Download request from %s {id:%u} : %s\n",inet_ntoa(Client->SAddr.sin_addr),SU_THREAD_SELF,Path);
   else
-    WriteLog("Download request from %s {id:%u} : Resuming %s\n",inet_ntoa(Client->SAddr.sin_addr),SU_THREAD_SELF,Path);
+  {
+    if(EndingPos == 0)
+      WriteLog("Download request from %s {id:%u} : Resuming %s from %lld\n",inet_ntoa(Client->SAddr.sin_addr),SU_THREAD_SELF,Path,StartPos);
+    else
+      WriteLog("Download request from %s {id:%u} : Bloc transfer for %s from %lld to %lld\n",inet_ntoa(Client->SAddr.sin_addr),SU_THREAD_SELF,Path,StartPos,EndingPos);
+  }
   return true;
 }
 

@@ -929,7 +929,7 @@ bool OnRecursiveDirectoryListing(SU_PClientSocket Client,const char Path[],FFSS_
   return true;
 }
 
-bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port,FFSS_LongField User) /* Path IN the share (without share name) */
+bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,FFSS_LongField EndingPos,int Port,FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PThreadSpecific ts;
   char buf[FFSS_MAX_FILEPATH_LENGTH];
@@ -1030,7 +1030,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
 #else /* !__unix__ */
   snprintf(buf,sizeof(buf),"%s\\%s",ts->Share->Path,(Path[0] == 0)?Path:(Path+1));
 #endif /* __unix__ */
-  if(!FFSS_UploadFile(Client,buf,StartPos,Port,Conn,(Port == -1),User,&FT))
+  if(!FFSS_UploadFile(Client,buf,StartPos,EndingPos,Port,Conn,(Port == -1),User,&FT))
   {
     SU_SEM_POST(FS_SemShr);
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error replying to client : %d",errno);
@@ -1085,7 +1085,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   while(Ptr != NULL)
   {
     if(((FS_PPlugin)Ptr->Data)->CB.OnDownload != NULL)
-      ((FS_PPlugin)Ptr->Data)->CB.OnDownload(Client,Path,StartPos,Port,User);
+      ((FS_PPlugin)Ptr->Data)->CB.OnDownload(Client,Path,StartPos,EndingPos,Port,User);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemPlugin);

@@ -9,6 +9,12 @@
 
 SU_PList FS_Index=NULL; /* FS_PShare */
 
+bool FS_GetChecksumForFile(FS_PFile File,const char Path[])
+{
+  /* Load checksum from file. Set it in File->ChkSum, and return true */
+  return false;
+}
+
 #ifdef __unix__
 FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
 {
@@ -20,7 +26,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   struct stat st,st2;
   FFSS_LongField total_dir_size = 0;
   FILE *fp;
-  char buf[1024];
+  char ChksumBuf[1024];
   int siz;
 
   SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tBuilding index for sub-dir %s",Path);
@@ -73,17 +79,20 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Flags = ((st.st_mode&S_IXUSR)?FFSS_FILE_EXECUTABLE:0) | (S_ISLNK(st2.st_mode)?FFSS_FILE_LINK:0);
       File->Size = st.st_size;
       File->Time = st.st_ctime;
-      if(Share->NoChksum == false)
+      if((Share->NoChksum == false) && (File->Size >= FS_MIN_FILE_CHKSUM_SIZE))
       {
-        fp = fopen(name,"rb");
-        if(fp != NULL)
+        if(!FS_GetChecksumForFile(File,name))
         {
-          siz = sizeof(buf);
-          if(siz > File->Size)
-            siz = File->Size;
-          fread(buf,1,siz,fp);
-          fclose(fp);
-          File->ChkSum = FFSS_ComputeChecksum(0,buf,siz);
+          fp = fopen(name,"rb");
+          if(fp != NULL)
+          {
+            siz = sizeof(ChksumBuf);
+            if(siz > File->Size)
+              siz = File->Size;
+            fread(ChksumBuf,1,siz,fp);
+            fclose(fp);
+            File->ChkSum = FFSS_ComputeChecksum(0,ChksumBuf,siz);
+          }
         }
       }
       total_dir_size += File->Size;
@@ -123,7 +132,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   WIN32_FIND_DATA ent;
   FFSS_LongField total_dir_size = 0;
   FILE *fp;
-  char buf[1024];
+  char ChksumBuf[1024];
   int siz;
 
   SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tBuilding index for sub-dir %s",Path);
@@ -165,18 +174,21 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Flags = FFSS_FILE_EXECUTABLE;
       File->Size = (ent.nFileSizeHigh * MAXDWORD) + ent.nFileSizeLow;
       File->Time = FS_ConvertTime(ent.ftCreationTime);
-      if(Share->NoChksum == false)
+      if((Share->NoChksum == false) && (File->Size >= FS_MIN_FILE_CHKSUM_SIZE))
       {
         snprintf(name,sizeof(name),"%s\\%s",Path,ent.cFileName);
-        fp = fopen(name,"rb");
-        if(fp != NULL)
+        if(!FS_GetChecksumForFile(File,name))
         {
-          siz = sizeof(buf);
-          if(siz > File->Size)
-            siz = File->Size;
-          fread(buf,1,siz,fp);
-          fclose(fp);
-          File->ChkSum = FFSS_ComputeChecksum(0,buf,siz);
+          fp = fopen(name,"rb");
+          if(fp != NULL)
+          {
+            siz = sizeof(ChksumBuf);
+            if(siz > File->Size)
+              siz = File->Size;
+            fread(ChksumBuf,1,siz,fp);
+            fclose(fp);
+            File->ChkSum = FFSS_ComputeChecksum(0,ChksumBuf,siz);
+          }
         }
       }
       total_dir_size += File->Size;

@@ -10,8 +10,20 @@ bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path
   fseek(FT->fp,0,SEEK_END);
   FT->XI.fsize = ftell(FT->fp);
   rewind(FT->fp);
+  if(FT->EndingPos != 0)
+  {
+    if(FT->EndingPos <= FT->XI.fsize)
+      FT->XI.fsize = FT->EndingPos;
+    else
+      SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Requested EndingSize is less than actual file size");
+  }
   FT->XI.Download = Download;
   FT->XI.Checksum = FFSS_ComputeChecksum(0,NULL,0);
+  if(FT->StartingPos != 0)
+  {
+    fseek(FT->fp,FT->StartingPos,SEEK_SET);
+    FT->XI.fsize -= FT->StartingPos;
+  }
 
   if(!FS_SendMessage_InitXFer(Client->sock,FT->XI.XFerTag,Path))
   {
@@ -34,7 +46,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
     return false;
   }
 
-  if((FT->XI.total+FFSS_TRANSFER_READ_BUFFER_SIZE) <= FT->XI.fsize)
+  if((FT->XI.total+FFSS_TRANSFER_READ_BUFFER_SIZE) < FT->XI.fsize)
   {
     rlen = FFSS_TRANSFER_READ_BUFFER_SIZE;
     last = false;
@@ -81,4 +93,3 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   }
   return true;
 }
-
