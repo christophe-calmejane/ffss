@@ -34,9 +34,6 @@
 #ifndef FCA_html_dw_prefix
 #	error "to use CGI, you must have the HTML skin. FCA_html_dw_prefix is not defined in skin.h"
 #endif /* FCA_html_dw_prefix */
-#ifndef html_can_header
-#	error "to use CGI, you must have the HTML skin. html_can_header is not defined in skin.h"
-#endif /* html_can_header */
 #endif /* CGI */
 
 
