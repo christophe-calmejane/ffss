@@ -250,7 +250,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[]);
 void FS_UnLoadPlugin(SU_DL_HANDLE Handle);
 /* Locks FS_SemPlugin */
 void FS_UnLoadAllPlugin(void);
-bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
+bool FS_ConfigurePlugin(SU_DL_HANDLE Handle,void *User);
 /* Locks FS_SemPlugin */
 bool FS_IsPluginValid(FS_PPlugin Plugin);
 
@@ -266,7 +266,7 @@ void FS_RemoveShare(FS_PShare Share);
 bool FS_CheckDirectoryChanged(FS_PShare Share);
 void FS_AddPluginToStartup(FS_PPlugin Plugin);
 void FS_RemovePluginFromStartup(FS_PPlugin Plugin);
-
+void FS_ShuttingDown(void);
 
 extern FFSS_Field FS_CurrentXFerTag;
 bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path[],bool Download);

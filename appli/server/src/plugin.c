@@ -30,6 +30,11 @@ void *FS_PluginQuery(int Type,...)
       break;
       //I = va_arg(ap, BN_PInfo); /* I */
 
+    case FSPQ_GET_FILTER_API : /* No Param */
+      if(FFSS_Filter_Api.Initialized)
+        ret = (void *)&FFSS_Filter_Api;
+      break;
+
     case FSPQ_GET_STATE : /* No Param */
       ret = (void *)FS_MyState;
       break;
@@ -171,15 +176,15 @@ void FS_UnLoadAllPlugin(void)
 #endif /* PLUGINS */
 }
 
-bool FS_ConfigurePlugin(SU_DL_HANDLE Handle)
+bool FS_ConfigurePlugin(SU_DL_HANDLE Handle,void *User)
 {
   bool ret = true;
 #ifdef PLUGINS
-  bool (*Fonc)(void);
+  bool (*Fonc)(void *);
 
-  Fonc = (bool(*)(void))SU_DL_SYM(Handle,"Plugin_Configure");
+  Fonc = (bool(*)(void *))SU_DL_SYM(Handle,"Plugin_Configure");
   if(Fonc != NULL)
-    ret = Fonc();
+    ret = Fonc(User);
   else
     ret = false;
 #endif /* PLUGINS */

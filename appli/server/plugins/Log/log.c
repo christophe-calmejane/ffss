@@ -215,7 +215,7 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
   MSG msg;
   HWND dlg;
 
-  L_hwnd = CreateDialog(L_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),GetDesktopWindow(),wndProc);
+  L_hwnd = CreateDialog(L_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),(HWND)info,wndProc);
   if(L_hwnd == NULL)
     return;
 
@@ -234,10 +234,10 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
 }
 
 /* This is the function called when plugin is requested to configure itself */
-FS_PLUGIN_EXPORT bool Plugin_Configure(void)
+FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
 {
   /* Create a thread to manage messages */
-  if(!SU_CreateThread(&L_Thr,ThreadFunc,NULL,true))
+  if(!SU_CreateThread(&L_Thr,ThreadFunc,User,true))
     return false;
   return true;
 }

@@ -2553,6 +2553,9 @@ bool FS_ShutDown()
     /* Sending logout message to my master */
     FS_SendMessage_State(FS_MyGlobal.Master,FS_MyGlobal.Name,FFSS_GetOS(),FS_MyGlobal.Comment,FS_MyState);
   }
+  /* Calling arch dep shut down routine */
+  FS_ShuttingDown();
+
   /* Shutting down server */
   FS_UnInit();
   return true;
@@ -2961,3 +2964,4 @@ int main(int argc,char *argv[])
   }
   return 0;
 }
+

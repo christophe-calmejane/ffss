@@ -5,7 +5,7 @@
 
 #include "server.h"
 
-#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
+#define FFSS_REGISTRY_PATH_SERVER FFSS_REGISTRY_PATH "Server\\"
 
 void FS_MainThread(void)
 {
@@ -19,9 +19,8 @@ bool FS_IsAlreadyRunning(void)
 {
   DWORD ProcessId;
   HANDLE Process;
-  DWORD res;
 
-  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "ProcessId",0);
+  ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",0);
   if(ProcessId == 0)
     return false;
   Process = OpenProcess(PROCESS_QUERY_INFORMATION,false,ProcessId);
@@ -52,12 +51,13 @@ bool FS_LoadConfig(const char FileName[])
 
   SU_SEM_WAIT(FS_SemGbl);
   GetCurrentDirectory(sizeof(Path),Path);
-  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "ServerDirectory",Path);
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "ProcessId",GetCurrentProcessId());
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "ServerDirectory",Path);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",GetCurrentProcessId());
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",FFSS_VERSION);
 N_DebugLevel = 0;
   FS_MyGlobal.ConfSock = true;
   FFSS_PrintDebug(5,"Loading config from registry\n");
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "ShareNames",Shares,sizeof(Shares),"");
+  SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "ShareNames",Shares,sizeof(Shares),"");
   if(Shares[0] == 0)
     p = NULL;
   else
@@ -73,23 +73,23 @@ N_DebugLevel = 0;
   while(p != NULL)
   {
     /* Get Share Path */
-    _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH_SERVER,p);
     SU_RB_GetStrValue(key,Path,sizeof(Path),"");
     /* Get Share Comment */
-    _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH_SERVER,p);
     SU_RB_GetStrValue(key,Comment,sizeof(Comment),"");
     /* Get Share Writeable */
-    _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH_SERVER,p);
     Writeable = SU_RB_GetIntValue(key,0);
     /* Get Share Private */
-    _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,p);
     Private = SU_RB_GetIntValue(key,0);
     /* Get Share MaxConnections */
-    _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,p);
     MaxConn = SU_RB_GetIntValue(key,0);
     /* Get Share Users */
     Ptr = NULL;
-    _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH,p);
+    _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH_SERVER,p);
     SU_RB_GetStrValue(key,Users,sizeof(Users),"");
     q = Users;
     r = strchr(q,',');
@@ -139,34 +139,34 @@ N_DebugLevel = 0;
     }
   }
   /* Get global Name */
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "Global_Name",GBL_Name,sizeof(GBL_Name),"Nobody");
+  SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Name",GBL_Name,sizeof(GBL_Name),"Nobody");
   FS_MyGlobal.Name = strdup(GBL_Name);
   /* Get global Comment */
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "Global_Comment",GBL_Comment,sizeof(GBL_Comment),"Misconfigured server");
+  SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Comment",GBL_Comment,sizeof(GBL_Comment),"Misconfigured server");
   FS_MyGlobal.Comment = strdup(GBL_Comment);
   /* Get global Master */
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "Global_Master",GBL_Master,sizeof(GBL_Master),"");
+  SU_RB_GetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Master",GBL_Master,sizeof(GBL_Master),"");
   if(GBL_Master[0] != 0)
     FS_MyGlobal.Master = strdup(GBL_Master);
   /* Get global Idle */
-  FS_MyGlobal.Idle = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_Idle",5*60);
+  FS_MyGlobal.Idle = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_Idle",5*60);
   /* Get global MaxConn */
-  FS_MyGlobal.MaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_MaxConn",FFSS_DEFAULT_MAX_CONN);
+  FS_MyGlobal.MaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxConn",FFSS_DEFAULT_MAX_CONN);
   /* Get global MaxXFerPerConn */
-  FS_MyGlobal.MaxXFerPerConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_MaxXFerPerConn",FFSS_DEFAULT_MAX_XFER_PER_CONN);
+  FS_MyGlobal.MaxXFerPerConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxXFerPerConn",FFSS_DEFAULT_MAX_XFER_PER_CONN);
   /* Get global FTP */
-  FS_MyGlobal.FTP = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_FTP",0);
+  FS_MyGlobal.FTP = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP",0);
   /* Get global FTP MaxConn */
-  FS_MyGlobal.FTPMaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_FTP_MaxConn",10);
+  FS_MyGlobal.FTPMaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP_MaxConn",10);
   /* Get global XFerInConn */
-  FS_MyGlobal.XFerInConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_XFerInConn",0);
+  FS_MyGlobal.XFerInConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerInConn",0);
   /* Get global ReadBufferSize */
-  FFSS_TransferReadBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_ReadBufferSize",FFSS_TRANSFER_READ_BUFFER_SIZE);
+  FFSS_TransferReadBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_ReadBufferSize",FFSS_TRANSFER_READ_BUFFER_SIZE);
   /* Get global BufferSize */
-  FFSS_TransferBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH "Global_XFerBufferSize",FFSS_TRANSFER_BUFFER_SIZE);
+  FFSS_TransferBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerBufferSize",FFSS_TRANSFER_BUFFER_SIZE);
 
   /* Load plugins */
-  _snprintf(key,sizeof(key),"%sPlugins\\",FFSS_REGISTRY_PATH);
+  _snprintf(key,sizeof(key),"%sPlugins\\",FFSS_REGISTRY_PATH_SERVER);
   HK = SU_RB_OpenKeys(key,KEY_READ);
   if(HK != NULL)
   {
@@ -217,19 +217,19 @@ bool FS_SaveConfig(const char FileName[])
       SU_strcat(Shares,"|",sizeof(Shares));
 
     /* Set Share Path */
-    _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetStrValue(key,Share->Path);
     /* Set Share Comment */
-    _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetStrValue(key,Share->Comment);
     /* Set Share Writeable */
-    _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetIntValue(key,Share->Writeable);
     /* Set Share Private */
-    _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetIntValue(key,Share->Private);
     /* Set Share MaxConnections */
-    _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetIntValue(key,Share->MaxConnections);
     /* Set Share Users */
     Ptr2 = Share->Users;
@@ -249,40 +249,40 @@ bool FS_SaveConfig(const char FileName[])
 
       Ptr2 = Ptr2->Next;
     }
-    _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH,Share->ShareName);
+    _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetStrValue(key,Users);
 
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemShr);
-  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "ShareNames",Shares);
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "ShareNames",Shares);
 
   SU_SEM_WAIT(FS_SemGbl);
   /* Set global Name */
-  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "Global_Name",FS_MyGlobal.Name);
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Name",FS_MyGlobal.Name);
   /* Set global Comment */
-  SU_RB_SetStrValue(FFSS_REGISTRY_PATH "Global_Comment",FS_MyGlobal.Comment);
+  SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Comment",FS_MyGlobal.Comment);
   /* Set global Master */
   if(FS_MyGlobal.Master != NULL)
-    SU_RB_SetStrValue(FFSS_REGISTRY_PATH "Global_Master",FS_MyGlobal.Master);
+    SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Master",FS_MyGlobal.Master);
   else
-    SU_RB_SetStrValue(FFSS_REGISTRY_PATH "Global_Master","");
+    SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "Global_Master","");
   /* Set global Idle */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_Idle",FS_MyGlobal.Idle);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_Idle",FS_MyGlobal.Idle);
   /* Set global MaxConn */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_MaxConn",FS_MyGlobal.MaxConn);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxConn",FS_MyGlobal.MaxConn);
   /* Set global MaxXFerPerConn */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_MaxXFerPerConn",FS_MyGlobal.MaxXFerPerConn);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxXFerPerConn",FS_MyGlobal.MaxXFerPerConn);
   /* Set global FTP */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_FTP",FS_MyGlobal.FTP);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP",FS_MyGlobal.FTP);
   /* Set global FTP MaxConn */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_FTP_MaxConn",FS_MyGlobal.FTPMaxConn);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP_MaxConn",FS_MyGlobal.FTPMaxConn);
   /* Set global XFerInConn */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_XFerInConn",FS_MyGlobal.XFerInConn);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerInConn",FS_MyGlobal.XFerInConn);
   /* Set global ReadBufferSize */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_ReadBufferSize",FFSS_TransferReadBufferSize);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_ReadBufferSize",FFSS_TransferReadBufferSize);
   /* Set global BufferSize */
-  SU_RB_SetIntValue(FFSS_REGISTRY_PATH "Global_XFerBufferSize",FFSS_TransferBufferSize);
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerBufferSize",FFSS_TransferBufferSize);
 
   SU_SEM_POST(FS_SemGbl);
   return true;
@@ -293,22 +293,22 @@ void FS_RemoveShare(FS_PShare Share)
   char key[10000];
 
   /* Del Share Path */
-  _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_Path",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share Comment */
-  _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_Comment",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share Writeable */
-  _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share Private */
-  _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share MaxConnections */
-  _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share Users */
-  _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH,Share->ShareName);
+  _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
 }
 
@@ -333,7 +333,7 @@ bool FS_CheckDirectoryChanged(FS_PShare Share)
 void FS_AddPluginToStartup(FS_PPlugin Plugin)
 {
   char tmp[1024];
-  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
+  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH_SERVER,Plugin->Name);
   SU_RB_SetStrValue(tmp,Plugin->Path);
   Plugin->Startup = true;
 }
@@ -341,8 +341,12 @@ void FS_AddPluginToStartup(FS_PPlugin Plugin)
 void FS_RemovePluginFromStartup(FS_PPlugin Plugin)
 {
   char tmp[1024];
-  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH,Plugin->Name);
+  _snprintf(tmp,sizeof(tmp),"%sPlugins\\%s",FFSS_REGISTRY_PATH_SERVER,Plugin->Name);
   SU_RB_DelValue(tmp);
   Plugin->Startup = false;
 }
 
+void FS_ShuttingDown()
+{
+  SU_RB_SetIntValue(FFSS_REGISTRY_PATH_SERVER "ProcessId",0);
+}

@@ -16,7 +16,7 @@ int FS_GetIntLen(int v)
 SU_THREAD_ROUTINE(FS_ClientConf,Info)
 {
   SU_PClientSocket Client = (SU_PClientSocket) Info;
-  FFSS_Field Size,pos;
+  FFSS_Field Size,pos,User;
   char *buf;
   unsigned int buf_len;
   char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m,*s_u;
@@ -658,10 +658,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       case FS_OPCODE_PL_CONFIGURE :
         pos = 1;
         Plugin = (FS_PPlugin) FFSS_UnpackField(buf,buf+pos,Size,&pos);
+        User = FFSS_UnpackField(buf,buf+pos,Size,&pos);
         Size = 1;
         if(FS_IsPluginValid(Plugin))
         {
-          if(FS_ConfigurePlugin(Plugin->Handle))
+          if(FS_ConfigurePlugin(Plugin->Handle,(void *)User))
             buf[0] = FS_OPCODE_ACK;
           else
             buf[0] = FS_OPCODE_NACK;

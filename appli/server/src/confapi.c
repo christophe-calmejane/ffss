@@ -495,7 +495,7 @@ bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStar
   return true;
 }
 
-bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle)
+bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle,void *User)
 {
   char Buf[1000];
   FFSS_Field Size;
@@ -503,6 +503,7 @@ bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle)
   Buf[0] = FS_OPCODE_PL_CONFIGURE;
   Size = 1;
   Size = FFSS_PackField(Buf,Size,(FFSS_Field)Handle);
+  Size = FFSS_PackField(Buf,Size,(FFSS_Field)User);
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;

@@ -17,6 +17,8 @@
 #define FSPQ_ACQUIRE_INDEX     3
 #define FSPQ_RELEASE_INDEX     4
 
+#define FSPQ_GET_FILTER_API    10
+
 #define FSPQ_GET_STATE        20
 #define FSPQ_SET_STATE        21
 #define FSPQ_EJECT_ALL        22
@@ -37,13 +39,6 @@ extern "C" {
 #endif /* __cplusplus */
 
 void *FS_PluginQuery(int Type,...);
-
-/* Internal prototypes */
-FS_PPlugin FS_LoadPlugin(const char Name[]);
-void FS_UnLoadPlugin(SU_DL_HANDLE Handle);
-void FS_UnLoadAllPlugin(void);
-bool FS_ConfigurePlugin(SU_DL_HANDLE Handle);
-bool FS_IsPluginValid(FS_PPlugin Plugin);
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,8 @@ void FS_MainThread(void)
 
 }
 
+void FS_ShuttingDown() {}
+
 bool FS_IsAlreadyRunning(void)
 {
   return false;

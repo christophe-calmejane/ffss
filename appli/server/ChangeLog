@@ -7,6 +7,11 @@
 
 VIRER LE -PREx DE SERVER.H
 
+June, 12th 2002:
+  - Fixed bug in confapi (wrong argument passed)
+  - Fixed shutdown bug
+  - Added filter api query opcode for plugins
+
 June, 10th 2002:
   - Code cleanup
   - Fixed bug in plugin shutdown query

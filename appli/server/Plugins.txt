@@ -5,7 +5,7 @@ Must export symbols :
  - Plugin_Init       = First symbol called when plugin is loaded     : FS_PPlugin (*)(void *,void *(*QueryFunc)(int Type,...))
     If successful, must return an initialized FS_PPlugin structure. NULL on error.
  - Plugin_UnInit     = Last symbol called when plugin is unloaded    : void (*)(void)
- - Plugin_Configure  = Called when plugin configuration is requested : bool (*)(void)
+ - Plugin_Configure  = Called when plugin configuration is requested : bool (*)(void *)
 
 
 
