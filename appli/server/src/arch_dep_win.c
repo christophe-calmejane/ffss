@@ -267,3 +267,7 @@ void FS_UnLoadPlugin(void *Handle)
 {
 }
 
+bool FS_CheckDirectoryChanged(FS_PShare Share)
+{
+  return false;
+}

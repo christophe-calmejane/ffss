@@ -1,14 +1,10 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
-#ifdef __unix__
 #include <ffss.h>
+#ifdef __unix__
 #include <sys/ioctl.h>
 #include <net/if.h>
-#else /* !__unix__ */
-#include "../ffss.h"
-#include "../utils.h"
-#include "../transfer.h"
 #endif /* __unix__ */
 
 #define FS_OPCODE_ADDSHARE       1
