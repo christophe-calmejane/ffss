@@ -339,6 +339,7 @@ object Form1: TForm1
             Hint = 'Editer les utilisateurs privil'#233'gi'#233's'
             Caption = 'Utilisateurs'
             TabOrder = 2
+            OnClick = Button4Click
           end
         end
         object Edit9: TEdit

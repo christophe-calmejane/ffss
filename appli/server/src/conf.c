@@ -19,29 +19,35 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   FFSS_Field Size,pos;
   char *buf;
   int buf_len;
-  char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m;
+  char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m,*s_u;
   char *g_n,*g_c,*g_m,*g_i,*g_max,*g_max_xf,*g_f,*g_f_max;
+  char *q,*r;
+  char *u_l,*u_p,*u_w;
   FS_PShare Share,shr2;
   FS_PConn Conn;
+  FS_PUser Usr;
   int res,nb,nb2,retval,c1,c2;
   bool error;
   SU_PList Ptr,Ptr2;
   fd_set rfds;
   struct timeval tv;
+  char *Users;
 
   SU_ThreadBlockSigs();
   buf_len = 10000;
   buf = (char *) malloc(buf_len);
+  Users = (char *) malloc(buf_len);
   while(1)
   {
     pos = 0;
     /* Receiving length of the command */
-    res = recv(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+    res = recv(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (read error)\n");
       SU_FreeCS(Client);
       free(buf);
+      free(Users);
       SU_END_THREAD(NULL);
     }
     else if(res == 0)
@@ -49,6 +55,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (null paquet)\n");
       SU_FreeCS(Client);
       free(buf);
+      free(Users);
       SU_END_THREAD(NULL);
     }
     if(Size >= buf_len)
@@ -56,6 +63,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (Command greater than receive buffer)\n");
       SU_FreeCS(Client);
       free(buf);
+      free(Users);
       SU_END_THREAD(NULL);
     }
     while(pos < Size)
@@ -71,6 +79,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (timed out)\n");
         SU_FreeCS(Client);
         free(buf);
+        free(Users);
         SU_END_THREAD(NULL);
       }
       res = recv(Client->sock,buf+pos,Size-pos,SU_MSG_NOSIGNAL);
@@ -79,6 +88,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (read error)\n");
         SU_FreeCS(Client);
         free(buf);
+        free(Users);
         SU_END_THREAD(NULL);
       }
       else if(res == 0)
@@ -86,6 +96,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FFSS_PrintDebug(6,"Client from runtime configuration socket disconnected (null paquet)\n");
         SU_FreeCS(Client);
         free(buf);
+        free(Users);
         SU_END_THREAD(NULL);
       }
       pos += res;
@@ -108,7 +119,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with same name already exists : %s\n",s_n);
           Size = 1;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
@@ -118,25 +129,54 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_w = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_pr = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_m = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((s_p == NULL) || (s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL))
+        s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        if((s_p == NULL) || (s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
         {
           error = true;
           break;
         }
-/*        Users = NULL;
-        u_l = strtok_r(NULL,",",&tmp);
-        while(u_l != NULL)
+        /* Parse users string */
+        Ptr = NULL;
+        q = s_u;
+        r = strchr(q,',');
+        while(r != NULL)
         {
-        }*/
+          r[0] = 0; r++;
+          u_l = q;
+          q = r;
+          r = strchr(q,',');
+          if(r == NULL)
+            break;
+          r[0] = 0; r++;
+          u_p = q;
+          q = r;
+          r = strchr(q,',');
+          if(r != NULL)
+          {
+            r[0] = 0; r++;
+          }
+          u_w = q;
+          q = r;
+          Usr = (FS_PUser) malloc(sizeof(FS_TUser));
+          memset(Usr,0,sizeof(FS_TUser));
+          Usr->Login = strdup(u_l);
+          Usr->Password = strdup(u_p);
+          Usr->Writeable = atoi(u_w);
+          Ptr = SU_AddElementHead(Ptr,Usr);
+          if(q == NULL)
+            break;
+          else
+            r = strchr(q,',');
+        }
         /* Building index */
         SU_SEM_WAIT(FS_SemShr);
-        FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),atoi(s_m),NULL,true);
+        FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),atoi(s_m),Ptr,true);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -148,7 +188,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
           Size = 1;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
@@ -161,7 +201,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
 #endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -185,7 +225,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%d",FS_MyGlobal.Idle,0,FS_MyGlobal.MaxConn,0,FS_MyGlobal.MaxXFerPerConn,0,FS_MyGlobal.FTP,0,FS_MyGlobal.FTPMaxConn);
         pos += FS_GetIntLen(FS_MyGlobal.Idle) + FS_GetIntLen(FS_MyGlobal.MaxConn) + FS_GetIntLen(FS_MyGlobal.MaxXFerPerConn) + FS_GetIntLen(FS_MyGlobal.FTP) + FS_GetIntLen(FS_MyGlobal.FTPMaxConn) + 5;
         Size = pos;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_GETSHARE :
@@ -201,7 +241,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           Size = 1;
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
@@ -211,10 +251,27 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         pos += strlen(Share->ShareName) + 1;
         SU_strcpy(buf+pos,Share->Comment,buf_len-pos);
         pos += strlen(Share->Comment) + 1;
-        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->MaxConnections,0,SU_ListCount(Share->Users));
-        pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->MaxConnections) + FS_GetIntLen(SU_ListCount(Share->Users)) + 4;
+        /* Build users string */
+        Ptr = Share->Users;
+        Users[0] = 0;
+        while(Ptr != NULL)
+        {
+          Usr = (FS_PUser) Ptr->Data;
+          SU_strcat(Users,Usr->Login,buf_len);
+          SU_strcat(Users,",",buf_len);
+          SU_strcat(Users,Usr->Password,buf_len);
+          if(Usr->Writeable)
+            SU_strcat(Users,",1",buf_len);
+          else
+            SU_strcat(Users,",0",buf_len);
+          if(Ptr->Next != NULL)
+            SU_strcat(Users,",",buf_len);
+          Ptr = Ptr->Next;
+        }
+        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%s",Share->Writeable,0,Share->Private,0,Share->MaxConnections,0,Users);
+        pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->MaxConnections) + strlen(Users) + 4;
         Size = pos;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_GETNAMEAVAIL :
@@ -226,7 +283,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           break;
         }
         Size = 1;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         if(FS_GetShareFromName(s_n) != NULL)
           buf[0] = FS_OPCODE_NACK;
         else
@@ -248,7 +305,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist, or with this name exists : %s -> %s\n",s_p,s_n);
           Size = 1;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
@@ -257,7 +314,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_w = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_pr = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_m = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL))
+        s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        if((s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
         {
           error = true;
           break;
@@ -271,13 +329,52 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Share->Writeable = (bool)atoi(s_w);
         Share->Private = (bool)atoi(s_pr);
         Share->MaxConnections = atoi(s_m);
-        /* Users .... */
+        Ptr = Share->Users;
+        while(Ptr != NULL)
+        {
+          FS_FreeUser((FS_PUser)Ptr->Data);
+          Ptr = Ptr->Next;
+        }
+        /* Parse users string */
+        Ptr = NULL;
+        q = s_u;
+        r = strchr(q,',');
+        while(r != NULL)
+        {
+          r[0] = 0; r++;
+          u_l = q;
+          q = r;
+          r = strchr(q,',');
+          if(r == NULL)
+            break;
+          r[0] = 0; r++;
+          u_p = q;
+          q = r;
+          r = strchr(q,',');
+          if(r != NULL)
+          {
+            r[0] = 0; r++;
+          }
+          u_w = q;
+          q = r;
+          Usr = (FS_PUser) malloc(sizeof(FS_TUser));
+          memset(Usr,0,sizeof(FS_TUser));
+          Usr->Login = strdup(u_l);
+          Usr->Password = strdup(u_p);
+          Usr->Writeable = atoi(u_w);
+          Ptr = SU_AddElementHead(Ptr,Usr);
+          if(q == NULL)
+            break;
+          else
+            r = strchr(q,',');
+        }
+        Share->Users = Ptr;
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
         SU_SEM_POST(FS_SemShr);
         Size = 1;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -322,14 +419,14 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           FFSS_PrintDebug(6,"Client from runtime configuration : Cannot restart server.. error in Global fields\n");
           Size = 1;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         FS_SaveConfig(CONFIG_FILE_NAME);
         Size = 1;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         if(MasterChanged)
@@ -352,7 +449,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         break;
       case FS_OPCODE_GETSTATE :
         Size = 2;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
         buf[1] = FS_MyState;
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
@@ -389,7 +486,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_SEM_POST(FS_SemShr);
         SU_SEM_POST(FS_SemConn);
         Size = pos;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_RESCAN :
@@ -440,7 +537,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         {
           FFSS_PrintDebug(6,"Client from runtime configuration : Share with this path does not exist : %s\n",s_p);
           Size = 1;
-          send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+          send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
@@ -480,7 +577,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         SU_SEM_POST(FS_SemConn);
         Size = pos;
-        send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+        send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_EJECTIP :
@@ -500,6 +597,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
     {
       SU_FreeCS(Client);
       free(buf);
+      free(Users);
       SU_END_THREAD(NULL);
     }
   }
@@ -538,13 +636,13 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   while(1)
   {
     Client = SU_ServerAcceptConnection(SI);
-    FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(Client == NULL)
     {
       /* Server may being shut down */
       SU_SLEEP(1);
       continue;
     }
+    FFSS_PrintDebug(6,"Client connected on runtime configuration port of the server from %s (%s) ... creating new thread\n",inet_ntoa(Client->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Client->SAddr.sin_addr)));
     if(!FS_CheckConfConn(Client))
     { /* rejecting */
       SU_FreeCS(Client);

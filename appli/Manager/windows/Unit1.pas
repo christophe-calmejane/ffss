@@ -8,7 +8,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, ScktComp, Menus, SystemTray, RegisteryUnit, Winsock;
+  RegisteryUnit, SystemTray, Menus, ScktComp, ComCtrls, ExtCtrls, StdCtrls,Winsock;
 
 Const
   STRING_YES = 'Oui';
@@ -31,6 +31,7 @@ Const
   FS_OPCODE_EJECT         = 12;
   FS_OPCODE_GETSHRCONNS   = 13;
   FS_OPCODE_EJECTIP       = 14;
+  FS_OPCODE_GETNAMEAVAIL  = 15;
   FS_OPCODE_ACK           = 20;
   FS_OPCODE_NACK          = 21;
   FFSS_STATE_ON    = 1;
@@ -50,12 +51,21 @@ type
   end;
   PGlobal = ^TGlobal;
 
+  TUser = record
+    Login : String;
+    Password : String;
+    Writeable : Boolean;
+  end;
+  PUser = ^TUser;
+
   TShare = record
     Name : String;
     Comment : String;
     Writeable : Boolean;
     Privat : Boolean;
     MaxConn : Integer;
+    NbUsers : Integer;
+    Users : Array[0..20] Of TUser;
   end;
   PShare = ^TShare;
 
@@ -111,7 +121,7 @@ type
     Edit10: TEdit;
     ST1: TSystemTrayIcon;
     RB1: TRegisteryBase;
-    procedure FormCreate(Sender: TObject);
+    procedure GetInitValues;
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
     procedure RadioButton2Click(Sender: TObject);
@@ -135,6 +145,8 @@ type
     procedure Ejecter1Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
     procedure ListView1DblClick(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -145,6 +157,7 @@ type
     function InitConnection : Boolean;
     function RequestGlobalInfo : PGlobal;
     function RequestShareInfo(Path : String) : PShare;
+    function RequestShareAvail(ShareName : String) : Boolean;
     procedure RequestStateInfo;
     procedure RequestSharesList;
     procedure RequestEject(ShareName : String);
@@ -176,7 +189,7 @@ var
 
 implementation
 
-uses Unit2;
+uses Unit2, Unit3;
 
 {$R *.DFM}
 
@@ -218,7 +231,7 @@ Begin
   End;
 End;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TForm1.GetInitValues;
 Var buf : Array[0..512] Of Char;
   HostEnt: PHostEnt;
   H : String;
@@ -257,8 +270,6 @@ begin
     OnFolder:=False
   else
     OnFolder:=True;
-  ST1.ShowAppIcon:=False;
-  ST1.Icon:=Application.Icon;
   If Not Limited Then
   Begin
     Global:=RequestGlobalInfo;
@@ -274,6 +285,10 @@ begin
   Begin
     Form1.Caption:='Propriétés de '+GetSharePath;
     Share:=RequestShareInfo(GetGoodSharePath);
+    If RequestShareAvail(GetSharePath) Then
+      SuggestedName:=GetSharePath
+    Else
+      SuggestedName:='';
     If Share = Nil Then
     Begin
       RadioButton1.Checked:=True;
@@ -357,13 +372,15 @@ Var Shar : PShare;
     Buf : Array[0..10000] Of Char;
     Size : DWord;
     Got : DWord;
-    Pos : DWord;
+    Posi : DWord;
+    Idx : DWord;
+    Users : String;
+    Item : TListItem;
+    Tmp : String;
 begin
   Result:=Nil;
   Buf[0]:=Char(FS_OPCODE_GETSHARE);
   Size:=1;
-  StrPCopy(Buf+Size,GetSharePath);
-  Inc(Size,Length(GetSharePath)+1);
   StrPCopy(Buf+Size,Path);
   Inc(Size,Length(Path)+1);
   CS.Socket.SendBuf(Size,sizeof(Size));
@@ -371,27 +388,66 @@ begin
   Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
   If Got <> Sizeof(Size) Then Exit;
   Got:=CS.Socket.ReceiveBuf(Buf,Size);
-  If Got < 2 Then Exit;
-  If Buf[1] = Char(FS_OPCODE_ACK) Then SuggestedName:=GetSharePath
-  Else SuggestedName:='';
+  If Got < 1 Then Exit;
   If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
   While Got < Size Do
   Begin
     Got:=Got + CS.Socket.ReceiveBuf(Buf[Got],Size-Got);
   End;
   New(Shar);
-  Pos:=1;
-  Shar.Name:=String(Buf+Pos);
-  Inc(Pos,StrLen(Buf+Pos)+1);
-  Shar.Comment:=String(Buf+Pos);
-  Inc(Pos,StrLen(Buf+Pos)+1);
-  Shar.Writeable:=Boolean(StrToInt(String(Buf+Pos)));
-  Inc(Pos,StrLen(Buf+Pos)+1);
-  Shar.Privat:=Boolean(StrToInt(String(Buf+Pos)));
-  Inc(Pos,StrLen(Buf+Pos)+1);
-  Shar.MaxConn:=StrToInt(String(Buf+Pos));
-//  Inc(Pos,StrLen(Buf+Pos)+1);
+  Posi:=1;
+  Shar.Name:=String(Buf+Posi);
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Shar.Comment:=String(Buf+Posi);
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Shar.Writeable:=Boolean(StrToInt(String(Buf+Posi)));
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Shar.Privat:=Boolean(StrToInt(String(Buf+Posi)));
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Shar.MaxConn:=StrToInt(String(Buf+Posi));
+  Inc(Posi,StrLen(Buf+Posi)+1);
+  Users:=String(Buf+Posi);
+  Form3.ListView1.Clear;
+  Idx:=Pos(',',Users);
+  While Idx <> 0 Do
+  Begin
+    Item:=Form3.ListView1.Items.Add;
+    Item.Caption:=Copy(Users,1,Idx-1);
+    Delete(Users,1,Idx);
+    Idx:=Pos(',',Users);
+    Tmp:=Copy(Users,1,Idx-1);
+    Delete(Users,1,Idx);
+    Idx:=Pos(',',Users);
+    If Idx = 0 Then
+      Idx:=Length(Users)+1;
+    If Copy(Users,1,Idx-1) = '1' Then
+      Item.SubItems.Add('Oui')
+    Else
+      Item.SubItems.Add('Non');
+    Item.SubItems.Add(Tmp);
+    Delete(Users,1,Idx);
+    Idx:=Pos(',',Users);
+  End;
   Result:=Shar;
+end;
+
+function TForm1.RequestShareAvail(ShareName : String) : Boolean;
+Var Buf : Array[0..10000] Of Char;
+    Size : DWord;
+    Got : DWord;
+begin
+  Result:=False;
+  Buf[0]:=Char(FS_OPCODE_GETNAMEAVAIL);
+  Size:=1;
+  StrPCopy(Buf+Size,ShareName);
+  Inc(Size,Length(ShareName)+1);
+  CS.Socket.SendBuf(Size,sizeof(Size));
+  CS.Socket.SendBuf(Buf,Size);
+  Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
+  If Got <> Sizeof(Size) Then Exit;
+  Got:=CS.Socket.ReceiveBuf(Buf,Size);
+  If Got <> 1 Then Exit;
+  If Buf[0] = Char(FS_OPCODE_ACK) Then Result:=True;
 end;
 
 procedure TForm1.RequestStateInfo;
@@ -406,8 +462,9 @@ begin
   Got:=CS.Socket.ReceiveBuf(Size,sizeof(Size));
   If Got <> Sizeof(Size) Then Exit;
   Got:=CS.Socket.ReceiveBuf(Buf,Size);
-  If Got < 1 Then Exit;
-  If Buf[0] = Char(FFSS_STATE_ON) Then RadioGroup1.ItemIndex:=0
+  If Got < 2 Then Exit;
+  If Buf[0] <> Char(FS_OPCODE_ACK) Then Exit;
+  If Buf[1] = Char(FFSS_STATE_ON) Then RadioGroup1.ItemIndex:=0
   Else RadioGroup1.ItemIndex:=1;
 end;
 
@@ -547,6 +604,8 @@ function TForm1.SetShareInfo(SharePath : String;Etat : Integer) : Boolean;
 Var Buf : Array[0..10000] Of Char;
     Size : DWord;
     Got : DWord;
+    Users : String;
+    I : Integer;
 begin
   Result:=True;
   If Etat = SHARE_DELETE Then // Del share
@@ -575,8 +634,19 @@ begin
     Inc(Size,IntLength(Integer(CheckBox3.Checked))+1);
     StrPCopy(Buf+Size,Edit9.Text);
     Inc(Size,Length(Edit9.Text)+1);
-    StrPCopy(Buf+Size,IntToStr(0)); // 0 Users for now
-    Inc(Size,IntLength(0)+1);
+    Users:='';
+    For I:=0 To Form3.ListView1.Items.Count-1 Do
+    Begin
+      If Users <> '' Then
+        Users:=Users+',';
+      Users:=Users+Form3.ListView1.Items.Item[I].Caption+','+Form3.ListView1.Items.Item[I].SubItems.Strings[1]+',';
+      If Form3.ListView1.Items.Item[I].SubItems.Strings[0] = 'Oui' Then
+        Users:=Users+'1'
+      else
+        Users:=Users+'0';
+    End;
+    StrPCopy(Buf+Size,Users);
+    Inc(Size,Length(Users)+1);
     ShareState:=SHARE_UPDT;
   End;
   CS.Socket.SendBuf(Size,sizeof(Size));
@@ -833,7 +903,14 @@ Begin
     Application.MessageBox('Mauvaise valeur dans le champ "Max de connexions"','FFSS Share Error',MB_OK);
     Exit;
   End;
-
+  If CheckBox3.Checked Then
+  Begin
+    If Form3.ListView1.Items.Count = 0 Then
+    Begin
+      Application.MessageBox('Un partage en mode privé sans utilisateur de défini sera inutilisable','FFSS Share Error',MB_OK);
+      Exit;
+    End;
+  End;
 
   ChkError:=False;
   Result:=True;
@@ -854,6 +931,7 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
+  GetInitValues;
   If OnFolder And Not Limited Then
   Begin
     If Share = Nil Then
@@ -970,6 +1048,17 @@ begin
       Form2.ShowModal;
     End;
   End;
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);
+begin
+  Form3.ShowModal;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  ST1.ShowAppIcon:=False;
+  ST1.Icon:=Application.Icon;
 end;
 
 end.

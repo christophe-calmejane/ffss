@@ -26,6 +26,7 @@ typedef struct
   bool  Writeable;
   bool  Private;
   int   MaxConn;
+  SU_PList Users; /* FS_PUser */
 } FSCA_TShare, *FSCA_PShare;
 
 typedef struct

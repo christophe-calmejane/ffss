@@ -186,6 +186,7 @@ extern SU_PList FS_Plugins;
 void FS_RealBuildIndex(void);
 /* Assumes FS_SemShr semaphore is locked */
 void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now);
+void FS_FreeUser(FS_PUser Usr);
 void FS_FreeShare(FS_PShare Share);
 void FS_FreeIndex(void);
 void FS_RescanShare(FS_PShare Share);

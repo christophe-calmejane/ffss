@@ -118,6 +118,10 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
   FFSS_Field Size;
   int Pos;
   FSCA_PShare Share;
+  char *q,*r;
+  char *u_l,*u_p,*u_w;
+  SU_PList Ptr = NULL;
+  FS_PUser Usr;
 
   /* Create request */
   Buf[0] = FS_OPCODE_GETSHARE;
@@ -140,6 +144,38 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
   Pos += strlen(Buf+Pos) +1;
   Share->MaxConn = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos) +1;
+  q = Buf+Pos;
+  r = strchr(q,',');
+  while(r != NULL)
+  {
+    r[0] = 0; r++;
+    u_l = q;
+    q = r;
+    r = strchr(q,',');
+    if(r == NULL)
+      break;
+    r[0] = 0; r++;
+    u_p = q;
+    q = r;
+    r = strchr(q,',');
+    if(r != NULL)
+    {
+      r[0] = 0; r++;
+    }
+    u_w = q;
+    q = r;
+    Usr = (FS_PUser) malloc(sizeof(FS_TUser));
+    memset(Usr,0,sizeof(FS_TUser));
+    Usr->Login = strdup(u_l);
+    Usr->Password = strdup(u_p);
+    Usr->Writeable = atoi(u_w);
+    Ptr = SU_AddElementHead(Ptr,Usr);
+    if(q == NULL)
+      break;
+    else
+      r = strchr(q,',');
+  }
+  Share->Users = Ptr;
   return Share;
 }
 
@@ -361,6 +397,9 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShar
 {
   char Buf[1000];
   FFSS_Field Size;
+  char Users[2048];
+  FS_PUser Usr;
+  SU_PList Ptr;
 
   Buf[0] = Opcode;
   Size = 1;
@@ -372,6 +411,25 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShar
   Size += strlen(Share->Comment) + 1;
   snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->MaxConn);
   Size += FSCA_GetIntLen(Share->Writeable) + FSCA_GetIntLen(Share->Private) + FSCA_GetIntLen(Share->MaxConn) + 3;
+  Ptr = Share->Users;
+  Users[0] = 0;
+  while(Ptr != NULL)
+  {
+    Usr = (FS_PUser) Ptr->Data;
+    SU_strcat(Users,Usr->Login,sizeof(Users));
+    SU_strcat(Users,",",sizeof(Users));
+    SU_strcat(Users,Usr->Password,sizeof(Users));
+    if(Usr->Writeable)
+      SU_strcat(Users,",1",sizeof(Users));
+    else
+      SU_strcat(Users,",0",sizeof(Users));
+    if(Ptr->Next != NULL)
+      SU_strcat(Users,",",sizeof(Users));
+
+    Ptr = Ptr->Next;
+  }
+  SU_strcpy(Buf+Size,Users,sizeof(Buf)-Size);
+  Size += strlen(Users) + 1;
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;

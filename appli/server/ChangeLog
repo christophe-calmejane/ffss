@@ -9,6 +9,8 @@ VIRER LE -PREx DE SERVER.H
 
 March, 1st 2002:
   - Added ACK/NACK to every return message for conf api (and fixed a bug in boolean returned for some functions)
+  - Fixed a bug in conf socket (may seg fault on shutdown)
+  - Added parse of users in conf socket and conf api
 
 February, 28th 2002:
   - Fixed a bug in conf socket (if multiple messages are in the buffer, only the first is parsed)

@@ -290,6 +290,7 @@ void FS_FreeShare(FS_PShare Share)
     FS_FreeUser(Ptr->Data);
     Ptr = Ptr->Next;
   }
+  SU_FreeList(Share->Users);
   Ptr = Share->Root.Dirs;
   while(Ptr != NULL)
   {
