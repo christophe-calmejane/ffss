@@ -22,6 +22,9 @@
 #define FCA_NO_ANSI_CFG			'a'
 #define FCA_SHARG_MASTER		'm'
 #define FCA_SHARG_SKIN			's'
+#ifdef BENCHMARK
+#	define FCA_SHARG_BENCHFILE		'b'
+#endif
     /* long args */
 #define FCA_LGARG_GET_VERSION		"version"
 #define FCA_LGARG_GET_HELP		"help"
@@ -42,6 +45,9 @@ struct FCA_Targs
 	char *dbg_level;	/* the debug level */
 	char *master;
 	char *skin;
+#ifdef BENCHMARK
+	char *benchfile;
+#endif
 } FCA_args;
 
 void FCA_get_args(void);

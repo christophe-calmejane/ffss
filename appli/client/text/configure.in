@@ -51,7 +51,6 @@ AC_ARG_ENABLE(malloc_trace,
 	  CFLAGS="$CFLAGS ""-DSU_MALLOC_TRACE "
 	fi
 
-
 	dnl option to configure: --enable-static, compiles staticly
 AC_ARG_ENABLE(static,
 [  --enable-static         Enables static build of ffss-client (default=dynamic)],
@@ -63,6 +62,19 @@ esac],[static=false])
 if test "$static" = "true"; then
   CFLAGS="$CFLAGS ""-static "
 fi
+
+	dnl option to configure: --enable-benchmark, adds a -DBENCHMARK or not
+AC_ARG_ENABLE(benchmark,
+	[  --enable-benchmark      Enables benchmark support (default=no)],
+	[case "${enableval}" in
+		yes) benchmark=true ;;
+		no)  benchmark=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-benchmark) ;;
+	esac],[benchmark=false])
+	if test "$benchmark" = "true"; then
+		CFLAGS="$CFLAGS -DBENCHMARK"
+	fi
+
 
 
 	dnl option to configure: --enable-cgi, adds a -DCGI or not

@@ -12,6 +12,10 @@
     /* it's ok, there's all in this :) */
 #include <ffss.h>
 
+#ifdef BENCHMARK
+#	include <sys/timeb.h>
+#endif
+
 #define FCA_NAME	"ffss-client"
 #define FCA_VERSION	"0.5-pre12"
 #define FCA_AUTHOR	"bennyben"
@@ -65,5 +69,8 @@ extern char FCA_env[][FCA_VAR_MAX];
 extern char FCA_home[FFSS_MAX_DOMAIN_LENGTH];
 extern FCA_Pskin FCA_skin;
 extern bool FCA_exiting;
+#ifdef BENCHMARK
+extern struct timeb FCA_starttime, FCA_stoptime;
+#endif
 
 #endif

@@ -31,6 +31,9 @@ char FCA_tolist_dir[FFSS_MAX_PATH_LENGTH];
 char FCA_home[FFSS_MAX_DOMAIN_LENGTH];
 FCA_Pskin FCA_skin;
 bool FCA_exiting;
+#ifdef BENCHMARK
+struct timeb FCA_starttime, FCA_stoptime;
+#endif
 
 char FCA_env[][FCA_VAR_MAX]={
 	"on",
@@ -49,7 +52,9 @@ char FCA_env[][FCA_VAR_MAX]={
 
 void FCA_init()
 {
+#ifdef CGI
 	const FCA_Tskin *p;
+#endif
 	
 		/* init FFSS callback structure */
 	memset(&FFSS_CB,0,sizeof(FFSS_CB));
@@ -171,16 +176,26 @@ void FCA_process_args()
 		sprintf(FCA_skin_name, FCA_args.skin);
 		FCA_upd_skin();
 	}
+	buf[0]='\0';
 	if( FCA_args.machToSh!=NULL )		/* get shares */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "ls /$/%s", FCA_args.machToSh);
 	else if( FCA_args.dirToLs!=NULL )	/* list a dir */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "ls %s", FCA_args.dirToLs);
 	else if( FCA_args.cmd!=NULL )	 	/* exec a command */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "%s", FCA_args.cmd);
-	else
+	if(buf[0]!='\0') {
+		FCA_command=buf;
+		FCA_run_once(false);
+	}
+#ifdef BENCHMARK
+	if( FCA_args.benchfile!=NULL ) { 	/* launch a find benchmark */
+		FCA_find_bench(FCA_args.benchfile);
+		FCA_exit(0);
 		return;
-	FCA_command=buf;
-	FCA_run_once(false);
+	}
+#endif
+	if(buf[0]!='\0')
+		FCA_exit(0);
 }
 
 #ifdef CGI
@@ -237,6 +252,7 @@ printf("</html>\n");
 exit(0);
 */
 	FCA_run_once(dw);
+	FCA_exit(0);
 }
 #endif
 

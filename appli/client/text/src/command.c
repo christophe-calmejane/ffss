@@ -16,6 +16,9 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#ifdef BENCHMARK
+#	include <sys/timeb.h>
+#endif
 
 	/* GLOBALS */
 
@@ -270,7 +273,6 @@ void FCA_run_once(bool isDownload)
 	FCA_interpret_cmd();
 	if(isDownload)
 		FCA_quiet=true;
-	FCA_exit(0);
 }
 
 bool FCA_ls_cmd(char *path)
@@ -728,8 +730,9 @@ bool FCA_find_cmd(char *args)
 	if(p-start<4 && p-start>0)
 		FCA_print_warning("%s is considered as a file type", start);
 
+	ftime(&FCA_starttime);
 	if( domain==NULL || (domain!=NULL && !SU_strcasecmp(domain,"None")) ) {	/* domain None or / -> search on all */
-		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
+		FFSS_PrintDebug(5, "(client) looking for '%s' on all domains\n", args, domain);
 		FCA_inDispFind=true;
 		FCA_multiFind=true;
 		res=FC_SendMessage_Search(FCA_master,NULL, args);
@@ -862,3 +865,49 @@ bool FCA_exit_cmd(char *args)
 	FCA_exit(1);
 	return false;
 }
+
+#ifdef BENCHMARK
+void FCA_find_bench(const char *file)
+{
+		/* starts a find benchmark */
+	FILE *fp;
+	char buf[FFSS_MAX_KEYWORDS_LENGTH];
+	int i, ret=1;
+	struct timeb now, start;
+	time_t tsum=0, t; unsigned short msum=0, m;
+	
+	FCA_quiet=true;
+	FCA_multiFind=false;
+	fp=fopen(file, "rt");
+	i=2;
+	while(fp && ret) {
+		i=0;
+		while(fp && (ret=fread(buf+(i++), 1, 1, fp)) &&
+		 i<FFSS_MAX_KEYWORDS_LENGTH-1 && buf[i-1]!='\n');
+		buf[i-1]='\0';
+		if(fp && ret) {
+			FCA_print_info("searching '%s'...", buf);
+			ftime(&start);
+			if( FCA_find_cmd(buf) )
+				FCA_sem_wait();
+			ftime(&now);
+			t=now.time-start.time;
+			m=now.millitm-start.millitm;
+			if(now.millitm<start.millitm) {
+				t-=(start.millitm-now.millitm)/1000+1;
+				m=(start.millitm-now.millitm)%1000;
+			} else if(m>1000) {
+				t+=m/1000;
+				m=(-m)%1000;
+			}
+			tsum+=t; msum+=m;
+			if(msum>1000) {
+				tsum+=msum/1000;
+				msum=msum%1000;
+			}
+		}
+	}
+	fclose(fp);
+	FCA_print_info("total duration: %ld second(s) %d", tsum, msum);
+}
+#endif

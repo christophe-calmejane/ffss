@@ -10,6 +10,9 @@
 #include <stdio.h>
 
 #include <readline/readline.h>
+#ifdef BENCHMARK
+#	include <sys/timeb.h>
+#endif
 
 #include "display.h"
 #include "args.h"
@@ -458,9 +461,13 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
 	const char *p;
 	int *res=NULL;
+	struct timeb now;
+	time_t t;
+	unsigned short m;
 
-	FCA_pre_search_ans(Query);
-	if(NbAnswers) {
+	if(!FCA_quiet)
+		FCA_pre_search_ans(Query);
+	if(NbAnswers && !FCA_quiet) {
 		res=FCA_sort_res(Answers, NbAnswers);
 		FCA_tab_width=38;
 		FCA_tab_top();
@@ -484,26 +491,28 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		FCA_tab_post_bar();
 	}
 	
-	snprintf(dom, FFSS_MAX_DOMAIN_LENGTH+2, "/$/%s", Domain);
-	for(ia=0; ia<NbAnswers; ia++) {
-		FCA_tab_pre_item();
-		 FCA_pre_tab_item();
-		p=strrchr(Answers[res[ia]], '/');
-		if(!p)	p=Answers[res[ia]];
-		if(!strchr(p, '.')) {
-			  FCA_pre_dir(dom, Answers[res[ia]], true);
-			   FCA_tab_item(Answers[res[ia]],0);
-			  FCA_post_dir(true);
-		} else {
-			  FCA_pre_file(dom, Answers[res[ia]], true);
-			   FCA_tab_item(Answers[res[ia]],0);
-			  FCA_post_file(true);
+	if(!FCA_quiet) {
+		snprintf(dom, FFSS_MAX_DOMAIN_LENGTH+2, "/$/%s", Domain);
+		for(ia=0; ia<NbAnswers; ia++) {
+			FCA_tab_pre_item();
+			 FCA_pre_tab_item();
+			p=strrchr(Answers[res[ia]], '/');
+			if(!p)	p=Answers[res[ia]];
+			if(!strchr(p, '.')) {
+				  FCA_pre_dir(dom, Answers[res[ia]], true);
+				   FCA_tab_item(Answers[res[ia]],0);
+				  FCA_post_dir(true);
+			} else {
+				  FCA_pre_file(dom, Answers[res[ia]], true);
+				   FCA_tab_item(Answers[res[ia]],0);
+				  FCA_post_file(true);
+			}
+			 FCA_post_tab_item();
+			FCA_tab_post_item();
 		}
-		 FCA_post_tab_item();
-		FCA_tab_post_item();
+	
+		FCA_tab_btm();
 	}
-
-	FCA_tab_btm();
 	FCA_pre_infos();
 	FCA_main_num(NbAnswers, "answer");
 	if(NbAnswers>1)
@@ -513,7 +522,29 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	if(NbAnswers)	/* no anwser on any domain */
 	    	FCA_infos(" in domain %s.", Domain);
 	FCA_post_infos();
-	FCA_post_search_ans(Query);
+	
+	ftime(&FCA_stoptime);
+	t=FCA_stoptime.time-FCA_starttime.time;
+	m=FCA_stoptime.millitm-FCA_starttime.millitm;
+	if(FCA_stoptime.millitm<FCA_starttime.millitm) {
+		t-=(FCA_starttime.millitm-FCA_stoptime.millitm)/1000+1;
+		m=(FCA_starttime.millitm-FCA_stoptime.millitm)%1000;
+	} else if(m>1000) {
+		t+=m/1000;
+		m=(-m)%1000;
+	}
+
+#ifdef BENCHMARK
+	FCA_pre_infos();
+	FCA_infos("duration: ");
+	FCA_main_num(t, "second");
+	FCA_infos(" and ");
+	FCA_main_num(m, "milisecond");
+	FCA_post_infos();
+#endif
+
+	if(!FCA_quiet)
+		FCA_post_search_ans(Query);
 }
 
     /* new ls */

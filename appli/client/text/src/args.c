@@ -46,16 +46,16 @@ unsigned short int FCA_interpret_args(void)
 				parg++;
 				while( *parg!='\0' && !stop ) {	/* each letter after the - */
 					switch( *parg ) {
-					case FCA_SHARG_GET_SHARES:		/* get shares */
+					case FCA_SHARG_GET_SHARES:	/* get shares */
 					    	nextToStore=&(FCA_args.machToSh);
 						break;
 					case FCA_SHARG_LS_DIR:		/* list a shared dir */
 						nextToStore=&(FCA_args.dirToLs);
 						break;
-					case FCA_SHARG_CFG_FILE:		/* specify a config file */
+					case FCA_SHARG_CFG_FILE:	/* specify a config file */
 						nextToStore=&(FCA_args.cfg_file);
 						break;
-					case FCA_SHARG_DBG_LEVEL:		/* sets debug level */
+					case FCA_SHARG_DBG_LEVEL:	/* sets debug level */
 						nextToStore=&(FCA_args.dbg_level);
 						break;
 					case FCA_NO_ANSI_CFG:		/* disable ansi */
@@ -67,13 +67,16 @@ unsigned short int FCA_interpret_args(void)
 					case FCA_SHARG_SKIN:		/* sets the skin */
 						nextToStore=&(FCA_args.skin);
 						break;
-					case FCA_SHARG_EXEC_CMD:		/* exec a command */
+					case FCA_SHARG_EXEC_CMD:	/* exec a command */
 						nextToStore=&(FCA_args.cmd);
 						break;
-					case FCA_SHARG_GET_VERSION:		/* get version */
+					case FCA_SHARG_BENCHFILE:	/* run a benchmark from file */
+						nextToStore=&(FCA_args.benchfile);
+						break;
+					case FCA_SHARG_GET_VERSION:	/* get version */
 						FCA_version();
 						break;
-					case FCA_SHARG_GET_HELP:		/* get help */
+					case FCA_SHARG_GET_HELP:	/* get help */
 						FCA_print_help();
 						break;
 					default:

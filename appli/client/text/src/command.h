@@ -70,23 +70,29 @@ void FCA_interpret_cmd();
 
 void FCA_run_once(bool isDownload);
 
-bool FCA_ls_cmd(char *path);
-bool FCA_cd_cmd(char *path);
-bool FCA_lcd_cmd(char *path);
-bool FCA_dw_cmd(char *rmFile);
-bool FCA_cat_cmd(char *rmFile);
-bool FCA_get_func(char *rmFile, bool toDisk);
+bool FCA_ls_cmd   (char *path	);
+bool FCA_cd_cmd	  (char *path	);
+bool FCA_lcd_cmd  (char *path	);
+bool FCA_dw_cmd   (char *rmFile	);
+bool FCA_cat_cmd  (char *rmFile	);
+bool FCA_get_func (char *rmFile, bool toDisk);
 
-bool FCA_shell_cmd(char *args);
-bool FCA_local_cmd(char *args);
+bool FCA_shell_cmd(char *args	);
+bool FCA_local_cmd(char *args	);
 
-bool FCA_help_cmd(char *cmd);
-bool FCA_close_cmd(char *args);
-bool FCA_find_cmd(char *args);
-bool FCA_set_cmd(char *args);
-bool FCA_exit_cmd(char *args);
+bool FCA_help_cmd (char *cmd	);
+bool FCA_close_cmd(char *args	);
+bool FCA_find_cmd (char *args	);
+bool FCA_set_cmd  (char *args	);
+bool FCA_exit_cmd (char *args	);
 
+#ifdef ALIASES
 bool FCA_alias_cmd(char *args);
 bool FCA_ualias_cmd(char *args);
+#endif
+
+#ifdef BENCHMARK
+void FCA_find_bench(const char *file);
+#endif
 
 #endif	/* _FCA_COMMAND_H_ */
