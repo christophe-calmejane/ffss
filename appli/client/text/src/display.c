@@ -457,7 +457,7 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	char tmp[128], tmp2[128];
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
 	const char *p;
-	int *res;
+	int *res=NULL;
 
 	FCA_pre_search_ans(Query);
 	if(NbAnswers) {
@@ -577,7 +577,7 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 					/* size, date & name */
 				FCA_tab_pre_item();
 				 FCA_pre_tab_item();
-				  FCA_size(Ent->Size," %4ld");
+				  FCA_size(Ent->Size," %4lld");
 				 FCA_post_tab_item();
 				FCA_tab_int_item();
 				 FCA_pre_tab_item();
@@ -865,7 +865,7 @@ bool FCA_debug_struct(char *args)
 
 	printf("cache: listing of: %s\n", FCA_listed_dir);
 	while(P) {
-		printf("%s (%ld o)\n", ( (FC_PEntry)(P->Data) )->Name, ( (FC_PEntry)(P->Data) )->Size );
+		printf("%s (%lld o)\n", ( (FC_PEntry)(P->Data) )->Name, ( (FC_PEntry)(P->Data) )->Size );
 		P=P->Next;
 	}
 	
@@ -1175,7 +1175,7 @@ void FCA_print_cmd_help(char *cmd)
 	FCA_tab_btm();
 }
 
-void FCA_print_size(unsigned int size, char *format)
+void FCA_print_size(FFSS_LongField size, char *format)
 {
 		/* be VERY careful of the value of format... */
     

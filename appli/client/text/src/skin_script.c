@@ -18,7 +18,7 @@ void FCA_scr_tab_item(const char name[], const unsigned int size);
 void FCA_scr_tab_int_item();
 void FCA_scr_tab_post_item();
 
-void FCA_scr_size(unsigned int n, const char text[]);
+void FCA_scr_size(FFSS_LongField n, const char text[]);
 
 FCA_Tps FCA_scr_ps;
 
@@ -66,7 +66,7 @@ void FCA_scr_tab_post_item()
 	printf("\n");
 }
 
-void FCA_scr_size(unsigned int n, const char text[])
+void FCA_scr_size(FFSS_LongField n, const char text[])
 {
-	printf("%d", n);
+	printf("%lld", n);
 }

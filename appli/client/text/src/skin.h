@@ -35,7 +35,7 @@ typedef struct
 	
 	void (*tab_pre_item)();
 	void (*pre_tab_item)();
-	void (*tab_item)(const char name[], const unsigned int size);
+	void (*tab_item)(const char name[], unsigned int size);
 	void (*post_tab_item)();
 	void (*tab_int_item)();
 	void (*tab_post_item)();
@@ -47,11 +47,11 @@ typedef struct
 	void (*pre_infos)();
 	void (*infos)(const char format[], ...);
 	void (*num)(int n, const char text[]);
-	void (*info_size)(unsigned int n, const char text[]);
+	void (*info_size)(FFSS_LongField n, const char text[]);
 	void (*main_num)(int n, const char text[]);
 	void (*post_infos)();
 	
-	void (*size)(unsigned int n, const char text[]);
+	void (*size)(FFSS_LongField n, const char text[]);
 	
 	void (*pre_err)();
 	void (*post_err)();
@@ -167,11 +167,11 @@ void FCA_post_tab();
 void FCA_pre_infos();
 void FCA_infos(const char format[], ...);
 void FCA_num(int n, const char text[]);
-void FCA_info_size(unsigned int n, const char text[]);
+void FCA_info_size(const FFSS_LongField n, const char text[]);
 void FCA_main_num(int n, const char text[]);
 void FCA_post_infos();
 
-void FCA_size(unsigned int n, const char text[]);
+void FCA_size(FFSS_LongField n, const char text[]);
 
 void FCA_pre_err();
 void FCA_post_err();

@@ -209,7 +209,7 @@ void FCA_num(int n, const char text[])
 		FCA_skin->ps->num(n, text);
 }
 
-void FCA_info_size(unsigned int n, const char text[])
+void FCA_info_size(FFSS_LongField n, const char text[])
 {
 	if(FCA_skin->ps->info_size)
 		FCA_skin->ps->info_size(n, text);
@@ -227,7 +227,7 @@ void FCA_post_infos()
 		FCA_skin->ps->post_infos();
 }
 
-void FCA_size(unsigned int n, const char text[])
+void FCA_size(FFSS_LongField n, const char text[])
 {
 	if(FCA_skin->ps->size)
 		FCA_skin->ps->size(n, text);

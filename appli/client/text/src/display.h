@@ -10,6 +10,7 @@
 #define _FCA_DISPLAY_H_
 
 #include <skyutils.h>
+#include <ffss.h>
 
 extern int FCA_progr_bar;
 extern int FCA_nb_states;
@@ -57,7 +58,7 @@ void FCA_print_dbg_info();
 
 void FCA_print_cmd_help(char *cmd);
 
-void FCA_print_size(unsigned int size, char *format);
+void FCA_print_size(FFSS_LongField size, char *format);
 void FCA_print_nb(int nb, const char name[]);
 
 void FCA_ansi_chs(unsigned short int style);

@@ -39,11 +39,11 @@ void FCA_html_tab_btm();
 
 void FCA_html_infos(const char format[], ...);
 void FCA_html_num(int n, const char text[]);
-void FCA_html_info_size(unsigned int n, const char text[]);
+void FCA_html_info_size(FFSS_LongField n, const char text[]);
 void FCA_html_main_num(int n, const char text[]);
 void FCA_html_post_infos();
 
-void FCA_html_size(unsigned int n, const char text[]);
+void FCA_html_size(FFSS_LongField n, const char text[]);
 
 void FCA_html_pre_err();
 void FCA_html_post_err();
@@ -326,7 +326,7 @@ void FCA_html_num(int n, const char text[])
 	FCA_print_nb(n, text);
 }
 
-void FCA_html_info_size(unsigned int n, const char text[])
+void FCA_html_info_size(FFSS_LongField n, const char text[])
 {
 	FCA_print_size(n, (char*)text);
 }
@@ -343,7 +343,7 @@ void FCA_html_post_infos()
 	printf("<br>\n</center>\n");
 }
 
-void FCA_html_size(unsigned int n, const char text[])
+void FCA_html_size(FFSS_LongField n, const char text[])
 {
 	FCA_print_size(n, (char*)text);
 }

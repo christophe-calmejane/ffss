@@ -71,7 +71,7 @@ extern FFSS_PTransfer FCA_Ptrans;
 extern bool FCA_sem_timeout;
 
 
-int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], unsigned int size);
+int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], FFSS_LongField size);
 unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passwd);
 void FCA_close_connection();
 void FCA_ShDisconnect();

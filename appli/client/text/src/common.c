@@ -88,11 +88,11 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 };
 
 
-int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], unsigned int size)
+int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[], FFSS_LongField size)
 {
 	FILE *fd;
-	long int oldsize;
-	long int start;
+	FFSS_LongField oldsize;
+	FFSS_LongField start;
 		/* TODO: and parameter 'use same thread ?' (=true) */
 	FCA_Ptrans = NULL;
 	start=0;

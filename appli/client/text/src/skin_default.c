@@ -37,11 +37,11 @@ void FCA_def_tab_btm();
 void FCA_def_pre_infos();
 void FCA_def_infos(const char format[], ...);
 void FCA_def_num(int n, const char text[]);
-void FCA_def_info_size(unsigned int n, const char text[]);
+void FCA_def_info_size(const FFSS_LongField n, const char text[]);
 void FCA_def_main_num(int n, const char text[]);
 void FCA_def_post_infos();
 
-void FCA_def_size(unsigned int n, const char text[]);
+void FCA_def_size(const FFSS_LongField n, const char text[]);
 
 void FCA_def_pre_err();
 void FCA_def_post_err();
@@ -267,7 +267,7 @@ void FCA_def_num(int n, const char text[])
 	FCA_ansi_chs(0);
 }
 
-void FCA_def_info_size(unsigned int n, const char text[])
+void FCA_def_info_size(FFSS_LongField n, const char text[])
 {
 	FCA_ansi_chs(35);
 	FCA_print_size(n, (char*)text);
@@ -286,7 +286,7 @@ void FCA_def_post_infos()
 	FCA_ansi_chs(0);printf("\n");
 }
 
-void FCA_def_size(unsigned int n, const char text[])
+void FCA_def_size(FFSS_LongField n, const char text[])
 {
 	FCA_print_size(n, (char*)text);
 }
