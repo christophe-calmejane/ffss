@@ -227,6 +227,8 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
       case FFSS_MESSAGE_DISCONNECT :
         FFSS_PrintDebug(3,"Received a disconnect message from client\n");
         ret_val = false;
+        if(FFSS_CB.SCB.OnDisconnect != NULL)
+          ret_val = FFSS_CB.SCB.OnDisconnect(Client);
         break;
       case FFSS_MESSAGE_CANCEL_XFER :
         FFSS_PrintDebug(3,"Received a cancel xfer message from client\n");

@@ -410,6 +410,7 @@ typedef struct
   bool (*OnDelete)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnMkDir)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   void (*OnEndTCPThread)(void);
+  bool (*OnDisconnect)(SU_PClientSocket Client);
   int (*OnSelect)(void); /* 0=Do timed-out select ; 1=don't do timed-out select, but sleep ; 2=don't do timed-out select, and continue */
   void (*OnIdleTimeout)(SU_PClientSocket Client);
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);

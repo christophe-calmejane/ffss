@@ -3,10 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : April, 14th 2002
+                  Last Update : May, 11th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+May, 11th 2002:
+  - Increased protocol version to match changes in master
+  - Added OnDisconnect message to server
 
 April, 14th 2002:
   - Added a new field in OnInitXFer callback
