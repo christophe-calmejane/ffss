@@ -9,7 +9,7 @@
 */
 
 #define LOG_NAME      "Log Plugin"
-#define LOG_VERSION   "0.2"
+#define LOG_VERSION   "0.3"
 #define LOG_COPYRIGHT "(c) Ze KiLleR - 2002"
 #define LOG_DESCRIPTION "Logs all successful connections and download requests."
 #define LOG_FILE_PREFIX "FS_Log"
@@ -43,7 +43,7 @@ FILE *L_fp = NULL;
 int L_day = 0;
 SU_THREAD_HANDLE L_Thr;
 #ifdef _WIN32
-HWND L_hwnd;
+HWND L_hwnd = NULL;
 HINSTANCE L_hInstance;
 void ThreadFunc(void *info);
 #endif /* _WIN32 */
@@ -228,14 +228,22 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
   ShowWindow(L_hwnd,SW_SHOW);
   while(GetMessage(&msg,L_hwnd,0,0))
   {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+    if(!IsWindow(L_hwnd) || !IsDialogMessage(L_hwnd,&msg))
+    {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
   }
+  DestroyWindow(L_hwnd);
+  L_hwnd = NULL;
 }
 
 /* This is the function called when plugin is requested to configure itself */
 FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
 {
+  if(IsWindow(L_hwnd))
+    return true;
+
   /* Create a thread to manage messages */
   if(!SU_CreateThread(&L_Thr,ThreadFunc,User,true))
     return false;

@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,0,0
- PRODUCTVERSION 0,2,0,0
+ FILEVERSION 0,3,0,0
+ PRODUCTVERSION 0,3,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -73,14 +73,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "SkyTech\0"
             VALUE "FileDescription", "Log plugin for FFSS Server\0"
-            VALUE "FileVersion", "0.2\0"
+            VALUE "FileVersion", "0.3\0"
             VALUE "InternalName", "Log Plugin\0"
             VALUE "LegalCopyright", "Copyright © Ze KiLleR - 2002\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Log.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Log plugin for FFSS Server\0"
-            VALUE "ProductVersion", "0.2\0"
+            VALUE "ProductVersion", "0.3\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -103,15 +103,15 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Logging configuration"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK,89,93,50,14
+    EDITTEXT        IDC_EDIT1,59,7,94,14,ES_AUTOHSCROLL
     CONTROL         "Successful connections",IDC_CHECK1,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,47,92,15
     CONTROL         "Download requests",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,66,92,10
-    GROUPBOX        " What to log ? ",IDC_STATIC,7,37,217,50
-    EDITTEXT        IDC_EDIT1,59,7,94,14,ES_AUTOHSCROLL
-    LTEXT           "Log files path",IDC_STATIC,7,7,51,14,SS_CENTERIMAGE
+    DEFPUSHBUTTON   "&Close",IDOK,89,93,50,14
     PUSHBUTTON      "Choose &path",IDC_BUTTON1,162,7,62,14
+    GROUPBOX        " What to log ? ",IDC_STATIC,7,37,217,50
+    LTEXT           "Log files path",IDC_STATIC,7,7,51,14,SS_CENTERIMAGE
 END
 
 
