@@ -28,7 +28,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
     Sleep(100);
     nb++;
   } while(nb < MAX_WAIT);
-  //MessageBox(NULL,"ffssd has been killed","ffssd killer",MB_OK);
 
   return 0;
 }
