@@ -7,4 +7,4 @@ void FFSS_SignalHandler_Term(int sig);
 
 extern bool FFSS_ShuttingDown;
 
-#endif
+#endif /* __FFSS_COMMON_H__ */

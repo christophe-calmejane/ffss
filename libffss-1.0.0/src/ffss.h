@@ -25,7 +25,6 @@
 
 #ifdef _WIN32
 #define HAVE_BZLIB 1
-#include <bzlib.h>
 #endif /* _WIN32 */
 
 #include <skyutils.h>
@@ -44,18 +43,18 @@
 #define LOG_INFO    2
 #define LOG_WARNING 1
 #define LOG_ERR     0
-#else /* _WIN32 */
+#else /* !_WIN32 */
 #include <sys/time.h>
 #include <unistd.h>
 #include <syslog.h>
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre70"
+#define FFSS_VERSION "1.0.0-pre71"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOLE_VERSION                  0x0010001
-#define FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE 0x0010000
+#define FFSS_PROTOCOLE_VERSION                  0x0010002
+#define FFSS_PROTOCOLE_VERSION_LEAST_COMPATIBLE 0x0010002
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -93,7 +92,7 @@
 #define FFSS_MAX_KEYWORDS_LENGTH 2048
 #ifdef __BSD__
 #define FFSS_MAX_UDP_PACKET_LENGTH 4000
-#else /* __BSD__ */
+#else /* !__BSD__ */
 #define FFSS_MAX_UDP_PACKET_LENGTH 60000
 #endif /* __BSD__ */
 #define FFSS_MIN_SEARCH_REQUEST_LENGTH 4
@@ -104,10 +103,10 @@
 #define FFSS_TCP_SERVER_BUFFER_SIZE 60000
 #ifdef _WIN32
 #define FFSS_TRANSFER_BUFFER_SIZE 1460
-#else /* _WIN32 */
+#else /* !_WIN32 */
 #ifdef __BSD__
 #define FFSS_TRANSFER_BUFFER_SIZE 1460
-#else /* __BSD__ */
+#else /* !__BSD__ */
 #define FFSS_TRANSFER_BUFFER_SIZE 1480
 #endif /* __BSD__ */
 #endif /* _WIN32 */
@@ -196,8 +195,8 @@
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING          2
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER   4
 #define FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER_2 3
-#define FFSS_MESSAGESIZE_DOWNLOAD                   4
-#define FFSS_MESSAGESIZE_UPLOAD                     4
+#define FFSS_MESSAGESIZE_DOWNLOAD                   (3+1*2)
+#define FFSS_MESSAGESIZE_UPLOAD                     (3+1*2)
 #define FFSS_MESSAGESIZE_MOVE                       2
 #define FFSS_MESSAGESIZE_COPY                       2
 #define FFSS_MESSAGESIZE_DELETE                     2
@@ -212,13 +211,13 @@
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA         7
 #define FFSS_MESSAGESIZE_INDEX_ANSWER_SAMBA_2       5
 #define FFSS_MESSAGESIZE_STREAMING_OPEN             3
-#define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      5
+#define FFSS_MESSAGESIZE_STREAMING_OPEN_ANSWER      (4+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_CLOSE            3
-#define FFSS_MESSAGESIZE_STREAMING_READ             5
+#define FFSS_MESSAGESIZE_STREAMING_READ             (4+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_READ_ANSWER      3
-#define FFSS_MESSAGESIZE_STREAMING_WRITE            4
+#define FFSS_MESSAGESIZE_STREAMING_WRITE            (3+1*2)
 #define FFSS_MESSAGESIZE_STREAMING_WRITE_ANSWER     4
-#define FFSS_MESSAGESIZE_STREAMING_SEEK             5
+#define FFSS_MESSAGESIZE_STREAMING_SEEK             (4+1*2)
 #define FFSS_MESSAGESIZE_INIT_XFER                  3
 #define FFSS_MESSAGESIZE_CANCEL_XFER                3
 #define FFSS_MESSAGESIZE_DATA                       3
@@ -320,12 +319,17 @@
 /*                   DATA STRUCTURE                 */
 /* ************************************************ */
 typedef long int FFSS_Field;
+#ifdef __unix__
+typedef long long FFSS_LongField;
+#else /* !__unix__ */
+typedef __int64 FFSS_LongField;
+#endif /* __unix__ */
 
 typedef struct
 {
   char *Name;
   FFSS_Field Flags;
-  FFSS_Field Size;
+  FFSS_LongField Size;
   FFSS_Field Stamp;
 } FC_TEntry, *FC_PEntry;
 
@@ -352,8 +356,8 @@ typedef struct
 
 typedef struct
 {
-  long int total;
-  FFSS_Field fsize,Checksum;
+  FFSS_LongField fsize,total;
+  FFSS_Field Checksum;
   FFSS_Field XFerTag;
   bool Download;
   bool UseConnSock;
@@ -361,18 +365,18 @@ typedef struct
 
 typedef struct
 {
-  int  sock;                /* Opened socket for file transfer */
-  FILE *fp;                 /* Opened file for reading/writing */
-  char *FileName;           /* Remote file name */ /* NULL on server side */
-  char *LocalPath;          /* Local path of file used for fopen */
-  long int StartingPos;     /* Reading/Writing starting pos in the file */
-  long int FileSize;        /* Size of the file */
-  long int XFerPos;         /* Current xfer pos */
-  int  ThreadType;          /* Type of the thread (SERVER / CLIENT) */
-  SU_PClientSocket Client;  /* SU_PClientSocket structure of the share connection we transfer from */ /* Do NOT free this, only a pointer !! */
-  bool Cancel;              /* If the transfer is to be canceled */
-  void *User;               /* User information */
-  FFSS_TXFerInfo XI;        /* XFer info for xfer using connection socket */
+  int  sock;                  /* Opened socket for file transfer */
+  FILE *fp;                   /* Opened file for reading/writing */
+  char *FileName;             /* Remote file name */ /* NULL on server side */
+  char *LocalPath;            /* Local path of file used for fopen */
+  FFSS_LongField StartingPos; /* Reading/Writing starting pos in the file */
+  FFSS_LongField FileSize;    /* Size of the file */
+  FFSS_LongField XFerPos;     /* Current xfer pos */
+  int  ThreadType;            /* Type of the thread (SERVER / CLIENT) */
+  SU_PClientSocket Client;    /* SU_PClientSocket structure of the share connection we transfer from */ /* Do NOT free this, only a pointer !! */
+  bool Cancel;                /* If the transfer is to be canceled */
+  void *User;                 /* User information */
+  FFSS_TXFerInfo XI;          /* XFer info for xfer using connection socket */
 } FFSS_TTransfer, *FFSS_PTransfer;
 
 typedef struct
@@ -390,8 +394,8 @@ typedef struct
   bool (*OnCheckConnection)(SU_PClientSocket Client);
   bool (*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
-  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],long int StartPos,int Port); /* Path IN the share (without share name) */
-  bool (*OnUpload)(SU_PClientSocket Client,const char Path[],long int Size,int Port); /* Path IN the share (without share name) */
+  bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port); /* Path IN the share (without share name) */
+  bool (*OnUpload)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port); /* Path IN the share (without share name) */
   bool (*OnRename)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
   bool (*OnCopy)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
   bool (*OnDelete)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
@@ -405,9 +409,9 @@ typedef struct
   void (*OnCancelXFer)(SU_PClientSocket Server,FFSS_Field XFerTag);
   void (*OnStrmOpen)(SU_PClientSocket Client,long int Flags,const char Path[]); /* Path IN the share (without share name) */
   void (*OnStrmClose)(SU_PClientSocket Client,long int Handle);
-  void (*OnStrmRead)(SU_PClientSocket Client,long int Handle,long int StartPos,long int Length);
-  void (*OnStrmWrite)(SU_PClientSocket Client,long int Handle,long int StartPos,const char Bloc[],long int BlocSize);
-  void (*OnStrmSeek)(SU_PClientSocket Client,long int Handle,long int Flags,long int Pos);
+  void (*OnStrmRead)(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,long int Length);
+  void (*OnStrmWrite)(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize);
+  void (*OnStrmSeek)(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_LongField Pos);
 
   /* FTP callbacks */
   bool (*OnConnectionFTP)(SU_PClientSocket Client);
@@ -417,8 +421,8 @@ typedef struct
   bool (*OnDirectoryListingFTP)(SU_PClientSocket Client,SU_PClientSocket Data,const char Path[]);
   void (*OnCWDFTP)(SU_PClientSocket Client,const char Path[]);
 
-  void (*OnDownloadFTP)(SU_PClientSocket Client,const char Path[],long int StartPos,const char Host[],const char Port[]); /* Path from the root of all shares */
-  bool (*OnUploadFTP)(SU_PClientSocket Client,const char Path[],long int Size,int Port); /* Path from the root of all shares */
+  void (*OnDownloadFTP)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,const char Host[],const char Port[]); /* Path from the root of all shares */
+  bool (*OnUploadFTP)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port); /* Path from the root of all shares */
   bool (*OnRenameFTP)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path from the root of all shares */
   bool (*OnDeleteFTP)(SU_PClientSocket Client,const char Path[]); /* Path from the root of all shares */
   bool (*OnMkDirFTP)(SU_PClientSocket Client,const char Path[]); /* Path from the root of all shares */
@@ -452,7 +456,7 @@ typedef struct
   void (*OnTransferActive)(FFSS_PTransfer FT,long int Amount,bool Download);
   FFSS_PTransfer (*OnInitXFer)(SU_PClientSocket Server,const char RequestedFileName[]); /* Returns PTransfer from RequestedFileName */
   FFSS_PTransfer (*OnData)(SU_PClientSocket Server,FFSS_Field XFerTag); /* Returns PTransfer from XFerTag */
-  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,long int Handle,long int FileSize);
+  void (*OnStrmOpenAnswer)(SU_PClientSocket Client,const char Path[],int Code,long int Handle,FFSS_LongField FileSize);
   void (*OnStrmReadAnswer)(SU_PClientSocket Client,long int Handle,const char Bloc[],long int BlocSize);
   void (*OnStrmWriteAnswer)(SU_PClientSocket Client,long int Handle,int Code);
 
@@ -591,12 +595,12 @@ unsigned char FFSS_GetWordTags(const char *Word);  /* <-- word to check for exte
 /* ************************************************ */
 
 /* If FT_out is NULL, not filled */
-bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],long int StartingPos,int Port,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
+bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
 
 /* RemotePath in the share */
 /* If FT_out is NULL, not filled */
 /* If LocalPath is NULL, stdout is used for local writing */
-bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],long int StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
+bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out);
 
 
 /* ************************************************ */
@@ -680,7 +684,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,long int FileSize);
+bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,FFSS_LongField FileSize);
 
 /* FS_SendMessage_StrmReadAnswer Function             */
 /* Sends an STREAMING READ answer message to a client */
@@ -738,7 +742,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[]);
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],long int StartingPos,bool UseConnSock);
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock);
 
 /* FC_SendMessage_Disconnect Function                   */
 /* Sends an DISCONNECT message to a server              */
@@ -786,7 +790,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle);
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,long int StartPos,long int Length);
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,long int Length);
 
 /* FC_SendMessage_StrmWrite Function                    */
 /* Sends an STREAMING WRITE message to a server         */
@@ -795,7 +799,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,long int St
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,long int StartPos,char *Buf,long int BlocLen);
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen);
 
 /* FC_SendMessage_StrmSeek Function                     */
 /* Sends an STREAMING SEEK message to a server          */
@@ -803,7 +807,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,long int S
 /*  Handle : The handle of the file to close            */
 /*  Flags : The flags for the seek operation            */
 /*  StartPos : The position of the seek                 */
-bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,long int StartPos);
+bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,FFSS_LongField StartPos);
 
 
 /* ************************************************ */
@@ -909,6 +913,8 @@ char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int
 /* Unpacks a FFSS_Field from a message, checking if the FFSS_Field is fully in the message (prevents DoS attacks) */
 /*  Returns the FFSS_Field, or 0 if there is a problem */
 FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long int *new_pos);
+/* Same with LongField */
+FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos);
 void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,char buf_out[],int Type);
 void FFSS_PackIP(char *buf,const char IP[],int Type);
 
@@ -941,11 +947,11 @@ extern FILE *FFSS_LogFile;
 #ifdef __unix__
 #define FFSS_PrintDebug(x,...) /* */
 #define SYSLOG_FN(x,y) syslog(x,y)
-#else /* __unix__ */
+#else /* !__unix__ */
 #define FFSS_PrintDebug() /* */
 #define SYSLOG_FN(x,y) SU_WriteToLogFile(FFSS_LogFile,y)
 #endif /* __unix__ */
-#else /* DEBUG */
+#else /* !DEBUG */
 #define SYSLOG_FN(x,y) printf(y)
 #endif /* DEBUG */
 
@@ -953,7 +959,7 @@ extern FILE *FFSS_LogFile;
 void FFSS_handle_SIGNAL(int signal);
 #define context set_context(__FILE__, __LINE__)
 void set_context(char *file, int line);
-#else /* FFSS_CONTEXT */
+#else /* !FFSS_CONTEXT */
 #define context
 #endif /* FFSS_CONTEXT */
 

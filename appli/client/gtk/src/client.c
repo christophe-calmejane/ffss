@@ -206,6 +206,23 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
   return true;
 }
 
+void PrintSize(FFSS_LongField Size,char *buf,int buf_size)
+{
+  char mod[]=" KMGT";
+  int pos = 0;
+  double val = Size;
+
+  while(val > 1024)
+  {
+    val = val / 1024;
+    pos++;
+  }
+  if(pos == 0)
+    snprintf(buf,buf_size,"%lld",Size);
+  else
+    snprintf(buf,buf_size,"%.2lf%c",val,mod[pos]);
+}
+
 bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries)
 {
   PConn Conn = lookup_conn(Server,false);
@@ -290,7 +307,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
       else
         strings[0] = "File";
       strings[1] = Ent->Name;
-      snprintf(buf,sizeof(buf),"%ld",Ent->Size);
+      PrintSize(Ent->Size,buf,sizeof(buf));
       strings[2] = buf;
       gtk_clist_append(Conn->list,strings);
       Ptr = Ptr->Next;

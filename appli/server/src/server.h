@@ -35,7 +35,7 @@
 #define FS_ON_DOWNLOAD_MAX_RETRIES 5
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 
-#define FFSS_SERVER_VERSION "1.0-pre70"
+#define FFSS_SERVER_VERSION "1.0-pre71"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
@@ -45,27 +45,27 @@
 
 typedef struct
 {
-  SU_PList Dirs;    /* FS_PDir */
-  long int NbDirs;  /* Number of dirs in this node */
-  SU_PList Files;   /* FS_PFile */
-  long int NbFiles; /* Number of files in this node */
+  SU_PList Dirs;      /* FS_PDir */
+  FFSS_Field NbDirs;  /* Number of dirs in this node */
+  SU_PList Files;     /* FS_PFile */
+  FFSS_Field NbFiles; /* Number of files in this node */
 } FS_TNode, *FS_PNode;
 
 typedef struct
 {
-  char *DirName;  /* Name of the directory */
-  long int Flags; /* Flags of the dir */
-  long int Size;  /* Size of the dir */
-  time_t Time;    /* Time of the dir */
-  FS_TNode Files; /* Files/Dirs in this dir */
+  char *DirName;       /* Name of the directory */
+  FFSS_Field Flags;    /* Flags of the dir */
+  FFSS_LongField Size; /* Size of the dir */
+  time_t Time;         /* Time of the dir */
+  FS_TNode Files;      /* Files/Dirs in this dir */
 } FS_TDir, *FS_PDir;
 
 typedef struct
 {
-  char *FileName; /* Name of the file */
-  long int Flags; /* Flags of the file */
-  long int Size;  /* Size of the file */
-  time_t Time;    /* Time of the file */
+  char *FileName;      /* Name of the file */
+  FFSS_Field Flags;    /* Flags of the file */
+  FFSS_LongField Size; /* Size of the file */
+  time_t Time;         /* Time of the file */
 } FS_TFile, *FS_PFile;
 
 typedef struct
@@ -86,8 +86,8 @@ typedef struct
   SU_PList Users;     /* FS_PUser */
 
   FS_TNode Root;      /* Files/Dirs in the root dir of the share */
-  long int NbFiles;   /* Total number of files in the share */
-  long int NbDirs;    /* Total number of directories in the share */
+  FFSS_Field NbFiles; /* Total number of files in the share */
+  FFSS_Field NbDirs;  /* Total number of directories in the share */
   SU_PList Conns;     /* FS_PConn */
   bool Disabled;      /* Temporarly disable the share */
   bool Remove;        /* If the share is to be removed (close all active connections) */
@@ -103,7 +103,7 @@ typedef struct
   /* FFSS variables */
   char *ShareName;                 /* NULL if FTP connection */
   bool Remove;                     /* If this connection is to be removed */
-  long int Comps;                  /* Supported compressions */
+  FFSS_Field Comps;                /* Supported compressions */
 
   /* FTP variables */
   char Path[FFSS_MAX_PATH_LENGTH]; /* Only used for FTP connections - Current path */
@@ -141,20 +141,20 @@ typedef struct
 
 typedef struct
 {
-  int  sock;                /* Socket for commands */
-  FILE *fp;                 /* Opened file for reading/writing */
-  char *LocalPath;          /* Local path of file used for fopen */
-  long int StartingPos;     /* Reading/Writing starting pos in the file */
-  SU_PClientSocket Client;  /* SU_PClientSocket structure for file transfer */
+  int  sock;                  /* Socket for commands */
+  FILE *fp;                   /* Opened file for reading/writing */
+  char *LocalPath;            /* Local path of file used for fopen */
+  FFSS_LongField StartingPos; /* Reading/Writing starting pos in the file */
+  SU_PClientSocket Client;    /* SU_PClientSocket structure for file transfer */
 } FS_TTransferFTP, *FS_PTransferFTP;
 
 typedef struct
 {
   FILE *fp;
   char *FileName;
-  long int Position;
-  long int Handle;
-  long int fsize;
+  FFSS_LongField Position;
+  FFSS_Field Handle;
+  FFSS_LongField fsize;
 } FS_TStreaming, *FS_PStreaming;
 
 typedef struct

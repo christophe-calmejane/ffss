@@ -979,6 +979,11 @@ bool FMI_LoadIndex(const char FileName[]) /* <-- Name of the file to load index 
 #else /* __unix__ */
     ReleaseSemaphore(FM_MySem5,1,NULL);
 #endif /* __unix__ */
+    if(!res)
+    {
+      printf("Error loading index file '%s'. Please remove it and re-run master\n",FileName);
+      abort();
+    }
     fclose(fp);
   }
   FFSS_PrintDebug(4,"Load complete : %s\n",res?"Success":"Failed");

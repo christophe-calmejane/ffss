@@ -8,7 +8,7 @@
 /* Define for caddr_t structure that differs with unixes */
 #ifdef __linux__
 #define CADDR_T __caddr_t
-#else /* __linux__ */
+#else /* !__linux__ */
 #define CADDR_T caddr_t
 #endif /* __linux__ */
 

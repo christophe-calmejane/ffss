@@ -1,6 +1,10 @@
 #include "ffss.h"
 #include "utils.h"
 
+#ifdef IS_BIG_ENDIAN
+#error FIX ME : All fields should be packed using a pack_field function
+#endif /* IS_BIG_ENDIAN */
+
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User);
 
 /* ************************************ */
@@ -462,7 +466,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
         break;
       case FFSS_COMPRESSION_ZLIB :
         partial = ((long int) Ptr2->Data)*1.05+12;
-        data = Ptr->Data;
+        data = (char *)Ptr->Data;
         Ptr->Data = malloc(partial);
         if(!FFSS_CompresseZlib(data,(long int)Ptr2->Data,(char *)Ptr->Data,&partial))
         {
@@ -628,7 +632,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
 /*  Code : The error code to send                     */
 /*  Handle : The handle of the file if successfull    */
 /*  FileSize : Size of the file                       */
-bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,long int FileSize)
+bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,long int Handle,FFSS_LongField FileSize)
 {
   char *msg;
   long int len,size,pos;
@@ -658,8 +662,8 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
   pos += sizeof(FFSS_Field);
   *(FFSS_Field *)(msg+pos) = Handle;
   pos += sizeof(FFSS_Field);
-  *(FFSS_Field *)(msg+pos) = FileSize;
-  pos += sizeof(FFSS_Field);
+  *(FFSS_LongField *)(msg+pos) = FileSize;
+  pos += sizeof(FFSS_LongField);
 
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Streaming OPEN answer message to client\n");
@@ -1008,7 +1012,7 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
 /*  Path : The path of requested file (in the share)                */
 /*  StartingPos : The pos we want to download the file starting at  */
 /*  UseConnSock : Use a separate socket/thread, or use the existing */
-int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],long int StartingPos,bool UseConnSock)
+int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongField StartingPos,bool UseConnSock)
 {
   char *msg;
   long int size,pos;
@@ -1054,8 +1058,8 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],long int S
     len = FFSS_MAX_FILEPATH_LENGTH;
   SU_strcpy(msg+pos,Path,len);
   pos += len;
-  *(FFSS_Field *)(msg+pos) = StartingPos;
-  pos += sizeof(FFSS_Field);
+  *(FFSS_LongField *)(msg+pos) = StartingPos;
+  pos += sizeof(FFSS_LongField);
   if(UseConnSock)
     *(FFSS_Field *)(msg+pos) = -1;
   else
@@ -1354,7 +1358,7 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
 /*  Handle : The handle of the file to close            */
 /*  StartPos : The start position of the requested bloc */
 /*  Length : Indicative length requested                */
-bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,long int StartPos,long int Length)
+bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,long int Length)
 {
   char *msg;
   long int size,pos;
@@ -1372,8 +1376,8 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,long int St
   *(FFSS_Field *)(msg+pos) = Handle;
   pos += sizeof(FFSS_Field);
 
-  *(FFSS_Field *)(msg+pos) = StartPos;
-  pos += sizeof(FFSS_Field);
+  *(FFSS_LongField *)(msg+pos) = StartPos;
+  pos += sizeof(FFSS_LongField);
 
   *(FFSS_Field *)(msg+pos) = Length;
   pos += sizeof(FFSS_Field);
@@ -1403,7 +1407,7 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,long int St
 /*  StartPos : The start position of the requested bloc */
 /*  Buf : The buffer of datas                           */
 /*  BlocLen : The length of the datas                   */
-bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,long int StartPos,char *Buf,long int BlocLen)
+bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongField StartPos,char *Buf,long int BlocLen)
 {
   char *msg;
   long int size,pos;
@@ -1421,8 +1425,8 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,long int S
   *(FFSS_Field *)(msg+pos) = Handle;
   pos += sizeof(FFSS_Field);
 
-  *(FFSS_Field *)(msg+pos) = StartPos;
-  pos += sizeof(FFSS_Field);
+  *(FFSS_LongField *)(msg+pos) = StartPos;
+  pos += sizeof(FFSS_LongField);
 
   memcpy(msg+pos,Buf,BlocLen);
   pos += BlocLen;
@@ -1451,7 +1455,7 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,long int S
 /*  Handle : The handle of the file to close            */
 /*  Flags : The flags for the seek operation            */
 /*  StartPos : The position of the seek                 */
-bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,long int StartPos)
+bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,FFSS_LongField StartPos)
 {
   char *msg;
   long int size,pos;
@@ -1472,8 +1476,8 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,l
   *(FFSS_Field *)(msg+pos) = Flags;
   pos += sizeof(FFSS_Field);
 
-  *(FFSS_Field *)(msg+pos) = StartPos;
-  pos += sizeof(FFSS_Field);
+  *(FFSS_LongField *)(msg+pos) = StartPos;
+  pos += sizeof(FFSS_LongField);
 
   *(FFSS_Field *)(msg) = pos;
   FFSS_PrintDebug(3,"Sending Streaming SEEK message to client\n");

@@ -367,7 +367,8 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
 {
   int Type, i;
   long int pos;
-  FFSS_Field val,val2,val3,val4;
+  FFSS_Field val,val2,val4;
+  FFSS_LongField lval;
   char *str,*str2;
   SU_PList Ptr;
   FC_PEntry Ent;
@@ -452,7 +453,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         memset(Ent,0,sizeof(FC_TEntry));
         str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
         val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
-        val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        lval = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
         val4 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
         if(str2 == NULL)
         {
@@ -464,7 +465,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         }
         Ent->Name = str2;
         Ent->Flags = val2;
-        Ent->Size = val3;
+        Ent->Size = lval;
         Ent->Stamp = val4;
         Ptr = SU_AddElementTail(Ptr,Ent);
       }
@@ -511,7 +512,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-      val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
       if((str == NULL) || (val == 0))
       {
         FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr));
@@ -520,7 +521,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
       }
       FFSS_PrintDebug(3,"Received a streaming open answer message (%s)\n",val);
       if(FFSS_CB.CCB.OnStrmOpenAnswer != NULL)
-        FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,val3);
+        FFSS_CB.CCB.OnStrmOpenAnswer(Server,str,val,val2,lval);
       break;
     case FFSS_MESSAGE_STREAMING_READ_ANSWER :
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);

@@ -208,14 +208,14 @@ Detail du protocole (Version 0100) :
    DWord : Nombre d'entrees
     ZStr : Nom du fichier (lister le repertoire ..)
     DWord : Flags du fichier (voir flags des fichiers ci-dessous)
-    DWord : Taille du fichier
+    QWord : Taille du fichier
     DWord : TimeStamp du fichier
 
  * Message de download de fichier (Client->Serveur connecte) (TCP) :
    DWord : Taille du message
    DWord : Type de message = 17 (download d'un fichier)
    ZStr : Path du fichier dans le partage
-   DWord : Position a partir de laquelle il faut envoyer le fichier (resume si il y a eu une erreur) ou 0 si fichier complet
+   QWord : Position a partir de laquelle il faut envoyer le fichier (resume si il y a eu une erreur) ou 0 si fichier complet
    DWord : Port auquel se connecter pour envoyer le fichier
   -> Messages d'erreur possibles
     5 : Fichier ou repertoire inconnu
@@ -229,7 +229,7 @@ Detail du protocole (Version 0100) :
    DWord : Taille du message
    DWord : Type de message = 18 (upload d'un fichier)
    ZStr : Path du fichier dans le partage
-   DWord : Taille du fichier
+   QWord : Taille du fichier
    DWord : Port auquel se connecter pour recuperer le fichier
   -> Messages d'erreur possibles
     6 : Acces refuse
@@ -351,7 +351,7 @@ Detail du protocole (Version 0100) :
    ZStr : Path du fichier
    DWord : Code de l'erreur
    DWord : Handle du fichier (si pas d'erreur)
-   DWord : Taille du fichier
+   QWord : Taille du fichier
 
  * Message de streaming : close (Client->Server connecte) (TCP) :
    DWord : Taille du message
@@ -362,7 +362,7 @@ Detail du protocole (Version 0100) :
    DWord : Taille du message
    DWord : Type de message = 83 (streaming read)
    DWord : Handle du fichier
-   DWord : Position de lecture
+   QWord : Position de lecture
    DWord : Taille de lecture (Indicative uniquement)
 
  * Message de streaming : reponse read (Server->Client connecte) (TCP) :
@@ -375,7 +375,7 @@ Detail du protocole (Version 0100) :
    DWord : Taille du message
    DWord : Type de message = 85 (streaming write)
    DWord : Handle du fichier
-   DWord : Position d'ecriture
+   QWord : Position d'ecriture
     Datas
 
  * Message de streaming : reponse write (Server->Client connecte) (TCP) :
@@ -386,10 +386,10 @@ Detail du protocole (Version 0100) :
 
  * Message de streaming : seek (Client->Server connecte) (TCP) :
    DWord : Taille du message
-   DWord : Type de message = 87 (streaming open)
+   DWord : Type de message = 87 (streaming seek)
    DWord : Handle du fichier
    DWord : Flags du seek (SET/CUR/END)
-   DWord : Position du seek
+   QWord : Position du seek
 
  * Message de debut de transfert (Server->Client connecte) (TCP) :
  ou Message de debut de transfert (Client->Server connecte) (TCP) :
@@ -413,7 +413,7 @@ Detail du protocole (Version 0100) :
 
 Protocole de download d'un fichier :
 ------------------------------------
-Le serveur se connecte au port indique par le client, et envoie la taille totale du fichier (DWORD), et le checksum du fichier complet (DWORD) calcule comme indique ci-dessous.
+Le serveur se connecte au port indique par le client, et envoie la taille totale du fichier (QWORD), et le checksum du fichier complet (DWORD) calcule comme indique ci-dessous.
 Le serveur envoie ensuite le fichier a partir de la position specifiee dans la requete (si il s'agit d'un resume).
 L'envoi se fait par paquets de 4096 octets. Le client connait la taille du fichier a l'avance.
 Apres l'envoi du dernier paquet, le serveur ferme la connexion. Le client calcule le checksum, et si il n'est pas correct, renvoie une

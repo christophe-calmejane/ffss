@@ -8,7 +8,7 @@
 VIRER LE -PREx DE SERVER.H
 
 January, 15th 2002:
-  - Added few retries when OnDownload fail because of TooManyActiveConnections
+  - Added few retries when OnDownload fail because of TooManyActiveTransfers
   - Added better protocol version check
 
 January, 5th 2002:

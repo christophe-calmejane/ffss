@@ -4,4 +4,4 @@
 SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info);
 SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info);
 
-#endif
+#endif /* __FFSS_TRANSFER_H__ */

@@ -242,6 +242,7 @@ void destroyts(void *ptr)
 {
   FS_PThreadSpecific ts = (FS_PThreadSpecific) ptr;
 
+  if(ts == NULL) return;
   if(ts->ShareName != NULL)
     free(ts->ShareName);
   free(ts);
@@ -257,12 +258,12 @@ FS_PThreadSpecific FS_GetThreadSpecific(bool DontCreate)
   FS_PThreadSpecific ts;
 
   SU_THREAD_ONCE(FS_once,tsinitkey);
-  ts = SU_THREAD_GET_SPECIFIC(FS_tskey);
+  ts = (FS_PThreadSpecific) SU_THREAD_GET_SPECIFIC(FS_tskey);
   if(ts == NULL)
   {
     if(DontCreate)
       return NULL;
-    ts = malloc(sizeof(FS_TThreadSpecific));
+    ts = (FS_PThreadSpecific) malloc(sizeof(FS_TThreadSpecific));
     memset(ts,0,sizeof(FS_TThreadSpecific));
     SU_THREAD_SET_SPECIFIC(FS_tskey,ts);
   }
@@ -648,7 +649,7 @@ bool OnDirectoryListing(SU_PClientSocket Client,const char Path[]) /* Path IN th
   return true;
 }
 
-bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int Port) /* Path IN the share (without share name) */
+bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port) /* Path IN the share (without share name) */
 {
   FS_PThreadSpecific ts;
   char buf[FFSS_MAX_FILEPATH_LENGTH];
@@ -656,7 +657,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   FS_PConn Conn;
   SU_PList Ptr;
 
-  FFSS_PrintDebug(1,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d\n",Path,StartPos,Port);
+  FFSS_PrintDebug(1,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d\n",Path,(long int)StartPos,Port);
 
   if(FS_MyGlobal.XFerInConn)
   {
@@ -683,7 +684,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   if(FS_MyGlobal.MaxXFerPerConn != 0)
   {
     if(FS_XFersCount(Conn) >= FS_MyGlobal.MaxXFerPerConn)
-    { /* Too many connections - Retry */
+    { /* Too many xfers - Retry */
       int retries = 0;
       bool accepted = false;
       while(retries < FS_ON_DOWNLOAD_MAX_RETRIES)
@@ -698,7 +699,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
       }
       if(!accepted) /* Still too many connections */
       {
-        FFSS_PrintDebug(6,"Too many active connections : %d\n",FS_XFersCount(Conn));
+        FFSS_PrintDebug(6,"Too many active xfers : %d\n",FS_XFersCount(Conn));
         return FS_SendMessage_Error(Client->sock,FFSS_ERROR_TOO_MANY_TRANSFERS,FFSS_ErrorTable[FFSS_ERROR_TOO_MANY_TRANSFERS]);
       }
     }
@@ -787,7 +788,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],long int StartPos,int 
   return true;
 }
 
-bool OnUpload(SU_PClientSocket Client,const char Path[],long int Size,int Port) /* Path IN the share (without share name) */
+bool OnUpload(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port) /* Path IN the share (without share name) */
 {
   SU_PList Ptr;
 
@@ -1039,7 +1040,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[]) /* Pat
   {
     Conn->Strms = SU_AddElementHead(Conn->Strms,FS);
 #ifdef DEBUG
-    printf("OnStrmOpen : Adding Streaming to conn (Handle=%ld Size=%ld)\n",FS->Handle,FS->fsize);
+    printf("OnStrmOpen : Adding Streaming to conn (Handle=%ld Size=%ld)\n",FS->Handle,(long int)FS->fsize);
 #endif
   }
   else
@@ -1089,7 +1090,7 @@ void OnStrmClose(SU_PClientSocket Client,long int Handle)
     printf("OnStrmClose : Conn not found !!\n");
 }
 
-void OnStrmRead(SU_PClientSocket Client,long int Handle,long int StartPos,long int Length)
+void OnStrmRead(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,long int Length)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1154,7 +1155,7 @@ void OnStrmRead(SU_PClientSocket Client,long int Handle,long int StartPos,long i
     printf("OnStrmRead : Conn not found !!\n");
 }
 
-void OnStrmWrite(SU_PClientSocket Client,long int Handle,long int StartPos,const char Bloc[],long int BlocSize)
+void OnStrmWrite(SU_PClientSocket Client,long int Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1186,7 +1187,7 @@ void OnStrmWrite(SU_PClientSocket Client,long int Handle,long int StartPos,const
     printf("OnStrmWrite : Conn not found !!\n");
 }
 
-void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,long int Pos)
+void OnStrmSeek(SU_PClientSocket Client,long int Handle,long int Flags,FFSS_LongField Pos)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1469,7 +1470,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   {
     Tm = localtime(&((FS_PFile)Ptr->Data)->Time);
     snprintf(Tim,sizeof(Tim),"%s %2d %2d:%2d",FS_TimeTable[Tm->tm_mon],Tm->tm_mday,Tm->tm_hour,Tm->tm_min);
-    snprintf(msg,sizeof(msg),"-rw%cr-%cr-%c    1 nobody   nobody   %8ld %s %s" CRLF,(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',((FS_PFile)Ptr->Data)->Size,Tim,((FS_PFile)Ptr->Data)->FileName);
+    snprintf(msg,sizeof(msg),"-rw%cr-%cr-%c    1 nobody   nobody   %8ld %s %s" CRLF,(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(long int)((FS_PFile)Ptr->Data)->Size,Tim,((FS_PFile)Ptr->Data)->FileName);
     send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
     Ptr = Ptr->Next;
   }
@@ -1774,7 +1775,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   SU_END_THREAD(NULL);
 }
 
-void OnDownloadFTP(SU_PClientSocket Client,const char Path[],long int StartPos,const char Host[],const char Port[])
+void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,const char Host[],const char Port[])
 {
   SU_PClientSocket DataPort;
   char msg[10000];

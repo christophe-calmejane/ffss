@@ -10,7 +10,7 @@
 SU_PList FS_Index=NULL; /* FS_PShare */
 
 #ifdef __unix__
-long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
+FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
 {
   FS_PDir Dir;
   FS_PFile File;
@@ -18,7 +18,7 @@ long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
   DIR *dir;
   struct dirent *ent;
   struct stat st,st2;
-  long int total_dir_size = 0;
+  FFSS_LongField total_dir_size = 0;
 
   FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
   /* List all files in Path, and fill Node with it */
@@ -70,7 +70,7 @@ long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
   closedir(dir);
   return total_dir_size;
 }
-#else
+#else /* !__unix__ */
 
 time_t FS_ConvertTime(FILETIME ft)
 {
@@ -88,7 +88,7 @@ time_t FS_ConvertTime(FILETIME ft)
   return mktime(&t);
 }
 
-long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
+FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
 {
   FS_PDir Dir;
   FS_PFile File;
@@ -139,7 +139,7 @@ long int FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[])
   } while(FindNextFile(dir,&ent));
   FindClose(dir);
 }
-#endif
+#endif /* __unix__ */
 
 void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now)
 {
@@ -420,13 +420,13 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
     *(FFSS_Field *)(buf+pos) = ((FS_PDir)Ptr->Data)->Flags;
     pos += sizeof(FFSS_Field);
 
-    if((pos+sizeof(FFSS_Field)) >= buf_size)
+    if((pos+sizeof(FFSS_LongField)) >= buf_size)
     {
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PDir)Ptr->Data)->Size;
-    pos += sizeof(FFSS_Field);
+    *(FFSS_LongField *)(buf+pos) = ((FS_PDir)Ptr->Data)->Size;
+    pos += sizeof(FFSS_LongField);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {
@@ -464,13 +464,13 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
     *(FFSS_Field *)(buf+pos) = ((FS_PFile)Ptr->Data)->Flags;
     pos += sizeof(FFSS_Field);
 
-    if((pos+sizeof(FFSS_Field)) >= buf_size)
+    if((pos+sizeof(FFSS_LongField)) >= buf_size)
     {
       buf_size += (Node->NbFiles-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    *(FFSS_Field *)(buf+pos) = ((FS_PFile)Ptr->Data)->Size;
-    pos += sizeof(FFSS_Field);
+    *(FFSS_LongField *)(buf+pos) = ((FS_PFile)Ptr->Data)->Size;
+    pos += sizeof(FFSS_LongField);
 
     if((pos+sizeof(FFSS_Field)) >= buf_size)
     {

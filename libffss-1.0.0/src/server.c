@@ -92,6 +92,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
   long int pos;
   char *str,*str2,*str3;
   FFSS_Field val,val2,val3;
+  FFSS_LongField lval;
   bool ret_val;
   long int Length;
 
@@ -148,7 +149,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
       case FFSS_MESSAGE_DOWNLOAD :
         FFSS_PrintDebug(3,"Received a download message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
-        val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (val2 == 0))
         {
@@ -157,12 +158,12 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.SCB.OnDownload != NULL)
-          ret_val = FFSS_CB.SCB.OnDownload(Client,str,val,val2);
+          ret_val = FFSS_CB.SCB.OnDownload(Client,str,lval,val2);
         break;
       case FFSS_MESSAGE_UPLOAD :
         FFSS_PrintDebug(3,"Received an upload message from client\n");
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
-        val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (val2 == 0))
         {
@@ -171,7 +172,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.SCB.OnUpload != NULL)
-          ret_val = FFSS_CB.SCB.OnUpload(Client,str,val,val2);
+          ret_val = FFSS_CB.SCB.OnUpload(Client,str,lval,val2);
         break;
       case FFSS_MESSAGE_MOVE :
         FFSS_PrintDebug(3,"Received a move message from client\n");
@@ -261,7 +262,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
       case FFSS_MESSAGE_STREAMING_READ :
         FFSS_PrintDebug(3,"Received a streaming READ message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-        val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (val3 == 0))
         {
@@ -270,12 +271,12 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.SCB.OnStrmRead != NULL)
-          FFSS_CB.SCB.OnStrmRead(Client,val,val2,val3);
+          FFSS_CB.SCB.OnStrmRead(Client,val,lval,val3);
         break;
       case FFSS_MESSAGE_STREAMING_WRITE :
         FFSS_PrintDebug(3,"Received a streaming WRITE message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-        val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         Length = Len-FFSS_MESSAGESIZE_STREAMING_WRITE*sizeof(FFSS_Field);
         if((val == 0) || (Length < 0))
         {
@@ -284,13 +285,13 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.SCB.OnStrmWrite != NULL)
-          FFSS_CB.SCB.OnStrmWrite(Client,val,val2,Buf+pos,Length);
+          FFSS_CB.SCB.OnStrmWrite(Client,val,lval,Buf+pos,Length);
         break;
       case FFSS_MESSAGE_STREAMING_SEEK :
         FFSS_PrintDebug(3,"Received a streaming SEEK message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
-        val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+        lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (val2 == 0))
         {
           FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
@@ -298,7 +299,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           break;
         }
         if(FFSS_CB.SCB.OnStrmSeek != NULL)
-          FFSS_CB.SCB.OnStrmSeek(Client,val,val2,val3);
+          FFSS_CB.SCB.OnStrmSeek(Client,val,val2,lval);
         break;
       default :
         FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),Type);
@@ -1009,4 +1010,4 @@ bool FS_UnInit(void)
   return true;
 }
 
-#endif
+#endif /* FFSS_DRIVER */

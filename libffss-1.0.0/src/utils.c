@@ -5,9 +5,9 @@
 FFSS_TCallbacks FFSS_CB;
 #ifdef DEBUG
 int N_DebugLevel = 6;
-#else
+#else /* !DEBUG */
 int N_DebugLevel = 0;
-#endif
+#endif /* DEBUG */
 bool N_SyslogOn = true;
 
 char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT] = {"mp3","wav","au","wma","snd","xm","mid","mod","ra"} ; /* 9 */
@@ -46,10 +46,10 @@ FFSS_PContextSpecific FFSS_Context_GetThreadSpecific(void)
   FFSS_PContextSpecific ts;
 
   SU_THREAD_ONCE(FFSS_Context_once,FFSS_Context_tsinitkey);
-  ts = SU_THREAD_GET_SPECIFIC(FFSS_Context_tskey);
+  ts = (FFSS_PContextSpecific) SU_THREAD_GET_SPECIFIC(FFSS_Context_tskey);
   if(ts == NULL)
   {
-    ts = malloc(sizeof(FFSS_TContextSpecific));
+    ts = (FFSS_PContextSpecific) malloc(sizeof(FFSS_TContextSpecific));
     memset(ts,0,sizeof(FFSS_TContextSpecific));
     SU_THREAD_SET_SPECIFIC(FFSS_Context_tskey,ts);
   }
@@ -99,11 +99,32 @@ FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long
   if((pos+sizeof(FFSS_Field)) <= len)
   {
     *new_pos = pos + sizeof(FFSS_Field);
+#ifdef IS_BIG_ENDIAN
+#error FIX ME !!
+#endif /* IS_BIG_ENDIAN */
     return *(FFSS_Field *)buf;
   }
   else
   {
-    FFSS_PrintSyslog(LOG_WARNING,"Longint out of message... DoS attack ?\n");
+    FFSS_PrintSyslog(LOG_WARNING,"LongInt out of message... DoS attack ?\n");
+    return 0;
+  }
+}
+
+FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos)
+{
+  int pos = buf - beginning;
+  if((pos+sizeof(FFSS_LongField)) <= len)
+  {
+    *new_pos = pos + sizeof(FFSS_LongField);
+#ifdef IS_BIG_ENDIAN
+#error FIX ME !!
+#endif /* IS_BIG_ENDIAN */
+    return *(FFSS_LongField *)buf;
+  }
+  else
+  {
+    FFSS_PrintSyslog(LOG_WARNING,"LongLongInt out of message... DoS attack ?\n");
     return 0;
   }
 }
@@ -173,11 +194,11 @@ FFSS_Field FFSS_ComputeChecksum(FFSS_Field Old,const char Buf[],long int Len)
 {
 #ifdef DISABLE_CHECKSUM
   return 1;
-#else
+#else /* !DISABLE_CHECKSUM */
   if(Buf == NULL)
     return adler32(0L, Z_NULL, 0);
   return adler32(Old, Buf, Len);
-#endif
+#endif /* DISABLE_CHECKSUM */
 }
 
 bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[])
@@ -198,19 +219,19 @@ bool FFSS_GetMyIP(SU_PServerInfo SI,const char IntName[])
       FFSS_MyIP = strdup(inet_ntoa(((struct sockaddr_in *)(&ic.ifc_req[i].ifr_addr))->sin_addr));
 #ifdef DEBUG
       printf("Using interface %s, with ip %s\n",IntName,FFSS_MyIP);
-#endif
+#endif /* DEBUG */
       return true;
     }
   }
   return false;
-#else
+#else /* !__unix__ */
   char Buf[1024];
 
   if(gethostname(Buf,sizeof(Buf)) != 0)
     return false;
   FFSS_MyIP = strdup(SU_AdrsOfPort(Buf));
   return true;
-#endif
+#endif /* __unix__ */
 }
 
 
@@ -221,7 +242,7 @@ bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
   res = compress(out,len_out,in,len_in);
 #ifdef DEBUG
   printf("Using Z compression (before=%ld - after=%ld)\n",len_in,*len_out);
-#endif
+#endif /* DEBUG */
   return (res == Z_OK);
 }
 
@@ -268,7 +289,7 @@ bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out)
   res = BZ2_bzBuffToBuffCompress(out,(unsigned int *)len_out,in,len_in,FFSS_BZLIB_BLOCK100K,0,0);
 #ifdef DEBUG
   printf("Using BZ compression (before=%ld - after=%ld)\n",len_in,*len_out);
-#endif
+#endif /* DEBUG */
   return (res == BZ_OK);
 }
 
@@ -306,7 +327,7 @@ char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out)
   }
   return out;
 }
-#endif
+#endif /* HAVE_BZLIB */
 
 /*
  * FFSS_GetFileTags
@@ -370,11 +391,11 @@ void FFSS_PrintSyslog(int Level,char *Txt, ...)
 #ifdef DEBUG
   if(!N_SyslogOn)
     return;
-#endif
+#endif /* DEBUG */
   va_start(argptr,Txt);
 #ifdef _WIN32
   _vsnprintf(Str,sizeof(Str),Txt,argptr);
-#else /* _WIN32 */
+#else /* !_WIN32 */
   vsnprintf(Str,sizeof(Str),Txt,argptr);
 #endif /* _WIN32 */
   va_end(argptr);
@@ -392,7 +413,7 @@ void FFSS_PrintDebug(int Level,char *Txt, ...)
     va_start(argptr,Txt);
 #ifdef _WIN32
     _vsnprintf(Str,sizeof(Str),Txt,argptr);
-#else /* _WIN32 */
+#else /* !_WIN32 */
     vsnprintf(Str,sizeof(Str),Txt,argptr);
 #endif /* _WIN32 */
     va_end(argptr);

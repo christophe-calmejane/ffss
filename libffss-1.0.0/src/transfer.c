@@ -22,8 +22,9 @@ void FFSS_FreeTransfer(FFSS_PTransfer T)
 SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
-  long int total=0,rpos=0,rlen;
-  FFSS_Field fsize,Checksum;
+  long int rpos=0,rlen;
+  FFSS_LongField fsize,total=0;
+  FFSS_Field Checksum;
   fd_set rfds;
   struct timeval tv;
   int retval,res,len;
@@ -87,6 +88,9 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     SU_END_THREAD(NULL);
   }
   res = send(FT->sock,(char *)&fsize,sizeof(fsize),SU_MSG_NOSIGNAL);
+#ifdef IS_BIG_ENDIAN
+#error FIX ME ??
+#endif /* IS_BIG_ENDIAN */
   if(res == SOCKET_ERROR)
   {
     FFSS_PrintDebug(1,"Error while uploading file (size) : %d %s\n",errno,strerror(errno));
@@ -142,7 +146,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     if((total+FFSS_TransferReadBufferSize) <= fsize)
       rlen = FFSS_TransferReadBufferSize;
     else
-      rlen = fsize - total;
+      rlen = (long int)(fsize - total);
     if(fread(RBuf,1,rlen,FT->fp) != rlen)
     {
       FFSS_PrintDebug(1,"Error reading file while uploading : %d\n",errno);
@@ -251,6 +255,9 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     free(RBuf);
     SU_END_THREAD(NULL);
   }
+#ifdef IS_BIG_ENDIAN
+#error FIX ME ??
+#endif /* IS_BIG_ENDIAN */
   res = send(FT->sock,(char *)&Checksum,sizeof(Checksum),SU_MSG_NOSIGNAL);
   if(res == SOCKET_ERROR)
   {
@@ -310,16 +317,14 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
   struct sockaddr sad;
-  int len;
+  long int len,res;
   int client;
   char Buf[FFSS_TRANSFER_BUFFER_SIZE*2];
-  int res;
-  long int total=0;
   fd_set rfds;
   struct timeval tv;
   int retval;
   FILE *fp;
-  FFSS_Field Size;
+  FFSS_LongField Size,total=0;
   FFSS_Field ChkSum,Checksum;
   bool error = false;
   time_t t1,t2;
@@ -349,8 +354,8 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     FFSS_FreeTransfer(FT);
     SU_END_THREAD(NULL);
   }
-  len = sizeof(sad);
-  client = accept(FT->sock,&sad,&len);
+  retval = sizeof(sad);
+  client = accept(FT->sock,&sad,&retval);
   SU_CLOSE_SOCKET(FT->sock);
   FT->sock = client;
   FFSS_PrintDebug(1,"Connection accepted from %s\n",inet_ntoa(((struct sockaddr_in *)&sad)->sin_addr));
@@ -424,6 +429,9 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   if(!error)
   {
     res = recv(FT->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+#ifdef IS_BIG_ENDIAN
+#error FIX ME ??
+#endif /* IS_BIG_ENDIAN */
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(1,"Error while downloading file (size) : %d %s\n",errno,strerror(errno));
@@ -508,8 +516,8 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     {
       context;
       len = sizeof(Buf);
-      if(len > (Size-total))
-        len = Size-total;
+      if(len > (long int)(Size-total)) /* WARNING HERE !!! This may bug, depending on the cast policy */
+        len = (long int)(Size-total);
       if(len == 0) /* End of file, getting checksum */
         res = recv(FT->sock,&ChkSum,sizeof(Checksum),SU_MSG_NOSIGNAL);
       else
@@ -598,9 +606,9 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
             context;
 #ifdef DISABLE_CHECKSUM
             if(true)
-#else
+#else /* !DISABLE_CHECKSUM */
             if((ChkSum == Checksum) || (ChkSum == 1)) /* A ChkSum of 1 means NO checksum on the other side */
-#endif
+#endif /* DISABLE_CHECKSUM */
             {
               FFSS_PrintDebug(1,"File successfully downloaded\n");
               if(FT->LocalPath != NULL)
@@ -671,7 +679,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 }
 
 
-bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],long int StartingPos,int Port,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
+bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],FFSS_LongField StartingPos,int Port,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
 {
   FILE *fp;
   SU_THREAD_HANDLE Thread;
@@ -731,7 +739,7 @@ bool FFSS_UploadFile(SU_PClientSocket Client,const char FilePath[],long int Star
   return true;
 }
 
-bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],long int StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
+bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const char LocalPath[],FFSS_LongField StartingPos,void *User,bool UseConnSock,FFSS_PTransfer *FT_out)
 {
   int sock;
   SU_THREAD_HANDLE Thread;
@@ -858,9 +866,9 @@ void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
   {
 #ifdef DISABLE_CHECKSUM
     if(true)
-#else
+#else /* !DISABLE_CHECKSUM */
     if((Checksum == FT->XI.Checksum) || (Checksum == 1)) /* A Checksum of 1 means NO checksum on the other side */
-#endif
+#endif /* DISABLE_CHECKSUM */
     {
       if(FT->ThreadType == FFSS_THREAD_SERVER)
       {
