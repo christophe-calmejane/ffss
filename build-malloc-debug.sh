@@ -5,7 +5,7 @@ echo
 echo '############# BUILDING SKYUTILS LIBRARY ###############'
 echo
 cd skyutils
-./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-ansi
+./configure --includedir=$archdir/skyutils/src --libdir=$archdir/skyutils/src/.libs --enable-reentrant --enable-trace_internal --enable-ansi
 make
 cd ..
 echo
@@ -13,7 +13,7 @@ echo '############# BUILDING FFSS LIBRARY ###############'
 echo
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --includedir=$libdir/src --libdir=$libdir/src/.libs --enable-context --enable-debug --with-skyutils=$archdir/skyutils
+./configure --includedir=$libdir/src --libdir=$libdir/src/.libs --enable-context --enable-debug --enable-malloc_trace --with-skyutils=$archdir/skyutils
 #./configure --includedir=$libdir/src--libdir=$libdir/src/.libs --enable-context --enable-debug --with-skyutils=$archdir/skyutils
 make
 cd ..
@@ -28,15 +28,15 @@ then
 	cd appli/client/example
 	make
         cd ../text
-	./configure --with-ffss=$libdir --enable-debug
+	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
 	make
         cd ../cgi
         make
         cd ../gtk
-	./configure --with-ffss=$libdir --enable-debug
+	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
 	make
         cd ../ffssnetplay
-	./configure --with-ffss=$libdir --enable-debug
+	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
 	make
         cd ../../..
 fi
@@ -49,7 +49,7 @@ then
 	echo '############# BUILDING FFSS SERVER ###############'
 	echo
 	cd appli/server
-	./configure --with-ffss=$libdir --enable-debug
+	./configure --with-ffss=$libdir --enable-debug --enable-malloc_trace
 	make
         cd ../..
 fi
@@ -62,7 +62,7 @@ then
 	echo '############# BUILDING FFSS MASTER ###############'
 	echo
 	cd appli/master
-	./configure --with-ffss=$libdir --enable-debug --enable-context
+	./configure --with-ffss=$libdir --enable-debug --enable-context --enable-malloc_trace
 	make
 	cd ../..
 fi
