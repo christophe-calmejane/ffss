@@ -14,21 +14,25 @@
 
 #define FFSS_CHECK_FILES_SERVER        4
 #define FFSS_CHECK_FILES_MANAGER       5
-#define FFSS_CHECK_FILES_SHAREMAN      6
+#define FFSS_CHECK_FILES_SHERMAN       6
 #define FFSS_CHECK_FILES_FFSSDKILLER   7
 
 #define FFSS_CHECK_FILES_TRAYCONN      8
 #define FFSS_CHECK_FILES_LOG           9
 #define FFSS_CHECK_FILES_CONFCONN      10
 #define FFSS_CHECK_FILES_IPFILTER      11
+#define FFSS_CHECK_FILES_IPFILTER_GUI  12
+#define FFSS_CHECK_FILES_QOS           13
+#define FFSS_CHECK_FILES_QOS_GUI       14
+#define FFSS_CHECK_FILES_HIDESHARE     15
 
-#define FFSS_CHECK_FILES_COUNT         12
+#define FFSS_CHECK_FILES_COUNT         16
 
 
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
 #define FFSS_CHECK_URL_PATCHES FFSS_CHECK_URL_BASE "CurrentPatches"
 #define FFSS_CHECK_URL_GET_PATCHES FFSS_CHECK_URL_BASE "patches/"
-#define FFSS_CHECK_RB_BASE "HKEY_CURRENT_USER\\Software\\FFSS\\AutoCheck_"
+#define FFSS_CHECK_RB_BASE FFSS_LM_REGISTRY_PATH "AutoCheck_"
 #define FFSS_CHECK_RB_CONN_TYPE  FFSS_CHECK_RB_BASE "Type"
 #define FFSS_CHECK_RB_PROXY_HOST FFSS_CHECK_RB_BASE "Proxy_Host"
 #define FFSS_CHECK_RB_PROXY_PORT FFSS_CHECK_RB_BASE "Proxy_Port"
@@ -49,13 +53,17 @@ FCU_TFiles FCU_Files[FFSS_CHECK_FILES_COUNT] = {{"",false},
 
                                                 {"Server\\ffssd.exe",true},
                                                 {"Server\\FFSS_Share.exe",false},
-                                                {"Server\\ShareMan.exe",false},
+                                                {"Server\\sherman.exe",false},
                                                 {"Server\\ffssdkiller.exe",false},
 
                                                 {"Server\\Plugins\\TrayConn.dll",true},
                                                 {"Server\\Plugins\\Log.dll",true},
                                                 {"Server\\Plugins\\ConfConn.dll",true},
-                                                {"Server\\Plugins\\ipfilter.dll",true}
+                                                {"Server\\Plugins\\ipfinstall.dll",true},
+                                                {"Server\\Plugins\\ipfgui.dll",true},
+                                                {"Server\\Plugins\\qosinstall.dll",true},
+                                                {"Server\\Plugins\\qosgui.dll",true},
+                                                {"Server\\Plugins\\hideshare.dll",true}
 
                                                 };
 
@@ -67,7 +75,7 @@ bool ChangeLog = false;
 
 void ProcOnOkRedirect(SU_PAnswer Ans,void *User);
 
-#define FFSS_REGISTRY_PATH_PROCESSID FFSS_REGISTRY_PATH "Server\\ProcessId"
+#define FFSS_REGISTRY_PATH_PROCESSID FFSS_LM_REGISTRY_PATH "Server\\ProcessId"
 #define SLEEP_TIME 100
 #define MAX_WAIT 30
 
@@ -106,7 +114,7 @@ void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
   char FileToPatch[1024];
   RECT rect1,rect2;
 
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
     return;
   snprintf(FileToPatch,sizeof(FileToPatch),"%s%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
@@ -169,7 +177,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   char InstallDir[512];
   char FileToPatch[1024];
 
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
     return;
   snprintf(FileToPatch,sizeof(FileToPatch),"%s%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
@@ -203,7 +211,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   fwrite(Ans->Data,Ans->Data_Length,1,fp);
   fclose(fp);
   /* Update File version in registry */
-  snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_REGISTRY_PATH,FCU_Files[CurrentIdx].FilePath);
+  snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_LM_REGISTRY_PATH,FCU_Files[CurrentIdx].FilePath);
   SU_RB_SetStrValue(buf,CurrentFileVersion);
   snprintf(buf,sizeof(buf),"Successfully patched file '%s' to version %s",FileToPatch,CurrentFileVersion);
   MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
@@ -255,8 +263,8 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
 
   if(Ans->Data == NULL)
     return;
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
   {
     MessageBox(NULL,"InstallDirectory key not found in registry. FFSS installation may be corrupted","FFSS Auto Patch Info",MB_OK | MB_ICONEXCLAMATION);
@@ -291,7 +299,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     tmp = strtok(NULL," ");
     if(tmp == NULL)
       continue;
-    snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_REGISTRY_PATH,FCU_Files[idx].FilePath);
+    snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_LM_REGISTRY_PATH,FCU_Files[idx].FilePath);
     SU_RB_GetStrValue(buf,FileVersion,sizeof(FileVersion),"");
     if((FileVersion[0] != 0) && (strncmp(tmp,FileVersion,sizeof(FileVersion)) <= 0))
       continue;

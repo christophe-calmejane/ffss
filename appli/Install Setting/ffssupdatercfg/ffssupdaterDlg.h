@@ -14,6 +14,8 @@
 class CFfssupdaterDlg : public CDialog
 {
 private:
+	bool Localize(void);
+	void ErrorMessage( CString &strDest, DWORD nError );
 	void UpdatePane( void );
 	BOOL	m_bUseProxy;
 	CRegKey	m_RegKey;
@@ -49,8 +51,12 @@ protected:
 	afx_msg void OnDirect();
 	afx_msg void OnProxy();
 	afx_msg void OnButton();
+	afx_msg void OnNoConn();
+	afx_msg void OnTestSettings();
+	afx_msg void OnIe();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+
 public:
 	afx_msg void OnDestroy();
 };

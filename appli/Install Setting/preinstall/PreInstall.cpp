@@ -60,19 +60,58 @@ BOOL CPreInstallApp::InitInstance()
 
 	CPreInstallDlg dlg;
 	m_pMainWnd = &dlg;
-	int nResponse = dlg.DoModal();
-	if (nResponse == IDOK)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
-	}
-	else if (nResponse == IDCANCEL)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with Cancel
-	}
+
+	/* Install string table */
+	InstallStringTables();
+
+	dlg.DoModal();
 
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
 	return FALSE;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void CPreInstallApp::InstallStringTables()
+{
+	CRegKey		RegKey;
+	char		buffer[16];
+	DWORD		nBufSize;
+
+#ifdef _DEBUG
+	MT_ST_INSTANCE->AddTable("English","en.txt");
+	MT_ST_INSTANCE->AddTable("French","fr.txt");
+#else
+	MT_ST_INSTANCE->AddTable("English",__argv[0]);
+	MT_ST_INSTANCE->AddTable("French",__argv[0]);
+#endif /* !_DEBUG */
+
+	if( __argc!=2 ) {
+		// Check for the registry
+		if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_SUBKEY)!=ERROR_SUCCESS ) {
+			MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+		} else {
+			nBufSize=sizeof(buffer);
+			if( RegKey.QueryValue(buffer,FFSS_REG_FAVORITE_LANGUAGE,&nBufSize)!=ERROR_SUCCESS ) {
+				MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+			} else {
+				if( stricmp(buffer,"en")==0 ) {
+					MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+				} else {
+					if( stricmp(buffer,"fr")==0 ) {
+						MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
+					}
+				}				
+			}
+			RegKey.Close();
+		}
+	} else {
+		if( stricmp(__argv[1],"en")==0 ) {
+			MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+		} else {
+			if( stricmp(__argv[1],"fr")==0 ) {
+				MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
+			}
+		}
+	}
 }

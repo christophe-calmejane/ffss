@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include <fstream.h>
 
 #include "PreInstall.h"
 #include "PreInstallDlg.h"
@@ -17,7 +16,6 @@ static char THIS_FILE[] = __FILE__;
 #define SHARE_LIST_OLD_SEP "#"
 
 #define PLUGINS_FILE	"plugins.lst"
-#define PLUGINS_PROMPT	"\n    Select a plugin in the list"
 
 #pragma pack(1)
 struct share_info_50 {
@@ -90,6 +88,9 @@ BOOL CPreInstallDlg::OnInitDialog()
 	DWORD			dwStringSize;
 	OSVERSIONINFO	Os;
 
+	/* Set dialog box language */
+	Localize();
+
 	/* Import function to enum shares */
 	Os.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
 	GetVersionEx(&Os);
@@ -131,17 +132,17 @@ BOOL CPreInstallDlg::OnInitDialog()
 	}
 
 	/* Get values from a previous configuration in registry */
-	if( m_RegKey.Open(HKEY_CURRENT_USER,"Software\\FFSS\\Server")==ERROR_SUCCESS ) {
+	if( m_RegKey.Open(FFSS_REG_KEY,FFSS_REG_SERVERKEY)==ERROR_SUCCESS ) {
 		dwStringSize=sizeof(szName);
-		if( m_RegKey.QueryValue(szName,"Global_Name",&dwStringSize)==ERROR_SUCCESS ) {
+		if( m_RegKey.QueryValue(szName,FFSS_REG_SVR_NAME,&dwStringSize)==ERROR_SUCCESS ) {
 			m_strServer=szName;
 		}
 		dwStringSize=sizeof(szComment);
-		if( m_RegKey.QueryValue(szComment,"Global_Comment",&dwStringSize)==ERROR_SUCCESS ) {
+		if( m_RegKey.QueryValue(szComment,FFSS_REG_SVR_COMMENT,&dwStringSize)==ERROR_SUCCESS ) {
 			m_strComment=szComment;
 		}
 		dwStringSize=sizeof(szMaster);
-		if( m_RegKey.QueryValue(szMaster,"Global_Master",&dwStringSize)==ERROR_SUCCESS ) {
+		if( m_RegKey.QueryValue(szMaster,FFSS_REG_SVR_MASTER,&dwStringSize)==ERROR_SUCCESS ) {
 			m_strMaster=szMaster;
 		}
 
@@ -149,9 +150,8 @@ BOOL CPreInstallDlg::OnInitDialog()
 	} 
 
 	/*************************************************************************/ 
-	SetDlgItemText(IDC_PLUGINDESC,PLUGINS_PROMPT);
 
-	m_Plugins.InsertColumn(0,"Name",LVCFMT_LEFT,160);
+	m_Plugins.InsertColumn(0,MT_ST_LOCAL(ST_HDR_NAME),LVCFMT_LEFT,160);
 	m_Plugins.SetExtendedStyle(LVS_EX_CHECKBOXES|LVS_EX_FULLROWSELECT);
 	GetPlugins();
 
@@ -209,24 +209,24 @@ void CPreInstallDlg::OnOk()
 
 	/*************************************************************************/
 	/* Save registry keys                                                    */
-	m_RegKey.Create(HKEY_CURRENT_USER,"Software\\FFSS\\Server");
+	m_RegKey.Create(FFSS_REG_KEY,FFSS_REG_SERVERKEY);
 
 	/* Save server name to registry */
 	if( m_strServer.IsEmpty() ) {
-		AfxMessageBox("You need to set a name for this server");
+		AfxMessageBox(MT_ST_LOCAL(ST_SET_A_NAME));
 		return;
 	} else {
-		m_RegKey.SetValue((LPCTSTR)m_strServer,"Global_Name");
+		m_RegKey.SetValue((LPCTSTR)m_strServer,FFSS_REG_SVR_NAME);
 	}
 
 	/* Save server comment to registry */
 	if( m_strComment.IsEmpty()==FALSE ) {
-		m_RegKey.SetValue((LPCTSTR)m_strComment,"Global_Comment");
+		m_RegKey.SetValue((LPCTSTR)m_strComment,FFSS_REG_SVR_COMMENT);
 	}
 
 	/* Save master name to registry */
 	if( m_strMaster.IsEmpty()==FALSE ) {
-		m_RegKey.SetValue((LPCTSTR)m_strMaster,"Global_Master");
+		m_RegKey.SetValue((LPCTSTR)m_strMaster,FFSS_REG_SVR_MASTER);
 	}
 
 	/*************************************************************************/
@@ -239,15 +239,16 @@ void CPreInstallDlg::OnOk()
 		} else {
 			lSharesAdded=ImportWin9xShares();
 		}
-		strReport.Format("%d shares have been added",lSharesAdded);
-		MessageBox((LPCTSTR)strReport,"Shares added",MB_OK|MB_ICONINFORMATION);
+		strReport.Format(MT_ST_LOCAL(ST_SHARES_COUNT),lSharesAdded);
+		MessageBox((LPCTSTR)strReport,MT_ST_LOCAL(ST_SHARE_ADDED),
+			MB_OK|MB_ICONINFORMATION);
 	}
 	
 	m_RegKey.Close();
 
 	/*************************************************************************/
 	/* Do some stuff with plugins                                            */
-	m_RegKey.Create(HKEY_CURRENT_USER,"Software\\FFSS\\Server\\Plugins");
+	m_RegKey.Create(FFSS_REG_KEY,FFSS_REG_PLUGINSKEY);
 	for(nItem=0; nItem<m_Plugins.GetItemCount(); nItem++) {
 		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
 		if( m_Plugins.GetCheck(nItem)==FALSE ) {
@@ -470,7 +471,7 @@ bool CPreInstallDlg::GetPlugins()
 	strcpy(szPluginsDirectory,"");
 
 	/* Get server directory */
-	if( RegKey.Open(HKEY_CURRENT_USER,"Software\\FFSS\\Server")==ERROR_SUCCESS ) {
+	if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_SERVERKEY)==ERROR_SUCCESS ) {
 		dwStringSize=sizeof(szPluginsDirectory);
 		if( RegKey.QueryValue(szPluginsDirectory,"ServerDirectory",&dwStringSize)!=ERROR_SUCCESS ) {
 			strcpy(szPluginsDirectory,"");
@@ -487,7 +488,7 @@ bool CPreInstallDlg::GetPlugins()
 	strcpy(szPluginsWildCards,szPluginsDirectory);
 	strcat(szPluginsWildCards,"*.dll");
 
-	if( RegKey.Open(HKEY_CURRENT_USER,"Software\\FFSS\\Server\\Plugins")==ERROR_SUCCESS ) {
+	if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_PLUGINSKEY)==ERROR_SUCCESS ) {
 		bKeyExists=true;
 	}
 
@@ -505,10 +506,10 @@ bool CPreInstallDlg::GetPlugins()
 			if( bKeyExists==true ) {
 				m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
 			}
+			nItem++;
 		}
 
 		while( FindNextFile(hFind, &wfd)==TRUE ) {
-			nItem++;
 			strcpy(szPluginFilename,szPluginsDirectory);
 			strcat(szPluginFilename,wfd.cFileName);
 			pPI=GetPluginInfo(szPluginFilename);
@@ -518,6 +519,7 @@ bool CPreInstallDlg::GetPlugins()
 				if( bKeyExists==true ) {
 					m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
 				}
+				nItem++;
 			}
 		}
 		FindClose(hFind);
@@ -550,7 +552,7 @@ void CPreInstallDlg::OnClickPlugins(NMHDR* pNMHDR, LRESULT* pResult)
 	PluginInfo*	pPI;
 
 	if( pos==NULL ) {
-		SetDlgItemText(IDC_PLUGINDESC,PLUGINS_PROMPT);
+		SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));
 	} else {
 		nItem = m_Plugins.GetNextSelectedItem(pos);
 		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
@@ -610,4 +612,18 @@ PluginInfo::~PluginInfo()
 	if( szPathToDLL!=NULL ) {
 		free(szPathToDLL);
 	}
+}
+
+/*****************************************************************************/
+bool CPreInstallDlg::Localize()
+{
+	SetWindowText(MT_ST_LOCAL(ST_WIN_TITLE));
+	SetDlgItemText(IDC_LSVRNAME,MT_ST_LOCAL(ST_SVR_NAME));
+	SetDlgItemText(IDC_LSVRCOMMENT,MT_ST_LOCAL(ST_SVR_COMMENT));
+	SetDlgItemText(IDC_LMSTNAME,MT_ST_LOCAL(ST_MST_NAME));
+	SetDlgItemText(IDC_SAMBA,MT_ST_LOCAL(ST_IMPORT_SHARES));
+	SetDlgItemText(IDC_LPANEL,MT_ST_LOCAL(ST_LPANEL));	
+	SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));
+		
+	return(true);
 }

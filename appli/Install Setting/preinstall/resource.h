@@ -12,6 +12,10 @@
 #define ID_BUTTON                       1004
 #define IDC_PLUGINS                     1005
 #define IDC_PLUGINDESC                  1009
+#define IDC_LSVRNAME                    1010
+#define IDC_LSVRCOMMENT                 1011
+#define IDC_LMSTNAME                    1012
+#define IDC_LPANEL                      1013
 
 // Next default values for new objects
 // 
@@ -19,7 +23,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

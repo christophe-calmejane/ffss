@@ -21,6 +21,29 @@
 #include <atlbase.h>
 
 
+#include "StringTable.h"
+
+#include "MT.h"
+#ifdef _DEBUG
+#define MT_ST_INSTANCE  MT_CSingleton<MT_CStringTable>::Instance()
+#else
+#define MT_ST_INSTANCE  MT_CSingleton<MT_CResourceStringTable>::Instance()
+#endif 
+#define MT_ST_LOCAL(id) MT_ST_INSTANCE->GetString(id)
+
+#define FFSS_REG_KEY					HKEY_LOCAL_MACHINE
+#define FFSS_REG_SUBKEY					"Software\\FFSS"
+#define FFSS_REG_VALUE_USE_PROXY		"Autocheck_Type" // 0 = no conn, 1 = direct, 2 = proxy, 3 = ie
+#define FFSS_REG_VALUE_PROXY_HOST		"Autocheck_Proxy_Host"
+#define FFSS_REG_VALUE_PROXY_PORT		"Autocheck_Proxy_Port"
+#define FFSS_REG_VALUE_PROXY_USER		"Autocheck_Proxy_User"
+#define FFSS_REG_VALUE_PROXY_PASSWORD	"Autocheck_Proxy_Password"
+#define FFSS_REG_FAVORITE_LANGUAGE		"FavoriteLanguage"
+
+#define FFSS_INET_AGENT	"FFSS Updater (Test Settings)"
+#define FFSS_TEST_PAGE	"http://www.ffss.fr.st"
+
+
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 

@@ -51,6 +51,7 @@ typedef FSP_PInfos (*procPluginQueryInfos)(void);
 class CPreInstallDlg : public CDialog
 {
 private:
+	bool Localize();
 	void ConvertFromOldFormat( void );
 	void AddShare( const char *szShareName, const char *szSharePath, 
 				   const char *szShareComment,const char *szSharePasswd,
@@ -103,6 +104,7 @@ protected:
 	afx_msg void OnDestroy();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -4,7 +4,7 @@
 
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
 #define FFSS_CHECK_URL_VERSION FFSS_CHECK_URL_BASE "CurrentVersion"
-#define FFSS_CHECK_RB_BASE "HKEY_CURRENT_USER\\Software\\FFSS\\AutoCheck_"
+#define FFSS_CHECK_RB_BASE FFSS_LM_REGISTRY_PATH "AutoCheck_"
 #define FFSS_CHECK_RB_CONN_TYPE  FFSS_CHECK_RB_BASE "Type"
 #define FFSS_CHECK_RB_PROXY_HOST FFSS_CHECK_RB_BASE "Proxy_Host"
 #define FFSS_CHECK_RB_PROXY_PORT FFSS_CHECK_RB_BASE "Proxy_Port"
@@ -29,7 +29,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     pos[0] = 0;
     pos++;
   }
-  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
   if(strncmp(Data,Version,sizeof(Version)) > 0)
   {
     if((pos == NULL) || (pos[0] == 0))

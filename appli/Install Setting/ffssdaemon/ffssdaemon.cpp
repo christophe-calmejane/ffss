@@ -7,13 +7,11 @@
 
 #include <ffss.h>
 
-#define FFSS_REGISTRY_PATH_PROCESSID FFSS_REGISTRY_PATH "Server\\ProcessId"
-#define FFSS_REGISTRY_PATH_SERVERDIR FFSS_REGISTRY_PATH "Server\\ServerDirectory"
+#define FFSS_REGISTRY_PATH_PROCESSID FFSS_LM_REGISTRY_PATH "Server\\ProcessId"
+#define FFSS_REGISTRY_PATH_SERVERDIR FFSS_LM_REGISTRY_PATH "Server\\ServerDirectory"
 
 #define SLEEP_TIME 100
 #define MAX_WAIT 50
-
-#define ERR_CreateProcess 10000
 
 #include <windows.h>
 #include <string.h>
