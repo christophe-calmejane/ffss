@@ -6,6 +6,10 @@ ou sur une machine non listee dans none, j'utilise ce qu'on me donne
 pour envoyer des messages, cad soit l'IP soit le nom de machine.
 Je ne peux pas avoir l'IP a partir du nom...c'est pas genant ?
 Ou alors il faut que j'utilise des fonctions DNS...
+>> Il ne faut pas utiliser la correspondance host->ip... car dans un server (ce qui est liste dans un domaine)
+>> on peut mettre un nom qui ne correspond pas a l'alias dns.
+>> En revanche, si l'utilisateur te donne un nom de host, ou une ip, tu cherches pas a comprendre, tu utilises tel quel.
+>> Si il donne une chaine non resolue par le dns, c'est son pb (le sendmessage foirera de toutes facons)
 
 5) Il faudrait un genre de SyslogLevel un peu comme le N_DebugLevel,
 une variable que je puisse changer en live dans mon prog et qui,
@@ -13,6 +17,10 @@ en fonction de sa valeur, lance le syslog ou pas.
 G pas envie de devoir recompiler la lib sans debug pour ne pas avoir
 'FFSS client waiting on arbitrary UDP port' ni
 'FFSS client shut down' dans ma sortie standart.
+>> Nan je ne peux pas faire ca. Si je devais ca ne serait que temporaire, mais ce n'est pas propre de faire ca.
+>> Cependant, en mode debug, je peux rajouter une variable globale (comme N_DebugLevel) qui desactive le syslog.
+>> Mais attention, elle ne sera valable que en mode debug... donc attention a ton code !
+>> Vala, c'est fait -> N_SyslogOn a true par defaut, fout le a false pour pas printer le FFSS_PrintSyslog (uniquement en mode DEBUG) !!
 
 7) ca serait pas possible dans la recherche, de me renvoyer un moyen
 de faire la difference entre une reponse fichier et une reponse dossier.
@@ -22,24 +30,36 @@ J'ai pas envie de faire un algo qui regarde si ya une extension ou pas,
 car ce n'est pas fiable.
 Il faudrait en fait me filer une structure FC_TEntry, avec la taille
 du fichier/dossier, ca peut etre pratique aussi.
+>> Ce n'est pas ideal nan. Quand on a pense aux messages de recherche, on a trouve qu'un renvoie des reponses
+>> directement en chaines etait le plus simple. Donc dans l'immediat, il n'est pas question de changer ce message.
+>> Cependant, on pourrait peut-etre (PEUT-ETRE) rajouter un 2e message de recherche... a voir, il y a plus urgent pour le moment :)
 
 8) est-ce que me renvoyer la taille des dossiers (la taille reelle totale)
 lors d'un listing serait possible ?
 Ca serait vraiment pratique.
+>> Je vais voir si c'est possible facilement... a suivre :)
 
 9) probleme de signaux avec les thread :
 J'arrive pas a relancer une thread (pthread_create me redonne jamais la
 main) apres l'avoir kille, meme si je fais un free apres le kill et un
 malloc avant le pthread_create.
+>> J'avais deja eu ce genre de problemes... en debuggant, g remarque que pthread_create me rendait jamais la main.
+>> Si je me souviens bien, c'etait a cause d'un mauvais link de la lib pthread
+>> (il faut le mettre au bon moment dans la ligne de commande du link... mais ils ont creer une option -pthread pour que
+>>  le link soit fait au bon moment justement)
 
 10) J'ai un master qui enregistre sa base de donnee pour la recherche
 dans Index.dat, mais au chargement il cherche un Dump.dat, c'est
 normal ?
+>> C'est le mode debug ca.... j'utilise ca pour pas overwriter une base que j'utilise pour le debug
 
 11) ca serait pas mal de me filer des ptites stats lors d'un listing
 de domaines (rien que le nb de machines, ou de machines on).
 A moins que tu preferes que je te bourrine a coups de ServerListing...:)
 MMM...ca serait pas un plugin a faire (ke je devrais faire ? :) ?
+>> Hum pourquoi pas... mais ca te sert a quoi d'avoir le nombre de machines ON ?
+>> Quand tu fais un ServerListing tu l'as... et en general quand on veux connaitre
+>> combien y a de machines On, on veut la liste de ces machines.. donc un ServerListing, nan ?
 
 12)
 Quand je lance mon client avec des arguments, pour que ca init la lib,
@@ -49,6 +69,7 @@ FFSS client shut down
 FFSS(1 1009793186:820) : Error on UDP port (SOCKET_ERROR : 9)
 x fois, puis
 FFSS(1 1009793186:870) : Too many consecutive errors on UDP port, exiting
+>> Heu je vois pas la comment ca... faudrait que je vois ton code exact pour comprendre :)
 
 
 ---------------------------------------
