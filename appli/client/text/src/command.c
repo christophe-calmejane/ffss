@@ -730,7 +730,9 @@ bool FCA_find_cmd(char *args)
 	if(p-start<4 && p-start>0)
 		FCA_print_warning("%s is considered as a file type", start);
 
+#ifdef BENCHMARK
 	ftime(&FCA_starttime);
+#endif
 	if( domain==NULL || (domain!=NULL && !SU_strcasecmp(domain,"None")) ) {	/* domain None or / -> search on all */
 		FFSS_PrintDebug(5, "(client) looking for '%s' on all domains\n", args, domain);
 		FCA_inDispFind=true;

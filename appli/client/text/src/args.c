@@ -70,9 +70,11 @@ unsigned short int FCA_interpret_args(void)
 					case FCA_SHARG_EXEC_CMD:	/* exec a command */
 						nextToStore=&(FCA_args.cmd);
 						break;
+#ifdef BENCHMARK
 					case FCA_SHARG_BENCHFILE:	/* run a benchmark from file */
 						nextToStore=&(FCA_args.benchfile);
 						break;
+#endif
 					case FCA_SHARG_GET_VERSION:	/* get version */
 						FCA_version();
 						break;

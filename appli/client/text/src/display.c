@@ -461,9 +461,11 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
 	const char *p;
 	int *res=NULL;
+#ifdef BENCHMARK
 	struct timeb now;
 	time_t t;
 	unsigned short m;
+#endif
 
 	if(!FCA_quiet)
 		FCA_pre_search_ans(Query);
@@ -522,7 +524,8 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	if(NbAnswers)	/* no anwser on any domain */
 	    	FCA_infos(" in domain %s.", Domain);
 	FCA_post_infos();
-	
+
+#ifdef BENCHMARK
 	ftime(&FCA_stoptime);
 	t=FCA_stoptime.time-FCA_starttime.time;
 	m=FCA_stoptime.millitm-FCA_starttime.millitm;
@@ -534,7 +537,6 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		m=(-m)%1000;
 	}
 
-#ifdef BENCHMARK
 	FCA_pre_infos();
 	FCA_infos("duration: ");
 	FCA_main_num(t, "second");
