@@ -468,7 +468,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 void FCA_print_search(const char *Query,const char *Domain,const char **Answers,int NbAnswers)
 {
 	int ia;
-	char tmp[128], tmp2[128];
+	char tmp[128], tmp2[128], **buf=(char**)Answers;
 	char dom[FFSS_MAX_DOMAIN_LENGTH+3];
 	const char *p;
 	int *res=NULL;
@@ -482,8 +482,14 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 	if(!FCA_quiet)
 		FCA_pre_search_ans(Query);
 	if(NbAnswers && !FCA_quiet) {
-		if(FCA_VAR_IS_ON(FCA_sort))
-			FCA_sort_chartab(res,Answers, NbAnswers);
+		if(FCA_VAR_IS_ON(FCA_sort)) {
+			buf=malloc(NbAnswers*sizeof(char*));
+			if(!buf)
+				FCA_crash("not enough memory");
+			for(ia=0; ia<NbAnswers; ia++)
+				buf[ia]=(char*)(Answers[ia]+1);
+			FCA_sort_chartab(res,(const char**)buf, NbAnswers);
+		}
 		FCA_tab_width=38;
 		FCA_tab_top();
 		
@@ -511,15 +517,15 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		for(ia=0; ia<NbAnswers; ia++) {
 			FCA_tab_pre_item();
 			 FCA_pre_tab_item();
-			p=strrchr(Answers[res[ia]], '/');
-			if(!p)	p=Answers[res[ia]];
+			p=strrchr(buf[res[ia]], '/');
+			if(!p)	p=buf[res[ia]];
 			if(!strchr(p, '.')) {
-				  FCA_pre_dir(dom, Answers[res[ia]], true);
-				   FCA_tab_item(Answers[res[ia]],0);
+				  FCA_pre_dir(dom, buf[res[ia]], true);
+				   FCA_tab_item(buf[res[ia]],0);
 				  FCA_post_dir(true);
 			} else {
-				  FCA_pre_file(dom, Answers[res[ia]], true);
-				   FCA_tab_item(Answers[res[ia]],0);
+				  FCA_pre_file(dom, buf[res[ia]], true);
+				   FCA_tab_item(buf[res[ia]],0);
 				  FCA_post_file(true);
 			}
 			 FCA_post_tab_item();
