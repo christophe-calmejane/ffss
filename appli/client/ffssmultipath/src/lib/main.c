@@ -101,7 +101,16 @@ int main(int argc, char *argv[])
   signal(SIGTERM,handint);
 
   sch = FMP_SearchFiles(argv[1],0);
-  while(!Complete) SU_SLEEP(5);
+  while(!Complete)
+  {
+    SU_SLEEP(1);
+    /*printf("CALLING PAUSE\n");
+    FMP_PauseDownload(fil);
+    SU_SLEEP(15);
+    printf("CALLING RESUME\n");
+    FMP_ResumeDownload(fil);
+    SU_SLEEP(20);*/
+  }
   return 0;
 }
 
