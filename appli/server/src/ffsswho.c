@@ -1,104 +1,49 @@
-/*
-  gcc ffsswho.c -o ffsswho -O2 -Wall -pthread -I /home/killer/travail/ffss/libffss-1.0.0/skyutils-1.15 -L/home/killer/travail/ffss/libffss-1.0.0/skyutils-1.15 -I/usr/local/include -L/home/killer/travail/ffss/libffss-1.0.0/src/.libs -I/home/killer/travail/ffss/libffss-1.0.0/src /home/killer/travail/ffss/libffss-1.0.0/src/.libs/libffss.a /home/killer/travail/ffss/libffss-1.0.0/src/.libs/libskyutils.a
-*/
 
-#include "server.h"
+#include "confapi.h"
 
-#define FFSSWHO_VERSION "1.0-pre3"
+#define FFSSWHO_VERSION "1.0-pre4"
 
 bool RequestConns(SU_PClientSocket Client,const char Path[])
 {
-  char Buf[10000];
-  FFSS_Field Size;
-  int Got,Pos,Nb,I,J;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
-  char *IP,*X,*Y,*File,*Pct;
+  SU_PList Conns,Ptr,Ptr2;
+  FSCA_PConn Conn;
 
-  /* Create request */
-  Buf[0] = FS_OPCODE_GETSHRCONNS;
-  Size = 1;
-  SU_strcpy(Buf+Size,Path,sizeof(Buf)-Size);
-  Size += strlen(Path) + 1;
-  /* Send request */
-  SU_ClientSendBuf(Client,(char *)&Size,sizeof(Size));
-  SU_ClientSendBuf(Client,Buf,Size);
-
-  /* Prepare to get answer */
-  FD_ZERO(&rfds);
-  FD_SET(Client->sock,&rfds);
-  tv.tv_sec = 5;
-  tv.tv_usec = 0;
-  retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
-  if(!retval)
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  Got = recv(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
-  if(Got != sizeof(Size))
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  Got = recv(Client->sock,Buf,Size,SU_MSG_NOSIGNAL);
-  if(Got < 1)
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  if(Buf[0] != FS_OPCODE_ACK)
-    return true;
-  while(Got < Size)
-  {
-    Got += recv(Client->sock,Buf+Got,Size-Got,SU_MSG_NOSIGNAL);
-  }
-  Pos = 1;
-  Nb = atoi(Buf+Pos);
-  Pos += strlen(Buf+Pos) + 1;
-  if(Nb == 0)
+  Conns = FSCA_RequestConns(Client,Path);
+  if(Conns == NULL)
   {
     printf("No connection\n");
     return true;
   }
   printf("%-15s  %-35s  Tranfers  Streamings\n","IP","Host");
   printf("--------------------------------------------------------------------------\n");
-  for(I=0;I<Nb;I++)
+  Ptr = Conns;
+  while(Ptr != NULL)
   {
-    IP = Buf + Pos;
-    Pos += strlen(IP) + 1;
-    X = Buf + Pos;
-    Pos += strlen(X) + 1;
-    Y = Buf + Pos;
-    Pos += strlen(Y) + 1;
-    printf("%-15s  %-35s  %-8s  %-3s\n",IP,SU_NameOfPort(IP),X,Y);
-    if(atoi(X) != 0)
+    Conn = (FSCA_PConn)Ptr->Data;
+    printf("%-15s  %-35s  %-8d  %-3d\n",Conn->IP,SU_NameOfPort(Conn->IP),Conn->NbXfers,Conn->NbStrms);
+    if(Conn->Xfers != NULL)
     {
       printf("  Current tranfers : \n");
-      for(J=0;J<atoi(X);J++)
+      Ptr2 = Conn->Xfers;
+      while(Ptr2 != NULL)
       {
-        File = Buf + Pos;
-        Pos += strlen(File) + 1;
-        Pct = Buf + Pos;
-        Pos += strlen(Pct) + 1;
-        printf("    %s : %s%%\n",File,Pct);
+        printf("    %s : %s%%\n",((FSCA_PFileInfo)Ptr2->Data)->Name,((FSCA_PFileInfo)Ptr2->Data)->Pct);
+        Ptr2 = Ptr2->Next;
       }
     }
-    if(atoi(Y) != 0)
+    if(Conn->Strms != NULL)
     {
       printf("  Current streamings : \n");
-      for(J=0;J<atoi(Y);J++)
+      Ptr2 = Conn->Strms;
+      while(Ptr2 != NULL)
       {
-        File = Buf + Pos;
-        Pos += strlen(File) + 1;
-        Pct = Buf + Pos;
-        Pos += strlen(Pct) + 1;
-        printf("    %s : %s%%\n",File,Pct);
+        printf("    %s : %s%%\n",((FSCA_PFileInfo)Ptr2->Data)->Name,((FSCA_PFileInfo)Ptr2->Data)->Pct);
+        Ptr2 = Ptr2->Next;
       }
     }
-    if((atoi(X) != 0) || (atoi(Y) != 0))
+    if((Conn->Xfers != NULL) || (Conn->Strms != NULL))
       printf("\n");
+    Ptr = Ptr->Next;
   }
   printf("\n");
   return true;
@@ -106,75 +51,27 @@ bool RequestConns(SU_PClientSocket Client,const char Path[])
 
 bool RequestSharesList(SU_PClientSocket Client)
 {
-  char Buf[10000];
-  FFSS_Field Size;
-  int Got,Pos,Nb,I,Conns,XFers;
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
-  char *Shr,*Path;
+  SU_PList Shares,Ptr;
+  FSCA_PShareLst Share;
 
-  /* Create request */
-  Buf[0] = FS_OPCODE_GETSHRLIST;
-  Size = 1;
-  /* Send request */
-  SU_ClientSendBuf(Client,(char *)&Size,sizeof(Size));
-  SU_ClientSendBuf(Client,Buf,Size);
-
-  /* Prepare to get answer */
-  FD_ZERO(&rfds);
-  FD_SET(Client->sock,&rfds);
-  tv.tv_sec = 5;
-  tv.tv_usec = 0;
-  retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
-  if(!retval)
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  Got = recv(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
-  if(Got != sizeof(Size))
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  Got = recv(Client->sock,Buf,Size,SU_MSG_NOSIGNAL);
-  if(Got < 1)
-  {
-    SU_FreeCS(Client);
-    return false;
-  }
-  if(Buf[0] != FS_OPCODE_ACK)
+  Shares = FSCA_RequestSharesList(Client);
+  if(Shares == NULL)
     return true;
-  while(Got < Size)
+  Ptr = Shares;
+  while(Ptr != NULL)
   {
-    Got += recv(Client->sock,Buf+Got,Size-Got,SU_MSG_NOSIGNAL);
-  }
-  Pos = 1;
-  Nb = atoi(Buf+Pos);
-  Pos += strlen(Buf+Pos) + 1;
-  if(Nb == 0)
-    return true;
-  for(I=0;I<Nb;I++)
-  {
-    Shr = Buf + Pos;
-    Pos += strlen(Buf+Pos) +1;
-    Path = Buf + Pos;
-    Pos += strlen(Buf+Pos) +1;
-    Pos += strlen(Buf+Pos) +1;
-    Conns = atoi(Buf + Pos);
-    Pos += strlen(Buf+Pos) +1;
-    XFers = atoi(Buf + Pos);
-    Pos += strlen(Buf+Pos) +1;
-    if((Conns+XFers) != 0)
+    Share = (FSCA_PShareLst)Ptr->Data;
+    if((Share->NbConns+Share->NbXfers) != 0)
     {
-      printf("Connections for share \"%s\" : \n",Shr);
-      if(!RequestConns(Client,Path))
+      printf("Connections for share \"%s\" : \n",Share->Name);
+      if(!RequestConns(Client,Share->Path))
         return false;
     }
+    Ptr = Ptr->Next;
   }
   return true;
 }
+
 
 int main(int argc,char *argv[])
 {
@@ -199,6 +96,22 @@ int main(int argc,char *argv[])
     return -2;
   }
 
+  if(argc != 1)
+  {
+    FSCA_PGlobal Gbl = FSCA_RequestGlobalInfo(Client);
+    if(Gbl != NULL)
+    {
+      printf("Global infos :\n");
+      printf("\tName           = %s\n",Gbl->Name);
+      printf("\tComment        = %s\n",Gbl->Comment);
+      printf("\tMaster         = %s\n",Gbl->Master);
+      printf("\tIdle           = %d\n",Gbl->Idle);
+      printf("\tMaxConn        = %d\n",Gbl->MaxConn);
+      printf("\tMaxXFerPerConn = %d\n",Gbl->MaxXFerPerConn);
+      printf("\tFTP            = %d\n",Gbl->FTP);
+      printf("\tFTP_MaxConn    = %d\n",Gbl->FTP_MaxConn);
+    }
+  }
   if(RequestSharesList(Client) == false)
   {
     printf("Cannot request shares for %s\n",Server);

@@ -14,4 +14,4 @@ ffss_server_SOURCES = \
 		server.h  		\
 		transfer.c
 
-ffsswho_SOURCES = ffsswho.c server.h
+ffsswho_SOURCES = ffsswho.c server.h confapi.c confapi.h
