@@ -21,6 +21,7 @@ typedef struct
 FFSS_PChain FFSS_Chains[FFSS_FILTER_CHAINS_COUNT] = {NULL,};
 SU_SEM_HANDLE FFSS_SemFilter;   /* Semaphore to protect the use of FFSS_Chains */
 bool FFSS_Filter_Created = false;
+FFSS_Filter_TApi FFSS_Filter_Api={0};
 
 #define FFSS_FILTER_CHECK_CHAIN(x,y) if((x) >= FFSS_FILTER_CHAINS_COUNT) return (y);
 #define FFSS_FILTER_CHECK_CHAIN_2(x,y) if(FFSS_Chains[x] == NULL) { SU_SEM_POST(FFSS_SemFilter);return (y); }
@@ -111,6 +112,20 @@ bool FFSS_Filter_Init(int Type)
     default :
       return false;
   }
+  /* Init FFSS_Filter_Api struct */
+  FFSS_Filter_Api.AddRuleToChain_Head = FFSS_Filter_AddRuleToChain_Head;
+  FFSS_Filter_Api.AddRuleToChain_Tail = FFSS_Filter_AddRuleToChain_Tail;
+  FFSS_Filter_Api.AddRuleToChain_Pos = FFSS_Filter_AddRuleToChain_Pos;
+  FFSS_Filter_Api.SetDefaultActionOfChain = FFSS_Filter_SetDefaultActionOfChain;
+  FFSS_Filter_Api.GetDefaultActionOfChain = FFSS_Filter_GetDefaultActionOfChain;
+  FFSS_Filter_Api.DelRuleFromChain_Pos = FFSS_Filter_DelRuleFromChain_Pos;
+  FFSS_Filter_Api.DelRuleFromChain_Name = FFSS_Filter_DelRuleFromChain_Name;
+  FFSS_Filter_Api.ClearChain = FFSS_Filter_ClearChain;
+  FFSS_Filter_Api.GetRuleOfChain_Pos = FFSS_Filter_GetRuleOfChain_Pos;
+  FFSS_Filter_Api.GetRuleOfChain_Name = FFSS_Filter_GetRuleOfChain_Name;
+  FFSS_Filter_Api.EnumChains = FFSS_Filter_EnumChains;
+  FFSS_Filter_Api.EnumRulesOfChain = FFSS_Filter_EnumRulesOfChain;
+  FFSS_Filter_Api.Initialized = true;
   return true;
 }
 

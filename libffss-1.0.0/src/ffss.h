@@ -1062,6 +1062,24 @@ bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB Enu
 FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(unsigned int Chain,unsigned long IP);
 bool FFSS_Filter_Init(int Type);
 
+typedef struct
+{
+  bool Initialized;
+  bool (*AddRuleToChain_Head)(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+  bool (*AddRuleToChain_Tail)(FFSS_FILTER_CHAIN Chain,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+  bool (*AddRuleToChain_Pos)(FFSS_FILTER_CHAIN Chain,unsigned int Pos,const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[]);
+  bool (*SetDefaultActionOfChain)(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION Action);
+  bool (*GetDefaultActionOfChain)(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_ACTION *Action);
+  bool (*DelRuleFromChain_Pos)(FFSS_FILTER_CHAIN Chain,unsigned int Pos);
+  bool (*DelRuleFromChain_Name)(FFSS_FILTER_CHAIN Chain,const char Name[]);
+  bool (*ClearChain)(FFSS_FILTER_CHAIN Chain);
+  bool (*GetRuleOfChain_Pos)(FFSS_FILTER_CHAIN Chain,unsigned int Pos,char **IP,char **Mask,FFSS_FILTER_ACTION *Action,char **Name); /* You must free returned strings */
+  bool (*GetRuleOfChain_Name)(FFSS_FILTER_CHAIN Chain,const char Name[],char **IP,char **Mask,FFSS_FILTER_ACTION *Action); /* You must free returned strings */
+  bool (*EnumChains)(FFSS_CHAINS_ENUM_CB EnumCB);
+  bool (*EnumRulesOfChain)(FFSS_FILTER_CHAIN Chain,FFSS_RULES_ENUM_CB EnumCB);
+} FFSS_Filter_TApi, *FFSS_Filter_PApi;
+extern FFSS_Filter_TApi FFSS_Filter_Api;
+
 extern char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT];
 extern char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT];
 extern char *FFSS_ImageExt[FFSS_IMAGE_NB_EXT];
@@ -1076,6 +1094,7 @@ extern SU_PServerInfo FC_SI_OUT_UDP;
 extern SU_PServerInfo FM_SI_UDP,FM_SI_OUT_UDP,FM_SI_TCP;
 extern SU_THREAD_HANDLE FFSS_MainThread;
 #ifdef _WIN32
+#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\"
 extern FILE *FFSS_LogFile;
 #endif /* _WIN32 */
 
