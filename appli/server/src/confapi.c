@@ -607,6 +607,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
       return Plugins;
     }
     Pl->Startup = (bool) Buf[Pos++];
+    Pl->Configurable = (bool) Buf[Pos++];
     Pl->Name = strdup(tmp1);
     Pl->Copyright = strdup(tmp2);
     Pl->Version = strdup(tmp3);

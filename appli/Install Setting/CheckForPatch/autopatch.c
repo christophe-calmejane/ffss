@@ -3,32 +3,6 @@
 #undef malloc
 #include "AutoPatch\\resource.h"
 
-/* CurrentPatches Format :
-  <FFSS version patch applies to> <ID of file to patch> <Version of patched file> <File Name>
-*/
-
-#define FFSS_CHECK_FILES_AUTO_CHECK    1
-#define FFSS_CHECK_FILES_UPDATER       2
-
-#define FFSS_CHECK_FILES_WINFFSS       3
-
-#define FFSS_CHECK_FILES_SERVER        4
-#define FFSS_CHECK_FILES_MANAGER       5
-#define FFSS_CHECK_FILES_SHERMAN       6
-#define FFSS_CHECK_FILES_FFSSDKILLER   7
-
-#define FFSS_CHECK_FILES_TRAYCONN      8
-#define FFSS_CHECK_FILES_LOG           9
-#define FFSS_CHECK_FILES_CONFCONN      10
-#define FFSS_CHECK_FILES_IPFILTER      11
-#define FFSS_CHECK_FILES_IPFILTER_GUI  12
-#define FFSS_CHECK_FILES_QOS           13
-#define FFSS_CHECK_FILES_QOS_GUI       14
-#define FFSS_CHECK_FILES_HIDESHARE     15
-
-#define FFSS_CHECK_FILES_COUNT         16
-
-
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
 #define FFSS_CHECK_URL_PATCHES FFSS_CHECK_URL_BASE "CurrentPatches"
 #define FFSS_CHECK_URL_GET_PATCHES FFSS_CHECK_URL_BASE "patches/"
@@ -39,45 +13,39 @@
 #define FFSS_CHECK_RB_PROXY_USER FFSS_CHECK_RB_BASE "Proxy_User"
 #define FFSS_CHECK_RB_PROXY_PWD  FFSS_CHECK_RB_BASE "Proxy_Pwd"
 
-typedef struct
-{
-  char *FilePath;
-  bool KillServer;
-} FCU_TFiles;
+#include "autopatch.h"
+#include "language.h"
 
-FCU_TFiles FCU_Files[FFSS_CHECK_FILES_COUNT] = {{"",false},
-                                                {"AutoCheck.exe",false},
-                                                {"ffssupdater.exe",false},
-
-                                                {"Client\\winffss.exe",false},
-
-                                                {"Server\\ffssd.exe",true},
-                                                {"Server\\FFSS_Share.exe",false},
-                                                {"Server\\sherman.exe",false},
-                                                {"Server\\ffssdkiller.exe",false},
-
-                                                {"Server\\Plugins\\TrayConn.dll",true},
-                                                {"Server\\Plugins\\Log.dll",true},
-                                                {"Server\\Plugins\\ConfConn.dll",true},
-                                                {"Server\\Plugins\\ipfinstall.dll",true},
-                                                {"Server\\Plugins\\ipfgui.dll",true},
-                                                {"Server\\Plugins\\qosinstall.dll",true},
-                                                {"Server\\Plugins\\qosgui.dll",true},
-                                                {"Server\\Plugins\\hideshare.dll",true}
-
-                                                };
-
+unsigned int AP_CurrentLang = AP_LANG_ENGLISH;
 int CurrentIdx = 0; /* Idx of file to patch */
 char *CurrentFileVersion = NULL; /* New file version to set in registry */
 HINSTANCE AP_hInstance;
 bool DoPatch = true;
 bool ChangeLog = false;
+bool NeverAgain = false;
 
 void ProcOnOkRedirect(SU_PAnswer Ans,void *User);
+HWND AP_hwnd;
 
 #define FFSS_REGISTRY_PATH_PROCESSID FFSS_LM_REGISTRY_PATH "Server\\ProcessId"
 #define SLEEP_TIME 100
 #define MAX_WAIT 30
+
+void AP_LoadLanguage(void)
+{
+  char buf[100];
+  int i;
+
+  SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "FavoriteLanguage",buf,sizeof(buf),"En");
+  for(i=0;i<AP_LANG_COUNT;i++)
+  {
+    if(stricmp(buf,AP_Lang[i][AP_LANGS_COUNTRYCODE]) == 0)
+    {
+      AP_CurrentLang = i;
+      break;
+    }
+  }
+}
 
 LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -85,18 +53,24 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
       switch(LOWORD(wParam))
       {
-        case IDOK:
+        case ID_BTN1:
           DoPatch = true;
-          EndDialog(hwnd,0);
-          PostQuitMessage(0);
+          DestroyWindow(hwnd);
+          AP_hwnd = NULL;
           return TRUE;
-        case IDCANCEL:
+        case ID_BTN2:
           DoPatch = false;
-          EndDialog(hwnd,0);
-          PostQuitMessage(0);
+          if(MessageBox(AP_hwnd,AP_LANG(AP_LANGS_MB1),"FFSS Auto Patch Info",MB_YESNO) != IDYES)
+          {
+            NeverAgain = true;
+          }
+          DestroyWindow(hwnd);
+          AP_hwnd = NULL;
           return TRUE;
       }
       break;
+    case WM_CLOSE:
+      return TRUE;
     case WM_DESTROY:
       PostQuitMessage(0);
       return TRUE;
@@ -107,7 +81,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
 {
   MSG msg;
-  HWND hwnd,dlg;
+  HWND dlg;
   char buf[4096];
   int len;
   char InstallDir[512];
@@ -119,27 +93,34 @@ void ProcOnOkGotChangeLog(SU_PAnswer Ans,void *User)
     return;
   snprintf(FileToPatch,sizeof(FileToPatch),"%s%s",InstallDir,FCU_Files[CurrentIdx].FilePath);
 
-  hwnd = CreateDialog(AP_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),GetDesktopWindow(),wndProc);
-  if(hwnd == NULL)
+  AP_hwnd = CreateDialog(AP_hInstance,MAKEINTRESOURCE(IDD_DIALOG1),GetDesktopWindow(),wndProc);
+  if(AP_hwnd == NULL)
     return;
   GetWindowRect(GetDesktopWindow(),&rect1);
-  GetWindowRect(hwnd,&rect2);
-  SetWindowPos(hwnd,HWND_TOPMOST,(rect1.right/2)-((rect2.right-rect2.left)/2),(rect1.bottom/2)-((rect2.bottom-rect2.top)/2),0,0,SWP_NOSIZE);
+  GetWindowRect(AP_hwnd,&rect2);
+  SetWindowPos(AP_hwnd,HWND_TOPMOST,(rect1.right/2)-((rect2.right-rect2.left)/2),(rect1.bottom/2)-((rect2.bottom-rect2.top)/2),0,0,SWP_NOSIZE);
 
-  dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_LABEL));
-  snprintf(buf,sizeof(buf),"ChangeLog for file : %s",FileToPatch);
-  SetWindowText(dlg,buf);
-  dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(ID_BTN1),AP_LANG(AP_LANGS_BTN1));
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(ID_BTN2),AP_LANG(AP_LANGS_BTN2));
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL1),AP_LANG(AP_LANGS_LBL1));
+  snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_LBL2),FileToPatch);
+  SetDlgItemText(AP_hwnd,(int)MAKEINTRESOURCE(IDC_LABEL2),buf);
+  dlg = GetDlgItem(AP_hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
   len = Ans->Data_Length + 1;
   if(len >= sizeof(buf))
     len = sizeof(buf);
   SU_strcpy(buf,Ans->Data,len);
   SetWindowText(dlg,buf);
-  ShowWindow(hwnd,SW_SHOW);
-  while(GetMessage(&msg,hwnd,0,0))
+
+  ShowWindow(AP_hwnd,SW_SHOW);
+
+  while(GetMessage(&msg,AP_hwnd,0,0))
   {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
+    if(!IsWindow(AP_hwnd) || !IsDialogMessage(AP_hwnd,&msg))
+    {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
   }
   ChangeLog = true;
 }
@@ -176,6 +157,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   FILE *fp;
   char InstallDir[512];
   char FileToPatch[1024];
+  int maxtry = 3;
 
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
@@ -185,12 +167,19 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   fp = fopen(FileToPatch,"wb");
   while(fp == NULL) /* Cannot open for writing... file in use ? */
   {
+    maxtry--;
+    if(maxtry == 0)
+    {
+      snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB5),FileToPatch);
+      MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
+      return;
+    }
     if(FCU_Files[CurrentIdx].KillServer) /* Server related file... kill server */
     {
-      snprintf(buf,sizeof(buf),"FFSS Server must be killed in order to update file '%s'. Do you want me to (try to) kill it ?",FileToPatch);
+      snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB2),FileToPatch);
       if(MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_YESNO) != IDYES)
       {
-        snprintf(buf,sizeof(buf),"Aborting file patching for '%s'",FileToPatch);
+        snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB3),FileToPatch);
         MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
         return;
       }
@@ -198,10 +187,10 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
     }
     else /* Display message box */
     {
-      snprintf(buf,sizeof(buf),"Can't open file '%s' for writing. File may be in use. Close it, then clic on RETRY",FileToPatch);
+      snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB4),FileToPatch);
       if(MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_RETRYCANCEL) == IDCANCEL)
       {
-        snprintf(buf,sizeof(buf),"Aborting file patching for '%s'",FileToPatch);
+        snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB3),FileToPatch);
         MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
         return;
       }
@@ -213,7 +202,7 @@ void ProcOnOkGotPatch(SU_PAnswer Ans,void *User)
   /* Update File version in registry */
   snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_LM_REGISTRY_PATH,FCU_Files[CurrentIdx].FilePath);
   SU_RB_SetStrValue(buf,CurrentFileVersion);
-  snprintf(buf,sizeof(buf),"Successfully patched file '%s' to version %s",FileToPatch,CurrentFileVersion);
+  snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB6),FileToPatch,CurrentFileVersion);
   MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
 }
 
@@ -267,7 +256,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
   SU_RB_GetStrValue(FFSS_LM_REGISTRY_PATH "InstallDirectory",InstallDir,sizeof(InstallDir),"");
   if(InstallDir[0] == 0)
   {
-    MessageBox(NULL,"InstallDirectory key not found in registry. FFSS installation may be corrupted","FFSS Auto Patch Info",MB_OK | MB_ICONEXCLAMATION);
+    MessageBox(NULL,AP_LANG(AP_LANGS_MB7),"FFSS Auto Patch Info",MB_OK | MB_ICONEXCLAMATION);
     return;
   }
   while(ReadLine(Ans->Data,&pos,Ans->Data_Length,S,sizeof(S)))
@@ -286,13 +275,16 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     if(tmp == NULL)
       continue;
     idx = atoi(tmp);
+
     if((idx <= 0) || (idx >= FFSS_CHECK_FILES_COUNT))
+      continue;
+    if(FCU_Files[idx].FilePath[0] == 0)
       continue;
     snprintf(buf,sizeof(buf),"%s%s",InstallDir,FCU_Files[idx].FilePath);
     fp = fopen(buf,"rb");
-    if(fp == NULL)
+    /*if(fp == NULL)
       continue;
-    fclose(fp);
+    fclose(fp);*/
     CurrentIdx = idx;
 
     /* Check local version */
@@ -307,11 +299,12 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
 
     DoPatch = true;
     ChangeLog = false;
+    NeverAgain = false;
     /* Get ChangeLog */
     tmp = strtok(NULL," ");
     if(tmp == NULL)
       continue;
-    snprintf(buf,sizeof(buf),"%s%s.changelog",FFSS_CHECK_URL_GET_PATCHES,tmp);
+    snprintf(buf,sizeof(buf),"%s%s.changelog.%s",FFSS_CHECK_URL_GET_PATCHES,tmp,AP_Lang[AP_CurrentLang][0]);
     Exec = NULL;
     Act = (SU_PHTTPActions) malloc(sizeof(SU_THTTPActions));
     memset(Act,0,sizeof(SU_THTTPActions));
@@ -322,7 +315,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     Exec = SU_AddElementHead(Exec,Act);
     if(SU_ExecuteActions(Exec) != 0)
     {
-      MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
+      MessageBox(NULL,AP_LANG(AP_LANGS_MB8),"FFSS Auto Patch Info",MB_OK);
       exit(2);
     }
     SU_FreeAction(Act);
@@ -333,10 +326,16 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     {
       if(!ChangeLog) /* ChangeLog dialog wasn't displayed */
       {
-        snprintf(buf,sizeof(buf),"Ready to patch file '%s%s'. Continue ?",InstallDir,FCU_Files[idx].FilePath);
+        snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB9),InstallDir,FCU_Files[idx].FilePath);
         if(MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OKCANCEL) == IDCANCEL)
         {
-          snprintf(buf,sizeof(buf),"Aborting file patching for '%s%s'",InstallDir,FCU_Files[idx].FilePath);
+          if(MessageBox(AP_hwnd,AP_LANG(AP_LANGS_MB1),"FFSS Auto Patch Info",MB_YESNO) != IDYES)
+          {
+            /* Update File version in registry */
+            snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_LM_REGISTRY_PATH,FCU_Files[CurrentIdx].FilePath);
+            SU_RB_SetStrValue(buf,CurrentFileVersion);
+          }
+          snprintf(buf,sizeof(buf),AP_LANG(AP_LANGS_MB10),InstallDir,FCU_Files[idx].FilePath);
           MessageBox(NULL,buf,"FFSS Auto Patch Info",MB_OK);
           continue;
         }
@@ -352,11 +351,20 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
       Exec = SU_AddElementHead(Exec,Act);
       if(SU_ExecuteActions(Exec) != 0)
       {
-        MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
+        MessageBox(NULL,AP_LANG(AP_LANGS_MB8),"FFSS Auto Patch Info",MB_OK);
         exit(2);
       }
       SU_FreeAction(Act);
       SU_FreeList(Exec);
+    }
+    else
+    {
+      if(NeverAgain)
+      {
+        /* Update File version in registry */
+        snprintf(buf,sizeof(buf),"%sPatches\\%s",FFSS_LM_REGISTRY_PATH,FCU_Files[CurrentIdx].FilePath);
+        SU_RB_SetStrValue(buf,CurrentFileVersion);
+      }
     }
   }
 }
@@ -442,7 +450,7 @@ void ProcOnOkRedirect(SU_PAnswer Ans,void *User)
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
+    MessageBox(NULL,AP_LANG(AP_LANGS_MB8),"FFSS Auto Patch Info",MB_OK);
     exit(2);
   }
   SU_FreeAction(Act);
@@ -460,9 +468,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   if((int)Exec == 666)
     printf("%f\n",fl);
 
+  AP_LoadLanguage();
   if(!SU_WSInit(2,2))
   {
-    MessageBox(NULL,"Cannot init winsock2 dll","FFSS Auto Patch Info",MB_OK);
+    MessageBox(NULL,AP_LANG(AP_LANGS_MB11),"FFSS Auto Patch Info",MB_OK);
     return 1;
   }
   CheckProxy();
@@ -475,7 +484,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
+    MessageBox(NULL,AP_LANG(AP_LANGS_MB8),"FFSS Auto Patch Info",MB_OK);
     return 2;
   }
   SU_FreeAction(Act);

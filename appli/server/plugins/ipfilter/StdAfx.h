@@ -19,7 +19,7 @@
 // TODO: reference additional headers your program requires here
 #include "../../src/plugin.h"
 #undef malloc
-#include "../../src/server.h"
+//#include "../../src/server.h"
 
 #include "common.h"
 #define FFSS_FAV_LANGUAGE	FFSS_LM_REGISTRY_PATH "FavoriteLanguage"

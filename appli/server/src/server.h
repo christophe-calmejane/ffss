@@ -2,6 +2,14 @@
 #define __SERVER_H__
 
 #include <ffss.h>
+
+/* Undefine c++ bool type (unsigned char ?)
+   Use SU_BOOL type in your appli, every time you use a ffss prototype
+ */
+#ifdef __cplusplus
+#define bool SU_BOOL
+#endif /* __cplusplus */
+
 #ifdef __unix__
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -179,12 +187,13 @@ typedef struct
 
 typedef struct /* Allocated by Plugin / Freed by Server */
 {
-  FFSS_Field size; /* Size of this structure... must be set by plugin */
-  char *Path;      /* Set and freed by server */
-  char *Name;      /* Set and freed by plugin */
-  char *Copyright; /* Set and freed by plugin */
-  char *Version;   /* Set and freed by plugin */
-  bool Startup;    /* If plugin is loaded at server startup */
+  FFSS_Field size;   /* Size of this structure... must be set by plugin */
+  char *Path;        /* Set and freed by server */
+  char *Name;        /* Set and freed by plugin */
+  char *Copyright;   /* Set and freed by plugin */
+  char *Version;     /* Set and freed by plugin */
+  bool Startup;      /* If plugin is loaded at server startup */
+  bool Configurable; /* If plugin is configurable */
   SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;
   bool (*OnCheckConfConn)(SU_PClientSocket Client); /* Returns false if Client is to be rejected. Defaults to true */
@@ -295,6 +304,8 @@ typedef struct /* 16 bytes */
 
 #ifdef __cplusplus
 }
+/* Redefine c++ bool type */
+#undef bool
 #endif /* __cplusplus */
 
 #endif /* !__SERVER_H__ */

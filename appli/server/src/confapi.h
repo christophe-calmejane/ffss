@@ -60,11 +60,12 @@ typedef struct
 
 typedef struct
 {
-  void *Handle;    /* DO NOT FREE */
-  char *Name;      /* Free it */
-  char *Copyright; /* Free it */
-  char *Version;   /* Free it */
-  bool Startup;    /* If plugin is loaded at server startup */
+  void *Handle;      /* DO NOT FREE */
+  char *Name;        /* Free it */
+  char *Copyright;   /* Free it */
+  char *Version;     /* Free it */
+  bool Startup;      /* If plugin is loaded at server startup */
+  bool Configurable; /* If plugin is configurable */
 } FSCA_TPluginInfo, *FSCA_PPluginInfo;
 
 #ifdef __cplusplus

@@ -77,6 +77,7 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
 #ifdef PLUGINS
   SU_DL_HANDLE handle;
   FS_PPlugin (*fonc)(void *,void *(*QueryFunc)(int Type,...));
+  void (*fonc2)(void);
   FS_PPlugin Pl;
 
   handle = SU_DL_OPEN(Name);
@@ -104,14 +105,19 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
   if(Pl == NULL)
   {
     FFSS_PrintSyslog(LOG_ERR,"Error in Plugin_Init function for %s\n",Name);
+    SU_DL_CLOSE(handle);
     return NULL;
   }
   if(Pl->size != sizeof(FS_TPlugin))
   {
-    FFSS_PrintSyslog(LOG_ERR,"Plugin_Init function returned a wrong sized FS_PPlugin... rebuild plugin %s\n",Name);
+    FFSS_PrintSyslog(LOG_ERR,"Plugin_Init function returned a wrong sized FS_PPlugin structure (%d instead of %d)... rebuild plugin %s\n",Pl->size,sizeof(FS_TPlugin),Name);
+    fonc2 = (void(*)(void))SU_DL_SYM(handle,"Plugin_UnInit");
+    if(fonc2 != NULL)
+      fonc2();
     SU_DL_CLOSE(handle);
     return NULL;
   }
+  Pl->Configurable = (SU_DL_SYM(handle,"Plugin_Configure") != NULL);
   Pl->Handle = handle;
   Pl->Path = strdup(Name);
   SU_SEM_WAIT(FS_SemPlugin);

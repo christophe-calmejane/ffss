@@ -22,7 +22,7 @@
 
 char *HS_Lang[HS_LANG_COUNT][HS_LANGS_COUNT] = {/* English */
                                                 {"En",
-                                                 "Automatically hides all shares with $ as first letter."
+                                                 "Automatically hides shares beginning with $."
                                                 },
                                                 /* French */
                                                 {"Fr",

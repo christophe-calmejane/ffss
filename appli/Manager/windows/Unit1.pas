@@ -761,6 +761,7 @@ begin
     Item.SubItems.Add(String(Buf+Pos));
     Inc(Pos,StrLen(Buf+Pos)+1);
     Inc(Pos); // Zap Startup flag
+    Inc(Pos); // Zap Configurable flag
   End;
 end;
 

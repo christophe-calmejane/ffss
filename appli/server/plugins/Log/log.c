@@ -28,9 +28,9 @@
 
 char *L_Lang[L_LANG_COUNT][L_LANGS_COUNT] = {/* English */
                                              {"En",
-                                              "Logs all successful connections and download requests."
+                                              "Logs all successful connections and download requests.",
                                               "Logging configuration",
-                                              "Choose &path",
+                                              "Choose &folder",
                                               "&Close",
                                               " What to log ? ",
                                               "Log files path",
@@ -40,14 +40,14 @@ char *L_Lang[L_LANG_COUNT][L_LANGS_COUNT] = {/* English */
                                              },
                                               /* French */
                                              {"Fr",
-                                              "Ecrit dans un fichier de log les connexions et les requêtes de download.",
-                                              "Configuration du plugin de log",
-                                              "&Choix chemin",
+                                              "Ecrit dans un fichier les connexions et les requêtes de téléchargement.",
+                                              "Configuration du module de journalisation",
+                                              "&Parcourir",
                                               "&Fermer",
                                               " Options de log ",
                                               "Chemin des fichiers",
                                               "Connexions réussies",
-                                              "Requêtes de download",
+                                              "Requêtes de téléchargement",
                                               "Vous devez spécifier un chemin pour les fichiers de log\nSpécifiez \".\" si vous voulez les stoquer dans le répertoire du serveur"
                                              }
                                             };
@@ -211,6 +211,32 @@ char *GetDirectoryPath(HWND hwnd,char *Buf,char *DisplayName)
   return Buf;
 }
 
+void CheckClose(HWND hwnd)
+{
+  HWND dlg;
+  char buf[1024];
+
+  L_Gbl.Log_Conn = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK1)) == BST_CHECKED;
+  L_Gbl.Log_Dwl = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK2)) == BST_CHECKED;
+  dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
+  GetWindowText(dlg,buf,sizeof(buf));
+  if(buf[0] == 0)
+  {
+    MessageBox(hwnd,L_LANG(L_LANGS_MB_PATH),"Log Plugin Info",MB_OK);
+    return;
+  }
+  if(L_Gbl.Path != NULL)
+    free(L_Gbl.Path);
+  if(buf[3] == 0) /* "c:\" for example */
+    buf[2] = 0; /* Remove trailing '\' */
+  L_Gbl.Path = strdup(buf);
+  /* Store config now */
+  StoreConfig();
+  /* Close box */
+  DestroyWindow(L_hwnd);
+  L_hwnd = NULL;
+}
+
 LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch (message) {
@@ -221,25 +247,7 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         char buf[1024],name[MAX_PATH];
 
         case IDOK:
-          L_Gbl.Log_Conn = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK1)) == BST_CHECKED;
-          L_Gbl.Log_Dwl = IsDlgButtonChecked(hwnd,(int)MAKEINTRESOURCE(IDC_CHECK2)) == BST_CHECKED;
-          dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
-          GetWindowText(dlg,buf,sizeof(buf));
-          if(buf[0] == 0)
-          {
-            MessageBox(hwnd,L_LANG(L_LANGS_MB_PATH),"Log Plugin Info",MB_OK);
-            return TRUE;
-          }
-          if(L_Gbl.Path != NULL)
-            free(L_Gbl.Path);
-          if(buf[3] == 0) /* "c:\" for example */
-            buf[2] = 0; /* Remove trailing '\' */
-          L_Gbl.Path = strdup(buf);
-          /* Store config now */
-          StoreConfig();
-          /* Close box */
-          DestroyWindow(L_hwnd);
-          L_hwnd = NULL;
+          CheckClose(hwnd);
           return TRUE;
         case IDC_BUTTON1:
           dlg = GetDlgItem(hwnd,(int)MAKEINTRESOURCE(IDC_EDIT1));
@@ -248,6 +256,10 @@ LRESULT CALLBACK wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       }
       break;
 
+    case WM_CLOSE:
+      CheckClose(hwnd);
+      PostQuitMessage(0);
+      return TRUE;
     case WM_DESTROY:
       PostQuitMessage(0);
       return TRUE;

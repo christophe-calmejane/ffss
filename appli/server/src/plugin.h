@@ -1,14 +1,14 @@
 #ifndef __PLUGIN_H__
 #define __PLUGIN_H__
 
+#include "server.h"
+
 /* Undefine c++ bool type (unsigned char ?)
    Use SU_BOOL type in your appli, every time you use a ffss prototype
  */
 #ifdef __cplusplus
 #define bool SU_BOOL
 #endif /* __cplusplus */
-
-#include "server.h"
 
 #ifdef _WIN32
 #define FSP_BASE_REG_ROOTHKEY HKEY_LOCAL_MACHINE

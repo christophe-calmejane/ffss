@@ -701,6 +701,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = FFSS_PackString(buf,Size,Plugin->Copyright,strlen(Plugin->Copyright)+1);
           Size = FFSS_PackString(buf,Size,Plugin->Version,strlen(Plugin->Version)+1);
           buf[Size++] = (char) Plugin->Startup;
+          buf[Size++] = (char) Plugin->Configurable;
           Ptr = Ptr->Next;
         }
         SU_SEM_POST(FS_SemPlugin);

@@ -22,12 +22,12 @@
 
 char *TC_Lang[TC_LANG_COUNT][TC_LANGS_COUNT] = {/* English */
                                                 {"En",
-                                                 "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows to eject everybody, set the server into quiet mode, and shutdown it.",
+                                                 "Displays an icon in the system tray which shows how many connections and downloads are currently running.\n A double clic on the icon opens the share manager, and a right clic pops up a contextual menu which allows you to eject everybody, set the server into quiet mode, and shutdown it.",
                                                  "You are requesting FFSS Server to shut down.\n                     Are you sure ??"
                                                 },
                                                 /* French */
                                                 {"Fr",
-                                                 "Affiche une icone dans la SystemTray, qui affiche le nombre de connexions et de download en cours.\n Un double clic sur l'icone ouvre le gestionnaire de partages, et un clic droit ouvre un menu contextuel qui permet en autres d'éjecter tout le monde, et de passer le serveur en mode silencieux.",
+                                                 "Affiche une icone dans la SystemTray, indiquant le nombre de connexions et de téléchargements en cours.\n Un dbl clic sur l'icone ouvre le gestionnaire de partages, et un clic droit ouvre un menu contextuel qui permet entre autres d'éjecter tout le monde, et de passer le serveur en mode silencieux.",
                                                  "Etes vous vraiment sûr de vouloir couper le serveur FFSS ??"
                                                 }
                                                };

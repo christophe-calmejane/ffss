@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 1
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "IPFINSTALL_EXPORTS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /I "../../../../libffss-1.0.0/src" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "IPFINSTALL_EXPORTS" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../../../skyutils/src" /I "../../../../misc/windows/include" /I "../../../../libffss-1.0.0/src" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "IPFINSTALL_EXPORTS" /D "DISABLE_ZLIB" /D "DISABLE_CHECKSUM" /D "DISABLE_BZLIB" /D "SU_USE_DL" /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"

@@ -66,13 +66,13 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "FFSS Auto Patch"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "&Yes",IDOK,76,116,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,144,116,50,14
+    DEFPUSHBUTTON   "&Yes",ID_BTN1,76,116,50,14
+    PUSHBUTTON      "&Cancel",ID_BTN2,144,116,50,14
     EDITTEXT        IDC_EDIT1,7,20,260,72,ES_MULTILINE | ES_READONLY | 
                     WS_VSCROLL
-    CTEXT           "Ready to patch the file ?",IDC_STATIC,76,96,116,16,
+    CTEXT           "Ready to patch the file ?",IDC_LABEL2,76,96,116,16,
                     SS_CENTERIMAGE
-    LTEXT           "ChangeLog for file : ",IDC_LABEL,8,4,260,8
+    LTEXT           "ChangeLog for file : ",IDC_LABEL1,8,4,260,8
 END
 
 

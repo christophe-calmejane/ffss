@@ -20,8 +20,8 @@
 
 char *CC_Lang[CC_LANG_COUNT][CC_LANGS_COUNT] = {/* English */
                                                 {"En",
-                                                 "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc..."
-                                                 "Conf Conn Plugin Configuration",
+                                                 "Allows remote hosts to connect (using ip+login+pwd filter) to the server, and manage shares, eject connections, etc...",
+                                                 "Remote Configuration Plugin Configuration",
                                                  "&Remove access",
                                                  "&Add",
                                                  "&Close",
@@ -42,7 +42,7 @@ char *CC_Lang[CC_LANG_COUNT][CC_LANGS_COUNT] = {/* English */
                                                  /* French */
                                                 {"Fr",
                                                  "Permet des connexions à distances sur le serveur (en utilisant un filtre ip+login+mdp), afin de contrôler les partages, éjecter des connexions, etc...",
-                                                 "Configuration du plugin Conf Conn",
+                                                 "Configuration du module de Configuration à Distance",
                                                  "&Retirer l'accès",
                                                  "&Ajouter",
                                                  "&Fermer",
@@ -252,6 +252,11 @@ LRESULT CALLBACK CC_wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       }
       break;
 
+    case WM_CLOSE:
+      /* Close box */
+      DestroyWindow(CC_hwnd);
+      CC_hwnd = NULL;
+      return TRUE;
     case WM_DESTROY:
       PostQuitMessage(0);
       return TRUE;
