@@ -3,9 +3,10 @@
 echo
 echo '############# BUILDING FFSS LIBRARY ###############'
 echo
+archdir=`pwd`
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --libdir=$libdir/src/.libs
+./configure --libdir=$libdir/src/.libs --with-skyutils=$archdir/skyutils
 make
 cd ..
 echo

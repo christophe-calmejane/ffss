@@ -11,7 +11,7 @@ POSSIBLE DoS :
  - Checker qu'on n'envoie pas trop souvent des requetes de recherche d'une meme machine (garder une trace des requetes client) ! DoS Attack
  - Interdire des index de plus de X nodes (se baser sur la valeur de celui de bennyben pour fixer la limite)
 
- - AJOUTER DANS LA CONF (win et nux) des regles pour limiter les ip qui se connectent !!
+ - AJOUTER DANS LA CONF (win et nux) des regles pour limiter les ip qui se connectent (172.17.64.* && 172.17.65.* pour flem par ex) !!
 
 
 KNOW BUGS

@@ -7,8 +7,12 @@ AC_PROG_LN_S
 AC_ISC_POSIX
 AC_ARG_PROGRAM
 
-dnl Version of SkyUtils and function to search
-SU_FUNCTION=SU_Dummy200
+dnl Needed version of libskyutils
+skyutils_needed="2.0"
+
+dnl Change this if libskyutils is not installed in /usr/local
+SU_PREFIX=/usr/local/bin
+dnl And change line bellow too (--with-skyutils)
 
 #
 # Making releases:
@@ -141,18 +145,51 @@ if test "$driver" = "true"; then
   CFLAGS="$CFLAGS ""-DFFSS_DRIVER "
 fi
 
+AC_ARG_WITH(skyutils, [  --with-skyutils=DIR       Bin path to uninstalled copy of libskyutils (default /usr/local/bin)])
+
+echo -n "checking for skyutils-config... "
+if test x"$with_skyutils" = x ; then
+  SU_CONFIG=$SU_PREFIX/skyutils-config
+  SU_GET_LIBS=--libs
+  if test -x "$SU_CONFIG"; then
+    :
+  else
+    AC_MSG_ERROR([skyutils-config not found. Installed ? Try with configure --with-skyutils option])
+  fi
+else
+  SU_CONFIG=$with_skyutils/skyutils-config
+  SU_GET_LIBS=--libs-static
+  SU_ADD_PATH=-L$with_skyutils/src/.libs
+  SU_ADD_INCLUDE=-I$with_skyutils/src
+  if test -x "$SU_CONFIG"; then
+    :
+  else
+    AC_MSG_ERROR([skyutils-config not found in this directory ($with_skyutils)])
+  fi
+fi
+
+echo "using $SU_CONFIG"
+dnl Check skyutils Version
+skyutils_vers=`$SU_CONFIG --version`
+skyutils_vers2=`echo $skyutils_vers | sed -e 's/\.//g'`
+skyutils_needed2=`echo $skyutils_needed | sed -e 's/\.//g'`
+if test "$skyutils_vers2" -lt "$skyutils_needed2"; then
+  AC_MSG_ERROR([Your version of libskyutils ($skyutils_vers) is too old, this version of libffss needs libskyutils >= $skyutils_needed])
+fi
+
+dnl Get cflags and libs
+SKYUTILS_LIB=`$SU_CONFIG $SU_GET_LIBS`
+SKYUTILS_CFLAGS=`$SU_CONFIG --cflags`
+skyutils_reentrant=`$SU_CONFIG --reentrant`
+
+if test "$skyutils_reentrant" = "no" ; then
+  AC_MSG_ERROR([libskyutils does NOT support REENTRANT features. Recompile libskyutils using --enable-reentrant flag])
+fi
+
+
 dnl Checks for libraries.
-SOLARIS=""
-AC_CHECK_LIB(pthread, pthread_create,FFSS_PTHREAD_LIB="-lpthread" FFSS_PTHREAD_FLAGS="-pthread")
-AC_CHECK_LIB(c_r, pthread_create,FFSS_PTHREAD_LIB="-lc_r" FFSS_PTHREAD_FLAGS="-pthread")
-AC_CHECK_LIB(skyutils, $SU_FUNCTION,O_SKYUTILS_LIB="-lskyutils")
 AC_CHECK_LIB(z, adler32,Z_LIB="-lz")
 AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress,BZ_LIB="-lbz2")
-AC_CHECK_LIB(socket, socket,SOLARIS="-lsocket -lnsl")
-
-if test ! "$FFSS_PTHREAD_LIB"; then
-  AC_MSG_ERROR("Cannot find pthread functions \(neither in libpthread nor in libc_r\)")
-fi
 
 if test ! "$Z_LIB"; then
   AC_MSG_ERROR("Z lib not found...")
@@ -166,18 +203,15 @@ else
   CFLAGS="$CFLAGS -DHAVE_BZLIB"
 fi
 
-if test ! "$O_SKYUTILS_LIB"; then
-  AC_MSG_ERROR("Cannot find correct version of libskyutils ... please install or upgrade it")
-fi
+SKYUTILS_CFLAGS="$SKYUTILS_CFLAGS $SU_ADD_PATH $SU_ADD_INCLUDE"
+CFLAGS="$CFLAGS $SKYUTILS_CFLAGS $SU_ADD_PATH $SU_ADD_INCLUDE"
 
-AC_SUBST(O_SKYUTILS_FLAGS)
-AC_SUBST(FFSS_PTHREAD_LIB)
-AC_SUBST(FFSS_PTHREAD_FLAGS)
+AC_SUBST(SKYUTILS_CFLAGS)
+AC_SUBST(SKYUTILS_LIB)
 AC_SUBST(Z_LIB)
 AC_SUBST(BZ_LIB)
 AC_SUBST(O_Z_LIB)
 AC_SUBST(O_BZ_LIB)
-AC_SUBST(SOLARIS)
 
 AC_OUTPUT([
 Makefile

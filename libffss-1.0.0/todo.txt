@@ -14,3 +14,5 @@
  - TRANSFORMER LES CONSTANTES DES PORTS en variables (enfin, garder les 2, par defaut, on assigne les constantes au var) et mettre les var en globales
 
  - Re-reflechir au check des versions -> Peut etre le faire aussi au nivo du server-client ?
+
+ - Dans le handint_segfault, detecter le process qui a crasher, et suivant son pid, afficher la BONNE valeur de file:line (eventuellement toutes)

@@ -3,9 +3,10 @@
 echo
 echo '############# BUILDING FFSS LIBRARY ###############'
 echo
+archdir=`pwd`
 cd libffss-1.0.0
 libdir=`pwd`
-./configure --libdir=$libdir/src/.libs --enable-static --enable-context --disable-dependency-tracking
+./configure --libdir=$libdir/src/.libs --enable-static --enable-context --with-skyutils=$archdir/skyutils
 make
 cd ..
 echo
@@ -37,7 +38,7 @@ then
 	echo '############# BUILDING FFSS SERVER ###############'
 	echo
 	cd appli/server
-	./configure --with-ffss=$libdir --enable-static --disable-dependency-tracking
+	./configure --with-ffss=$libdir --enable-static
 	make
         strip src/ffss-server
         cd ../..
@@ -51,7 +52,7 @@ then
 	echo '############# BUILDING FFSS MASTER ###############'
 	echo
 	cd appli/master
-	./configure --with-ffss=$libdir --enable-static --enable-context --disable-dependency-tracking
+	./configure --with-ffss=$libdir --enable-static --enable-context
 	make
         strip src/ffss-master
 	cd ../..

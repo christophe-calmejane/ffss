@@ -12,6 +12,8 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
+  --enable-debug          Enables debug option (default=no)"
+ac_help="$ac_help
   --enable-context        Enables context debug info (default=no)"
 ac_help="$ac_help
   --enable-malloc_trace   Enables malloc trace debug info (default=no)"
@@ -19,8 +21,6 @@ ac_help="$ac_help
   --enable-static         Enables static build of ffss-master (default=dynamic)"
 ac_help="$ac_help
   --with-ffss=DIR       Bin path to uninstalled copy of libffss (default /usr/local/bin)"
-ac_help="$ac_help
-  --enable-debug          Enables debug option (default=no)"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -1628,6 +1628,22 @@ fi
 done
 
 
+# Check whether --enable-debug or --disable-debug was given.
+if test "${enable_debug+set}" = set; then
+  enableval="$enable_debug"
+  case "${enableval}" in
+  yes) debug=true ;;
+  no)  debug=false ;;
+  *) { echo "configure: error: bad value ${enableval} for --enable-debug" 1>&2; exit 1; } ;;
+esac
+else
+  debug=false
+fi
+
+if test "$debug" = "true"; then
+  CFLAGS="$CFLAGS ""-DDEBUG "
+fi
+
 # Check whether --enable-context or --disable-context was given.
 if test "${enable_context+set}" = set; then
   enableval="$enable_context"
@@ -1682,21 +1698,6 @@ if test "${with_ffss+set}" = set; then
   :
 fi
 
-# Check whether --enable-debug or --disable-debug was given.
-if test "${enable_debug+set}" = set; then
-  enableval="$enable_debug"
-  case "${enableval}" in
-  yes) debug=true ;;
-  no)  debug=false ;;
-  *) { echo "configure: error: bad value ${enableval} for --enable-debug" 1>&2; exit 1; } ;;
-esac
-else
-  debug=false
-fi
-
-if test "$debug" = "true"; then
-  CFLAGS="$CFLAGS ""-DDEBUG "
-fi
 
 echo -n "checking for ffss-config... "
 if test x"$with_ffss" = x ; then

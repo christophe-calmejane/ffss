@@ -68,8 +68,6 @@ FFSS_INTERFACE_AGE = @FFSS_INTERFACE_AGE@
 FFSS_MAJOR_VERSION = @FFSS_MAJOR_VERSION@
 FFSS_MICRO_VERSION = @FFSS_MICRO_VERSION@
 FFSS_MINOR_VERSION = @FFSS_MINOR_VERSION@
-FFSS_PTHREAD_FLAGS = @FFSS_PTHREAD_FLAGS@
-FFSS_PTHREAD_LIB = @FFSS_PTHREAD_LIB@
 FFSS_VERSION = @FFSS_VERSION@
 LD = @LD@
 LIBTOOL = @LIBTOOL@
@@ -83,11 +81,11 @@ MAKEINFO = @MAKEINFO@
 NM = @NM@
 OBJDUMP = @OBJDUMP@
 O_BZ_LIB = @O_BZ_LIB@
-O_SKYUTILS_FLAGS = @O_SKYUTILS_FLAGS@
 O_Z_LIB = @O_Z_LIB@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
-SOLARIS = @SOLARIS@
+SKYUTILS_CFLAGS = @SKYUTILS_CFLAGS@
+SKYUTILS_LIB = @SKYUTILS_LIB@
 VERSION = @VERSION@
 Z_LIB = @Z_LIB@
 
@@ -100,10 +98,10 @@ include_HEADERS = ffss.h
 libffss_la_SOURCES =  	client.c  	common.c  	common.h  	ffss.h  	master.c  	message.c  	server.c  	transfer.c 	transfer.h 	utils.c 	utils.h         driver.c
 
 
-libffss_la_LDFLAGS =  	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) 	-release $(LT_RELEASE)         @FFSS_PTHREAD_LIB@
+libffss_la_LDFLAGS =  	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) 	-release $(LT_RELEASE)
 
 
-CFLAGS = @CFLAGS@ @O_SKYUTILS_FLAGS@
+CFLAGS = @CFLAGS@ @SKYUTILS_CFLAGS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -457,6 +455,7 @@ all-redirect all-am all installdirs-am installdirs mostlyclean-generic \
 distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
+	@SKYUTILS_LIB@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
