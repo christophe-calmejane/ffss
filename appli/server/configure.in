@@ -128,7 +128,7 @@ fi
 if test ! "$O_CRYPT_LIB"; then
 	AC_MSG_WARN("Cannot find libcrypt so password will NOT BE CRYPTED")
 else
-	CFLAGS="$CFLAGS ""-DUSE_CRYPT "
+	CFLAGS="$CFLAGS ""-DUSE_CRYPT -I/usr/src/lib/libcrypt "
 fi
 
 LIBS="$LIBS $ffss_libs $O_CRYPT_LIB"
