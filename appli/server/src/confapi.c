@@ -513,7 +513,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
 {
   SU_PList Plugins = NULL;
   FSCA_PPluginInfo Pl;
-  int nb;
+  int nb,i;
   char Buf[10000],*tmp1,*tmp2,*tmp3;
   FFSS_Field Size,Pos;
 
@@ -524,7 +524,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
 
   Pos = 1;
   nb = FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
-  for(nb=0;nb<nb;nb++)
+  for(i=0;i<nb;i++)
   {
     Pl = (FSCA_PPluginInfo) malloc(sizeof(FSCA_TPluginInfo));
     memset(Pl,0,sizeof(FSCA_TPluginInfo));

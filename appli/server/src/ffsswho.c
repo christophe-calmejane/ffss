@@ -1,7 +1,7 @@
 
 #include "confapi.h"
 
-#define FFSSWHO_VERSION "1.0-pre5"
+#define FFSSWHO_VERSION "1.0-pre6"
 
 bool RequestConns(SU_PClientSocket Client,const char Path[])
 {
@@ -80,6 +80,7 @@ void PrintHelp(void)
   printf("          -v or --version  : Prints server version and exits\n");
   printf("          -g or --global   : Prints server global infos\n");
   printf("          -c or --conns    : Prints actual connection to the server (and active downloads). [Default]\n");
+  printf("          -s <servername> or --server <servername> : Connects to the specified server instead of localhost\n");
   exit(0);
 }
 
@@ -90,6 +91,7 @@ int main(int argc,char *argv[])
   int i;
   bool global_info = false;
   bool conn_info = false;
+  SU_PList Plugins;
 
 #ifdef _WIN32
   if(!SU_WSInit(2,2))
@@ -101,6 +103,7 @@ int main(int argc,char *argv[])
   printf("FFSS Who v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSSWHO_VERSION);
   printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n\n",FFSS_SERVER_VERSION);
 
+  Server = "localhost";
   if(argc != 1)
   {
     i = 1;
@@ -122,11 +125,22 @@ int main(int argc,char *argv[])
         conn_info = true;
       else if(strcmp(argv[i],"--conns") == 0)
         conn_info = true;
+      else if(strcmp(argv[i],"-s") == 0)
+      {
+        if((i+1) == argc)
+          PrintHelp();
+        Server = argv[++i];
+      }
+      else if(strcmp(argv[i],"--server") == 0)
+      {
+        if((i+1) == argc)
+          PrintHelp();
+        Server = argv[++i];
+      }
       i++;
     }
   }
 
-  Server = "localhost";
   Client = SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
   if(Client == NULL)
   {
@@ -139,6 +153,7 @@ int main(int argc,char *argv[])
   if(global_info)
   {
     FSCA_PGlobal Gbl = FSCA_RequestGlobalInfo(Client);
+    Plugins = FSCA_Plugin_Enum(Client);
     if(Gbl != NULL)
     {
       printf("Global infos :\n");
@@ -150,6 +165,16 @@ int main(int argc,char *argv[])
       printf("\tMaxXFerPerConn = %d\n",Gbl->MaxXFerPerConn);
       printf("\tFTP            = %d\n",Gbl->FTP);
       printf("\tFTP_MaxConn    = %d\n",Gbl->FTP_MaxConn);
+    }
+    if(Plugins != NULL)
+    {
+      while(Plugins != NULL)
+      {
+        FSCA_PPluginInfo Pl = (FSCA_PPluginInfo) Plugins->Data;
+        printf("\nLoaded plugins :\n");
+        printf("\t%s %s v%s\n",Pl->Name,Pl->Author,Pl->Version);
+        Plugins = Plugins->Next;
+      }
     }
   }
   if(conn_info)

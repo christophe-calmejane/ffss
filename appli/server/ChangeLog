@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 11th 2002
+                  Last Update : May, 20th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+May, 20th 2002:
+  - Added plugin support in confapi
+  - Added plugin display in ffsswho
 
 May, 11th 2002:
   - Fixed a bug in xfer displayed by ffsswho : Not removing conn when xfer are still actives
