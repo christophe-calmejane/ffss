@@ -391,7 +391,12 @@ void OnPing(struct sockaddr_in Master)
     Ptr = FS_Index;
     while(Ptr != NULL)
     {
-      FS_CheckDirectoryChanged((FS_PShare)Ptr->Data);
+      if(FS_CheckDirectoryChanged((FS_PShare)Ptr->Data))
+      {
+        FFSS_PrintDebug(5,"Detected a change... Rescaning share\n");
+        FS_EjectFromShare((FS_PShare)Ptr->Data,false);
+        FS_RescanShare((FS_PShare)Ptr->Data);
+      }
       Ptr = Ptr->Next;
     }
     SU_SEM_POST(FS_SemShr);
@@ -1734,7 +1739,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   struct timeval tv;
   int retval,res,len;
   char *RBuf;
-  long int total=0,rpos=0,rlen;
+  unsigned long int total=0,rpos=0,rlen;
   FFSS_Field fsize;
 
   SU_ThreadBlockSigs();

@@ -102,6 +102,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   char name[2048];
   HANDLE dir;
   WIN32_FIND_DATA ent;
+  FFSS_LongField total_dir_size = 0;
 
   FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
   /* List all files in Path, and fill Node with it */
@@ -110,7 +111,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   if(dir == INVALID_HANDLE_VALUE)
   {
     FFSS_PrintDebug(4,"Error opening dir %s (%d)\n",name,GetLastError());
-    return;
+    return 0;
   }
   do
   {
@@ -128,7 +129,8 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       Dir->Flags = FFSS_FILE_DIRECTORY | FFSS_FILE_EXECUTABLE;
       Dir->Time = FS_ConvertTime(ent.ftCreationTime);
       snprintf(name,sizeof(name),"%s\\%s",Path,ent.cFileName);
-      FS_BuildIndex_rec(Share,&Dir->Files,name);
+      Dir->Size = FS_BuildIndex_rec(Share,&Dir->Files,name);
+      total_dir_size += Dir->Size;
       Node->Dirs = SU_AddElementHead(Node->Dirs,Dir);
     }
     else
@@ -141,10 +143,12 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Flags = FFSS_FILE_EXECUTABLE;
       File->Size = (ent.nFileSizeHigh * MAXDWORD) + ent.nFileSizeLow;
       File->Time = FS_ConvertTime(ent.ftCreationTime);
+      total_dir_size += File->Size;
       Node->Files = SU_AddElementHead(Node->Files,File);
     }
   } while(FindNextFile(dir,&ent));
   FindClose(dir);
+  return total_dir_size;
 }
 #endif /* __unix__ */
 
@@ -370,7 +374,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   char *p;
 #endif /* __unix__ */
   FS_PNode Node;
-  long int buf_size,len,pos,i;
+  unsigned long int buf_size,len,pos,i;
 
   assert(Share);
   if(Share == NULL)

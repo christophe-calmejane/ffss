@@ -94,12 +94,7 @@ bool FS_CheckDirectoryChanged(FS_PShare Share)
   snprintf(name,sizeof(name),"%s/.",Share->Path);
   stat(name,&st);
   if(st.st_ctime != Share->Time)
-  {
-    FFSS_PrintDebug(5,"Detected a change... Rescaning share\n");
-    FS_EjectFromShare(Share,false);
-    FS_RescanShare(Share);
     return true;
-  }
   else
     return false;
 }

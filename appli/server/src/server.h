@@ -89,6 +89,9 @@ typedef struct
   SU_PList Conns;     /* FS_PConn */
   bool Disabled;      /* Temporarly disable the share */
   bool Remove;        /* If the share is to be removed (close all active connections) */
+#ifdef _WIN32
+  HANDLE NotifyHandle;/* Notification handle */
+#endif /* _WIN32 */
 } FS_TShare, *FS_PShare;
 
 typedef struct

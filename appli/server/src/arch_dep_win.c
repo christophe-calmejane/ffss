@@ -269,5 +269,17 @@ void FS_UnLoadPlugin(void *Handle)
 
 bool FS_CheckDirectoryChanged(FS_PShare Share)
 {
+  FFSS_PrintDebug(5,"Checking for a change in share %s (%s)\n",Share->ShareName,Share->Path);
+  if(Share->NotifyHandle == NULL)
+  {
+    Share->NotifyHandle = FindFirstChangeNotification(Share->Path,true,FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME);
+    if(Share->NotifyHandle == NULL)
+      return false;
+  }
+  if(WaitForSingleObject(Share->NotifyHandle,0) == WAIT_OBJECT_0) /* Change detected */
+  {
+    FindNextChangeNotification(Share->NotifyHandle);
+    return true;
+  }
   return false;
 }
