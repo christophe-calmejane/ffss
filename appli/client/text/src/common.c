@@ -1134,15 +1134,15 @@ bool FCA_hostlist_comp(SU_PList p1, SU_PList p2)
 		return true;
 	switch(FCA_sort_servers_by[0]) {
 	case 'I':	/* by IP */
-		return (strcmp(
+		return (strcasecmp(
 			((FM_PHost)(p1->Data))->IP,
 			((FM_PHost)(p2->Data))->IP)*ord <0);
 	case 'c':	/* by comment */
-		return (strcmp(
+		return (strcasecmp(
 			((FM_PHost)(p1->Data))->Comment,
 			((FM_PHost)(p2->Data))->Comment)*ord <0);
 	default:	/* default, by name */
-		return (strcmp(
+		return (strcasecmp(
 			((FM_PHost)(p1->Data))->Name,
 			((FM_PHost)(p2->Data))->Name)*ord <0);
 	}
@@ -1166,7 +1166,7 @@ bool FCA_dirlist_comp(SU_PList p1, SU_PList p2)
 	case 'd':	/* by date */
 		return ( (e1->Stamp-e2->Stamp)*ord <=0 );
 	default:	/* default, by name */
-		return ( strcmp(e1->Name,e2->Name)*ord <=0 );
+		return ( strcasecmp(e1->Name,e2->Name)*ord <=0 );
 	}
 }
 
