@@ -41,7 +41,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   }
   else
   {
-    rlen = FT->XI.fsize - FT->XI.total;
+    rlen = (unsigned long int)(FT->XI.fsize - FT->XI.total);
     last = true;
   }
   if(fread(Conn->TransferBuffer,1,rlen,FT->fp) != rlen)

@@ -20,6 +20,7 @@ typedef struct
   int  MaxXFerPerConn;
   bool FTP;
   int  FTP_MaxConn;
+  bool XFerInConn;
 } FSCA_TGlobal, *FSCA_PGlobal;
 
 typedef struct

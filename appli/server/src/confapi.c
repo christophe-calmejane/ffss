@@ -132,6 +132,8 @@ FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
   Gbl->FTP = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos)+1;
   Gbl->FTP_MaxConn = atoi(Buf+Pos);
+  Pos += strlen(Buf+Pos)+1;
+  Gbl->XFerInConn = atoi(Buf+Pos);
   return Gbl;
 }
 
@@ -372,8 +374,8 @@ bool FSCA_SetGlobalInfo(SU_PClientSocket Client,const FSCA_PGlobal Gbl)
   Size += strlen(Gbl->Comment) + 1;
   SU_strcpy(Buf+Size,Gbl->Master,sizeof(Buf)-Size);
   Size += strlen(Gbl->Master) + 1;
-  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d%c%d",Gbl->Idle,0,Gbl->MaxConn,0,Gbl->MaxXFerPerConn,0,Gbl->FTP,0,Gbl->FTP_MaxConn);
-  Size += FSCA_GetIntLen(Gbl->Idle) + FSCA_GetIntLen(Gbl->MaxConn) + FSCA_GetIntLen(Gbl->MaxXFerPerConn) + FSCA_GetIntLen(Gbl->FTP) + FSCA_GetIntLen(Gbl->FTP_MaxConn) + 5;
+  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d%c%d%c%d",Gbl->Idle,0,Gbl->MaxConn,0,Gbl->MaxXFerPerConn,0,Gbl->FTP,0,Gbl->FTP_MaxConn,0,Gbl->XFerInConn);
+  Size += FSCA_GetIntLen(Gbl->Idle) + FSCA_GetIntLen(Gbl->MaxConn) + FSCA_GetIntLen(Gbl->MaxXFerPerConn) + FSCA_GetIntLen(Gbl->FTP) + FSCA_GetIntLen(Gbl->FTP_MaxConn) + FSCA_GetIntLen(Gbl->XFerInConn) + 6;
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;

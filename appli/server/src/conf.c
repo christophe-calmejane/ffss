@@ -20,7 +20,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   char *buf;
   unsigned int buf_len;
   char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m,*s_u;
-  char *g_n,*g_c,*g_m,*g_i,*g_max,*g_max_xf,*g_f,*g_f_max;
+  char *g_n,*g_c,*g_m,*g_i,*g_max,*g_max_xf,*g_f,*g_f_max,*g_xf_conn;
   char *q,*r;
   char *u_l,*u_p,*u_w;
   FS_PShare Share,shr2;
@@ -235,8 +235,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           SU_strcpy(buf+pos,FS_MyGlobal.Master,buf_len-pos);
           pos += strlen(FS_MyGlobal.Master) + 1;
         }
-        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%d",FS_MyGlobal.Idle,0,FS_MyGlobal.MaxConn,0,FS_MyGlobal.MaxXFerPerConn,0,FS_MyGlobal.FTP,0,FS_MyGlobal.FTPMaxConn);
-        pos += FS_GetIntLen(FS_MyGlobal.Idle) + FS_GetIntLen(FS_MyGlobal.MaxConn) + FS_GetIntLen(FS_MyGlobal.MaxXFerPerConn) + FS_GetIntLen(FS_MyGlobal.FTP) + FS_GetIntLen(FS_MyGlobal.FTPMaxConn) + 5;
+        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%d%c%d",FS_MyGlobal.Idle,0,FS_MyGlobal.MaxConn,0,FS_MyGlobal.MaxXFerPerConn,0,FS_MyGlobal.FTP,0,FS_MyGlobal.FTPMaxConn,0,FS_MyGlobal.XFerInConn);
+        pos += FS_GetIntLen(FS_MyGlobal.Idle) + FS_GetIntLen(FS_MyGlobal.MaxConn) + FS_GetIntLen(FS_MyGlobal.MaxXFerPerConn) + FS_GetIntLen(FS_MyGlobal.FTP) + FS_GetIntLen(FS_MyGlobal.FTPMaxConn) + FS_GetIntLen(FS_MyGlobal.XFerInConn) + 6;
         SU_SEM_POST(FS_SemGbl);
         Size = pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -412,7 +412,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         g_max_xf = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         g_f = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         g_f_max = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((g_n == NULL) || (g_c == NULL) || (g_m == NULL) || (g_i == NULL) || (g_max == NULL) || (g_f == NULL) || (g_f_max == NULL) || (g_max_xf == NULL))
+        g_xf_conn = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        if((g_n == NULL) || (g_c == NULL) || (g_m == NULL) || (g_i == NULL) || (g_max == NULL) || (g_f == NULL) || (g_f_max == NULL) || (g_max_xf == NULL) || (g_xf_conn == NULL))
         {
           error = true;
           break;
@@ -438,6 +439,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         FS_MyGlobal.MaxXFerPerConn = atoi(g_max_xf);
         FS_MyGlobal.FTP = (bool)atoi(g_f);
         FS_MyGlobal.FTPMaxConn = (bool)atoi(g_f_max);
+        FS_MyGlobal.XFerInConn = (bool)atoi(g_xf_conn);
         if(FS_CheckGlobal() != NULL)
         {
           SU_SEM_POST(FS_SemGbl);
