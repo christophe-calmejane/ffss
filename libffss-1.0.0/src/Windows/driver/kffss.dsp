@@ -136,6 +136,14 @@ SOURCE=..\..\utils.cpp
 
 SOURCE=..\..\ffss.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\appli\driver\ffssfs\inc\ffss_tdi.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\kffss.h
+# End Source File
 # End Group
 # End Target
 # End Project
