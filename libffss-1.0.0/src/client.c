@@ -508,7 +508,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = false;
         break;
       }
-      FFSS_PrintDebug(3,"Received a xfer data message (%d bytes)\n",val);
+      FFSS_PrintDebug(3,"Received a xfer data message (%d bytes)\n",Length);
       if(FFSS_CB.CCB.OnData != NULL)
       {
         FT = FFSS_CB.CCB.OnData(Server,val);

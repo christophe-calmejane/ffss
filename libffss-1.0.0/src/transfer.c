@@ -847,12 +847,14 @@ void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
 
   if(FT->XI.fsize == 0) /* Extract FileSize */
   {
-    FT->XI.fsize = *(FFSS_Field *)(Buf);
-    Len -= sizeof(FFSS_Field);
+    FT->XI.fsize = *(FFSS_LongField *)(Buf);
+    Len -= sizeof(FFSS_LongField);
+    FFSS_PrintDebug(3,"FFSS_OnDataDownload : Receiving file size : %lld\n",FT->XI.fsize);
   }
   FT->XI.total += Len;
   if(FT->XI.total > FT->XI.fsize) /* Extract Checksum */
   {
+    FFSS_PrintDebug(3,"FFSS_OnDataDownload : All data received, after %lld bytes (fsize=%lld)...extracting checksum\n",FT->XI.total,FT->XI.fsize);
     Len -= sizeof(FFSS_Field);
     Checksum = *(FFSS_Field *)(Buf+Len);
   }

@@ -473,8 +473,9 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
 /* FFSS Master : Init */
 /* Initialisation of the FFSS Master - Must be called before any other FFSS function */
 /* Returns true on success, false otherwise */
-bool FM_Init(int MasterPort)
+bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Interface)
 {
+  bool error = false;
 #ifdef FFSS_CONTEXT
   signal(SIGSEGV, FFSS_handle_SIGNAL);
   FFSS_MainThread = SU_THREAD_SELF;
@@ -529,6 +530,53 @@ bool FM_Init(int MasterPort)
     free(FM_SI_TCP);
     return false;
   }
+  context;
+  if(Interface != NULL)
+  {
+    if(getuid() == 0)
+    {
+      if(setsockopt(FM_SI_UDP->sock,SOL_SOCKET,SO_BINDTODEVICE,Interface,strlen(Interface)+1) == SOCKET_ERROR)
+      {
+        error = true;
+        FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s (UDP socket) : %s\n",Interface,strerror(errno));
+      }
+      if(setsockopt(FM_SI_OUT_UDP->sock,SOL_SOCKET,SO_BINDTODEVICE,Interface,strlen(Interface)+1) == SOCKET_ERROR)
+      {
+        error = true;
+        FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s (UDP outgoing socket) : %s\n",Interface,strerror(errno));
+      }
+      if(setsockopt(FM_SI_TCP->sock,SOL_SOCKET,SO_BINDTODEVICE,Interface,strlen(Interface)+1) == SOCKET_ERROR)
+      {
+        error = true;
+        FFSS_PrintSyslog(LOG_WARNING,"Warnig : Cannot bind only for %s (TCP socket) : %s\n",Interface,strerror(errno));
+      }
+      if(!error)
+        FFSS_PrintSyslog(LOG_WARNING,"Entering limited bind mode to %s\n",Interface);
+    }
+    else
+      FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot bind to %s only\n",Interface);
+  }
+  context;
+#ifdef __unix__
+  if((User != NULL) || (Group != NULL))
+  {
+    if(getuid() == 0)
+    {
+      if(Group != NULL)
+      {
+        if(!SU_SetUserGroup(NULL,Group))
+          FFSS_PrintSyslog(LOG_WARNING,"Warning : cannot setgid to group %s\n",Group);
+      }
+      if(User != NULL)
+      {
+        if(!SU_SetUserGroup(User,NULL))
+          FFSS_PrintSyslog(LOG_WARNING,"Warning : cannot setuid to user %s\n",User);
+      }
+    }
+    else
+      FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot use setuid/setgid\n");
+  }
+#endif /* __unix__ */
   context;
   if(!SU_CreateThread(&FM_THR_UDP,F_ThreadUDP,(void *)FFSS_THREAD_MASTER,false))
   {

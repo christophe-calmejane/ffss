@@ -24,6 +24,8 @@ extern "C" {
 #define __unix__
 #elif __CYGWIN32__
 #define FFSS_SERVER_OS "CygWin"
+#elif __sun__
+#define FFSS_SERVER_OS "SunOS"
 #else
 #error "Unknown OS... contact devel team"
 #endif /* __linux__ */
@@ -59,9 +61,12 @@ extern "C" {
 #include <sys/time.h>
 #include <unistd.h>
 #include <syslog.h>
+#ifdef __sun__
+#include <sys/sockio.h>
+#endif /* __sun__ */
 #endif /* _WIN32 */
 
-#define FFSS_VERSION "1.0.0-pre79"
+#define FFSS_VERSION "1.0.0-pre80"
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
@@ -558,7 +563,7 @@ bool FC_UnInit(void);
 /* FFSS Master : Init */
 /* Initialisation of the FFSS Master - Must be called before any other FFSS function */
 /* Returns true on success, false otherwise */
-bool FM_Init(int MasterPort);
+bool FM_Init(int MasterPort,const char *User,const char *Group,const char *Interface);
 
 /* FFSS Master : UnInit */
 /* Uninitialisation of the FFSS Master - Must be called at the end of the main */

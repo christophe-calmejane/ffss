@@ -3,10 +3,19 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : March, 5th 2002
+                  Last Update : April, 5th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+April, 13th 2002:
+  - Bug fixed in Xfer in sock mode
+
+April, 5th 2002:
+  - Added SunOS arch support
+
+March, 30th 2002:
+  - Changed FM_Init function, to take care of setuid/setgid and limited bind, instead of the master itself
 
 March, 5th 2002:
   - Added time printing in PrintDebug messages
