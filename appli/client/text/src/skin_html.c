@@ -209,6 +209,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
   </td>
  </tr>
 </table>
+</form>
 <center>
  <h2>
   ");FCA_sep_link(path, "", true);printf("
@@ -258,6 +259,7 @@ printf("   </select>
   </td>
  </tr>
 </table>
+</form>
 <center>
  <h2>
   search results for '%s' on %s", query, domain);printf("
