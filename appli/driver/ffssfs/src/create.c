@@ -160,7 +160,14 @@ FsdCreateFile (
                 //Status = STATUS_OBJECT_NAME_NOT_FOUND; /* Already set by FsdGetInodeFromPath */
                 __leave;
             }
-
+#if DBG
+            if(Inode == NULL)
+            {
+              KdPrint(("FsdCreateFile : AIE AIE AIE AIE AIE !!! Inode NULL HERE !!!!\n"));
+              Status = STATUS_OBJECT_NAME_NOT_FOUND;
+              __leave;
+            }
+#endif /* DBG */
             Fcb = FsdAllocateFcb (
                 ((PFSD_VCB)DeviceObject->DeviceExtension),
                 &IrpSp->FileObject->FileName,
@@ -175,10 +182,6 @@ FsdCreateFile (
                 __leave;
             }
             
-            KdPrint((
-                DRIVER_NAME ": Allocated a new FCB for \"%s\" - ",
-                Fcb->AnsiFileName.Buffer
-                ));
         }
         
         Ccb = FsdAllocateCcb();
@@ -324,10 +327,12 @@ void FsdRescanInode(IN struct ffss_inode* Inode)
       KdPrint(("FsdRescanInode : Rescaning SHARE '%s' inode (of server '%s')\n",Inode->Name,Inode->IP));
       break;
     case FFSS_INODE_DIRECTORY :
-      KdPrint(("AIE AIE AIE FsdRescanInode : Rescaning is meaningless for DIRECTORY '%s' inode\n",Inode->Name));
+      if(!Inode->Listed)
+        KdPrint(("AIE AIE AIE FsdRescanInode : Rescaning is meaningless for DIRECTORY '%s' inode\n",Inode->Name));
       break;
     case FFSS_INODE_FILE :
-      KdPrint(("AIE AIE AIE FsdRescanInode : Rescan is meaningless for FILE inodes !!\n"));
+      if(!Inode->Listed)
+        KdPrint(("AIE AIE AIE FsdRescanInode : Rescan is meaningless for FILE inodes !!\n"));
       break;
   }
   UNLOCK_SUPERBLOCK_RESOURCE;
@@ -338,7 +343,7 @@ struct ffss_inode *FsdGetInodeByIndex(IN PFSD_FCB Fcb,IN ULONG FileIndex,OUT NTS
 {
   *Status = STATUS_INVALID_PARAMETER;
 
-  KdPrint(("FsdGetInodeByIndex : Looking for inode %d in '%s'\n",FileIndex,Fcb->FileName.Buffer));
+  //KdPrint(("FsdGetInodeByIndex : Looking for inode %d in '%s'\n",FileIndex,Fcb->FileName.Buffer));
 #if DBG
   if(Fcb == NULL)
   {
@@ -358,12 +363,12 @@ struct ffss_inode *FsdGetInodeByIndex(IN PFSD_FCB Fcb,IN ULONG FileIndex,OUT NTS
     FsdRescanInode(Fcb->ffss_inode);
     if((Fcb->ffss_inode->NbInodes == 0) || (FileIndex >= Fcb->ffss_inode->NbInodes)) /* Still not ok */
     {
-      KdPrint(("FsdGetInodeByIndex : No inode with FileIndex %d\n",FileIndex));
+      //KdPrint(("FsdGetInodeByIndex : No inode with FileIndex %d\n",FileIndex));
       return NULL;
     }
   }
   *Status = STATUS_SUCCESS;
-  KdPrint(("FsdGetInodeByIndex : Found inode for FileIndex %d (%s)\n",FileIndex,Fcb->ffss_inode->Inodes[FileIndex]->Name));
+  //KdPrint(("FsdGetInodeByIndex : Found inode for FileIndex %d (%s)\n",FileIndex,Fcb->ffss_inode->Inodes[FileIndex]->Name));
   return FsdAssignInode(Fcb->ffss_inode->Inodes[FileIndex],true);
 }
 
@@ -376,16 +381,16 @@ struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
   LOCK_SUPERBLOCK_RESOURCE;
   if(FFSS_SuperBlock->Root->Inodes == NULL)
   {
-    KdPrint(("FsdGetInodeFromDomain : No domains... requesting domains list\n"));
+    //KdPrint(("FsdGetInodeFromDomain : No domains... requesting domains list\n"));
     FC_SendMessage_DomainListing(FFSS_MASTER_IP,FsdAssignInode(FFSS_SuperBlock->Root,false));
   }
-  KdPrint(("FsdGetInodeFromDomain : Looking for '%s' in domains list\n",domain));
+  //KdPrint(("FsdGetInodeFromDomain : Looking for '%s' in domains list\n",domain));
 
   for(i=0;i<FFSS_SuperBlock->Root->NbInodes;i++)
   {
     if(FFSS_strcasecmp(domain,FFSS_SuperBlock->Root->Inodes[i]->Name))
     {
-      KdPrint(("FsdGetInodeFromDomain : Inode found\n"));
+      //KdPrint(("FsdGetInodeFromDomain : Inode found\n"));
       Inode = FsdAssignInode(FFSS_SuperBlock->Root->Inodes[i],false);
 #if DBG
       if(Inode->Type != FFSS_INODE_DOMAIN)
@@ -397,7 +402,7 @@ struct ffss_inode *FsdGetInodeFromDomain(IN char *domain)
   }
 
   UNLOCK_SUPERBLOCK_RESOURCE;
-  KdPrint(("FsdGetInodeFromDomain : Inode not found for domain '%s'\n",domain));
+  //KdPrint(("FsdGetInodeFromDomain : Inode not found for domain '%s'\n",domain));
   return NULL;
 }
 
@@ -410,16 +415,16 @@ struct ffss_inode *FsdGetInodeFromServer(IN char *server,IN struct ffss_inode *D
   LOCK_SUPERBLOCK_RESOURCE;
   if(Domain->Inodes == NULL)
   {
-    KdPrint(("FsdGetInodeFromServer : No servers... requesting servers list for '%s'\n",Domain->Name));
+    //KdPrint(("FsdGetInodeFromServer : No servers... requesting servers list for '%s'\n",Domain->Name));
     FC_SendMessage_ServerList(FFSS_MASTER_IP,NULL,Domain->Name,FsdAssignInode(Domain,false));
   }
-  KdPrint(("FsdGetInodeFromServer : Looking for '%s' in servers list for domain '%s'\n",server,Domain->Name));
+  //KdPrint(("FsdGetInodeFromServer : Looking for '%s' in servers list for domain '%s'\n",server,Domain->Name));
 
   for(i=0;i<Domain->NbInodes;i++)
   {
     if(FFSS_strcasecmp(server,Domain->Inodes[i]->Name))
     {
-      KdPrint(("FsdGetInodeFromServer : Inode found\n"));
+      //KdPrint(("FsdGetInodeFromServer : Inode found\n"));
       Inode = FsdAssignInode(Domain->Inodes[i],false);
 #if DBG
       if(Domain->Type != FFSS_INODE_DOMAIN)
@@ -433,7 +438,7 @@ struct ffss_inode *FsdGetInodeFromServer(IN char *server,IN struct ffss_inode *D
   }
 
   UNLOCK_SUPERBLOCK_RESOURCE;
-  KdPrint(("FsdGetInodeFromServer : Inode not found for server '%s'\n",server));
+  //KdPrint(("FsdGetInodeFromServer : Inode not found for server '%s'\n",server));
   return NULL;
 }
 
@@ -454,16 +459,16 @@ struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Ser
   LOCK_SUPERBLOCK_RESOURCE;
   if(Server->Inodes == NULL)
   {
-    KdPrint(("FsdGetInodeFromShare : No shares... requesting shares list for '%s' (%s)\n",Server->Name,Server->IP));
+    //KdPrint(("FsdGetInodeFromShare : No shares... requesting shares list for '%s' (%s)\n",Server->Name,Server->IP));
     FC_SendMessage_SharesListing(Server->IP,FsdAssignInode(Server,false));
   }
-  KdPrint(("FsdGetInodeFromShare : Looking for '%s' in shares list for server '%s'\n",share,Server->Name));
+  //KdPrint(("FsdGetInodeFromShare : Looking for '%s' in shares list for server '%s'\n",share,Server->Name));
 
   for(i=0;i<Server->NbInodes;i++)
   {
     if(FFSS_strcasecmp(share,Server->Inodes[i]->Name))
     {
-      KdPrint(("FsdGetInodeFromShare : Inode found\n"));
+      //KdPrint(("FsdGetInodeFromShare : Inode found\n"));
       Inode = FsdAssignInode(Server->Inodes[i],false);
 #if DBG
       if(Server->Type != FFSS_INODE_SERVER)
@@ -477,7 +482,7 @@ struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Ser
   }
 
   UNLOCK_SUPERBLOCK_RESOURCE;
-  KdPrint(("FsdGetInodeFromShare : Inode not found for share '%s'\n",share));
+  //KdPrint(("FsdGetInodeFromShare : Inode not found for share '%s'\n",share));
   return NULL;
 }
 
@@ -504,6 +509,31 @@ bool FsdRequestInodeListing(struct ffss_inode *Inode)
   return true;
 }
 
+int FsdRequestStrmOpen(struct ffss_inode *Inode,PFSD_CCB Ccb,long int OpenFlags)
+{
+  char buf[1024];
+  int pos = 0,len;
+
+  len = strlen(Inode->Path);
+  RtlCopyMemory(buf,Inode->Path,len);
+  pos = len;
+  buf[pos++] = '/';
+  len = strlen(Inode->Name) + 1;
+  RtlCopyMemory(buf+pos,Inode->Name,len);
+  KdPrint(("FsdRequestStrmOpen : File '%s' not yet opened.... sending Streaming open message\n",buf));
+  
+  if(!FC_SendMessage_StrmOpen(Inode->Conn,buf,OpenFlags,(FFSS_LongField)Ccb))
+    return false;
+
+  if(Ccb->State != FFSS_HANDLE_STATE_OPEN)
+  {
+    return false;
+    KdPrint(("FsdRequestStrmOpen : AIE AIE AIE : Still not opened... some error might have occured\n"));
+  }
+
+  return true;
+}
+
 /* Returned inode must be freed */
 struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTATUS *Status)
 {
@@ -512,22 +542,26 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   int i;
   bool found;
 
-  *Status = STATUS_OBJECT_NAME_NOT_FOUND;
+  *Status = STATUS_SUCCESS;
 
   if(FullFileName->Length == 0)
+  {
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
+  }
 
   FsdWcharToChar(Buf,FullFileName->Buffer,FullFileName->Length);
   KdPrint(("FsdGetInodeFromPath : Parsing '%s'\n",Buf));
 
   if(Buf[0] != '\\') /* Invalid path */
+  {
+    KdPrint(("FsdGetInodeFromPath : WARNING : Invalid path : %s\n",Buf));
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
+  }
 
   if(Buf[1] == 0) /* Root of FileSystem */
-  {
-    *Status = STATUS_SUCCESS;
     return FsdAssignInode(FFSS_SuperBlock->Root,true);
-  }
 
   /* Start of path parsing */
   parse = Buf+1;
@@ -540,14 +574,11 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   Domain = FsdGetInodeFromDomain(parse);
   if(Domain == NULL) /* Domain does not exists */
   {
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
   }
   if((p == NULL) || (p[1] == 0)) /* End of parse */
-  {
-    KdPrint(("end of parse (domain)\n"));
-    *Status = STATUS_SUCCESS;
     return Domain; /* Already assigned */
-  }
   parse = p + 1; /* Update parse position */
 
   /* Parse Server */
@@ -559,14 +590,11 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   FsdFreeInode(Domain,true);
   if(Server == NULL) /* Server does not exists */
   {
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
   }
   if((p == NULL) || (p[1] == 0)) /* End of parse */
-  {
-    KdPrint(("end of parse (server)\n"));
-    *Status = STATUS_SUCCESS;
     return Server; /* Already assigned */
-  }
   parse = p + 1; /* Update parse position */
 
   /* Parse Share */
@@ -578,26 +606,27 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
   FsdFreeInode(Server,true);
   if(Share == NULL) /* Share does not exists */
   {
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
   }
   if(p == NULL) /* End of parse */
-  {
-    KdPrint(("end of parse (share)\n"));
-    *Status = STATUS_SUCCESS;
     return Share; /* Already assigned */
-  }
   parse = p + 1; /* Update parse position */
 
   Conn = FsdGetConnection(Share);
   FsdFreeInode(Share,true);
   if(Conn == NULL)
   {
+    *Status = STATUS_OBJECT_NAME_NOT_FOUND;
     return NULL;
   }
   Inode = FsdAssignInode(Conn,true);
   /* Parse directories */
   while(parse[0] != 0)
   {
+    p = strchr(parse,'\\');
+    if(p != NULL) /* \ found ? */
+      p[0] = 0;
     if(!Inode->Listed)
     {
       /* Not listed yet, request listing */
@@ -608,6 +637,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
         FsdFreeInode(Conn,false);
         FsdFreeInode(Inode,false);
         UNLOCK_SUPERBLOCK_RESOURCE;
+        *Status = STATUS_OBJECT_NAME_NOT_FOUND;
         return NULL;
       }
       UNLOCK_SUPERBLOCK_RESOURCE;
@@ -626,6 +656,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     if(found == -1)
     {
       Inode = NULL;
+      *Status = STATUS_OBJECT_NAME_NOT_FOUND;
       break;
     }
     Inode2 = Inode;
@@ -633,7 +664,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
     FsdFreeInode(Inode2,false);
     UNLOCK_SUPERBLOCK_RESOURCE;
 
-    p = strchr(parse,'\\');
+    /* p already points to strchr(parse,'\\') */
     if(p == NULL) /* End of parse */
       break;
     if(p[1] == 0) /* End of parse */
@@ -649,6 +680,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
             FsdFreeInode(Conn,false);
             FsdFreeInode(Inode,false);
             UNLOCK_SUPERBLOCK_RESOURCE;
+            *Status = STATUS_OBJECT_NAME_NOT_FOUND;
             return NULL;
           }
           UNLOCK_SUPERBLOCK_RESOURCE;
@@ -657,6 +689,7 @@ struct ffss_inode *FsdGetInodeFromPath(IN PUNICODE_STRING FullFileName,OUT NTSTA
         {
           FsdFreeInode(Inode,true);
           Inode = NULL; /* Not a directory... error */
+          *Status = STATUS_OBJECT_NAME_NOT_FOUND;
         }
       }
       break;

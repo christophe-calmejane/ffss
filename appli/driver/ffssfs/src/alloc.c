@@ -271,8 +271,16 @@ FsdAllocateFcb (
     ExInitializeResourceLite(&(Fcb->MainResource));
     ExInitializeResourceLite(&(Fcb->PagingIoResource));
 
-    InsertTailList(&Vcb->FcbList, &Fcb->Next);
+/*    Fcb->Handle = 0;
+    Fcb->State = FFSS_HANDLE_STATE_CLOSE;
+    Fcb->eof = false;
+    Fcb->BufferPos = 0;
+    Fcb->FilePos = 0;*/
 
+    InsertTailList(&Vcb->FcbList, &Fcb->Next);
+#if DBG_MEM
+    KdPrint(("FsdAllocateFcb : Allocated a new FCB for %s\n",Fcb->AnsiFileName.Buffer));
+#endif /* DBG_MEM */
     return Fcb;
 }
 
@@ -299,7 +307,9 @@ struct ffss_inode *FsdAllocInode(IN const char Name[],IN unsigned long int Type)
   ffss_inode->Path = NULL;
 
   ffss_inode->Parent = NULL;
-  KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name '%s'\n",Type,(ffss_inode->Name == NULL)?"no name yet":ffss_inode->Name));
+#if DBG_MEM
+  KdPrint(("FsdAllocInode : Allocating inode (Type %d) with name '%s'\n",Type,ffss_inode->Name));
+#endif /* DBG_MEM */
 
   return ffss_inode;
 }
@@ -321,6 +331,9 @@ struct ffss_inode *FsdAssignInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL L
   }
   else
     ffss_inode->RefCount++;
+#if DBG_MEM
+  KdPrint(("FsdAssignInode : Assign inode for '%s' : new ref count = %d\n",ffss_inode->Name,ffss_inode->RefCount));
+#endif /* DBG_MEM */
   return ffss_inode;
 }
 
@@ -341,13 +354,17 @@ VOID FsdFreeInode(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   ffss_inode->RefCount--;
   if(ffss_inode->RefCount > 0)
   {
+#if DBG_MEM
     KdPrint(("FsdFreeInode : Delaying free for '%s'... %d ref remaining\n",ffss_inode->Name,ffss_inode->RefCount));
+#endif /* DBG_MEM */
     if(Lock)
       UNLOCK_SUPERBLOCK_RESOURCE;
     return;
   }
 
+#if DBG_MEM
   KdPrint(("FsdFreeInode : Freeing inode (%d) '%s'\n",ffss_inode->Type,ffss_inode->Name));
+#endif /* DBG_MEM */
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
@@ -394,7 +411,9 @@ VOID FsdFreeSubInodes(IN struct ffss_inode*  ffss_inode,IN SU_BOOL Lock)
   if(Lock)
     LOCK_SUPERBLOCK_RESOURCE;
 
+#if DBG_MEM
   KdPrint(("FsdFreeSubInodes : Freeing %d sub inodes for '%s'\n",ffss_inode->NbInodes,ffss_inode->Name));
+#endif /* DBG_MEM */
   if(ffss_inode->NbInodes != 0)
   {
     for(i=0;i<ffss_inode->NbInodes;i++)
@@ -441,7 +460,9 @@ FsdFreeFcb (
     IN PFSD_FCB Fcb
     )
 {
+#if DBG_MEM
   KdPrint(("FsdFreeFcb : %s\n",Fcb->FileName.Buffer));
+#endif /* DBG_MEM */
     ASSERT(Fcb != NULL);
 
     ASSERT((Fcb->Identifier.Type == FCB) &&
@@ -487,12 +508,19 @@ FsdAllocateCcb (
     Ccb->DirectorySearchPattern.MaximumLength = 0;
     Ccb->DirectorySearchPattern.Buffer = 0;
 
+    Ccb->Handle = 0;
+    Ccb->State = FFSS_HANDLE_STATE_CLOSE;
+    Ccb->eof = false;
+    Ccb->BufferPos = 0;
+    Ccb->FilePos = 0;
+
     return Ccb;
 }
 
 VOID
 FsdFreeCcb (
-    IN PFSD_CCB Ccb
+    IN PFSD_CCB Ccb,
+    IN struct ffss_inode *Inode
     )
 {
     ASSERT(Ccb != NULL);
@@ -503,6 +531,11 @@ FsdFreeCcb (
     if (Ccb->DirectorySearchPattern.Buffer != NULL)
     {
         FsdFreePool(Ccb->DirectorySearchPattern.Buffer);
+    }
+    if(Ccb->Handle != 0)
+    {
+      KdPrint(("FsdFreeCcb : Streaming file opened... sending close request (%d)\n",Ccb->Handle));
+      FC_SendMessage_StrmClose(Inode->Conn,Ccb->Handle);
     }
 
     FsdFreePool(Ccb);
@@ -540,7 +573,9 @@ FsdFreeVcb (
 
     IoDeleteDevice(Vcb->DeviceObject);
 
+#if DBG_MEM
     KdPrint((DRIVER_NAME ": Vcb deallocated\n"));
+#endif /* DBG_MEM */
 }
 
 #pragma code_seg() // end FSD_PAGED_CODE

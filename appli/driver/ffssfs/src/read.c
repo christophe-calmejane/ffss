@@ -134,6 +134,7 @@ FsdReadNormal (
 
             VcbResourceAcquired = TRUE;
 
+            KdPrint(("AIE AIE AIE : Requesting I/O READ on VCB !!  -> TO DO\n"));
             /* TO DO : ByteOffset = Offset de depart de lecture dans le fichier */
             if (ByteOffset.QuadPart >=
 
@@ -389,16 +390,26 @@ FsdReadNormal (
                 __leave;
             }
 
+            /* Check if file is already opened */
+            if(Ccb->State != FFSS_HANDLE_STATE_OPEN)
+            {
+              if(!FsdRequestStrmOpen(Fcb->ffss_inode,Ccb,FFSS_STRM_OPEN_READ | FFSS_STRM_OPEN_BINARY))
+              {
+                Status = STATUS_NOT_FOUND;
+                __leave;
+              }
+            }
+
             Status = FsdReadFileData(
                 Vcb->TargetDeviceObject,
-                /*(ULONG) Fcb->IndexNumber.QuadPart*/0, /* TO DO */
+                Ccb,
                 Fcb->ffss_inode,
-                &ByteOffset,
+                &ByteOffset.QuadPart,
                 Length,
                 UserBuffer
                 );
 
-            if (Status == STATUS_VERIFY_REQUIRED)
+            /*if (Status == STATUS_VERIFY_REQUIRED)
             {
                 DeviceToVerify = IoGetDeviceToVerify(PsGetCurrentThread());
 
@@ -410,14 +421,13 @@ FsdReadNormal (
                 {
                     Status = FsdReadFileData(
                         Vcb->TargetDeviceObject,
-                        /*(ULONG) Fcb->IndexNumber.QuadPart*/0, /* TO DO */
-                        Fcb->ffss_inode,
+                        Fcb,
                         &ByteOffset,
                         Length,
                         UserBuffer
                         );
                 }
-            }
+            }*/
 
             if (NT_SUCCESS(Status))
             {
@@ -546,11 +556,10 @@ FsdReadComplete (
     return Status;
 }
 
-NTSTATUS
+/*NTSTATUS
 FsdReadFileData (
     IN PDEVICE_OBJECT       DeviceObject,
-    IN ULONG                Index,
-    IN struct ffss_inode*  Inode,
+    IN struct ffss_inode*   Inode,
     IN PLARGE_INTEGER       Offset,
     IN ULONG                Length,
     IN OUT PVOID            Buffer
@@ -573,16 +582,6 @@ FsdReadFileData (
         Offset->QuadPart,
         Length
         ));
-
-    //
-    // On Romfs file data is 16 byte aligned and continuous while read/write
-    // operations on storage devices must be sector aligned and have an length
-    // that is a multiple of the sector size. If the file data happens to be
-    // sector aligned we just calculate the physical offset to it and do a read
-    // from the storage device. If the file data is not sector aligned we
-    // allocate a temporary buffer, do a sector aligned read to it and copy the
-    // right data from the temporary buffer to the callers buffer.
-    //
 
     if (!((Index + SIZEOF_FFSS_INODE(Inode) + Offset->QuadPart) &
         (SECTOR_SIZE - 1))
@@ -638,4 +637,51 @@ FsdReadFileData (
     }
 
     return Status;
+}*/
+
+
+void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User)
+{
+  PFSD_CCB Ccb;
+
+  Ccb = (PFSD_CCB) User;
+  if(Ccb == NULL)
+  {
+    KdPrint(("OnStrmOpenAnswer : User Pointer is NULL... disconnecting\n"));
+    return;
+  }
+
+  if(Code == FFSS_ERROR_NO_ERROR)
+  {
+    KdPrint(("OnStrmOpenAnswer : File successfully opened by server with handle %d\n",Handle));
+    Ccb->State = FFSS_HANDLE_STATE_OPEN;
+    Ccb->Handle = Handle;
+  }
 }
+
+void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User)
+{
+  PFSD_CCB Ccb;
+
+  Ccb = (PFSD_CCB) User;
+  if(Ccb == NULL)
+  {
+    KdPrint(("OnStrmReadAnswer : User Pointer is NULL... disconnecting\n"));
+    return;
+  }
+
+  if(BlocSize == 0)
+  {
+    KdPrint(("OnStrmReadAnswer : EOF for file %d\n",Handle));
+    Ccb->eof = true;
+  }
+  else
+  {
+    if(BlocSize > STREAMING_BUFFER_SIZE)
+      BlocSize = STREAMING_BUFFER_SIZE;
+    KdPrint(("OnStrmReadAnswer : %ld bytes read from %d\n",BlocSize,Handle));
+    RtlCopyMemory(Ccb->Buffer,Bloc,BlocSize);
+    Ccb->BufferPos = BlocSize;
+  }
+}
+

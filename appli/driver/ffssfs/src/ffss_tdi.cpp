@@ -18,7 +18,11 @@
 
 /* ***************************** TO DO ***************************** *
    - Tester un FileOpen sur un path complet (existant) sans avoir scanner avec le domain/server/share -> Devrait pas trouver le fichier (le domain ... server ... et/ou share)
-   - Tester un GROS malloc dans une routine en DIRQL
+   - AJOUTER UN CHAMP "VALID" dans la classe FfssTCP qui indique si la structure est en cours de liberation (deconnexion par ex), que l'on met a false dans le disconnect.
+     Et dans le GetConnection, tester si cette variable est a TRUE, si c'est pas le cas, liberer l'inode "/" connecté.
+
+  TODO :
+   - Mettre une var qq part pour savoir si une conn est tjs active ou non... et dans le getconnection, si non active, relancer la connexion.
  * ***************************************************************** */
 
 /* ********************************************************************** */
@@ -209,8 +213,10 @@ SU_BOOL OnDirectoryListingAnswer(FfssTCP *Server,const char Path[],int NbEntries
       KdPrint(("OnDirectoryListingAnswer : Got entry '%s' for '%s'\n",Ent->Name,Path));
       Inode = FsdAllocInode(Ent->Name,(Ent->Flags & FFSS_FILE_DIRECTORY)?FFSS_INODE_DIRECTORY:FFSS_INODE_FILE);
       Inode->Flags = Ent->Flags;
+      Inode->Size = Ent->Size;
+      Inode->Stamp = Ent->Stamp;
       Inode->Parent = FsdAssignInode(parent,false);
-      Inode->Conn = Server;
+      Inode->Conn = Server->Assign();
       len = strlen(Path) + 1;
       Inode->Path = (char *) malloc(len);
       RtlCopyMemory(Inode->Path,Path,len);
@@ -314,9 +320,9 @@ FfssUDP::FfssUDP() : KDatagramSocket()
   FFSS_CB.CCB.OnError = OnError;
   FFSS_CB.CCB.OnDirectoryListingAnswer = OnDirectoryListingAnswer;
   /* Streaming callbacks */
-  /*FFSS_CB.CCB.OnStrmOpenAnswer = OnStrmOpenAnswer;
+  FFSS_CB.CCB.OnStrmOpenAnswer = OnStrmOpenAnswer;
   FFSS_CB.CCB.OnStrmReadAnswer = OnStrmReadAnswer;
-  FFSS_CB.CCB.OnStrmWriteAnswer = OnStrmWriteAnswer;*/
+  /*FFSS_CB.CCB.OnStrmWriteAnswer = OnStrmWriteAnswer;*/
 };
 
 FfssUDP::~FfssUDP()
@@ -455,21 +461,25 @@ void FfssUDP::GetDatagram(uchar *Data,uint Indicated,PTRANSPORT_ADDRESS pTA,bool
 /* ********************************************************************** */
 FfssTCP::FfssTCP(const char Server[],const char ShareName[]) : KStreamSocket()
 {
-  int len;
+  int siz;
 
-  len = strlen(ShareName) + 1;
-  Share = (char *) malloc(len);
-  RtlCopyMemory(Share,ShareName,len);
+  siz = strlen(ShareName) + 1;
+  Share = (char *) malloc(siz);
+  RtlCopyMemory(Share,ShareName,siz);
 
-  len = strlen(Server) + 1;
-  IP = (char *) malloc(len);
-  RtlCopyMemory(IP,Server,len);
+  siz = strlen(Server) + 1;
+  IP = (char *) malloc(siz);
+  RtlCopyMemory(IP,Server,siz);
 
   BufSize = FFSS_TCP_CLIENT_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
   len = 0;
+  RefCount = 0;
   Sem = new FfssSem;
   if(Sem == NULL)
+    ASSERT(0);
+  IncLock = new FfssSem;
+  if(IncLock == NULL)
     ASSERT(0);
   Timer = new (NonPagedPool)FfssTimer(Sem,FFSS_TIMEOUT_TCP_MESSAGE*1000);
   if(Timer == NULL)
@@ -480,6 +490,7 @@ FfssTCP::FfssTCP(const char Server[],const char ShareName[]) : KStreamSocket()
 FfssTCP::~FfssTCP()
 {
   Sem->SignalTimer();
+  delete IncLock;
   delete Sem;
   delete Timer;
   free(Buf);
@@ -488,6 +499,22 @@ FfssTCP::~FfssTCP()
   FsdFreeInode(Root,true);
 }
 
+FfssTCP *FfssTCP::Assign()
+{
+  IncLock->Wait();
+  RefCount++;
+  IncLock->Signal();
+  return this;
+}
+
+void FfssTCP::Delete()
+{
+  IncLock->Wait();
+  RefCount--;
+  IncLock->Signal();
+  if(RefCount <= 0)
+    delete this;
+}
 
 TDI_STATUS FfssTCP::connect(PTDI_CONNECTION_INFORMATION RequestAddr)
 {
@@ -729,7 +756,7 @@ struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
     return NULL;
   }
   Inode = FsdAssignInode(Inode,false);
-  Inode->Conn = Conn;
+  Inode->Conn = Conn->Assign();
   Conn->Root = FsdAssignInode(Inode,false);
   KdPrint(("FsdGetConnection : Successfully connected to %s/%s\n",Share->IP,Share->Name));
   if(!FsdRequestInodeListing(Inode))
@@ -763,6 +790,102 @@ void FsdFreeConnection(IN struct ffss_inode *Conn)
   KdPrint(("FsdFreeConnection : Freeing Connection itself\n"));
   FsdFreeInode(Conn,false); /* Freeing connection itself */
   UNLOCK_SUPERBLOCK_RESOURCE;
+}
+
+NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,struct ffss_inode *IN FcbInode,IN __int64 Offset,IN ULONG Length,IN OUT PVOID Buffer)
+{
+  struct ffss_inode*   Inode;
+  unsigned long int data_pos;
+  NTSTATUS Status;
+
+  KdPrint(("Handle Read : Begin\n"));
+
+  /* Right now, if current file ofs is != of requested ofs, we invalidate the whole current buffer */
+  if(Ccb->FilePos != Offset)
+  {
+    KdPrint(("FsdReadFileData : HEY HEY HEY ... NOT OPTIMAL ... Check if a part of the requested ofs is in actual buffer (%ld-%ld)!!\n",Offset,Ccb->FilePos));
+    Ccb->BufferPos = 0;
+  }
+  data_pos = 0;
+  /* Check if some data are available in handle's buffer */
+  if(Ccb->BufferPos != 0)
+  {
+    KdPrint(("Handle Read : Some data in buffer\n"));
+    if(Ccb->BufferPos > Length) /* If more data than requested *in stock* */
+    {
+      RtlCopyMemory(Buffer,Ccb->Buffer,Length); /* Copy to user's buffer */
+      data_pos = Length;
+      memmove(Ccb->Buffer,Ccb->Buffer+data_pos,Ccb->BufferPos-Length); /* Copy the remaining bytes to handle's buffer */
+      Ccb->BufferPos -= Length;
+      Length = 0;
+    }
+    else
+    {
+      RtlCopyMemory(Buffer,Ccb->Buffer,Ccb->BufferPos); /* Copy to user's buffer */
+      data_pos = Ccb->BufferPos;
+      Length -= Ccb->BufferPos;
+      Ccb->BufferPos = 0;
+    }
+  }
+  KdPrint(("Handle Read : Requesting %d bytes of data\n",Length));
+  while(Length > 0)
+  {
+    KdPrint(("Handle Read : Sending STREAMING READ for %ld starting at %ld",Ccb->Handle,Offset+data_pos));
+    Ccb->BufferPos = 0;
+    Ccb->eof = false;
+    // Synchronized function
+    KdPrint(("Handle Read : setting sem\n"));
+    ((FfssTCP *)FcbInode->Conn)->Sem->SetTimeout(FFSS_TIMEOUT_TRANSFER*1000);
+    KdPrint(("Handle Read : calling streaming read\n"));
+    if(!FC_SendMessage_StrmRead((FfssTCP *)FcbInode->Conn,Ccb->Handle,Offset+data_pos,Length,(__int64)Ccb))
+    {
+      ((FfssTCP *)FcbInode->Conn)->Sem->SetTimeout(FFSS_TIMEOUT_TCP_MESSAGE*1000);
+      KdPrint(("Read File : Error sending Streaming Read message !\n"));
+      Length = data_pos; /* TO DO */
+      Offset += Length; /* TO DO */
+      return STATUS_DATA_ERROR;
+    }
+    KdPrint(("Handle Read : waiting data\n"));
+    ((FfssTCP *)FcbInode->Conn)->Sem->SetTimeout(FFSS_TIMEOUT_TCP_MESSAGE*1000);
+    KdPrint(("Handle Read : got data\n"));
+    if(Ccb->eof)
+    {
+      KdPrint(("Read File : EOF\n"));
+      Length = data_pos; /* TO DO */
+      Offset += Length; /* TO DO */
+      return STATUS_END_OF_FILE;
+    }
+    if(Ccb->BufferPos == 0)
+    {
+      KdPrint(("Read File : Timed out reading file\n"));
+      Length = data_pos; /* TO DO */
+      Offset += Length; /* TO DO */
+      return STATUS_DATA_ERROR;
+    }
+    if(Ccb->BufferPos > Length) /* If more data than requested returned */
+    {
+      KdPrint(("More than requested : %ld %ld\n",Ccb->BufferPos,Length));
+      RtlCopyMemory((char *)Buffer+data_pos,Ccb->Buffer,Length); /* Copy to user's buffer */
+      data_pos += Length;
+      KdPrint(("Copying %d remaining bytes to handle's buffer\n",Ccb->BufferPos-Length));
+      memmove(Ccb->Buffer,Ccb->Buffer+Length,Ccb->BufferPos-Length); /* Copy the remaining bytes to handle's buffer */
+      Ccb->BufferPos -= Length;
+      Length = 0;
+    }
+    else
+    {
+      KdPrint(("Copy whole block : %ld %ld\n",data_pos,Ccb->BufferPos));
+      RtlCopyMemory((char *)Buffer+data_pos,Ccb->Buffer,Ccb->BufferPos); /* Copy to user's buffer */
+      data_pos += Ccb->BufferPos;
+      Length -= Ccb->BufferPos;
+      Ccb->BufferPos = 0;
+    }
+
+  }
+  KdPrint(("Read File : Read complete. Returning\n"));
+  Length = data_pos; /* TO DO */
+  Offset += Length; /* TO DO */
+  return STATUS_SUCCESS;
 }
 
 NTSTATUS TDI_Init()

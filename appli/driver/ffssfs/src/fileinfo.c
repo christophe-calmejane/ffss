@@ -104,6 +104,39 @@ FsdQueryInformation (
 
         switch (FileInformationClass)
         {
+        case FileStreamInformation:
+          {
+            PFILE_STREAM_INFORMATION Buffer;
+
+Status = STATUS_INVALID_PARAMETER;
+__leave;
+
+            if (Length < sizeof(FILE_STREAM_INFORMATION))
+            {
+                Status = STATUS_INFO_LENGTH_MISMATCH;
+                __leave;
+            }
+
+            Buffer = (PFILE_STREAM_INFORMATION) SystemBuffer;
+/*
+            typedef struct _FILE_STREAM_INFORMATION {
+                ULONG NextEntryOffset;
+                ULONG StreamNameLength;
+                LARGE_INTEGER StreamSize;
+                LARGE_INTEGER StreamAllocationSize;
+                WCHAR StreamName[1];
+            } FILE_STREAM_INFORMATION, *PFILE_STREAM_INFORMATION;
+*/
+            Buffer->NextEntryOffset = 0;
+            Buffer->StreamNameLength = 0;
+            Buffer->StreamSize.QuadPart = STREAMING_BUFFER_SIZE;
+            Buffer->StreamAllocationSize.QuadPart = STREAMING_BUFFER_SIZE;
+            Buffer->StreamName[0] = 0;
+
+            Irp->IoStatus.Information = sizeof(FILE_STREAM_INFORMATION);
+            Status = STATUS_SUCCESS;
+            __leave;
+          }
         case FileBasicInformation:
             {
                 PFILE_BASIC_INFORMATION Buffer;
@@ -126,14 +159,10 @@ FsdQueryInformation (
                 } FILE_BASIC_INFORMATION, *PFILE_BASIC_INFORMATION;
 */
 
-                Buffer->CreationTime.QuadPart = 0;
-
-                Buffer->LastAccessTime.QuadPart = 0;
-
-                Buffer->LastWriteTime.QuadPart = 0;
-
-                Buffer->ChangeTime.QuadPart = 0;
-
+                Buffer->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
                 Buffer->FileAttributes = Fcb->FileAttributes;
 
                 Irp->IoStatus.Information = sizeof(FILE_BASIC_INFORMATION);
@@ -164,17 +193,13 @@ FsdQueryInformation (
 */
 
                 Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
-
                 Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
-
                 Buffer->NumberOfLinks = 1;
-
 #ifndef FSD_RO
                 Buffer->DeletePending = (BOOLEAN) FlagOn(Fcb->Flags, FCB_DELETE_PENDING);
 #else
                 Buffer->DeletePending = FALSE;
 #endif
-
                 Buffer->Directory = (BOOLEAN) FlagOn(Fcb->FileAttributes, FILE_ATTRIBUTE_DIRECTORY);
 
                 Irp->IoStatus.Information = sizeof(FILE_STANDARD_INFORMATION);
@@ -262,8 +287,7 @@ FsdQueryInformation (
                     Fcb->FileName.Length
                     );
 
-                Irp->IoStatus.Information = sizeof(FILE_NAME_INFORMATION) +
-                    Fcb->FileName.Length - sizeof(WCHAR);
+                Irp->IoStatus.Information = sizeof(FILE_NAME_INFORMATION) + Fcb->FileName.Length - sizeof(WCHAR);
                 Status = STATUS_SUCCESS;
                 __leave;
             }
@@ -331,10 +355,10 @@ FsdQueryInformation (
                 FileEaInformation = &FileAllInformation->EaInformation;
                 FilePositionInformation = &FileAllInformation->PositionInformation;
                 FileNameInformation = &FileAllInformation->NameInformation;
-                FileBasicInformation->CreationTime.QuadPart = 0;
-                FileBasicInformation->LastAccessTime.QuadPart = 0;
-                FileBasicInformation->LastWriteTime.QuadPart = 0;
-                FileBasicInformation->ChangeTime.QuadPart = 0;
+                FileBasicInformation->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FileBasicInformation->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FileBasicInformation->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
+                FileBasicInformation->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
                 FileBasicInformation->FileAttributes = Fcb->FileAttributes;
                 FileStandardInformation->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
                 FileStandardInformation->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
@@ -345,7 +369,6 @@ FsdQueryInformation (
 #else
                 FileStandardInformation->DeletePending = FALSE;
 #endif
-
                 FileStandardInformation->Directory = (BOOLEAN) FlagOn(Fcb->FileAttributes, FILE_ATTRIBUTE_DIRECTORY);
 
                 // The "inode number"
@@ -353,7 +376,6 @@ FsdQueryInformation (
 
                 // Romfs doesn't have any extended attributes
                 FileEaInformation->EaSize = 0;
-
                 FilePositionInformation->CurrentByteOffset = FileObject->CurrentByteOffset;
 
                 if (Length < sizeof(FILE_ALL_INFORMATION) + Fcb->FileName.Length - sizeof(WCHAR))
@@ -371,8 +393,7 @@ FsdQueryInformation (
                     Fcb->FileName.Length
                     );
 
-                Irp->IoStatus.Information = sizeof(FILE_ALL_INFORMATION) +
-                    Fcb->FileName.Length - sizeof(WCHAR);
+                Irp->IoStatus.Information = sizeof(FILE_ALL_INFORMATION) + Fcb->FileName.Length - sizeof(WCHAR);
                 Status = STATUS_SUCCESS;
                 __leave;
             }
@@ -401,10 +422,10 @@ FsdQueryInformation (
                 } FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
 */
 
-                Buffer->CreationTime.QuadPart = 0;
-                Buffer->LastAccessTime.QuadPart = 0;
-                Buffer->LastWriteTime.QuadPart = 0;
-                Buffer->ChangeTime.QuadPart = 0;
+                Buffer->CreationTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->LastAccessTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->LastWriteTime.QuadPart = Fcb->ffss_inode->Stamp;
+                Buffer->ChangeTime.QuadPart = Fcb->ffss_inode->Stamp;
                 Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
                 Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
                 Buffer->FileAttributes = Fcb->FileAttributes;
@@ -436,11 +457,8 @@ FsdQueryInformation (
 */
 
                 Buffer->FileAttributes = Fcb->FileAttributes;
-
                 Buffer->ReparseTag = 0;
-
-                Irp->IoStatus.Information =
-                    sizeof(FILE_ATTRIBUTE_TAG_INFORMATION);
+                Irp->IoStatus.Information = sizeof(FILE_ATTRIBUTE_TAG_INFORMATION);
                 Status = STATUS_SUCCESS;
                 __leave;
             }

@@ -191,6 +191,7 @@ typedef struct _FSD_VCB {
 #define VCB_DISMOUNT_PENDING    0x00000002
 #define VCB_READ_ONLY           0x00000004
 
+
 //
 // FSD_FCB File Control Block
 //
@@ -242,6 +243,19 @@ typedef struct _FSD_FCB {
     // Pointer to the inode
     struct ffss_inode*             ffss_inode;
 
+    /* FFSS file handle */
+    //unsigned long int              Handle;
+    /* State of file (see FFSS_HANDLE_STATE_xxx) */
+    //int                            State;
+    /* Is EndOfFile ? */
+    //unsigned char                  eof;
+    /* Buffer for streaming */
+    //char *                         Buffer[STREAMING_BUFFER_SIZE];
+    /* Current pos of buffer */
+    //unsigned long int              BufferPos;
+    /* Current file position */
+    //__int64                        FilePos;
+
 } FSD_FCB, *PFSD_FCB;
 
 //
@@ -249,23 +263,6 @@ typedef struct _FSD_FCB {
 //
 #define FCB_PAGE_FILE               0x00000001
 #define FCB_DELETE_PENDING          0x00000002
-
-//
-// FSD_CCB Context Control Block
-//
-// Data that represents one instance of an open file
-// There is one instance of the CCB for every instance of an open file
-//
-typedef struct _FSD_CCB {
-
-    // Identifier for this structure
-    FSD_IDENTIFIER  Identifier;
-
-    // State that may need to be maintained
-    ULONG           CurrentByteOffset;
-    UNICODE_STRING  DirectorySearchPattern;
-
-} FSD_CCB, *PFSD_CCB;
 
 //
 // FSD_IRP_CONTEXT
@@ -369,16 +366,6 @@ VOID FsdFreeSuperBlock(IN struct ffss_super_block *ffss_super_block);
 VOID
 FsdFreeFcb (
     IN PFSD_FCB Fcb
-    );
-
-PFSD_CCB
-FsdAllocateCcb (
-    VOID
-    );
-
-VOID
-FsdFreeCcb (
-    IN PFSD_CCB Ccb
     );
 
 VOID
@@ -885,16 +872,6 @@ FsdReadNormal (
 NTSTATUS
 FsdReadComplete (
     IN PFSD_IRP_CONTEXT IrpContext
-    );
-
-NTSTATUS
-FsdReadFileData (
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN ULONG                Index,
-    IN struct ffss_inode*  Inode,
-    IN PLARGE_INTEGER       Offset,
-    IN ULONG                Length,
-    IN OUT PVOID            Buffer
     );
 
 //

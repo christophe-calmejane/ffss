@@ -245,12 +245,15 @@ FsdFastIoQueryBasicInfo (
             ASSERT((Fcb->Identifier.Type == FCB) &&
                    (Fcb->Identifier.Size == sizeof(FSD_FCB)));
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                FsdGetCurrentProcessName(),
-                "FASTIO_QUERY_BASIC_INFO",
-                Fcb->AnsiFileName.Buffer
-                ));
+            if(Fcb->ffss_inode == NULL)
+            {
+                KdPrint(("AIE AIE AIE : FsdFastIoQueryBasicInfo : Inode NULL !!!\n"));
+                IoStatus->Status = STATUS_INVALID_PARAMETER;
+                Status = TRUE;
+                __leave;
+            }
+
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_BASIC_INFO",Fcb->AnsiFileName.Buffer));
 
             if (!ExAcquireResourceSharedLite(
                     &Fcb->MainResource,
@@ -276,17 +279,11 @@ FsdFastIoQueryBasicInfo (
 */
 
             Buffer->CreationTime.QuadPart = 0;
-
             Buffer->LastAccessTime.QuadPart = 0;
-
             Buffer->LastWriteTime.QuadPart = 0;
-
             Buffer->ChangeTime.QuadPart = 0;
-
             Buffer->FileAttributes = Fcb->FileAttributes;
-
             IoStatus->Information = sizeof(FILE_BASIC_INFORMATION);
-
             IoStatus->Status = STATUS_SUCCESS;
 
             Status =  TRUE;
@@ -312,21 +309,11 @@ FsdFastIoQueryBasicInfo (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_BASIC_INFO"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_BASIC_INFO"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_BASIC_INFO",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_BASIC_INFO",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -372,12 +359,15 @@ FsdFastIoQueryStandardInfo (
             ASSERT((Fcb->Identifier.Type == FCB) &&
                    (Fcb->Identifier.Size == sizeof(FSD_FCB)));
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                FsdGetCurrentProcessName(),
-                "FASTIO_QUERY_STANDARD_INFO",
-                Fcb->AnsiFileName.Buffer
-                ));
+            if(Fcb->ffss_inode == NULL)
+            {
+                KdPrint(("AIE AIE AIE : FsdFastIoQueryStandardInfo : Inode NULL !!!\n"));
+                IoStatus->Status = STATUS_INVALID_PARAMETER;
+                Status = TRUE;
+                __leave;
+            }
+
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_STANDARD_INFO",Fcb->AnsiFileName.Buffer));
 
             if (!ExAcquireResourceSharedLite(
                     &Fcb->MainResource,
@@ -403,23 +393,16 @@ FsdFastIoQueryStandardInfo (
 */
 
             Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
-
             Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
-
             Buffer->NumberOfLinks = 1;
-
 #ifndef FSD_RO
             Buffer->DeletePending = (BOOLEAN) FlagOn(Fcb->Flags, FCB_DELETE_PENDING);
 #else
             Buffer->DeletePending = FALSE;
 #endif
-
             Buffer->Directory = (BOOLEAN) FlagOn(Fcb->FileAttributes, FILE_ATTRIBUTE_DIRECTORY);
-
             IoStatus->Information = sizeof(FILE_STANDARD_INFORMATION);
-
             IoStatus->Status = STATUS_SUCCESS;
-
             Status =  TRUE;
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
@@ -443,21 +426,11 @@ FsdFastIoQueryStandardInfo (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_STANDARD_INFO"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_STANDARD_INFO"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_STANDARD_INFO",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_STANDARD_INFO",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -513,30 +486,13 @@ FsdFastIoLock (
                 __leave;
             }
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                (PUCHAR) Process + ProcessNameOffset,
-                "FASTIO_LOCK",
-                Fcb->AnsiFileName.Buffer
-                ));
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_LOCK",Fcb->AnsiFileName.Buffer));
 
-            KdPrint((
-                DRIVER_NAME ": Offset: %I64u Length: %I64u Key: %u %s%s\n",
-                FileOffset->QuadPart,
-                Length->QuadPart,
-                Key,
-                (FailImmediately ? "FailImmediately " : ""),
-                (ExclusiveLock ? "ExclusiveLock " : "")
-                ));
+            KdPrint((DRIVER_NAME ": Offset: %I64u Length: %I64u Key: %u %s%s\n",FileOffset->QuadPart,Length->QuadPart,Key,(FailImmediately ? "FailImmediately " : ""),(ExclusiveLock ? "ExclusiveLock " : "")));
 
             if (Fcb->CommonFCBHeader.IsFastIoPossible != FastIoIsQuestionable)
             {
-                KdPrint((
-                    DRIVER_NAME ": %-16.16s %-31s %s\n",
-                    (PUCHAR) Process + ProcessNameOffset,
-                    "FastIoIsQuestionable",
-                    Fcb->AnsiFileName.Buffer
-                    ));
+                KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",(PUCHAR) Process + ProcessNameOffset,"FastIoIsQuestionable",Fcb->AnsiFileName.Buffer));
 
                 Fcb->CommonFCBHeader.IsFastIoPossible = FastIoIsQuestionable;
             }
@@ -569,21 +525,11 @@ FsdFastIoLock (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_LOCK"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_LOCK"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_LOCK",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_LOCK",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -637,19 +583,9 @@ FsdFastIoUnlockSingle (
                 __leave;
             }
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                (PUCHAR) Process + ProcessNameOffset,
-                "FASTIO_UNLOCK_SINGLE",
-                Fcb->AnsiFileName.Buffer
-                ));
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_SINGLE",Fcb->AnsiFileName.Buffer));
 
-            KdPrint((
-                DRIVER_NAME ": Offset: %I64u Length: %I64u Key: %u\n",
-                FileOffset->QuadPart,
-                Length->QuadPart,
-                Key
-                ));
+            KdPrint((DRIVER_NAME ": Offset: %I64u Length: %I64u Key: %u\n",FileOffset->QuadPart,Length->QuadPart,Key));
 
             IoStatus->Status = FsRtlFastUnlockSingle(
                 &Fcb->FileLock,
@@ -679,21 +615,11 @@ FsdFastIoUnlockSingle (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_SINGLE"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_SINGLE"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_SINGLE",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_SINGLE",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -744,12 +670,7 @@ FsdFastIoUnlockAll (
                 __leave;
             }
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                (PUCHAR) Process + ProcessNameOffset,
-                "FASTIO_UNLOCK_ALL",
-                Fcb->AnsiFileName.Buffer
-                ));
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL",Fcb->AnsiFileName.Buffer));
 
             IoStatus->Status = FsRtlFastUnlockAll(
                 &Fcb->FileLock,
@@ -775,21 +696,11 @@ FsdFastIoUnlockAll (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_ALL"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_ALL",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -841,17 +752,9 @@ FsdFastIoUnlockAllByKey (
                 __leave;
             }
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                (PUCHAR) Process + ProcessNameOffset,
-                "FASTIO_UNLOCK_ALL_BY_KEY",
-                Fcb->AnsiFileName.Buffer
-                ));
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL_BY_KEY",Fcb->AnsiFileName.Buffer));
 
-            KdPrint((
-                DRIVER_NAME ": Key: %u\n",
-                Key
-                ));
+            KdPrint((DRIVER_NAME ": Key: %u\n",Key));
 
             IoStatus->Status = FsRtlFastUnlockAllByKey(
                 &Fcb->FileLock,
@@ -878,21 +781,11 @@ FsdFastIoUnlockAllByKey (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_ALL_BY_KEY"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL_BY_KEY"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            (PUCHAR) Process + ProcessNameOffset,
-            "FASTIO_UNLOCK_ALL_BY_KEY",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",(PUCHAR) Process + ProcessNameOffset,"FASTIO_UNLOCK_ALL_BY_KEY",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;
@@ -938,12 +831,15 @@ FsdFastIoQueryNetworkOpenInfo (
             ASSERT((Fcb->Identifier.Type == FCB) &&
                    (Fcb->Identifier.Size == sizeof(FSD_FCB)));
 
-            KdPrint((
-                DRIVER_NAME ": %-16.16s %-31s %s\n",
-                FsdGetCurrentProcessName(),
-                "FASTIO_QUERY_NETWORK_OPEN_INFO",
-                Fcb->AnsiFileName.Buffer
-                ));
+            if(Fcb->ffss_inode == NULL)
+            {
+                KdPrint(("AIE AIE AIE : FsdFastIoQueryNetworkOpenInfo : Inode NULL !!!\n"));
+                IoStatus->Status = STATUS_INVALID_PARAMETER;
+                Status = TRUE;
+                __leave;
+            }
+
+            KdPrint((DRIVER_NAME ": %-16.16s %-31s %s\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_NETWORK_OPEN_INFO",Fcb->AnsiFileName.Buffer));
 
             if (!ExAcquireResourceSharedLite(
                     &Fcb->MainResource,
@@ -971,23 +867,14 @@ FsdFastIoQueryNetworkOpenInfo (
 */
 
             Buffer->CreationTime.QuadPart = 0;
-
             Buffer->LastAccessTime.QuadPart = 0;
-
             Buffer->LastWriteTime.QuadPart = 0;
-
             Buffer->ChangeTime.QuadPart = 0;
-
             Buffer->AllocationSize.QuadPart = Fcb->ffss_inode->Size;
-
             Buffer->EndOfFile.QuadPart = Fcb->ffss_inode->Size;
-
             Buffer->FileAttributes = Fcb->FileAttributes;
-
             IoStatus->Information = sizeof(FILE_NETWORK_OPEN_INFORMATION);
-
             IoStatus->Status = STATUS_SUCCESS;
-
             Status =  TRUE;
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
@@ -1011,21 +898,11 @@ FsdFastIoQueryNetworkOpenInfo (
 
     if (Status == FALSE)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_NETWORK_OPEN_INFO"
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: FALSE ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_NETWORK_OPEN_INFO"));
     }
     else if (IoStatus->Status != STATUS_SUCCESS)
     {
-        KdPrint((
-            DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",
-            FsdGetCurrentProcessName(),
-            "FASTIO_QUERY_NETWORK_OPEN_INFO",
-            FsdNtStatusToString(IoStatus->Status),
-            IoStatus->Status
-            ));
+        KdPrint((DRIVER_NAME ": %-16.16s %-31s *** Status: %s (%#x) ***\n",FsdGetCurrentProcessName(),"FASTIO_QUERY_NETWORK_OPEN_INFO",FsdNtStatusToString(IoStatus->Status),IoStatus->Status));
     }
 
     return Status;

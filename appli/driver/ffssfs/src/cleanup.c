@@ -16,6 +16,9 @@
 
 #include "ntifs.h"
 #include "fsd.h"
+#include "ffss_fs.h"
+#include "border.h"
+#include "ffss_tdi.h"
 
 #pragma code_seg(FSD_PAGED_CODE)
 

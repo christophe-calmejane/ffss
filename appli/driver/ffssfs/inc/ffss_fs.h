@@ -17,9 +17,9 @@
 #ifndef _ROM_FS_
 #define _ROM_FS_
 
-#define FFSSDISK_ID			"FFSS Disk 1.0"
-#define DBGNAME				"FFSS FS : "
-#define FFSSLABEL "FFSS Net"
+#define FFSSDISK_ID	 "FFSS Disk 1.0"
+#define DBGNAME	     "FFSS FS : "
+#define FFSSLABEL    "FFSS Net"
 
 #define FFSS_DEFINES_ONLY
 #define SU_PClientSocket void *

@@ -18,8 +18,10 @@
 #define _FFSS_TDI_H_
 
 //#define FFSS_MASTER_IP "172.17.64.3"
-//#define FFSS_MASTER_IP "192.168.223.1"
-#define FFSS_MASTER_IP "192.168.1.36"
+//#define FFSS_MASTER_IP "192.168.1.36"
+#define FFSS_MASTER_IP "192.168.1.33"
+//#define DBG_MEM
+
 
 #ifdef __cplusplus
 
@@ -107,7 +109,8 @@ public:
   char *IP;
   struct ffss_inode *Root; /* Assigned upon connection, released when destroying this class */
   FfssTCP(const char Server[],const char ShareName[]);
-  ~FfssTCP();
+  FfssTCP *Assign(void);
+  void Delete(void);
   TDI_STATUS connect(PTDI_CONNECTION_INFORMATION);
   TDI_STATUS send(void*,uint,bool,bool sem=true);
 protected:
@@ -118,11 +121,14 @@ protected:
   void On_disconnectComplete(PVOID,TDI_STATUS,uint);
   void OnDisconnect(uint OptionsLength,PVOID Options,BOOLEAN bAbort);
 private:
+  FfssSem *IncLock;
   FfssTimer *Timer;
   char *Buf;
   long int BufSize;
   unsigned int len;
+  signed int RefCount;
   bool GetPacket(uchar *Data,uint Indicated);
+  ~FfssTCP();
 };
 
 
@@ -159,6 +165,11 @@ struct ffss_super_block {
 #define FFSS_INODE_DIRECTORY 5
 #define FFSS_INODE_FILE      6
 
+// Constants for FFSS File State
+#define FFSS_HANDLE_STATE_OPEN    1
+#define FFSS_HANDLE_STATE_CLOSE   2
+#define STREAMING_BUFFER_SIZE 65536
+
 struct ffss_inode {
   unsigned long int  Type;
   char               *Name;
@@ -179,6 +190,54 @@ struct ffss_inode {
 
   struct ffss_inode *Parent;
 };
+
+//
+// FSD_IDENTIFIER_TYPE
+//
+// Identifiers used to mark the structures
+//
+typedef enum _FSD_IDENTIFIER_TYPE2 {
+    FGD2 = ':DGF',
+    VCB2 = ':BCV',
+    FCB2 = ':BCF',
+    CCB2 = ':BCC',
+    ICX2 = ':XCI',
+    FSD2 = ':DSF'
+} FSD_IDENTIFIER_TYPE2;
+
+//
+// FSD_IDENTIFIER
+//
+// Header used to mark the structures
+//
+typedef struct _FSD_IDENTIFIER2 {
+    FSD_IDENTIFIER_TYPE2     Type;
+    ULONG                   Size;
+} FSD_IDENTIFIER2, *PFSD_IDENTIFIER2;
+
+typedef struct _FSD_CCB {
+
+    // Identifier for this structure
+    FSD_IDENTIFIER2  Identifier;
+
+    // State that may need to be maintained
+    ULONG           CurrentByteOffset;
+    UNICODE_STRING  DirectorySearchPattern;
+
+    /* FFSS file handle */
+    unsigned long int              Handle;
+    /* State of file (see FFSS_HANDLE_STATE_xxx) */
+    int                            State;
+    /* Is EndOfFile ? */
+    unsigned char                  eof;
+    /* Buffer for streaming */
+    char *                         Buffer[STREAMING_BUFFER_SIZE];
+    /* Current pos of buffer */
+    unsigned long int              BufferPos;
+    /* Current file position */
+    __int64                        FilePos;
+
+} FSD_CCB, *PFSD_CCB;
 
 extern struct ffss_super_block *FFSS_SuperBlock;
 
@@ -202,11 +261,19 @@ struct ffss_inode *FsdGetInodeFromShare(IN char *share,IN struct ffss_inode *Ser
 /* Superblock must be locked */
 bool FsdRequestInodeListing(struct ffss_inode *Inode);
 
+PFSD_CCB FsdAllocateCcb(VOID);
+VOID FsdFreeCcb(IN PFSD_CCB Ccb,IN struct ffss_inode *Inode);
+/* Superblock must be locked */
+int FsdRequestStrmOpen(struct ffss_inode *Inode,PFSD_CCB Ccb,long int OpenFlags); /* a boolean value is returned */
+
 int FFSS_strcasecmp(const char *s,const char *p); /* != 0 if strings are equal */
 
 NTSTATUS TDI_Init();
 struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share);
 void FsdFreeConnection(IN struct ffss_inode *Conn);
+NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,struct ffss_inode *IN FcbInode,IN __int64 Offset,IN ULONG Length,IN OUT PVOID Buffer);
+void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
+void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User);
 
 #ifdef __cplusplus
 };
