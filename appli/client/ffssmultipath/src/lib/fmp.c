@@ -825,7 +825,8 @@ SU_THREAD_ROUTINE(FMP_StreamingRoutine,User)
     else
     {
       printf("Try to find another bloc in 2min\n");
-      SU_SLEEP(FMP_ReconnectDelay); /* Else, retry in 2 min */
+      if(!Path->MustCancel && !Path->MustPause)
+        SU_SLEEP(FMP_ReconnectDelay); /* Else, retry in 2 min */
       continue;
     }
   }
