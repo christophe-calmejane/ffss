@@ -19,7 +19,7 @@
 /* Undefine c++ bool type (unsigned char ?)
    Use SU_BOOL type in your appli, every time you use a ffss prototype
  */
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(__BORLANDC__)
 #define bool SU_BOOL
 #endif /* __cplusplus */
 
@@ -56,7 +56,7 @@ extern char FFSS_WinServerVersion[20];
 #endif /* __arm__ */
 
 #ifndef DISABLE_BZLIB
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__BORLANDC__)
 #define HAVE_BZLIB 1
 #endif /* _WIN32 */
 #endif /* !DISABLE_BZLIB */
@@ -611,7 +611,7 @@ typedef struct
 } FC_THandle, *FC_PHandle;
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(__BORLANDC__)
 extern "C" {
 #endif /* __cplusplus */
 
@@ -1285,8 +1285,10 @@ void *FFSS_malloc(size_t size);
 #define malloc FFSS_malloc
 #endif /* !SU_MALLOC_TRACE && !FFSS_DRIVER */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(__BORLANDC__)
 }
+#endif /* __cplusplus */
+#ifdef __cplusplus
 /* Redefine c++ bool type */
 #undef bool
 #endif /* __cplusplus */
