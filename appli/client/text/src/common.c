@@ -1239,7 +1239,7 @@ void FCA_upd_skin()
 	int i=0;
 	
 		/* look for the skin in the list */
-	while( FCA_SKINS[i].name && strcmp(FCA_SKINS[i].name,FCA_skin_name) && (!FCA_CGI_mode || !FCA_SKINS[i].canCGI))
+	while( FCA_SKINS[i].name && !(!strcmp(FCA_SKINS[i].name,FCA_skin_name) && (!FCA_CGI_mode || !FCA_SKINS[i].canCGI)))
 		i++;
 	if(!FCA_SKINS[i].name) {
 		FCA_print_cmd_err("cannot load this skin, restoring the default skin");
