@@ -8,6 +8,11 @@
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
 
+March, 3rd 2002:
+  - Added intensive usage of context() for debug purpose
+  - Added function name in any "DoS Attack" syslog print
+  - Added check for invalid values in messages (avoid seg faults)
+
 February, 28th 2002:
   - Fixed possible bugs in Server messages, if no master is defined
 

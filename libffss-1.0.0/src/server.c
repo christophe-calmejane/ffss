@@ -31,7 +31,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if(str == NULL)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STATE_ANSWER : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
       if(FFSS_CB.SCB.OnStateAnswer != NULL)
@@ -52,7 +52,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_INDEX_REQUEST : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
       if(FFSS_CB.SCB.OnIndexRequest != NULL)
@@ -64,7 +64,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_ERROR : One or many fields empty, or out of buffer (%s) (%ld,%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),val,str);
         break;
       }
       if(FFSS_CB.SCB.OnError != NULL)
@@ -75,7 +75,7 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SEARCH_MASTER_ANSWER : One or many fields empty, or out of buffer (%s) (%ld,%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),val,str);
         break;
       }
       if(FFSS_CB.SCB.OnMasterSearchAnswer != NULL)
@@ -110,7 +110,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
     str3 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
     if((str == NULL) || (str2 == NULL) || (str3 == NULL))
     {
-      FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+      FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SHARE_CONNECTION : One or many fields empty, or out of buffer (%s) (%p,%p,%p) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),str,str2,str3);
       ret_val = false;
     }
     else
@@ -139,7 +139,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_DIRECTORY_LISTING : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
           ret_val = false;
           break;
         }
@@ -153,7 +153,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (val2 == 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_DOWNLOAD : One or many fields empty, or out of buffer (%s) (%p,%ld) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),str,val2);
           ret_val = false;
           break;
         }
@@ -167,7 +167,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (val2 == 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_UPLOAD : One or many fields empty, or out of buffer (%s) (%p,%ld) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),str,val2);
           ret_val = false;
           break;
         }
@@ -180,7 +180,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (str2 == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_MOVE : One or many fields empty, or out of buffer (%s) (%p,%p) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),str,str2);
           ret_val = false;
           break;
         }
@@ -193,7 +193,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (str2 == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_COPY : One or many fields empty, or out of buffer (%s) (%p,%p) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),str,str2);
           ret_val = false;
           break;
         }
@@ -205,7 +205,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_DELETE : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
           ret_val = false;
           break;
         }
@@ -217,7 +217,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if(str == NULL)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_MKDIR : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
           ret_val = false;
           break;
         }
@@ -240,7 +240,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (str == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STREAMING_OPEN : One or many fields empty, or out of buffer (%s) (%ld,%p) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),val,str);
           ret_val = false;
           break;
         }
@@ -252,7 +252,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if(val == 0)
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STREAMING_CLOSE : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
           ret_val = false;
           break;
         }
@@ -266,7 +266,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         val3 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (val3 == 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STREAMING_READ : One or many fields empty, or out of buffer (%s) (%ld,%ld) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),val,val3);
           ret_val = false;
           break;
         }
@@ -280,7 +280,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         Length = Len-FFSS_MESSAGESIZE_STREAMING_WRITE*sizeof(FFSS_Field);
         if((val == 0) || (Length < 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STREAMING_WRITE : One or many fields empty, or out of buffer (%s) (%ld,%ld) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),val,Length);
           ret_val = false;
           break;
         }
@@ -294,7 +294,7 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         lval = FFSS_UnpackLongField(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (val2 == 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STREAMING_SEEK : One or many fields empty, or out of buffer (%s) (%ld,%ld) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),val,val2);
           ret_val = false;
           break;
         }

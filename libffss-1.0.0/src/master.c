@@ -32,7 +32,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       str3 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (val2 == 0) || (str == NULL) || (str2 == NULL) || (str3 == NULL))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_STATE : One or many fields empty, or out of buffer (%s) (%ld,%ld,%p,%p,%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),val,val2,str,str2,str3);
         break;
       }
       if((val2 > FFSS_PROTOCOL_VERSION) || (val2 < FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE))
@@ -43,7 +43,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       if(FFSS_CB.MCB.OnState != NULL)
         FFSS_CB.MCB.OnState(Client,val,str,str2,str3);
       break;
-      case FFSS_MESSAGE_SERVER_LISTING:
+      case FFSS_MESSAGE_SERVER_LISTING :
         context;
         FFSS_PrintDebug(3,"Received a server listing message from client\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -51,20 +51,20 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (str2 == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SERVER_LISTING : One or many fields empty, or out of buffer (%s) (%p,%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),str,str2);
           break;
         }
         if(FFSS_CB.MCB.OnServerListing != NULL)
           FFSS_CB.MCB.OnServerListing(Client,str,str2,val);
         break;
-    case FFSS_MESSAGE_CLIENT_SERVER_FAILED:
+    case FFSS_MESSAGE_CLIENT_SERVER_FAILED :
       context;
       FFSS_PrintDebug(3,"Received a client/server failed message from client\n");
       type_ip = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
       if((type_ip == 0) || (IP[0] == 0))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_CLIENT_SERVER_FAILED : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
       if(FFSS_CB.MCB.OnClientServerFailed != NULL)
@@ -76,7 +76,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       state = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(state == 0)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_PONG : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
       if(FFSS_CB.MCB.OnPong != NULL)
@@ -97,7 +97,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
       if((val == 0) || (str == NULL) || (str2 == NULL))
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SEARCH : One or many fields empty, or out of buffer (%s) (%ld,%p,%p) ... DoS attack ?\n",inet_ntoa(Client.sin_addr),val,str,str2);
         break;
       }
       if(FFSS_CB.MCB.OnSearch != NULL)
@@ -109,7 +109,7 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(val == 0)
       {
-        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
+        FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SEARCH_MASTER : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
       if(FFSS_CB.MCB.OnMasterSearch != NULL)
@@ -157,6 +157,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
   FFSS_Field state,type_ip,type_ip2;
   char IP[512],IP2[512];
 
+  context;
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
   pos = sizeof(FFSS_Field)*2;
   ret_val = true;
@@ -166,11 +167,12 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
 
   if(Type == FFSS_MESSAGE_MASTER_CONNECTION)
   {
+    context;
     FFSS_PrintDebug(3,"Received a connection message from master\n");
     val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
     if(val == 0)
     {
-      FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+      FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_MASTER_CONNECTION : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
       ret_val = false;
     }
     else
@@ -207,7 +209,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
             u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
             if(u_Buf == NULL)
             {
-              FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+              FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_NEW_STATES : Corrupted Z compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
               ret_val = false;
               break;
             }
@@ -220,7 +222,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
             u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES,&u_Len);
             if(u_Buf == NULL)
             {
-              FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+              FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_NEW_STATES : Corrupted BZ compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
               ret_val = false;
               break;
             }
@@ -229,7 +231,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
             break;
   #endif
           default :
-            FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %ld ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),val2);
+            FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_NEW_STATES : Unknown compression type (%s) : %ld ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),val2);
             ret_val = false;
             break;
         }
@@ -250,14 +252,14 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
           FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP2,type_ip2);
           if((state == 0) || (type_ip == 0) || (IP[0] == 0) || (str == NULL) || (str2 == NULL) || (str3 == NULL) || (str4 == NULL) || (type_ip2 == 0) || (IP2[0] == 0))
           {
-            FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+            FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_NEW_STATES : One or many fields empty, or out of buffer (%s) (%ld,%ld,%s,%p,%p,%p,%p,%ld,%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),state,type_ip,IP,str,str2,str3,str4,type_ip2,IP2);
             break;
           }
           if(FFSS_CB.MCB.OnNewState != NULL)
             FFSS_CB.MCB.OnNewState(state,IP2,str,str2,str3,str4,IP);
         }
         break;
-      case FFSS_MESSAGE_SERVER_LISTING:
+      case FFSS_MESSAGE_SERVER_LISTING :
         context;
         FFSS_PrintDebug(3,"Received a server listing message from master\n");
         val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
@@ -265,7 +267,7 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         str2 = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((str == NULL) || (str2 == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SERVER_LISTING : One or many fields empty, or out of buffer (%s) (%p,%p) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),str,str2);
           break;
         }
         if(FFSS_CB.MCB.OnServerListingMaster != NULL)
@@ -280,13 +282,13 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
         FFSS_UnpackIP(Buf,Buf+pos,Len,&pos,IP,type_ip);
         if((type_ip == 0) || (IP[0] == 0))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SEARCH_FW : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
           break;
         }
         str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
         if((val == 0) || (str == NULL))
         {
-          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr));
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_SEARCH_FW : One or many fields empty, or out of buffer (%s) (%ld,%p) ... DoS attack ?\n",inet_ntoa(Master->SAddr.sin_addr),val,str);
           break;
         }
         if(FFSS_CB.MCB.OnSearchForward != NULL)
@@ -314,6 +316,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
   long int BufSize;
   bool Ident = false;
 
+  context;
   SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_MASTER_BUFFER_SIZE;
   Buf = (char *) malloc(BufSize);
@@ -339,6 +342,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
       SU_END_THREAD(NULL);
     }
 
+    context;
     if(len >= BufSize)
     {
       FFSS_PrintSyslog(LOG_INFO,"WARNING : Master's buffer too short for this message !!\n");
@@ -375,6 +379,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
         free(Buf);
         SU_END_THREAD(NULL);
       }
+      context;
       Size = *(FFSS_Field *)Buf;
       if(Size > len)
       {
@@ -421,6 +426,7 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
   SU_PClientSocket Master;
   SU_THREAD_HANDLE MasterThr;
 
+  context;
   SU_ThreadBlockSigs();
   if(SU_ServerListen(FM_SI_TCP) == SOCKET_ERROR)
   {
@@ -431,6 +437,7 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
   while(1)
   {
     Master = SU_ServerAcceptConnection(FM_SI_TCP);
+    context;
     if(FFSS_ShuttingDown)
     {
       FFSS_PrintDebug(1,"TCP Routine : FFSS Library is been shut down...\n");
@@ -452,6 +459,7 @@ SU_THREAD_ROUTINE(FM_ThreadTCP,User)
         continue;
       }
     }
+    context;
     FFSS_PrintDebug(5,"Master connected from %s (%s) ...\n",inet_ntoa(Master->SAddr.sin_addr),SU_NameOfPort(inet_ntoa(Master->SAddr.sin_addr)));
     if(!SU_CreateThread(&MasterThr,FM_MasterThreadTCP,(void *)Master,true))
     {
@@ -553,6 +561,7 @@ bool FM_Init(int MasterPort)
 /* Returns true on success, false otherwise */
 bool FM_UnInit(void)
 {
+  context;
   FFSS_ShuttingDown = true;
   SU_TermThread(FM_THR_UDP);
   SU_TermThread(FM_THR_TCP);

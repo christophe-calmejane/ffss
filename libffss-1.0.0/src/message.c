@@ -20,6 +20,7 @@ bool FS_SendMessage_State(const char Master[],const char Name[],const char OS[],
   long int len,pos;
   int resp;
 
+  context;
   if(Master == NULL)
     return true;
   pos = sizeof(FFSS_Field);
@@ -60,6 +61,7 @@ bool FS_SendMessage_ServerSearchAnswer(struct sockaddr_in Client,const char Doma
   long int len,pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_NEW_STATES);
   pos = FFSS_PackField(msg,pos,FFSS_COMPRESSION_NONE);
@@ -107,6 +109,7 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
   int resp;
   int i;
 
+  context;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER + FFSS_IP_FIELD_SIZE + (FFSS_MAX_SHARENAME_LENGTH+1)*NbShares + (FFSS_MAX_SHARECOMMENT_LENGTH+1)*NbShares;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -144,6 +147,7 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   long int pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_PONG);
   pos = FFSS_PackField(msg,pos,State);
@@ -167,6 +171,7 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[])
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
   pos = FFSS_PackField(msg,pos,Code);
@@ -213,6 +218,9 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
   int retval;
   long int CompSize;
 
+  context;
+  if((Buffer == NULL) || (BufSize == 0))
+    return true;
   CompSize = BufSize*1.05+6000;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DIRECTORY_LISTING_ANSWER + FFSS_MAX_PATH_LENGTH+1 + CompSize;
   msg = (char *) malloc(size);
@@ -291,6 +299,7 @@ bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[])
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_INIT_XFER);
   pos = FFSS_PackField(msg,pos,Tag);
@@ -328,6 +337,7 @@ bool FS_SendMessage_MasterSearch()
   long int pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_SERVER);
@@ -359,6 +369,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   int retval;
   FFSS_Field NbBufs;
 
+  context;
   if(Host == NULL)
     return true;
   sock = socket(AF_INET,SOCK_STREAM,getprotobyname("tcp")->p_proto);
@@ -448,6 +459,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
   }
   NbBufs /= 2;
 
+  context;
   pos = FFSS_PackField(msg,pos,total);
   pos = FFSS_PackField(msg,pos,total_ft);
   pos = FFSS_PackField(msg,pos,total_node);
@@ -480,6 +492,7 @@ bool FS_SendMessage_IndexAnswer(const char Host[],const char Port[],SU_PList Buf
     return false;
 
   /* Send nb buffers */
+  context;
   FD_ZERO(&rfds);
   FD_SET(client,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_INDEX_XFER;
@@ -572,6 +585,7 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_OPEN_ANSWER);
 
@@ -619,6 +633,7 @@ bool FS_SendMessage_StrmReadAnswer(int Client,long int Handle,char *Buf,long int
   struct timeval tv;
   int retval;
 
+  context;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_READ_ANSWER + BlocLen;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -659,6 +674,7 @@ bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code)
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_WRITE_ANSWER);
   pos = FFSS_PackField(msg,pos,Handle);
@@ -693,6 +709,7 @@ bool FC_SendMessage_ServerSearch(void)
   long int pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_SEARCH);
   FFSS_PackField(msg,0,pos);
@@ -710,6 +727,9 @@ bool FC_SendMessage_SharesListing(const char Server[])
   long int pos;
   int resp;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING);
   FFSS_PackField(msg,0,pos);
@@ -730,6 +750,7 @@ bool FC_SendMessage_ServerList(const char Master[],const char OS[],const char Do
   int resp;
   long int Comps;
 
+  context;
   if(Master == NULL)
     return true;
   pos = sizeof(FFSS_Field);
@@ -788,6 +809,9 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
   SU_THREAD_HANDLE Thread;
 #endif /* !DRIVER */
 
+  context;
+  if(Server == NULL)
+    return NULL;
   CS = SU_ClientConnect((char *)Server,FFSS_SERVER_PORT_S,SOCK_STREAM);
   if(CS == NULL)
     return NULL;
@@ -868,6 +892,9 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DIRECTORY_LISTING);
   len = strlen(Path)+1;
@@ -907,6 +934,9 @@ int FC_SendMessage_Download(SU_PClientSocket Server,const char Path[],FFSS_LongF
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return SOCKET_ERROR;
   if(!UseConnSock)
   {
     sock = socket(AF_INET,SOCK_STREAM,getprotobyname("tcp")->p_proto);
@@ -981,6 +1011,9 @@ void FC_SendMessage_Disconnect(SU_PClientSocket Server)
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_DISCONNECT);
 
@@ -1010,6 +1043,9 @@ void FC_SendMessage_CancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_CANCEL_XFER);
   pos = FFSS_PackField(msg,pos,XFerTag);
@@ -1038,6 +1074,7 @@ bool FC_SendMessage_DomainListing(const char Master[])
   long int pos;
   int resp;
 
+  context;
   if(Master == NULL)
     return true;
   pos = sizeof(FFSS_Field);
@@ -1061,6 +1098,7 @@ bool FC_SendMessage_Search(const char Master[],const char Domain[],const char Ke
   int resp;
   long int Comps;
 
+  context;
   if(Master == NULL)
     return true;
 
@@ -1104,6 +1142,7 @@ bool FC_SendMessage_MasterSearch()
   long int pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER);
   pos = FFSS_PackField(msg,pos,FFSS_THREAD_CLIENT);
@@ -1127,6 +1166,9 @@ bool FC_SendMessage_StrmOpen(SU_PClientSocket Server,const char Path[],int Flags
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_OPEN);
   pos = FFSS_PackField(msg,pos,Flags);
@@ -1170,6 +1212,9 @@ bool FC_SendMessage_StrmClose(SU_PClientSocket Server,long int Handle)
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_CLOSE);
   pos = FFSS_PackField(msg,pos,Handle);
@@ -1204,6 +1249,9 @@ bool FC_SendMessage_StrmRead(SU_PClientSocket Server,long int Handle,FFSS_LongFi
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_READ);
   pos = FFSS_PackField(msg,pos,Handle);
@@ -1241,6 +1289,9 @@ bool FC_SendMessage_StrmWrite(SU_PClientSocket Server,long int Handle,FFSS_LongF
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_STREAMING_WRITE + BlocLen;
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -1284,6 +1335,9 @@ bool FC_SendMessage_StrmSeek(SU_PClientSocket Server,long int Handle,int Flags,F
   struct timeval tv;
   int retval;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_STREAMING_SEEK);
   pos = FFSS_PackField(msg,pos,Handle);
@@ -1321,6 +1375,9 @@ SU_PClientSocket FM_SendMessage_Connect(const char Master[])
   SU_PClientSocket CS;
   SU_THREAD_HANDLE MasterThr;
 
+  context;
+  if(Master == NULL)
+    return NULL;
   CS = SU_ClientConnect((char *)Master,FFSS_MASTER_PORT_S,SOCK_STREAM);
   if(CS == NULL)
     return NULL;
@@ -1346,6 +1403,7 @@ bool FM_SendMessage_MasterConnection(int Master)
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_MASTER_CONNECTION);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
@@ -1374,6 +1432,7 @@ bool FM_SendMessage_Ping()
   long int pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_PING);
   FFSS_PackField(msg,0,pos);
@@ -1398,6 +1457,9 @@ bool FM_SendMessage_NewStatesMaster(int Master,const char *Buffer,long int BufSi
   struct timeval tv;
   int retval;
 
+  context;
+  if((Buffer == NULL) || (BufSize == 0))
+    return true;
   CompSize = BufSize*1.05+6000;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_NEW_STATES + CompSize;
   msg = (char *) malloc(size);
@@ -1468,6 +1530,9 @@ bool FM_SendMessage_ServerListing(struct sockaddr_in Client,const char *Buffer,l
   int resp;
   long int CompSize;
 
+  context;
+  if((Buffer == NULL) || (BufSize == 0))
+    return true;
   CompSize = BufSize*1.05+6000;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER + CompSize;
   msg = (char *) malloc(size);
@@ -1526,6 +1591,9 @@ bool FM_SendMessage_Error(const char Server[],FFSS_Field Code,const char Descr[]
   long int len,pos;
   int resp;
 
+  context;
+  if(Server == NULL)
+    return true;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
   pos = FFSS_PackField(msg,pos,Code);
@@ -1556,6 +1624,7 @@ bool FM_SendMessage_ErrorClient(struct sockaddr_in Client,FFSS_Field Code,const 
   long int len,pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
   pos = FFSS_PackField(msg,pos,Code);
@@ -1589,6 +1658,7 @@ bool FM_SendMessage_ErrorMaster(int Master,FFSS_Field Code,const char Descr[])
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_ERROR);
   pos = FFSS_PackField(msg,pos,Code);
@@ -1630,6 +1700,7 @@ bool FM_SendMessage_ServerList(int Master)
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SERVER_LISTING);
   pos = FFSS_PackField(msg,pos,FFSS_COMPRESSION_BZLIB);
@@ -1664,6 +1735,7 @@ bool FM_SendMessage_DomainListingAnswer(struct sockaddr_in Client,int NbDomains,
   long int len,size,pos;
   int resp,i;
 
+  context;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER + NbDomains*(FFSS_MAX_DOMAIN_LENGTH+1);
   msg = (char *) malloc(size);
   pos = sizeof(FFSS_Field);
@@ -1695,6 +1767,7 @@ bool FM_SendMessage_MasterSearchAnswer(struct sockaddr_in Client,bool Server,con
   long int len,pos;
   int resp;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_MASTER_ANSWER);
   pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
@@ -1730,6 +1803,9 @@ bool FM_SendMessage_SearchAnswer(struct sockaddr_in Client,const char *Buffer,lo
   int resp;
   long int CompSize;
 
+  context;
+  if((Buffer == NULL) || (BufSize == 0))
+    return true;
   CompSize = BufSize*1.05+6000;
   size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SEARCH_ANSWER + CompSize;
   msg = (char *) malloc(size);
@@ -1793,6 +1869,7 @@ bool FM_SendMessage_SearchForward(int Master,struct sockaddr_in Client,int Compr
   struct timeval tv;
   int retval;
 
+  context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SEARCH_FW);
   pos = FFSS_PackField(msg,pos,ntohs(Client.sin_port));
