@@ -124,7 +124,7 @@ void FCA_init()
 			N_SyslogOn=0;
 		sprintf(FCA_debuglevel, "0");
 			/* fun to log user agent */
-		FCA_printlog("%s", getenv("HTTP_USER_AGENT"));
+		FCA_printlog("client : %s", getenv("HTTP_USER_AGENT"));
 	}
 #endif
 		/* load all skins */
@@ -192,7 +192,6 @@ void FCA_process_cgi_args()
 	char buf[6+FFSS_MAX_PATH_LENGTH];
 	bool dw=false;
 	char *pd;
-FILE *f;
 
 	
 	if(!FCA_CGI_mode)
@@ -242,15 +241,6 @@ printf("</html>\n");
 exit(0);
 */
 
-f=fopen("/tmp/ffsstest", "w");
-if(f) {
-	if(!FCA_logf)
-		fprintf(f, "le descripteur est vide !\n");
-	fprintf(f, "log=%s, log_file=%s\n", FCA_log, FCA_logfile);
-	fprintf(f, "cmd=%s\n", dw);
-	fclose(f);
-}
-FCA_printlog("test dans un log...");
 	FCA_run_once(dw);
 	FCA_exit(0);
 }
