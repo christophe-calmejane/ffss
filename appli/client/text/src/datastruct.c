@@ -27,7 +27,7 @@ void FCA_free_Domains()
     SU_PList Pdom;
     FCA_PServs Pser;
     FFSS_PrintDebug(4, "(client) free-ing all domains\n");
-    
+
     Pdom=FCA_Servers;
     while(Pdom!=NULL) {
 	Pser=(FCA_PServs)SU_GetElementHead(Pdom);
@@ -56,7 +56,7 @@ void FCA_free_Domain(const char *Domain)
     SU_PList Ptr;
     FCA_PServs servs=NULL;
     bool found=false;
-    
+
     Ptr=FCA_Servers;
 
      FFSS_PrintDebug(4, "(client) free-ing domain: %s\n", Domain);
@@ -75,7 +75,7 @@ void FCA_free_servs(SU_PList Servers)
 {
 	/* free recursively servers in a domain */
     FM_PHost servs;
-    
+
     if(Servers==NULL)
 	return;
     FCA_free_servs(Servers->Next);
@@ -96,7 +96,7 @@ SU_PList FCA_get_Domain(const char *Domain)
 	SU_PList PServs;
 	FCA_PServs serv=NULL;
 	bool found=false;
-    
+
 	FFSS_PrintDebug(4, "(client) looking for domain: %s\n", Domain);
 
 		/* never listed domains */
@@ -111,7 +111,7 @@ SU_PList FCA_get_Domain(const char *Domain)
 		/* no domain */
 	if(PServs==NULL)
 		return NULL;
-	
+
 	serv=(FCA_PServs)SU_GetElementHead(PServs);
 	FFSS_PrintDebug(5, "(client) >%s<->%s<\n", serv->Domain, Domain);
 	found=!SU_strcasecmp(serv->Domain, Domain);
@@ -134,7 +134,7 @@ SU_PList FCA_get_server(SU_PList Domain, const char *machine)
 		/* search a server in a domain */
 	SU_PList Pserv, Pbest=NULL;
 	FM_PHost host;
-    
+
 	if(Domain==NULL)
 		return NULL;
 	FFSS_PrintDebug(4, "(client) looking for server in the domain: %s\n", machine);
@@ -170,18 +170,18 @@ FM_PHost FCA_get_host(const char *domain, const char* machine)
 {
 		/*  get_server: from pointer to domain
 		    get_host:   from domain name
-	    
+
 		search machine in the structure, and return his IP if found, NULL else
 		 */
 	SU_PList Pservs=NULL;
 	FM_PHost serv=NULL;
 	bool found=false;
-    
+
 	Pservs=FCA_get_Domain(domain);
 	if(Pservs==NULL)
 		return NULL;
 	Pservs=( (FCA_PServs)(Pservs->Data) )->servers;
-    
+
 		/* find the server in the list */
 	FFSS_PrintDebug(4, "(client) searching machine: %s\n", machine);
 	while(!found && Pservs!=NULL) {
@@ -202,12 +202,12 @@ SU_PList FCA_add_Domain(const char *Domain)
 {
 	/* insert a new moo-domain */
 	FCA_PServs dom;
-    
+
 	FFSS_PrintDebug(4, "(client) adding domain: %s\n", Domain);
 	dom=malloc(sizeof(FCA_TServs));
 	if(dom==NULL)
 		FCA_crash("out of memory");
-    
+
 	dom->Domain=strdup(Domain);
 	dom->servers=NULL;
 	dom->everlisted=false;
@@ -221,7 +221,7 @@ char *FCA_get_a_domain()
 	static SU_PList p=NULL;
 	static bool isStarted=false;
 	char *r;
-	
+
 		/* returns a domain each time it is called
 		 at the end of the domain list, returns NULL
 		*/
@@ -243,7 +243,7 @@ char *FCA_get_a_domain()
 void FCA_free_list()
 {
 	SU_PList P=FCA_list;
-	
+
 	if(FCA_list) {
 		FCA_list=P->Next;
 		FCA_free_list();
@@ -256,7 +256,7 @@ void FCA_free_list()
 SU_PList FCA_find_el(char *name)
 {
 	SU_PList P=FCA_list;
-	
+
 	while(P && strcmp( ((FC_PEntry)(P->Data))->Name, name))
 		P=P->Next;
 	return P;
@@ -268,7 +268,7 @@ void FCA_add_alias(char *cmd, char *val)
 {
 	FCA_Palias a;
 	SU_PList l;
-	
+
 		/* first, we must verify if there's another existing alias  */
 	l=FCA_aliases;
 	while( l && strcmp(( (FCA_Palias)(l->Data) )->cmd,cmd) )
@@ -279,7 +279,7 @@ void FCA_add_alias(char *cmd, char *val)
 		FFSS_PrintDebug(4, "(client) alias replaced\n");
 	} else {	/* new alias */
 		a=malloc(sizeof(FCA_Talias));
-		
+
 		a->cmd=strdup(cmd);
 		a->val=strdup(val);
 		FCA_aliases=SU_AddElementHead(FCA_aliases,(void*)a);
@@ -291,7 +291,7 @@ void FCA_add_alias(char *cmd, char *val)
 bool FCA_del_alias(char *cmd)
 {
 	SU_PList p;
-	
+
 	p=FCA_aliases;
 	while( p && strcmp(( (FCA_Palias)(p->Data) )->cmd,cmd) )
 		p=p->Next;
@@ -310,7 +310,7 @@ bool FCA_del_alias(char *cmd)
 char *FCA_get_alias(char *cmd)
 {
 	SU_PList p;
-	
+
 	p=FCA_aliases;
 	while( p && strcmp(( (FCA_Palias)(p->Data) )->cmd,cmd) )
 		p=p->Next;
@@ -322,7 +322,7 @@ char *FCA_get_alias(char *cmd)
 void FCA_free_aliases()
 {
 	SU_PList p=FCA_aliases;
-	
+
 	if(!p)	return;
 	FCA_aliases=p->Next;
 	FCA_free_aliases();

@@ -98,26 +98,15 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
     if(FM_MyDomain.Master == NULL)
     {
       context;
-      if(Int == NULL)
+      if(!FFSS_GetMyIP(FM_SI_UDP,FM_Iface))
       {
-#ifdef __BSD__
-        Int = strdup("xl0");
-#elif __linux__
-        Int = strdup("eth0");
-#endif /* __BSD__ */
-        FFSS_PrintSyslog(LOG_WARNING,"Config Loader : No network interface defined... using %s\n",Int);
-      }
-      if(!FFSS_GetMyIP(FM_SI_UDP,Int))
-      {
-        FFSS_PrintSyslog(LOG_ERR,"Config Loader : Cannot get my ip for interface %s\n",Int);
+        FFSS_PrintSyslog(LOG_ERR,"Config Loader : Cannot get my ip for interface %s\n",FM_Iface);
         return false;
       }
       FM_MyDomain.Master = FFSS_MyIP;
     }
     else
       FFSS_PrintSyslog(LOG_INFO,"Forcing IP %s\n",FM_MyDomain.Master);
-    if(Int != NULL)
-      free(Int);
 
     /* Loading my local servers */
     context;
@@ -153,6 +142,15 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
       Group = strdup("nogroup");
     if(User == NULL)
       User = strdup("ffss");
+    if(Int == NULL)
+    {
+#ifdef __BSD__
+      Int = strdup("xl0");
+#elif __linux__
+      Int = strdup("eth0");
+#endif /* __BSD__ */
+      FFSS_PrintSyslog(LOG_WARNING,"Config Loader : No network interface defined... using %s\n",Int);
+    }
     FM_User = User;
     FM_Group = Group;
     FM_Iface = Int;

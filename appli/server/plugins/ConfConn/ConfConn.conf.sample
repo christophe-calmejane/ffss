@@ -6,6 +6,10 @@
 #Crypt
 
 
+## 'Language' line
+## Define this line to the 2 character defining the language you want for this plugin (defaults to 'En' if not specified or not found)
+#Fr
+
 ## 'Access' line
 ## Each Access line defines a triplet for remote access <IP>:<Login>:<Password>
 

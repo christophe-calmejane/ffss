@@ -16,7 +16,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   char **answers,**ips;
   long int pos;
   FFSS_Field val,val2,val3;
-  FFSS_LongField lval;
+  FFSS_LongField lval,lval2;
   FFSS_Field i,j,state,type_ip,type_ip2;
   char IP[512], IP2[512];
   FM_PHost Hst;
@@ -24,6 +24,8 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   bool do_it,error,free_it;
   char *u_Buf;
   long int u_pos,u_Len;
+  FFSS_Field *chksums;
+  FFSS_LongField *sizes;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
   pos = sizeof(FFSS_Field)*2;
@@ -325,7 +327,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       {
         FFSS_PrintDebug(3,"Received a search answer message, but master has found nothing\n");
         if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,0,lval);
+          FFSS_CB.CCB.OnSearchAnswer(str,NULL,NULL,NULL,NULL,NULL,0,lval);
         break;
       }
       FFSS_PrintDebug(3,"Received a search answer message (%d domains)\n",val);
@@ -342,15 +344,19 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         {
           FFSS_PrintDebug(3,"Master has found nothing for domain %s\n",str2);
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,0,lval);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,NULL,NULL,NULL,NULL,0,lval);
           continue;
         }
         answers = (char **) malloc(val2*sizeof(char *));
         ips = (char **) malloc(val2*sizeof(char *));
+        chksums = (FFSS_Field *) malloc(val2*sizeof(FFSS_Field));
+        sizes = (FFSS_LongField *) malloc(val2*sizeof(FFSS_LongField));
         for(j=0;j<val2;j++)
         {
           type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
+          val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           if((str3 == NULL) || (type_ip == 0) || (IP[0] == 0))
           {
@@ -360,11 +366,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           }
           ips[j] = strdup(IP);
           answers[j] = str3;
+          chksums[j] = val3;
+          sizes[j] = lval2;
         }
         if(!error)
         {
           if(FFSS_CB.CCB.OnSearchAnswer != NULL)
-            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,val2,lval);
+            FFSS_CB.CCB.OnSearchAnswer(str,str2,(const char **)answers,(char **)ips,chksums,sizes,val2,lval);
         }
         free(ips);
         free(answers);

@@ -1,5 +1,5 @@
 /* This is the conf conn plugin for ffss server */
-/* (c) Christophe Calmejane - 2001'02           */
+/* (c) Christophe Calmejane - 2001'03           */
 /*     aka Ze KiLleR / SkyTech                  */
 /*                                              */
 /* http://zekiller.skytech.org                  */
@@ -354,6 +354,26 @@ FS_PLUGIN_EXPORT bool Plugin_Configure(void *User)
 }
 
 #else /* !_WIN32 */
+char *CC_Language2Char = NULL;
+
+void CC_LoadLanguage(void)
+{
+  char buf[100];
+  int i;
+
+  if(CC_Language2Char == NULL)
+    CC_Language2Char = "En";
+
+  for(i=0;i<CC_LANG_COUNT;i++)
+  {
+    if(strcasecmp(buf,CC_Lang[i][CC_LANGS_COUNTRYCODE]) == 0)
+    {
+      CC_CurrentLang = i;
+      break;
+    }
+  }
+}
+
 bool CC_LoadConfig()
 {
   FILE *fp;
@@ -403,6 +423,10 @@ bool CC_LoadConfig()
       }
       Pwd = strdup(ptr);
       CC_AddConf(IP,Login,Pwd);
+    }
+    else if(strcasecmp(Name,"Language") == 0)
+    {
+      CC_Language2Char = strdup(Value);
     }
     else
     {

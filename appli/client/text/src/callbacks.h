@@ -18,10 +18,10 @@ void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,
 void FCA_OnEndServerListingAnswer(void);
 void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User);
 void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares, FFSS_LongField User);
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User);
-void FCA_OnMasterError(int Code,const char Descr[]);
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User);
+void FCA_OnMasterError(FFSS_Field ErrorCode,const char Descr[]);
     /* TCP */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
+bool FCA_OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
 bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User);
 void FCA_OnEndTCPThread(SU_PClientSocket Server);
 void FCA_OnIdleTimeout(SU_PClientSocket Client);

@@ -30,6 +30,7 @@ typedef struct
   char *Comment;   /* Free it */
   bool  Writeable;
   bool  Private;
+  bool  NoChksum;
   int   MaxConn;
   SU_PList Users; /* FS_PUser */
 } FSCA_TShare, *FSCA_PShare;

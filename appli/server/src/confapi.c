@@ -108,7 +108,7 @@ bool FSCA_Request(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
 /* Connection & authentification */
 SU_PClientSocket FSCA_Connection(const char Server[])
 {
-  return SU_ClientConnect(Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
+  return SU_ClientConnect((char *)Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
 }
 
 bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[])
@@ -210,6 +210,8 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
   Share->Writeable = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos) +1;
   Share->Private = atoi(Buf+Pos);
+  Pos += strlen(Buf+Pos) +1;
+  Share->NoChksum = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos) +1;
   Share->MaxConn = atoi(Buf+Pos);
   Pos += strlen(Buf+Pos) +1;
@@ -478,8 +480,8 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],const FSCA
   Size += strlen(SharePath) + 1;
   SU_strcpy(Buf+Size,Share->Comment,sizeof(Buf)-Size);
   Size += strlen(Share->Comment) + 1;
-  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->MaxConn);
-  Size += FSCA_GetIntLen(Share->Writeable) + FSCA_GetIntLen(Share->Private) + FSCA_GetIntLen(Share->MaxConn) + 3;
+  snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->NoChksum,0,Share->MaxConn);
+  Size += FSCA_GetIntLen(Share->Writeable) + FSCA_GetIntLen(Share->Private) + FSCA_GetIntLen(Share->NoChksum) + FSCA_GetIntLen(Share->MaxConn) + 3;
   Ptr = Share->Users;
   Users[0] = 0;
   while(Ptr != NULL)

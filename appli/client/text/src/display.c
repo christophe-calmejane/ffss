@@ -40,11 +40,11 @@ bool FCA_question(const char *question)
 	char key;
 	printf("%s (y/n) ", question);
 	fflush(stdout);
-	
+
 	key=(char)rl_read_key();
 	while(key!='y' && key!='n')
 		key=(char)rl_read_key();
-		
+
 	return ( key=='y' );
 }
 
@@ -66,7 +66,7 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 			FCA_tab_width=73;
 			FCA_tab_top();
 
-			snprintf(tmp, 127, " master: %%-%d.%ds  Domain: %%-%d.%ds", 
+			snprintf(tmp, 127, " master: %%-%d.%ds  Domain: %%-%d.%ds",
 				FFSS_IP_FIELD_SIZE,FFSS_IP_FIELD_SIZE,
 				FFSS_MAX_DOMAIN_LENGTH,FFSS_MAX_DOMAIN_LENGTH);
 			snprintf(tmp2,127,tmp,MasterIP,Domain);
@@ -79,7 +79,7 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 			FCA_tab_int_stitle();FCA_tab_stitle("OS",FFSS_MAX_SERVEROS_LENGTH);
 			FCA_tab_int_stitle();FCA_tab_stitle("Comment",0);
 			FCA_tab_post_stitle();
-			
+
 			FCA_tab_pre_bar();FCA_tab_bar(5);
 			FCA_tab_int_bar();FCA_tab_bar(FFSS_MAX_SERVERNAME_LENGTH);
 			FCA_tab_int_bar();FCA_tab_bar(FFSS_IP_FIELD_SIZE);
@@ -87,7 +87,7 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 			FCA_tab_int_bar();FCA_tab_bar(8);
 			FCA_tab_post_bar();
 		}
-    		
+
 		FCA_tab_pre_item();
 		 FCA_pre_tab_item();
 		  FCA_pre_serv(Domain, IP, State, false);
@@ -120,12 +120,12 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 		 FCA_post_tab_item();
 		FCA_tab_post_item();
 	}
-    
+
 		/* enter this host in the host data structure */
 	Server=malloc(sizeof(FM_THost));
 	if(Server==NULL)
 	FCA_crash("out of memory");
-	
+
 	Server->Name=strdup(Name);
 	Server->OS=strdup(OS);
 	Server->Comment=strdup(Comment);
@@ -135,7 +135,7 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 	servs=FCA_get_Domain(Domain);
 	if(servs==NULL)
 		servs=FCA_add_Domain(Domain);
-	
+
 	FFSS_PrintDebug(3, "adding server: %s\n", Name);
 	dom=(FCA_PServs)(servs->Data);
 	dom->everlisted=true;
@@ -170,7 +170,7 @@ void FCA_print_state(long int State,const char *IP,const char *Domain,const char
 void FCA_print_post_states()
 {
 	char tmp[128];
-	
+
 	if(!FCA_nb_states) {
 		FCA_pre_listing("/$/None");
 		FCA_post_tab();
@@ -183,7 +183,7 @@ void FCA_print_post_states()
 	if(!FCA_quiet && FCA_nb_states) {
 		FCA_tab_btm();
 		FCA_post_tab();
-		
+
 		FCA_pre_infos();
 		FCA_main_num(FCA_nb_states, "server");
 		if(FCA_nb_states>1)
@@ -205,7 +205,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 	FC_PEntry Es;
 	FCA_PServs dom;
 	unsigned int *itab=NULL;
-    
+
 	    	/* prepare the listing structure */
 	SU_strcpy(FCA_listed_dir, "/$", FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
@@ -223,7 +223,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 			FCA_tab_pre_stitle();
 			FCA_tab_stitle("Domain",0);
 			FCA_tab_post_stitle();
-			
+
 			FCA_tab_pre_bar();
 			FCA_tab_bar(7);
 			FCA_tab_post_bar();
@@ -259,7 +259,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 				FCA_post_tab_item();
 				FCA_tab_post_item();
 	    		}
-	
+
 				/* update the data structure */
 			if(id!=NbDomains)
 				Pdoms=FCA_get_Domain(Domains[itab[id]]);
@@ -277,7 +277,7 @@ void FCA_print_domains(const char **Domains, int NbDomains)
 				dom->servers=( (FCA_PServs)(Pdoms->Data) )->servers;
 		}
 	}
-    
+
 		/* free FCA_Servers domain listing */
 	FCA_free_Domain_list();
 		/* replace by the new listing */
@@ -310,7 +310,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 	int nbqu, nboff, nbdisp=0;
 	char tmp[128], tmp2[128];
 
-	
+
 	if(FCA_VAR_IS_ON(FCA_sort))
 		Ptr = FCA_sort_hostlist(HostList);
 	else
@@ -319,14 +319,14 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 	snprintf(FCA_listed_dir, FFSS_MAX_FILEPATH_LENGTH, "/$/%s", Domain);
 	FCA_free_list();
 	FCA_list=NULL;
-        
-	
+
+
 
 	if(! FCA_inDispServs)
 	        FCA_inDispServs=true;
 		/* fill a precedent structure */
 	FCA_free_Domain(Domain);
-    
+
 		/* we add a domain if necesssary */
 	servs=(FCA_PServs)(FCA_get_Domain(Domain)->Data);
 	if(servs==NULL)
@@ -361,27 +361,27 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 			Ps=SU_AddElementHead(NULL,Es);
 			FCA_list=Ps;
 		}
-	
+
 		if(!FCA_quiet  && !(!FCA_VAR_IS_ON(FCA_disp_off) && H->State==FFSS_STATE_OFF)
 		 && ! (!FCA_VAR_IS_ON(FCA_disp_quiet) && H->State==FFSS_STATE_QUIET)) {
 		 	if(!nbdisp) {
 				FCA_pre_listing(FCA_listed_dir);
 				FCA_tab_width=73;
 				FCA_tab_top();
-    		
+
 				snprintf(tmp,127," Domain: %%%d.%ds",
 					FFSS_MAX_DOMAIN_LENGTH,FFSS_MAX_DOMAIN_LENGTH);
 				snprintf(tmp2,127, tmp, Domain);
 				FCA_tab_title(tmp2);
 				FCA_tab_untitle();
-    
+
     				FCA_tab_pre_stitle();FCA_tab_stitle("State",5);
 				FCA_tab_int_stitle();FCA_tab_stitle("Name",FFSS_MAX_SERVERNAME_LENGTH);
 				FCA_tab_int_stitle();FCA_tab_stitle("IP",FFSS_IP_FIELD_SIZE);
 				FCA_tab_int_stitle();FCA_tab_stitle("OS",FFSS_MAX_SERVEROS_LENGTH);
 				FCA_tab_int_stitle();FCA_tab_stitle("Comment",0);
 				FCA_tab_post_stitle();
-    
+
     				FCA_tab_pre_bar();FCA_tab_bar(5);
 				FCA_tab_int_bar();FCA_tab_bar(FFSS_MAX_SERVERNAME_LENGTH);
 				FCA_tab_int_bar();FCA_tab_bar(FFSS_IP_FIELD_SIZE);
@@ -389,7 +389,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 				FCA_tab_int_bar();FCA_tab_bar(8);
 				FCA_tab_post_bar();
 			}
-			
+
 			FCA_tab_pre_item();FCA_pre_tab_item();FCA_pre_serv(Domain, H->Name, H->State, false);
 			FCA_tab_item(States[H->State],5);
 			FCA_post_serv(false);FCA_post_tab_item();FCA_tab_int_item();FCA_pre_tab_item();FCA_pre_serv(Domain, H->Name, H->State, true);
@@ -401,25 +401,25 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 			FCA_post_serv(false);FCA_post_tab_item();FCA_tab_int_item();FCA_pre_tab_item();FCA_pre_serv(Domain, H->Name, H->State, false);
 			FCA_tab_item(H->Comment,0);
 			FCA_post_serv(false);FCA_post_tab_item();FCA_tab_post_item();
-			
+
 			nbdisp++;
 		}
 		if(H->State==FFSS_STATE_OFF)
 			nboff++;
 		else if(H->State==FFSS_STATE_QUIET)
 			nbqu++;
-		
+
 			/* add a new machine in the internal structure... */
 		Server=malloc(sizeof(FM_THost));
 		if(Server==NULL)
 			FCA_crash("out of memory");
-	
+
 		Server->Name=strdup(H->Name);
 		Server->OS=strdup(H->OS);
 		Server->Comment=strdup(H->Comment);
 		Server->IP=strdup(H->IP);
 		Server->State=H->State;
-	
+
 		servs->servers=SU_AddElementHead(servs->servers, Server);
 		free(H->IP);
 		Ptr = Ptr->Next;
@@ -470,7 +470,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList)
 	}
 }
 
-void FCA_print_search(const char *Query,const char *Domain,const char **Answers,int NbAnswers)
+void FCA_print_search(const char *Query,const char *Domain,const char **Answers,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers)
 {
 	int ia, nbav=0, nbsmb=0, nbfiles=0, state;
 	char tmp[128], tmp2[128], **buf=(char**)Answers;
@@ -496,28 +496,28 @@ void FCA_print_search(const char *Query,const char *Domain,const char **Answers,
 		}
 		FCA_tab_width=38;
 		FCA_tab_top();
-		
-		snprintf(tmp,127,"Domain: %%-%d.%ds", 
+
+		snprintf(tmp,127,"Domain: %%-%d.%ds",
 			FFSS_MAX_DOMAIN_LENGTH,FFSS_MAX_DOMAIN_LENGTH);
 		snprintf(tmp2,127,tmp, Domain);
 		FCA_tab_title(tmp2);
-		
+
 		snprintf(tmp2,127,"Query: %-30.30s", Query);
 		FCA_tab_title(tmp2);
 		FCA_tab_untitle();
-		
+
 		FCA_tab_pre_stitle();
 		 FCA_tab_stitle("State", 5);
 		  FCA_tab_int_stitle();
 		 FCA_tab_stitle("Answer", 0);
 		 FCA_tab_stitle("", 25);
 		FCA_tab_post_stitle();
-		
+
 		FCA_tab_pre_bar();
 		 FCA_tab_bar(5);FCA_tab_int_bar();FCA_tab_bar(36);
 		FCA_tab_post_bar();
 	}
-	
+
 	if(!FCA_quiet) {
 		snprintf(dom, FFSS_MAX_DOMAIN_LENGTH+2, "/$/%s", Domain);
 		for(ia=0; ia<NbAnswers; ia++) {
@@ -611,7 +611,7 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 	char *timech;
 	unsigned int nbEl=0, nbFd=0, nbFl=0;
 	long long totSz=0;
-	
+
 	if(FCA_VAR_IS_ON(FCA_sort))
 		Ptr=FCA_sort_dirlist(Entries);
 	else
@@ -620,7 +620,7 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 	SU_strcpy(FCA_listed_dir, FCA_tolist_dir, FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
 	FCA_list=NULL;
-    
+
 	if(Ptr==NULL) {
 	    	if(! FCA_quiet) {
 			FCA_pre_listing(FCA_listed_dir);
@@ -635,12 +635,12 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 			FCA_pre_listing(FCA_listed_dir);
 			FCA_tab_width=43;
 			FCA_tab_top();
-			
+
 			FCA_tab_pre_stitle();FCA_tab_stitle("size", 5);
 			FCA_tab_int_stitle();FCA_tab_stitle("date", 25);
 			FCA_tab_int_stitle();FCA_tab_stitle("name", 0);
 			FCA_tab_post_stitle();
-			
+
 			FCA_tab_pre_bar();FCA_tab_bar(5);
 			FCA_tab_int_bar();FCA_tab_bar(25);
 			FCA_tab_int_bar();FCA_tab_bar(5);
@@ -660,11 +660,11 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 	    			Ps=SU_AddElementHead(NULL,Es);
 				FCA_list=Ps;
 			}
-	    
+
 			if(! FCA_quiet) {
 			    	timech=ctime((time_t *)&Ent->Stamp);
 			    	timech[strlen(timech)-1] = '\0';
-		
+
 					/* size, date & name */
 				FCA_tab_pre_item();
 				 FCA_pre_tab_item();
@@ -702,7 +702,7 @@ void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries)
 			}
 			Ptr = Ptr->Next;
 		}
-	
+
 		if(! FCA_quiet) {
 			FCA_tab_btm();
 			FCA_post_tab();
@@ -743,7 +743,7 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 	SU_PList Ps=NULL;
 	FC_PEntry Es;
 	unsigned int *itab=NULL;
-    
+
 	    	/* prepare the internal structure */
 	SU_strcpy(FCA_listed_dir, FCA_tolist_dir, FFSS_MAX_FILEPATH_LENGTH);
 	FCA_free_list();
@@ -763,13 +763,13 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 			}
 			FCA_tab_width=33;
 			FCA_tab_top();
-			
+
 			FCA_tab_pre_stitle();
 			 FCA_tab_stitle("Share name",FFSS_MAX_SHARENAME_LENGTH);
 			FCA_tab_int_stitle();
 			 FCA_tab_stitle("Comment", 0);
 			FCA_tab_post_stitle();
-			
+
 			FCA_tab_pre_bar();
 			 FCA_tab_bar(FFSS_MAX_SHARENAME_LENGTH);
 			FCA_tab_int_bar();
@@ -790,7 +790,7 @@ void FCA_print_shares(const char IP[],const char **Names,const char **Comments,i
 				Ps=SU_AddElementHead(NULL,Es);
 				FCA_list=Ps;
 			}
-	    
+
 			if(! FCA_quiet) {
 				FCA_tab_pre_item();
 				 FCA_pre_tab_item();
@@ -831,7 +831,7 @@ void FCA_print_info(char *Txt, ...)
 	vsnprintf(str, 1023, Txt, argptr);
 	va_end(argptr);
 	FCA_infos(str);
-	
+
 	FCA_post_infos();
 }
 
@@ -878,11 +878,11 @@ void FCA_print_cmd_err(char *msg, ...)
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
 	fprintf(FCA_err_stream, "cannot execute command: ");
-	
+
 	va_start(argptr,msg);
 	vfprintf(FCA_err_stream, msg, argptr);
 	va_end(argptr);
-	
+
 	FCA_post_err();
 	fprintf(FCA_err_stream, "\n");
 }
@@ -897,11 +897,11 @@ void FCA_print_err(char *msg, ...)
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
 	fprintf(FCA_err_stream, "error: ");
-	
+
 	va_start(argptr,msg);
 	vfprintf(FCA_err_stream, msg, argptr);
 	va_end(argptr);
-	
+
 	FCA_post_err();
 	fprintf(FCA_err_stream, "\n");
 }
@@ -932,15 +932,15 @@ void FCA_crash(char *msg, ...)
 	FCA_pre_err();
 	if(FCA_reading_file)
 		fprintf(FCA_err_stream, "%s: ", FCA_file_status);
-	
+
 	fprintf(FCA_err_stream, "FATAL ERROR: ");
-	
+
 	va_start(argptr,msg);
 	vfprintf(FCA_err_stream, msg, argptr);
 	va_end(argptr);
-	
+
 	fprintf(FCA_err_stream, "\n");
-	
+
 	FCA_post_err();
 	FCA_exit(-1);
 }
@@ -958,10 +958,10 @@ bool FCA_debug_struct(char *args)
 		printf("%s (%lld o)\n", ( (FC_PEntry)(P->Data) )->Name, ( (FC_PEntry)(P->Data) )->Size );
 		P=P->Next;
 	}
-	
+
 	printf("domains & servers structure: \n");
 	Pdoms=FCA_Servers;
-    
+
 	while(Pdoms!=NULL) {
 		printf("---------domain: %s-------\n", ( (FCA_PServs)(Pdoms->Data) )->Domain);
 		printf("-- new: %s \n", ( (FCA_PServs)(Pdoms->Data) )->everlisted?"no":"yes");
@@ -1010,18 +1010,18 @@ void FCA_print_version(void)
 void FCA_print_env()
 {
 	int i=0;
-	
+
 	FCA_tab_width=FCA_VARNAME_MAX+11;
 	FCA_tab_top();
-	
+
 	FCA_tab_pre_stitle();FCA_tab_stitle("Variable",FCA_VARNAME_MAX);
 	FCA_tab_int_stitle();FCA_tab_stitle("Value",0);
 	FCA_tab_post_stitle();
-	
+
 	FCA_tab_pre_bar();FCA_tab_bar(FCA_VARNAME_MAX);
 	FCA_tab_int_bar();FCA_tab_bar(6);
 	FCA_tab_post_bar();
-	
+
 	while(FCA_VARS[i].name) {
 		FCA_tab_pre_item();
 		FCA_pre_tab_item();
@@ -1043,15 +1043,15 @@ void FCA_print_var(int index)
 {
 	FCA_tab_width=FCA_VARNAME_MAX+11;
 	FCA_tab_top();
-	
+
 	FCA_tab_pre_stitle();FCA_tab_stitle("Variable",FCA_VARNAME_MAX);
 	FCA_tab_int_stitle();FCA_tab_stitle("Value",0);
 	FCA_tab_post_stitle();
-	
+
 	FCA_tab_pre_bar();FCA_tab_bar(FCA_VARNAME_MAX);
 	FCA_tab_int_bar();FCA_tab_bar(6);
 	FCA_tab_post_bar();
-	
+
 	FCA_tab_pre_item();
 	FCA_pre_tab_item();
 	FCA_ansi_chs(33);	/* yellow */
@@ -1071,7 +1071,7 @@ void FCA_print_aliases(char *cmd)
 {
 	char *p=NULL;
 	SU_PList l=FCA_aliases;
-	
+
 	if(cmd) {
 		p=FCA_get_alias(cmd);
 		if(!p) {
@@ -1084,18 +1084,18 @@ void FCA_print_aliases(char *cmd)
 		FCA_print_cmd_err("no alias found");
 		return;
 	}
-	
+
 	FCA_tab_width=FCA_ALIAS_MAX+11;
 	FCA_tab_top();
-	
+
 	FCA_tab_pre_stitle();FCA_tab_stitle("Alias",FCA_ALIAS_MAX);
 	FCA_tab_int_stitle();FCA_tab_stitle("Value",0);
 	FCA_tab_post_stitle();
-	
+
 	FCA_tab_pre_bar();FCA_tab_bar(FCA_ALIAS_MAX);
 	FCA_tab_int_bar();FCA_tab_bar(6);
 	FCA_tab_post_bar();
-	
+
 	while(p || l) {
 		FCA_tab_pre_item();
 		FCA_pre_tab_item();
@@ -1123,7 +1123,7 @@ void FCA_print_aliases(char *cmd)
 			l=l->Next;
 	}
 	FCA_tab_btm();
-	
+
 }
 #endif	/* aliases */
 
@@ -1207,10 +1207,10 @@ void FCA_print_cmd_help(char *cmd)
 	FCA_tab_top();
 	FCA_tab_title("            ffss text-mode client              ");
 	FCA_tab_title("                   help                        ");
-	
+
 	FCA_tab_pre_item();
 	FCA_tab_post_item();
-	
+
 	if(!cmd) {
 		FCA_tab_pre_item();
 		printf("    Known commands: ");
@@ -1264,7 +1264,7 @@ void FCA_print_cmd_help(char *cmd)
 void FCA_print_size(FFSS_LongField size, char *format)
 {
 		/* be VERY careful of the value of format... */
-    
+
 	if(size>=1099511627776) {	/* >= 1 TB ! */
 		printf(format, size/1099511627776);
 		printf("T");
@@ -1286,7 +1286,7 @@ void FCA_print_size(FFSS_LongField size, char *format)
 void FCA_print_time(int s)
 {
 	bool begun=false;
-	
+
 	if(s>3600*24) {	/* > 1 day */
 		FCA_num(s/(3600*24), "day");
 		begun=true;

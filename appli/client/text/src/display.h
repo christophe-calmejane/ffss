@@ -29,7 +29,7 @@ void FCA_print_servers(const char *Domain, const int NbHost,SU_PList HostList);
 void FCA_print_ls(const char Path[],int NbEntries,SU_PList Entries);
 void FCA_print_shares(const char IP[],const char **Names,const char **Comments,int NbShares);
 void FCA_print_domains(const char **Domains, int NbDomains);
-void FCA_print_search(const char *Query,const char *Domain,const char **Answers,int NbAnswers);
+void FCA_print_search(const char *Query,const char *Domain,const char **Answers,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers);
 
 void FCA_print_prog_bar();
 bool FCA_print_pwd(char *args);

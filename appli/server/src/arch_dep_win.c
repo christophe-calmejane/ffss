@@ -40,6 +40,7 @@ bool FS_LoadConfig(const char FileName[])
   FS_PUser Usr;
   int  Writeable;
   int  Private;
+  int NoChksum;
   int  MaxConn;
   char GBL_Name[FFSS_MAX_SERVERNAME_LENGTH+1];
   char GBL_Comment[FFSS_MAX_SERVERCOMMENT_LENGTH+1];
@@ -81,6 +82,9 @@ bool FS_LoadConfig(const char FileName[])
     /* Get Share Private */
     _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,p);
     Private = SU_RB_GetIntValue(key,0);
+    /* Get Share NoChksum */
+    _snprintf(key,sizeof(key),"%s%s_NoChksum",FFSS_REGISTRY_PATH_SERVER,p);
+    NoChksum = SU_RB_GetIntValue(key,0);
     /* Get Share MaxConnections */
     _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,p);
     MaxConn = SU_RB_GetIntValue(key,0);
@@ -122,7 +126,7 @@ bool FS_LoadConfig(const char FileName[])
     if(Path[0] != 0)
     {
       /* Building index */
-      FS_BuildIndex(Path,p,Comment,(bool)Writeable,(bool)Private,MaxConn,Ptr,false);
+      FS_BuildIndex(Path,p,Comment,(bool)Writeable,(bool)Private,(bool)NoChksum,MaxConn,Ptr,false);
     }
 
     if((s == NULL) || (s[0] == 0))
@@ -228,6 +232,9 @@ bool FS_SaveConfig(const char FileName[])
     /* Set Share Private */
     _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetIntValue(key,Share->Private);
+    /* Set Share NoChksum */
+    _snprintf(key,sizeof(key),"%s%s_NoChksum",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
+    SU_RB_SetIntValue(key,Share->NoChksum);
     /* Set Share MaxConnections */
     _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
     SU_RB_SetIntValue(key,Share->MaxConnections);
@@ -303,6 +310,9 @@ void FS_RemoveShare(FS_PShare Share)
   SU_RB_DelValue(key);
   /* Del Share Private */
   _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
+  SU_RB_DelValue(key);
+  /* Del Share NoChksum */
+  _snprintf(key,sizeof(key),"%s%s_NoChksum",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);
   SU_RB_DelValue(key);
   /* Del Share MaxConnections */
   _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,Share->ShareName);

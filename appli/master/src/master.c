@@ -931,7 +931,7 @@ int main(int argc,char *argv[])
   FILE *fp;
   pid_t MainPid;
 
-  printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_MASTER_VERSION);
+  printf("FFSS Master v%s (c) Ze KiLleR / SkyTech 2001'03\n",FFSS_MASTER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
   fp = fopen(FM_PID_FILE,"rt");
@@ -1013,7 +1013,7 @@ int main(int argc,char *argv[])
   memset(&FM_MyDomain,0,sizeof(FM_MyDomain));
 
   context;
-  if(!FM_LoadConfigFile(ConfigFile,true)) /* Only get user and group */
+  if(!FM_LoadConfigFile(ConfigFile,true)) /* Only get user/group/interface */
   {
     FFSS_PrintSyslog(LOG_ERR,"Cannot open config file : %s\n",ConfigFile);
     return -1;
@@ -1131,7 +1131,7 @@ int main(int argc,char *argv[])
     fp = fopen(FM_PID_FILE,"wt");
     if(fp == NULL)
     {
-      FFSS_PrintSyslog(LOG_ERR,"Cannot create pid file (%s). Check write access... exiting\n",FM_PID_FILE);
+      FFSS_PrintSyslog(LOG_ERR,"Cannot create pid file '%s' (%s). Check write access... exiting\n",FM_PID_FILE,strerror(errno));
       FM_UnInit();
       return -6;
     }

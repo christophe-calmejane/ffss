@@ -1,8 +1,3 @@
-- Ajouter la taille du fichier dans la reponse de recherche (master/search.c/FM_BuildPath),
-  et ajouter un champ TAILLE a la structure FM_PFTNode (server/server.h & master/index.h),
-  et ajouter l'envoi de cette taille dans FS_BuildIndexBuffer (server/index.c)
-
-
 - Ajouter un message de cryptage (en mode connecte) dans le protocol : DWORD CryptType, ... DATAs (de la taille du packet - entete)
   Une fonction a qui on passe le CryptType et les data (cle privee/publique par ex) (et la socket, si il doit communiquer avec l autre bout pour un echange)
   Une fonction dans le thread de message (juste avant analyse_packet) a qui on passe le packet pour decryptage
@@ -17,9 +12,9 @@
  - TRANSFORMER LES CONSTANTES DES PORTS en variables (enfin, garder les 2, par defaut, on assigne les constantes au var) et mettre les var en globales
 
  - optimiser les messages (ne pas faire de copie des buffers, mais envoyer plusieurs paquets)
-     >> [11:46:04] <kiki[Artabel]>  writev
-     >> [11:46:09] <kiki[Artabel]>  WSPSend
-     >> [11:46:16] <kiki[Artabel]>  pour envoyer des buffers a concatener
+     >> [11:46:04] <kiki]>  writev
+     >> [11:46:09] <kiki]>  WSPSend
+     >> [11:46:16] <kiki]>  pour envoyer des buffers a concatener
 
 
 dnl Check endian

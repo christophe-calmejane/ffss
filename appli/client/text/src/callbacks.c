@@ -74,12 +74,12 @@ printf("POUF\n");
 	FCA_sem_post();
 }
 
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User)
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
 	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
 
 	if(FCA_inDispFind || !FCA_multiFind)
-		FCA_print_search(Query,Domain,Answers,NbAnswers);
+		FCA_print_search(Query,Domain,Answers,ChkSums,Sizes,NbAnswers);
 	else
 		FFSS_PrintDebug(3, "(client) sorry, too late to give your answer\n");
 
@@ -124,29 +124,29 @@ FFSS_PrintDebug(3, "(client) wake up baby\n");
 	FCA_sem_post();
 }
 
-void FCA_OnMasterError(int Code,const char Descr[])
+void FCA_OnMasterError(FFSS_Field ErrorCode,const char Descr[])
 {
-	FCA_print_cmd_err("error from master (code %d, %s)\n", Code, Descr);
+	FCA_print_cmd_err("error from master (code %d, %s)\n", ErrorCode, Descr);
 
 	FCA_sem_post();
 }
 
     /* error */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
+bool FCA_OnError(SU_PClientSocket Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
-	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s, value=%d)\n", Code, Descr, Code==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
-	if(Code==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {
+	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s, value=%d)\n", ErrorCode, Descr, ErrorCode==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
+	if(ErrorCode==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {
 		FCA_print_warning("This server supports only useconnsock mode, switching to this one");
 		sprintf(FCA_useConnSock, "on");
-		FCA_err_errno=Code;
+		FCA_err_errno=ErrorCode;
 	} else {
 		if(! FCA_quiet)
-			FCA_print_conn_err(Server, Code, Descr);
-		if(Code!=FFSS_ERROR_NO_ERROR) {	/* if error during share connection */
+			FCA_print_conn_err(Server, ErrorCode, Descr);
+		if(ErrorCode!=FFSS_ERROR_NO_ERROR) {	/* if error during share connection */
 			/* connection altered */
-			if( Code!=FFSS_ERROR_FILE_NOT_FOUND && Code!=FFSS_ERROR_ACCESS_DENIED )
+			if( ErrorCode!=FFSS_ERROR_FILE_NOT_FOUND && ErrorCode!=FFSS_ERROR_ACCESS_DENIED )
 				FCA_close_connection();
-			FCA_err_errno=Code;
+			FCA_err_errno=ErrorCode;
 		}
 	}
 	FCA_sem_post();

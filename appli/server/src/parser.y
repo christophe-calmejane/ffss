@@ -98,6 +98,7 @@ bool FS_AddFilterRule()
 %token PATH
 %token WRITEABLE
 %token PRIVATE
+%token NOCHKSUM
 %token MAXCONN
 %token MAXXFERCONN
 %token FTP_MAXCONN
@@ -117,7 +118,7 @@ input:    field
 ;
 
 field:    INF GLOBAL SUP fieldcontentglobal INF END SUP
-        | INF STRING SUP fieldcontent INF END SUP            { FS_BuildIndex(TmpShr.Path,$2,TmpShr.Comment,TmpShr.Writeable,TmpShr.Private,TmpShr.MaxConnections,TmpShr.Users,false); FS_FreeTempoShare(); }
+        | INF STRING SUP fieldcontent INF END SUP            { FS_BuildIndex(TmpShr.Path,$2,TmpShr.Comment,TmpShr.Writeable,TmpShr.Private,TmpShr.NoChksum,TmpShr.MaxConnections,TmpShr.Users,false); FS_FreeTempoShare(); }
 ;
 
 fieldcontentglobal:   fieldlineglobal
@@ -152,6 +153,7 @@ fieldline:         PATH STRING                               { TmpShr.Path = str
                  | COMMENT STRING                            { TmpShr.Comment = strdup($2); }
                  | WRITEABLE NUM                             { TmpShr.Writeable = (int)($2); }
                  | PRIVATE NUM                               { TmpShr.Private = (int)($2); }
+                 | NOCHKSUM NUM                              { TmpShr.NoChksum = (int)($2); }
                  | MAXCONN NUM                               { TmpShr.MaxConnections = (int)($2); }
                  | USERS users
 ;

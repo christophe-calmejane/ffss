@@ -19,7 +19,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
   FFSS_Field Size,pos,User;
   char *buf;
   unsigned int buf_len;
-  char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_m,*s_u;
+  char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_nchk,*s_m,*s_u;
   char *g_n,*g_c,*g_m,*g_i,*g_max,*g_max_xf,*g_f,*g_f_max,*g_xf_conn;
   char *q,*r;
   char *u_l,*u_p,*u_w;
@@ -141,9 +141,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_c = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_w = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_pr = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        s_nchk = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_m = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((s_p == NULL) || (s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
+        if((s_p == NULL) || (s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_nchk == NULL) || (s_m == NULL) || (s_u == NULL))
         { /* Attack */
           error = true;
           break;
@@ -182,7 +183,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
             r = strchr(q,',');
         }
         /* Building index */
-        FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),atoi(s_m),Ptr,true);
+        FS_BuildIndex(s_p,s_n,s_c,(bool)atoi(s_w),(bool)atoi(s_pr),(bool)atoi(s_nchk),atoi(s_m),Ptr,true);
 #ifdef _WIN32
         FS_SaveConfig(NULL);
 #endif /* _WIN32 */
@@ -284,8 +285,8 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
             SU_strcat(Users,",",buf_len);
           Ptr = Ptr->Next;
         }
-        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%s",Share->Writeable,0,Share->Private,0,Share->MaxConnections,0,Users);
-        pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->MaxConnections) + strlen(Users) + 4;
+        snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%s",Share->Writeable,0,Share->Private,0,Share->NoChksum,0,Share->MaxConnections,0,Users);
+        pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->NoChksum) + FS_GetIntLen(Share->MaxConnections) + strlen(Users) + 4;
         Size = pos;
         SU_SEM_POST(FS_SemShr);
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
@@ -334,9 +335,10 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         s_c = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_w = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_pr = FFSS_UnpackString(buf,buf+pos,Size,&pos);
+        s_nchk = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_m = FFSS_UnpackString(buf,buf+pos,Size,&pos);
         s_u = FFSS_UnpackString(buf,buf+pos,Size,&pos);
-        if((s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_m == NULL) || (s_u == NULL))
+        if((s_c == NULL) || (s_w == NULL) || (s_pr == NULL) || (s_nchk == NULL) || (s_m == NULL) || (s_u == NULL))
         {
           SU_SEM_POST(FS_SemShr);
           error = true;
@@ -350,6 +352,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Share->Comment = strdup(s_c);
         Share->Writeable = (bool)atoi(s_w);
         Share->Private = (bool)atoi(s_pr);
+        Share->NoChksum = (bool)atoi(s_nchk);
         Share->MaxConnections = atoi(s_m);
         Ptr = Share->Users;
         while(Ptr != NULL)

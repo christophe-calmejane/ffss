@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : August, 20th 2002
+                  Last Update : August, 29th 2003
 
 VIRER LE -PREx DE SERVER.H
+
+July, 29th 2003:
+  - Added an option in shares to compute a checksum of 1rst kbyte of files (for use with master search)
+  - Changes in Index message to master : Now sending size, and chksum of 1rst kbyte of files
 
 August, 20th 2002:
   - Added support for QoS

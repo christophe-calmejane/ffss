@@ -1,5 +1,5 @@
 /* This is the conf conn plugin for ffss server */
-/* (c) Christophe Calmejane - 2001'02           */
+/* (c) Christophe Calmejane - 2001'03           */
 /*     aka Ze KiLleR / SkyTech                  */
 /*                                              */
 /* http://zekiller.skytech.org                  */

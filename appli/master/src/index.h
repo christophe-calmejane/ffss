@@ -31,11 +31,13 @@ typedef struct FM_SSTNode /* 16 bytes */
   char Letter;                 /* Letter is UNUSED_CHAR if struct not occupied */ /* Hashed letter */
 } FM_TSTNode, *FM_PSTNode;
 
-typedef struct /* 16 bytes */
+typedef struct /* 28 bytes */
 {
   int Pos;                     /* Pos is the offset in 'char *FileTree' for the string of this node        */ /* -1 if not used */
   int Father;                  /* Father is the index in 'FM_TFTNode *FTNodes' for the father of this node */ /* -1 if no father */
   int Last;                    /* Last index in host's nodes table for this directory                      */
+  FFSS_LongField Size;         /* Size of the file                                                         */
+  FFSS_Field ChkSum;           /* Checksum of the beginning of the file (if available)                     */
   unsigned char Tags;          /* Bit field for tags of file                                               */
 } FM_TFTNode, *FM_PFTNode;
 

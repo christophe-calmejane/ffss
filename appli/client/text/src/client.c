@@ -41,25 +41,25 @@ void FCA_init()
 #ifdef CGI
 	const FCA_Tskin *p;
 #endif
-	
+
 		/* init FFSS callback structure */
 	memset(&FFSS_CB,0,sizeof(FFSS_CB));
 	FFSS_CB.CCB.OnNewState 			= FCA_OnNewState;
 	FFSS_CB.CCB.OnBeginTCPThread		= FCA_OnBeginTCPThread;
-    
+
 	FFSS_CB.CCB.OnServerListingAnswer 	= FCA_OnServerListingAnswer;
 	FFSS_CB.CCB.OnEndServerListingAnswer	= FCA_OnEndServerListingAnswer;
 	FFSS_CB.CCB.OnDirectoryListingAnswer	= FCA_OnDirectoryListingAnswer;
 	FFSS_CB.CCB.OnSharesListing 		= FCA_OnSharesListing;
 	FFSS_CB.CCB.OnDomainListingAnswer	= FCA_OnDomainListingAnswer;
 	FFSS_CB.CCB.OnSearchAnswer		= FCA_OnSearchAnswer;
-    
+
 	FFSS_CB.CCB.OnTransferActive 		= FCA_OnTransfertActive;
 	FFSS_CB.CCB.OnTransferFailed		= FCA_OnTransfertFailed;
 	FFSS_CB.CCB.OnTransferSuccess		= FCA_OnTransfertSuccess;
 	FFSS_CB.CCB.OnInitXFer			= FCA_OnInitXFer;
 	FFSS_CB.CCB.OnData			= FCA_OnData;
-   
+
 	FFSS_CB.CCB.OnMasterError		= FCA_OnMasterError;
 	FFSS_CB.CCB.OnError 			= FCA_OnError;
 	FFSS_CB.CCB.OnEndTCPThread 		= FCA_OnEndTCPThread;
@@ -123,7 +123,7 @@ void FCA_init()
 		if( FFSS_GetFFSSOptions() & FFSS_OPTIONS_DEBUG)
 			N_SyslogOn=0;
 		sprintf(FCA_debuglevel, "0");
-		
+
 	}
 #endif
 		/* load all skins */
@@ -205,7 +205,7 @@ void FCA_process_cgi_args()
 	bool dw=false;
 	char *pd;
 
-	
+
 	if(!FCA_CGI_mode)
 		return;
 		/* let's see the CGI args */
@@ -249,7 +249,7 @@ void FCA_process_cgi_args()
 	if(!dw)
 		FCA_err_stream=stdout;
 	FCA_command=buf;
-/* to debug CGI scripts 
+/* to debug CGI scripts
 printf("<html>\n");
 printf("command to run: '%s'<br>\n", FCA_command);
 printf("</html>\n");
@@ -267,7 +267,7 @@ void FCA_first_list()
 {
 	    	/* first list domains */
 	SU_PList Pdom;
-    
+
 	FCA_quiet=true;
 	FCA_list_domains();
 		/* pwd = /$/(first domain in list) */
@@ -314,7 +314,7 @@ void FCA_uninit()
 int main(int argc, char **argv)
 {
 	FCA_init();
-    
+
 	FCA_args.argc=argc;
 	FCA_args.argv=argv;
 	FCA_get_args();
@@ -338,7 +338,7 @@ FCA_init_headers();
 	FCA_print_version();
 	if( !FC_Init() )
 		FCA_crash("cannot initialise FFSS client");
-    
+
 	FCA_first_list();
 
 		/* we use exit() to quit */

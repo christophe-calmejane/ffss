@@ -79,12 +79,12 @@ extern char FFSS_WinServerVersion[20];
 #endif /* _WIN32 */
 #endif /* !FFSS_DRIVER */
 
-#define FFSS_VERSION "1.0.0-pre85"
-#define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
+#define FFSS_VERSION "1.0.0-pre86"
+#define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'03"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOL_VERSION                  0x0010006
-#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010006
+#define FFSS_PROTOCOL_VERSION                  0x0010007
+#define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010007
 
 #define FFSS_MASTER_PORT 10001
 #define FFSS_SERVER_PORT 10002
@@ -518,7 +518,7 @@ typedef struct
   void (*OnDomainListingAnswer)(const char **Domains,int NbDomains,FFSS_LongField User); /* First domain is assumed to be domain from the answering master */
   void (*OnMasterSearchAnswer)(struct sockaddr_in Master,FFSS_Field ProtocolVersion,const char Domain[],FFSS_LongField User);
   /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
-  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User);
+  void (*OnSearchAnswer)(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User);
   void (*OnUDPError)(int ErrNum);
   void (*OnMasterError)(FFSS_Field ErrorCode,const char Descr[]);
 

@@ -54,7 +54,7 @@
 #define FS_ON_DOWNLOAD_SLEEP_RETRY 100
 #define FS_CHECK_EVERY_X_PING 10
 
-#define FFSS_SERVER_VERSION "1.0-pre85"
+#define FFSS_SERVER_VERSION "1.0-pre86"
 
 #ifdef DEBUG
 #define CONFIG_FILE_NAME "./Server.conf"
@@ -72,19 +72,20 @@ typedef struct
 
 typedef struct
 {
-  char *DirName;       /* Name of the directory */
   FFSS_Field Flags;    /* Flags of the dir */
   FFSS_LongField Size; /* Size of the dir */
   time_t Time;         /* Time of the dir */
   FS_TNode Files;      /* Files/Dirs in this dir */
+  char *DirName;       /* Name of the directory */
 } FS_TDir, *FS_PDir;
 
 typedef struct
 {
-  char *FileName;      /* Name of the file */
   FFSS_Field Flags;    /* Flags of the file */
   FFSS_LongField Size; /* Size of the file */
   time_t Time;         /* Time of the file */
+  FFSS_Field ChkSum;   /* Checksum of first ko of the file */
+  char *FileName;      /* Name of the file */
 } FS_TFile, *FS_PFile;
 
 typedef struct
@@ -101,6 +102,7 @@ typedef struct
   char *Comment;               /* Comment of the share */
   bool Writeable;              /* If the share is writeable */
   bool Private;                /* If we need to be a REGISTERED user (login/pwd) */
+  bool NoChksum;               /* If we don't want checksum to be computed */
   unsigned int MaxConnections; /* Max simultaneous connections to this share */
   SU_PList Users;              /* FS_PUser */
 
@@ -220,7 +222,7 @@ extern char *FS_TimeTable[];
 extern SU_PList FS_Plugins; /* FS_PPlugin */
 
 /* Locks FS_SemShr */
-void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now);
+void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,bool NoChksum,int MaxConnections,SU_PList Users,bool do_it_now);
 /* Locks FS_SemShr */
 void FS_RealBuildIndex(void);
 void FS_FreeUser(FS_PUser Usr);
@@ -286,11 +288,13 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn); /* False on END OF TRANSF
 
 /* Included from MASTER's index.h */
 
-typedef struct /* 16 bytes */
+typedef struct /* 28 bytes */
 {
   int Pos;                     /* Pos is the offset in 'char *FileTree' for the string of this node        */ /* -1 if not used */
   int Father;                  /* Father is the index in 'FM_TFTNode *FTNodes' for the father of this node */ /* -1 if no father */
   int Last;                    /* Last index in host's nodes table for this directory                      */
+  FFSS_LongField Size;         /* Size of the file                                                         */
+  FFSS_Field ChkSum;           /* Checksum of the beginning of the file (if available)                     */
   unsigned char Tags;          /* Bit field for tags of file                                               */
 } FM_TFTNode, *FM_PFTNode;
 

@@ -19,6 +19,9 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   struct dirent *ent;
   struct stat st,st2;
   FFSS_LongField total_dir_size = 0;
+  FILE *fp;
+  char buf[1024];
+  int siz;
 
   FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
   /* List all files in Path, and fill Node with it */
@@ -67,6 +70,19 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Flags = ((st.st_mode&S_IXUSR)?FFSS_FILE_EXECUTABLE:0) | (S_ISLNK(st2.st_mode)?FFSS_FILE_LINK:0);
       File->Size = st.st_size;
       File->Time = st.st_ctime;
+      if(Share->NoChksum == false)
+      {
+        fp = fopen(name,"rb");
+        if(fp != NULL)
+        {
+          siz = sizeof(buf);
+          if(siz > File->Size)
+            siz = File->Size;
+          fread(buf,1,siz,fp);
+          fclose(fp);
+          File->ChkSum = FFSS_ComputeChecksum(0,buf,siz);
+        }
+      }
       total_dir_size += File->Size;
       Node->Files = SU_AddElementHead(Node->Files,File);
       Share->NbFiles++;
@@ -103,6 +119,9 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   HANDLE dir;
   WIN32_FIND_DATA ent;
   FFSS_LongField total_dir_size = 0;
+  FILE *fp;
+  char buf[1024];
+  int siz;
 
   FFSS_PrintDebug(5,"\tBuilding index for sub-dir %s\n",Path);
   /* List all files in Path, and fill Node with it */
@@ -143,6 +162,19 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
       File->Flags = FFSS_FILE_EXECUTABLE;
       File->Size = (ent.nFileSizeHigh * MAXDWORD) + ent.nFileSizeLow;
       File->Time = FS_ConvertTime(ent.ftCreationTime);
+      if(Share->NoChksum == false)
+      {
+        fp = fopen(name,"rb");
+        if(fp != NULL)
+        {
+          siz = sizeof(buf);
+          if(siz > File->Size)
+            siz = File->Size;
+          fread(buf,1,siz,fp);
+          fclose(fp);
+          File->ChkSum = FFSS_ComputeChecksum(0,buf,siz);
+        }
+      }
       total_dir_size += File->Size;
       Node->Files = SU_AddElementHead(Node->Files,File);
     }
@@ -153,7 +185,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
 #endif /* __unix__ */
 
 /* Locks FS_SemShr */
-void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,int MaxConnections,SU_PList Users,bool do_it_now)
+void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComment[],bool Writeable,bool Private,bool NoChksum,int MaxConnections,SU_PList Users,bool do_it_now)
 {
   FS_PShare Share;
   SU_PList Ptr;
@@ -168,6 +200,7 @@ void FS_BuildIndex(const char Path[],const char ShareName[],const char ShareComm
   Share->Comment = strdup(ShareComment);
   Share->Writeable = Writeable;
   Share->Private = Private;
+  Share->NoChksum = NoChksum;
   Share->MaxConnections = MaxConnections;
   Share->Users = Users;
   Ptr = Share->Users;
@@ -763,6 +796,8 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     tg = FFSS_GetFileTags(((FS_PFile)Ptr->Data)->FileName);
     tags |= tg;
     TabNodes[node].Tags = tg;
+    TabNodes[node].Size = ((FS_PFile)Ptr->Data)->Size;
+    TabNodes[node].ChkSum = ((FS_PFile)Ptr->Data)->ChkSum;
     node++;
     len = strlen(((FS_PFile)Ptr->Data)->FileName)+1;
     while((pos+len) >= size)

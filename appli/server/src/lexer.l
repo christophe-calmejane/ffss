@@ -28,6 +28,7 @@ extern int line;
 "Path"               { return PATH; }
 "Writeable"          { return WRITEABLE; }
 "Private"            { return PRIVATE; }
+"NoChksum"           { return NOCHKSUM; }
 "MaxConnections"     { return MAXCONN; }
 "MaxXFerConnections" { return MAXXFERCONN; }
 "FTP_MaxConnections" { return FTP_MAXCONN; }

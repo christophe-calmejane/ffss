@@ -2833,7 +2833,7 @@ int main(int argc,char *argv[])
   char ConfigFile[1024];
   bool daemonize = false;
 
-  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'02\n",FFSS_SERVER_VERSION);
+  printf("FFSS Server v%s (c) Ze KiLleR / SkyTech 2001'03\n",FFSS_SERVER_VERSION);
   printf("%s\n",FFSS_COPYRIGHT);
 
 #ifdef _WIN32

@@ -76,14 +76,17 @@ Path "/tmp"
 # Define the displayed name of the share
 Comment "test of a share"
 
-# Define is the share is writeable
+# Define if the share is writeable
 Writeable 0
 
-# Define is the share is private (only registered users can connect)
+# Define if the share is private (only registered users can connect)
 Private 0
 
 # Define max number of simultaneous connections (0 is illimited)
 MaxConnections 2
+
+# Define if you don't want checksum to be compute on the first kbyte of each file (on share with many files)
+NoChksum 1
 
 # Define registered users
 # Each user is defined like that : (login,password,writeable)

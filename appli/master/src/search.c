@@ -139,11 +139,11 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
         {
           bool do_it=true;
           if(Cur_Nb != 1)
-            do_it = memmem(Ans,buf_pos,str,len-1) == NULL;
+            do_it = memmem(Ans,buf_pos,str,len-1) == NULL; /* Compares FilePath */
           if(do_it)
           {
 #endif /* INTER_BOURRIN */
-        while((buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE) >= buf_size)
+        while((buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE+sizeof(FFSS_Field)+sizeof(FFSS_LongField)) >= buf_size)
         {
           buf_size += 50*FFSS_MAX_FILEPATH_LENGTH;
           Ans = (char *) realloc(Ans,buf_size);
@@ -152,6 +152,10 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
         buf_pos = FFSS_PackField(Ans,buf_pos,FFSS_IP_TYPE);
         FFSS_PackIP(Ans+buf_pos,Host->IP,FFSS_IP_TYPE);
         buf_pos += FFSS_IP_FIELD_SIZE;
+        /* Copy Chksum */
+        buf_pos = FFSS_PackField(Ans,buf_pos,Host->FTNodes[Leaf->NumFiles[j]].ChkSum);
+        /* Copy Size */
+        buf_pos = FFSS_PackLongField(Ans,buf_pos,Host->FTNodes[Leaf->NumFiles[j]].Size);
         /* Copy answer string */
         memcpy(Ans+buf_pos,str,len);
         buf_pos += len;

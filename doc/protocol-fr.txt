@@ -39,7 +39,7 @@ Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, 
 Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
 
 
-Detail du protocole (Version 0x0010006) :
+Detail du protocole (Version 0x0010007) :
 ---------------------------------
  * Message d'etat (Serveur->Master 695) (UDP) :
    DWord : Taille du message
@@ -358,7 +358,9 @@ Detail du protocole (Version 0x0010006) :
       DWord : Reserve
       DWord : Reserve
       DWord : Reserve
-     ZStr : Chaine reponse contenant le nom du server, le partage, le path dans le partage
+     DWord : Chksum (si disponible)
+     QWord : Taille du fichier
+     ZStr : Chaine reponse contenant le nom du server, le partage, le path dans le partage (Premier octet = Etat du serveur ET type de partage)
 
  * Message de recherche forwarde (Master->Master 695) (TCP) :
    DWord : Taille du message

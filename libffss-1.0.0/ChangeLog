@@ -3,10 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : Auguest, 30th 2002
+                  Last Update : July, 29th 2003
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+July, 29th 2003:
+  - Changed protocol for SearchAnswer message, and updated the lib
 
 August, 30th 2002:
   - Added protocol version in ping/pong messages
