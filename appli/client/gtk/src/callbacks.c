@@ -10,6 +10,7 @@
 #include "support.h"
 #include "client.h"
 #include "main.h"
+#include "draw.h"
 
 gboolean
 on_window1_delete_event                (GtkWidget       *widget,
@@ -25,27 +26,31 @@ void
 on_rescan_clicked                      (GtkButton       *button,
                                         gpointer         user_data)
 {
-  GtkCList *clist;
-  char *domain = NULL;
-  GList *items;
+  gchar *domain = NULL;
+  GtkTreeIter iter;
+  GtkTreeModel *store;
+  GtkTreeSelection *select;
+  GtkTreeView *view;
 
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-  if(clist != NULL)
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store2");
+  if(store != NULL)
   {
-    gtk_clist_clear(clist);
+    gtk_list_store_clear(GTK_LIST_STORE(store));
   }
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist3");
-  if(clist != NULL)
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store3");
+  if(store != NULL)
   {
-    gtk_clist_clear(clist);
+    gtk_list_store_clear(GTK_LIST_STORE(store));
   }
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist2");
-  if(clist != NULL)
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store1");
+  view = (GtkTreeView *) lookup_widget(wnd_main,"list1");
+  if((store != NULL) && (view != NULL))
   {
-    items = GTK_CLIST(clist)->selection;
-    if((items != NULL) && ((gint)items->data != 0))
+    select = gtk_tree_view_get_selection(view);
+    if(select != NULL)
     {
-      gtk_clist_get_text(clist,(gint)items->data,0,&domain);
+      if(gtk_tree_selection_get_selected(select,&store,&iter))
+        gtk_tree_model_get(store,&iter,0,&domain,-1);
     }
   }
   if(MyMaster != NULL)
@@ -57,6 +62,8 @@ on_rescan_clicked                      (GtkButton       *button,
   }
   else
     FC_SendMessage_ServerSearch();
+  if(domain != NULL)
+    g_free(domain);
 }
 
 
@@ -64,49 +71,67 @@ void
 on_button3_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
 {
-  GtkCList *clist;
-  char *server = NULL;
-  GList *items;
+  gchar *server = NULL;
+  GtkTreeIter iter;
+  GtkTreeModel *store;
+  GtkTreeSelection *select;
+  GtkTreeView *view;
 
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-  if(clist != NULL)
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store3");
+  if(store != NULL)
   {
-    items = GTK_CLIST(clist)->selection;
-    if(items != NULL)
+    gtk_list_store_clear(GTK_LIST_STORE(store));
+  }
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store2");
+  view = (GtkTreeView *) lookup_widget(wnd_main,"list2");
+  if((store != NULL) && (view != NULL))
+  {
+    select = gtk_tree_view_get_selection(view);
+    if(select != NULL)
     {
-      gtk_clist_get_text(clist,(gint)items->data,3,&server);
+      if(gtk_tree_selection_get_selected(select,&store,&iter))
+        gtk_tree_model_get(store,&iter,3,&server,-1);
     }
   }
   if(server != NULL)
+  {
     FC_SendMessage_SharesListing(server);
+    g_free(server);
+  }
 }
 
 void
 on_button4_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
 {
-  GtkCList *clist;
-  char *server = NULL;
-  char *share = NULL;
+  gchar *server = NULL;
+  gchar *share = NULL;
   SU_PClientSocket CS = NULL;
-  GList *items;
+  GtkTreeIter iter;
+  GtkTreeModel *store;
+  GtkTreeSelection *select;
+  GtkTreeView *view;
 
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist3");
-  if(clist != NULL)
+  store = (GtkTreeModel *) lookup_widget(wnd_main,"store3");
+  view = (GtkTreeView *) lookup_widget(wnd_main,"list3");
+  if((store != NULL) && (view != NULL))
   {
-    items = GTK_CLIST(clist)->selection;
-    if(items != NULL)
+    select = gtk_tree_view_get_selection(view);
+    if(select != NULL)
     {
-      gtk_clist_get_text(clist,(gint)items->data,0,&share);
+      if(gtk_tree_selection_get_selected(select,&store,&iter))
+        gtk_tree_model_get(store,&iter,0,&share,-1);
       if(share != NULL)
       {
-        clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-        if(clist != NULL)
+        store = (GtkTreeModel *) lookup_widget(wnd_main,"store2");
+        view = (GtkTreeView *) lookup_widget(wnd_main,"list2");
+        if((store != NULL) && (view != NULL))
         {
-          items = GTK_CLIST(clist)->selection;
-          if(items != NULL)
+          select = gtk_tree_view_get_selection(view);
+          if(select != NULL)
           {
-            gtk_clist_get_text(clist,(gint)items->data,3,&server);
+            if(gtk_tree_selection_get_selected(select,&store,&iter))
+              gtk_tree_model_get(store,&iter,3,&server,-1);
             if(server != NULL)
             {
               G_LOCK(gbl_conns_lock);
@@ -128,8 +153,10 @@ on_button4_clicked                     (GtkButton       *button,
                 Conn->sb = (GtkStatusbar *) lookup_widget(Conn->wnd,"statusbar1");
                 assert(Conn->sb != NULL);
                 Conn->ctx_id = gtk_statusbar_get_context_id(Conn->sb,"mycontext");
-                Conn->list = (GtkCList *) lookup_widget(Conn->wnd,"clist4");
-                assert(Conn->list != NULL);
+                Conn->store = (GtkTreeModel *) lookup_widget(Conn->wnd,"store1");
+                assert(Conn->store != NULL);
+                Conn->view = (GtkTreeView *) lookup_widget(Conn->wnd,"list1");
+                assert(Conn->view != NULL);
                 gtk_object_set_user_data(GTK_OBJECT(Conn->wnd),(gpointer)Conn);
                 printf("Adding conn to gbl_conns : %p (CS=%p)\n",Conn,CS);
                 gbl_conns = g_list_append(gbl_conns,(gpointer)Conn);
@@ -139,9 +166,11 @@ on_button4_clicked                     (GtkButton       *button,
               }
               else
                 G_UNLOCK(gbl_conns_lock);
+              g_free(server);
             }
           }
         }
+        g_free(share);
       }
     }
   }
@@ -157,29 +186,7 @@ on_button2_clicked                     (GtkButton       *button,
 
 
 gboolean
-on_clist2_button_press_event           (GtkWidget       *widget,
-                                        GdkEventButton  *event,
-                                        gpointer         user_data)
-{
-  if(event->type == GDK_2BUTTON_PRESS)
-    on_rescan_clicked(NULL,NULL);
-  return FALSE;
-}
-
-
-gboolean
-on_clist1_button_press_event           (GtkWidget       *widget,
-                                        GdkEventButton  *event,
-                                        gpointer         user_data)
-{
-  if(event->type == GDK_2BUTTON_PRESS)
-    on_button3_clicked(NULL,NULL);
-  return FALSE;
-}
-
-
-gboolean
-on_clist3_button_press_event           (GtkWidget       *widget,
+on_list3_button_press_event            (GtkWidget       *widget,
                                         GdkEventButton  *event,
                                         gpointer         user_data)
 {
@@ -188,33 +195,27 @@ on_clist3_button_press_event           (GtkWidget       *widget,
   return FALSE;
 }
 
-
-void
-on_clist1_unselect_row                 (GtkCList        *clist,
-                                        gint             row,
-                                        gint             column,
-                                        GdkEvent        *event,
-                                        gpointer         user_data)
+void on_list1_selection_changed(GtkTreeSelection *selection, gpointer data)
 {
-  GtkCList *list;
+  on_rescan_clicked(NULL,NULL);
+}
 
-  list = (GtkCList *) lookup_widget(wnd_main,"clist3");
-  if(list != NULL)
-  {
-    gtk_clist_clear(list);
-  }
+void on_list2_selection_changed(GtkTreeSelection *selection, gpointer data)
+{
+  on_button3_clicked(NULL,NULL);
 }
 
 
 gboolean
-on_clist4_button_press_event           (GtkWidget       *widget,
+on_list1_button_press_event            (GtkWidget       *widget,
                                         GdkEventButton  *event,
                                         gpointer         user_data)
 {
   PConn Conn;
-  GList *items;
   gchar *type = NULL;
   gchar *file = NULL;
+  GtkTreeIter iter;
+  GtkTreeSelection *select;
 
   Conn = (PConn) gtk_object_get_user_data(GTK_OBJECT(user_data));
   assert(Conn != NULL);
@@ -223,62 +224,73 @@ on_clist4_button_press_event           (GtkWidget       *widget,
     return FALSE;
   if(event == NULL || event->type == GDK_2BUTTON_PRESS) /* Double clicked */
   {
-    items = Conn->list->selection;
-    if(items != NULL)
+    select = gtk_tree_view_get_selection(Conn->view);
+    if(select != NULL)
     {
-      gtk_clist_get_text(Conn->list,(gint)items->data,0,&type);
-      assert(type);
-      if(SU_strcasecmp(type,"Dir"))
-      { /* If directory, active recurse download, or go into it */
-        if(widget == NULL) /* Clicked on download button */
-        {
+      if(gtk_tree_selection_get_selected(select,NULL,&iter))
+      {
+        gtk_tree_model_get(Conn->store,&iter,0,&type,-1);
+        assert(type);
+        if(SU_strcasecmp(type,"Dir"))
+        { /* If directory, active recurse download, or go into it */
+          if(widget == NULL) /* Clicked on download button */
+          {
+            GtkWidget *filesel;
+            filesel = create_fileselection2();
+            gtk_object_set_user_data(GTK_OBJECT(filesel),(gpointer)Conn);
+            gtk_tree_model_get(Conn->store,&iter,1,&file,-1);
+            assert(file);
+            gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel),file);
+            gtk_widget_show(filesel);
+            if(file != NULL)
+              g_free(file);
+          }
+          else /* Double clicked on dir name, so go into it */
+          {
+            char buf[1024];
+            gtk_tree_model_get(Conn->store,&iter,1,&file,-1);
+            assert(file);
+            if(strcmp(file,"..") == 0) /* Going back */
+            {
+              char *p;
+              SU_strcpy(buf,Conn->path,sizeof(buf));
+              p = strrchr(buf,'/');
+              assert(p);
+              if(p != NULL)
+              {
+                if(p == buf) /* Going back to root directory */
+                  p[1] = 0;
+                else
+                  p[0] = 0;
+              }
+            }
+            else
+            {
+              if(Conn->path[1] == 0) /* Root directory */
+                snprintf(buf,sizeof(buf),"/%s",file);
+              else
+                snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
+            }
+            printf("Going into %s\n",buf);
+            FC_SendMessage_DirectoryListing(Conn->Server,buf);
+            if(file != NULL)
+              g_free(file);
+          }
+        }
+        else
+        { /* If file, download it */
           GtkWidget *filesel;
-          filesel = create_fileselection2();
+          filesel = create_fileselection1();
           gtk_object_set_user_data(GTK_OBJECT(filesel),(gpointer)Conn);
-          gtk_clist_get_text(Conn->list,(gint)items->data,1,&file);
+          gtk_tree_model_get(Conn->store,&iter,1,&file,-1);
           assert(file);
           gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel),file);
           gtk_widget_show(filesel);
+          if(file != NULL)
+            g_free(file);
         }
-        else /* Double clicked on dir name, so go into it */
-        {
-          char buf[1024];
-          gtk_clist_get_text(Conn->list,(gint)items->data,1,&file);
-          assert(file);
-          if(strcmp(file,"..") == 0) /* Going back */
-          {
-            char *p;
-            SU_strcpy(buf,Conn->path,sizeof(buf));
-            p = strrchr(buf,'/');
-            assert(p);
-            if(p != NULL)
-            {
-              if(p == buf) /* Going back to root directory */
-                p[1] = 0;
-              else
-                p[0] = 0;
-            }
-          }
-          else
-          {
-            if(Conn->path[1] == 0) /* Root directory */
-              snprintf(buf,sizeof(buf),"/%s",file);
-            else
-              snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
-          }
-          printf("Going into %s\n",buf);
-          FC_SendMessage_DirectoryListing(Conn->Server,buf);
-        }
-      }
-      else
-      { /* If file, download it */
-        GtkWidget *filesel;
-        filesel = create_fileselection1();
-        gtk_object_set_user_data(GTK_OBJECT(filesel),(gpointer)Conn);
-        gtk_clist_get_text(Conn->list,(gint)items->data,1,&file);
-        assert(file);
-        gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel),file);
-        gtk_widget_show(filesel);
+        if(type != NULL)
+          g_free(type);
       }
     }
   }
@@ -291,7 +303,7 @@ on_button5_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
 {
   /* Download clicked */
-  on_clist4_button_press_event(NULL,NULL,user_data);
+  on_list1_button_press_event(NULL,NULL,user_data);
 }
 
 gboolean
@@ -327,37 +339,47 @@ on_ok_button1_clicked                  (GtkButton       *button,
                                         gpointer         user_data)
 {
   PConn Conn;
-  GList *items;
   gchar *type = NULL;
   gchar *file = NULL;
   gchar *size = NULL;
+  GtkTreeIter iter;
+  GtkTreeSelection *select;
 
   Conn = (PConn) gtk_object_get_user_data(GTK_OBJECT(user_data));
   assert(Conn != NULL);
 
-  items = Conn->list->selection;
-  if(items != NULL)
+  select = gtk_tree_view_get_selection(Conn->view);
+  if(select != NULL)
   {
-    gtk_clist_get_text(Conn->list,(gint)items->data,0,&type);
-    assert(type);
-    if(SU_strcasecmp(type,"Dir"))
-    { /* If directory, go in it */
-      printf("Shouldn't have DIR row here\n");
-      abort();
-    }
-    else
-    { /* If file, download it */
-      char buf[1024];
-
-      gtk_clist_get_text(Conn->list,(gint)items->data,1,&file);
-      assert(file);
-      gtk_clist_get_text(Conn->list,(gint)items->data,2,&size);
-      assert(size);
-      if(Conn->path[1] == 0) /* Root path */
-        snprintf(buf,sizeof(buf),"/%s",file);
+    if(gtk_tree_selection_get_selected(select,NULL,&iter))
+    {
+      gtk_tree_model_get(Conn->store,&iter,0,&type,-1);
+      assert(type);
+      if(SU_strcasecmp(type,"Dir"))
+      { /* If directory, go in it */
+        printf("Shouldn't have DIR row here\n");
+        abort();
+      }
       else
-        snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
-      add_file_to_download(Conn,buf,gtk_file_selection_get_filename(GTK_FILE_SELECTION(user_data)),size,false);
+      { /* If file, download it */
+        char buf[1024];
+
+        gtk_tree_model_get(Conn->store,&iter,1,&file,-1);
+        assert(file);
+        gtk_tree_model_get(Conn->store,&iter,2,&size,-1);
+        assert(size);
+        if(Conn->path[1] == 0) /* Root path */
+          snprintf(buf,sizeof(buf),"/%s",file);
+        else
+          snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
+        FC_DQ_AddOpToList_AddFileToDownload(Conn,buf,gtk_file_selection_get_filename(GTK_FILE_SELECTION(user_data)),size);
+        if(file != NULL)
+          g_free(file);
+        if(size != NULL)
+          g_free(size);
+      }
+      if(type != NULL)
+        g_free(type);
     }
   }
   gtk_widget_destroy(user_data);
@@ -388,35 +410,43 @@ on_ok_button2_clicked                  (GtkButton       *button,
   if(path != NULL)
   {
     char buf[1024];
-    GList *items;
+    GtkTreeIter iter;
+    GtkTreeSelection *select;
     gchar *type;
     gchar *file;
 
-    items = Conn->list->selection;
-    if(items != NULL)
+    select = gtk_tree_view_get_selection(Conn->view);
+    if(select != NULL)
     {
-      gtk_clist_get_text(Conn->list,(gint)items->data,0,&type);
-      assert(type);
-      if(SU_strcasecmp(type,"Dir"))
+      if(gtk_tree_selection_get_selected(select,NULL,&iter))
       {
-        gtk_clist_get_text(Conn->list,(gint)items->data,1,&file);
-        assert(file);
-        if(Conn->path[1] == 0)
-          snprintf(buf,sizeof(buf),"/%s",file);
+        gtk_tree_model_get(Conn->store,&iter,0,&type,-1);
+        assert(type);
+        if(SU_strcasecmp(type,"Dir"))
+        {
+          gtk_tree_model_get(Conn->store,&iter,1,&file,-1);
+          assert(file);
+          if(Conn->path[1] == 0)
+            snprintf(buf,sizeof(buf),"/%s",file);
+          else
+            snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
+          Conn->rec_path = strdup(buf);
+          Conn->rec_local_path = strdup(path);
+          Conn->rec_dir_count = 1; /* Waiting at least one rep */
+          Conn->recursif = true;
+          MKDIR(Conn->rec_local_path);
+          printf("Starting recursive download for %s -- Local savine to %s\n",Conn->rec_path,Conn->rec_local_path);
+          FC_SendMessage_DirectoryListing(Conn->Server,Conn->rec_path);
+          if(file != NULL)
+            g_free(file);
+        }
         else
-          snprintf(buf,sizeof(buf),"%s/%s",Conn->path,file);
-        Conn->rec_path = strdup(buf);
-        Conn->rec_local_path = strdup(path);
-        Conn->rec_dir_count = 1; /* Waiting at least one rep */
-        Conn->recursif = true;
-        MKDIR(Conn->rec_local_path);
-        printf("Starting recursive download for %s -- Local savine to %s\n",Conn->rec_path,Conn->rec_local_path);
-        FC_SendMessage_DirectoryListing(Conn->Server,Conn->rec_path);
-      }
-      else
-      { /* If file, fail */
-        printf("Shouldn't have FILE row here\n");
-        abort();
+        { /* If file, fail */
+          printf("Shouldn't have FILE row here\n");
+          abort();
+        }
+        if(type != NULL)
+          g_free(type);
       }
     }
   }
@@ -439,18 +469,26 @@ on_button7_clicked                     (GtkButton       *button,
   /* Resume clicked */
   PConn Conn;
   gchar *remote = NULL,*local = NULL,*position = NULL;
+  GtkTreeIter iter;
 
   Conn = (PConn) gtk_object_get_user_data(GTK_OBJECT(user_data));
   assert(Conn != NULL);
-  gtk_clist_get_text(clist_dwl,0,1,&remote);
+  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store_dwl),&iter);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,1,&remote,-1);
   assert(remote);
-  gtk_clist_get_text(clist_dwl,0,2,&local);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,2,&local,-1);
   assert(local);
-  gtk_clist_get_text(clist_dwl,0,4,&position);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,4,&position,-1);
   assert(position);
 
   add_conn_count(Conn);
   FFSS_DownloadFile(Conn->Server,remote,local,atoi(position),(void *)Conn,false,NULL);
+  if(remote != NULL)
+    g_free(remote);
+  if(local != NULL)
+    g_free(local);
+  if(position != NULL)
+    g_free(position);
   gtk_widget_destroy(user_data);
 }
 
@@ -460,7 +498,10 @@ on_button8_clicked                     (GtkButton       *button,
                                         gpointer         user_data)
 {
   /* Overwrite clicked */
-  gtk_clist_set_text(clist_dwl,0,4,"0");
+  GtkTreeIter iter;
+
+  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store_dwl),&iter);
+  gtk_list_store_set(store_dwl,&iter,4,"0",-1);
   on_button7_clicked(button,user_data);
 }
 
@@ -472,23 +513,33 @@ on_button9_clicked                     (GtkButton       *button,
   /* Ignore clicked */
   gchar *host_share = NULL,*remote = NULL,*local = NULL,*size = NULL;
   PConn Conn;
+  GtkTreeIter iter;
 
   Conn = (PConn) gtk_object_get_user_data(GTK_OBJECT(user_data));
   /* Move file to Fail list */
-  gtk_clist_get_text(clist_dwl,0,0,&host_share);
+  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store_dwl),&iter);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,0,&host_share,-1);
   assert(host_share);
-  gtk_clist_get_text(clist_dwl,0,1,&remote);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,1,&remote,-1);
   assert(remote);
-  gtk_clist_get_text(clist_dwl,0,2,&local);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,2,&local,-1);
   assert(local);
-  gtk_clist_get_text(clist_dwl,0,3,&size);
+  gtk_tree_model_get(GTK_TREE_MODEL(store_dwl),&iter,3,&size,-1);
   assert(size);
-  move_file_to_failed(host_share,remote,local,size,"Overwrite ignored");
+  FCQ_MoveFileToFailed(host_share,remote,local,size,"Overwrite ignored");
   /* Remove Xfer from queue */
-  gtk_clist_remove(clist_dwl,0);
+  gtk_list_store_remove(store_dwl,&iter);
   remove_conn(Conn,false);
   /* Launch next download */
-  launch_next_download();
+  FCQ_LaunchNextDownload();
+  if(host_share != NULL)
+    g_free(host_share);
+  if(remote != NULL)
+    g_free(remote);
+  if(local != NULL)
+    g_free(local);
+  if(size != NULL)
+    g_free(size);
   gtk_widget_destroy(user_data);
 }
 

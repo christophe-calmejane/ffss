@@ -14,25 +14,23 @@
 #include "client.h"
 
 GtkWidget *wnd_main;
-GtkCList *clist_dwl,*clist_fail;
+GtkListStore *store_dwl,*store_fail;
 
 G_LOCK_DEFINE(gbl_conns_lock);
 GList *gbl_conns = NULL;
 char *MyMaster = NULL;
 
+#if defined(_WIN32) && !defined(_CONSOLE)
+int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow)
+#else
 int main (int argc, char *argv[])
-{
-#ifdef ENABLE_NLS
-  bindtextdomain (PACKAGE, PACKAGE_LOCALE_DIR);
-  textdomain (PACKAGE);
 #endif
+{
 
   g_thread_init(NULL);
   gtk_set_locale();
-  gtk_init (&argc, &argv);
-
-  add_pixmap_directory (PACKAGE_DATA_DIR "/pixmaps");
-  add_pixmap_directory (PACKAGE_SOURCE_DIR "/pixmaps");
+  gtk_init (NULL,NULL);
+  gtk_rc_parse("ffssclient.gtkrc");
 
   /*
    * The following code was added by Glade to create one of each component
@@ -41,10 +39,10 @@ int main (int argc, char *argv[])
    */
   wnd_main = create_window1();
   gtk_widget_show (wnd_main);
-  clist_dwl = (GtkCList *) lookup_widget(wnd_main,"clist5");
-  clist_fail = (GtkCList *) lookup_widget(wnd_main,"clist6");
-  assert(clist_dwl);
-  assert(clist_fail);
+  store_dwl = (GtkListStore *) lookup_widget(wnd_main,"store4");
+  store_fail = (GtkListStore *) lookup_widget(wnd_main,"store5");
+  assert(store_dwl);
+  assert(store_fail);
 
   /* FFSS Initialization */
   memset(&FFSS_CB,0,sizeof(FFSS_CB));

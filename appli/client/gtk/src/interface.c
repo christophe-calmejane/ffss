@@ -8,7 +8,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <string.h>
 
 #include <gdk/gdkkeysyms.h>
@@ -25,8 +25,6 @@ create_window1 (void)
   GtkWidget *hpaned1;
   GtkWidget *vbox1;
   GtkWidget *scrolledwindow2;
-  GtkWidget *clist2;
-  GtkWidget *label7;
   GtkWidget *button1;
   GtkWidget *button3;
   GtkWidget *button4;
@@ -34,40 +32,31 @@ create_window1 (void)
   GtkWidget *notebook1;
   GtkWidget *vpaned1;
   GtkWidget *scrolledwindow1;
-  GtkWidget *clist1;
-  GtkWidget *label1;
-  GtkWidget *label2;
-  GtkWidget *label3;
-  GtkWidget *label4;
-  GtkWidget *label5;
-  GtkWidget *label6;
   GtkWidget *scrolledwindow3;
-  GtkWidget *clist3;
-  GtkWidget *label8;
-  GtkWidget *label9;
   GtkWidget *label13;
   GtkWidget *vpaned3;
   GtkWidget *scrolledwindow5;
-  GtkWidget *clist5;
-  GtkWidget *label15;
-  GtkWidget *label16;
-  GtkWidget *label17;
-  GtkWidget *label18;
-  GtkWidget *label19;
   GtkWidget *hbox2;
   GtkWidget *label14;
   GtkWidget *scrolledwindow6;
-  GtkWidget *clist6;
-  GtkWidget *label24;
-  GtkWidget *label25;
-  GtkWidget *label26;
-  GtkWidget *label27;
-  GtkWidget *label28;
   GtkWidget *label20;
+  GtkWidget *list1;
+  GtkListStore *store1;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
+  GtkTreeSelection *select;
+  GtkWidget *list2;
+  GtkListStore *store2;
+  GtkWidget *list3;
+  GtkListStore *store3;
+  GtkWidget *list4;
+  GtkListStore *store4;
+  GtkWidget *list5;
+  GtkListStore *store5;
 
   window1 = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_object_set_data (GTK_OBJECT (window1), "window1", window1);
-  gtk_window_set_title (GTK_WINDOW (window1), _("FFSS Client - 0.01"));
+  gtk_window_set_title (GTK_WINDOW (window1), _("FFSS Client Gtk - 0.02"));
   gtk_window_set_position (GTK_WINDOW (window1), GTK_WIN_POS_CENTER);
   gtk_window_set_default_size (GTK_WINDOW (window1), 700, 400);
 
@@ -94,23 +83,22 @@ create_window1 (void)
   gtk_widget_show (scrolledwindow2);
   gtk_box_pack_start (GTK_BOX (vbox1), scrolledwindow2, TRUE, TRUE, 0);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow2), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+/**********/
+  store1 = gtk_list_store_new(1,G_TYPE_STRING);
+  gtk_object_set_data_full(GTK_OBJECT (window1),"store1",store1,NULL);
+  list1 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store1));
+  select = gtk_tree_view_get_selection(GTK_TREE_VIEW(list1));
+  gtk_tree_selection_set_mode(select,GTK_SELECTION_SINGLE);
+  g_signal_connect(G_OBJECT(select),"changed",G_CALLBACK(on_list1_selection_changed),NULL);
 
-  clist2 = gtk_clist_new (1);
-  gtk_widget_ref (clist2);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "clist2", clist2,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist2);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow2), clist2);
-  gtk_clist_set_column_width (GTK_CLIST (clist2), 0, 80);
-  gtk_clist_column_titles_hide (GTK_CLIST (clist2));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list1),0,"Domains",renderer,"text",0,NULL);
 
-  label7 = gtk_label_new (_("label7"));
-  gtk_widget_ref (label7);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label7", label7,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label7);
-  gtk_clist_set_column_widget (GTK_CLIST (clist2), 0, label7);
-
+  gtk_widget_ref(list1);
+  gtk_object_set_data_full(GTK_OBJECT(window1),"list1",list1,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list1);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow2),list1);
+/**********/
   button1 = gtk_button_new_with_label (_("Rescan"));
   gtk_widget_ref (button1);
   gtk_object_set_data_full (GTK_OBJECT (window1), "button1", button1,
@@ -153,108 +141,91 @@ create_window1 (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vpaned1);
   gtk_container_add (GTK_CONTAINER (notebook1), vpaned1);
-  gtk_paned_set_position (GTK_PANED (vpaned1), 260);
+  gtk_paned_set_position (GTK_PANED (vpaned1), 280);
 
   scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_ref (scrolledwindow1);
   gtk_object_set_data_full (GTK_OBJECT (window1), "scrolledwindow1", scrolledwindow1,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow1);
-  gtk_paned_pack1 (GTK_PANED (vpaned1), scrolledwindow1, FALSE, TRUE);
+  gtk_paned_pack1 (GTK_PANED (vpaned1), scrolledwindow1, TRUE, TRUE);
   gtk_container_set_border_width (GTK_CONTAINER (scrolledwindow1), 6);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+/**********/
+  store2 = gtk_list_store_new(6,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);
+  gtk_object_set_data_full(GTK_OBJECT (window1),"store2",store2,NULL);
+  list2 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store2));
+  select = gtk_tree_view_get_selection(GTK_TREE_VIEW(list2));
+  gtk_tree_selection_set_mode(select,GTK_SELECTION_SINGLE);
+  g_signal_connect(G_OBJECT(select),"changed",G_CALLBACK(on_list2_selection_changed),NULL);
 
-  clist1 = gtk_clist_new (6);
-  gtk_widget_ref (clist1);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "clist1", clist1,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist1);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow1), clist1);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 0, 86);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 1, 122);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 2, 55);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 3, 94);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 4, 74);
-  gtk_clist_set_column_width (GTK_CLIST (clist1), 5, 80);
-  gtk_clist_column_titles_show (GTK_CLIST (clist1));
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),0,"Name",renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),1,"Comment",renderer,"text",1,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),2,"State",renderer,"text",2,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),3,"IP",renderer,"text",3,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),4,"OS",renderer,"text",4,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list2),5,"Domain",renderer,"text",5,NULL);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(list2),TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),0);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,100);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),1);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,140);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),2);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,50);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),3);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,110);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),4);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,74);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list2),5);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  label1 = gtk_label_new (_("Name"));
-  gtk_widget_ref (label1);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label1", label1,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label1);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 0, label1);
-
-  label2 = gtk_label_new (_("Comment"));
-  gtk_widget_ref (label2);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label2", label2,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label2);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 1, label2);
-
-  label3 = gtk_label_new (_("State"));
-  gtk_widget_ref (label3);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label3", label3,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label3);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 2, label3);
-
-  label4 = gtk_label_new (_("IP"));
-  gtk_widget_ref (label4);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label4", label4,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label4);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 3, label4);
-
-  label5 = gtk_label_new (_("OS"));
-  gtk_widget_ref (label5);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label5", label5,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label5);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 4, label5);
-
-  label6 = gtk_label_new (_("Domain"));
-  gtk_widget_ref (label6);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label6", label6,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label6);
-  gtk_clist_set_column_widget (GTK_CLIST (clist1), 5, label6);
-
+  gtk_widget_ref(list2);
+  gtk_object_set_data_full(GTK_OBJECT(window1),"list2",list2,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list2);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow1),list2);
+/**********/
   scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_ref (scrolledwindow3);
   gtk_object_set_data_full (GTK_OBJECT (window1), "scrolledwindow3", scrolledwindow3,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow3);
-  gtk_paned_pack2 (GTK_PANED (vpaned1), scrolledwindow3, TRUE, TRUE);
+  gtk_paned_pack2 (GTK_PANED (vpaned1), scrolledwindow3, FALSE, TRUE);
   gtk_container_set_border_width (GTK_CONTAINER (scrolledwindow3), 6);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow3), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+/**********/
+  store3 = gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING);
+  gtk_object_set_data_full(GTK_OBJECT (window1),"store3",store3,NULL);
+  list3 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store3));
 
-  clist3 = gtk_clist_new (2);
-  gtk_widget_ref (clist3);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "clist3", clist3,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist3);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow3), clist3);
-  gtk_clist_set_column_width (GTK_CLIST (clist3), 0, 129);
-  gtk_clist_set_column_width (GTK_CLIST (clist3), 1, 80);
-  gtk_clist_column_titles_show (GTK_CLIST (clist3));
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list3),0,"Name",renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list3),1,"Comment",renderer,"text",1,NULL);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(list3),TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list3),0);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,129);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list3),1);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  label8 = gtk_label_new (_("Name"));
-  gtk_widget_ref (label8);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label8", label8,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label8);
-  gtk_clist_set_column_widget (GTK_CLIST (clist3), 0, label8);
-  gtk_label_set_justify (GTK_LABEL (label8), GTK_JUSTIFY_LEFT);
-
-  label9 = gtk_label_new (_("Comment"));
-  gtk_widget_ref (label9);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label9", label9,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label9);
-  gtk_clist_set_column_widget (GTK_CLIST (clist3), 1, label9);
-  gtk_label_set_justify (GTK_LABEL (label9), GTK_JUSTIFY_LEFT);
-
+  gtk_widget_ref(list3);
+  gtk_object_set_data_full(GTK_OBJECT(window1),"list3",list3,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list3);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow3),list3);
+/**********/
   label13 = gtk_label_new (_("Hosts"));
   gtk_widget_ref (label13);
   gtk_object_set_data_full (GTK_OBJECT (window1), "label13", label13,
@@ -275,63 +246,51 @@ create_window1 (void)
   gtk_object_set_data_full (GTK_OBJECT (window1), "scrolledwindow5", scrolledwindow5,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow5);
-  gtk_paned_pack1 (GTK_PANED (vpaned3), scrolledwindow5, FALSE, TRUE);
+  gtk_paned_pack1 (GTK_PANED (vpaned3), scrolledwindow5, TRUE, TRUE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow5), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+/**********/
+  store4 = gtk_list_store_new(6,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_POINTER);
+  gtk_object_set_data_full(GTK_OBJECT (window1),"store4",store4,NULL);
+  list4 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store4));
 
-  clist5 = gtk_clist_new (5);
-  gtk_widget_ref (clist5);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "clist5", clist5,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist5);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow5), clist5);
-  gtk_clist_set_column_width (GTK_CLIST (clist5), 0, 96);
-  gtk_clist_set_column_width (GTK_CLIST (clist5), 1, 141);
-  gtk_clist_set_column_width (GTK_CLIST (clist5), 2, 156);
-  gtk_clist_set_column_width (GTK_CLIST (clist5), 3, 96);
-  gtk_clist_set_column_width (GTK_CLIST (clist5), 4, 80);
-  gtk_clist_column_titles_show (GTK_CLIST (clist5));
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list4),0,"Host/Share",renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list4),1,"Remote Path",renderer,"text",1,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list4),2,"Local Path",renderer,"text",2,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list4),3,"File Size",renderer,"text",3,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list4),4,"Position",renderer,"text",4,NULL);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(list4),TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list4),0);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,96);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list4),1);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,141);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list4),2);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,156);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list4),3);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,96);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list4),4);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  label15 = gtk_label_new (_("Host/Share"));
-  gtk_widget_ref (label15);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label15", label15,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label15);
-  gtk_clist_set_column_widget (GTK_CLIST (clist5), 0, label15);
-
-  label16 = gtk_label_new (_("Remote Path"));
-  gtk_widget_ref (label16);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label16", label16,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label16);
-  gtk_clist_set_column_widget (GTK_CLIST (clist5), 1, label16);
-
-  label17 = gtk_label_new (_("Local Path"));
-  gtk_widget_ref (label17);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label17", label17,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label17);
-  gtk_clist_set_column_widget (GTK_CLIST (clist5), 2, label17);
-
-  label18 = gtk_label_new (_("File Size"));
-  gtk_widget_ref (label18);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label18", label18,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label18);
-  gtk_clist_set_column_widget (GTK_CLIST (clist5), 3, label18);
-
-  label19 = gtk_label_new (_("Position"));
-  gtk_widget_ref (label19);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label19", label19,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label19);
-  gtk_clist_set_column_widget (GTK_CLIST (clist5), 4, label19);
-
+  gtk_widget_ref(list4);
+  gtk_object_set_data_full(GTK_OBJECT(window1),"list4",list4,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list4);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow5),list4);
+/**********/
   hbox2 = gtk_hbox_new (FALSE, 0);
   gtk_widget_ref (hbox2);
   gtk_object_set_data_full (GTK_OBJECT (window1), "hbox2", hbox2,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (hbox2);
-  gtk_paned_pack2 (GTK_PANED (vpaned3), hbox2, TRUE, TRUE);
+  gtk_paned_pack2 (GTK_PANED (vpaned3), hbox2, FALSE, TRUE);
 
   label14 = gtk_label_new (_("Downloads"));
   gtk_widget_ref (label14);
@@ -347,55 +306,43 @@ create_window1 (void)
   gtk_widget_show (scrolledwindow6);
   gtk_container_add (GTK_CONTAINER (notebook1), scrolledwindow6);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow6), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+/**********/
+  store5 = gtk_list_store_new(5,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);
+  gtk_object_set_data_full(GTK_OBJECT (window1),"store5",store5,NULL);
+  list5 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store5));
 
-  clist6 = gtk_clist_new (5);
-  gtk_widget_ref (clist6);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "clist6", clist6,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist6);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow6), clist6);
-  gtk_clist_set_column_width (GTK_CLIST (clist6), 0, 96);
-  gtk_clist_set_column_width (GTK_CLIST (clist6), 1, 127);
-  gtk_clist_set_column_width (GTK_CLIST (clist6), 2, 118);
-  gtk_clist_set_column_width (GTK_CLIST (clist6), 3, 80);
-  gtk_clist_set_column_width (GTK_CLIST (clist6), 4, 80);
-  gtk_clist_column_titles_show (GTK_CLIST (clist6));
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list5),0,"Host/Share",renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list5),1,"Remote Path",renderer,"text",1,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list5),2,"Local Path",renderer,"text",2,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list5),3,"File Size",renderer,"text",3,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list5),4,"Error",renderer,"text",4,NULL);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(list5),TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list5),0);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,96);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list5),1);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,127);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list5),2);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,118);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list5),3);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list5),4);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  label24 = gtk_label_new (_("Host/Share"));
-  gtk_widget_ref (label24);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label24", label24,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label24);
-  gtk_clist_set_column_widget (GTK_CLIST (clist6), 0, label24);
-
-  label25 = gtk_label_new (_("Remote Path"));
-  gtk_widget_ref (label25);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label25", label25,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label25);
-  gtk_clist_set_column_widget (GTK_CLIST (clist6), 1, label25);
-
-  label26 = gtk_label_new (_("Local Path"));
-  gtk_widget_ref (label26);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label26", label26,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label26);
-  gtk_clist_set_column_widget (GTK_CLIST (clist6), 2, label26);
-
-  label27 = gtk_label_new (_("File Size"));
-  gtk_widget_ref (label27);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label27", label27,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label27);
-  gtk_clist_set_column_widget (GTK_CLIST (clist6), 3, label27);
-
-  label28 = gtk_label_new (_("Error"));
-  gtk_widget_ref (label28);
-  gtk_object_set_data_full (GTK_OBJECT (window1), "label28", label28,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label28);
-  gtk_clist_set_column_widget (GTK_CLIST (clist6), 4, label28);
-
+  gtk_widget_ref(list5);
+  gtk_object_set_data_full(GTK_OBJECT(window1),"list5",list5,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list5);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow6),list5);
+/**********/
   label20 = gtk_label_new (_("Failures"));
   gtk_widget_ref (label20);
   gtk_object_set_data_full (GTK_OBJECT (window1), "label20", label20,
@@ -405,9 +352,6 @@ create_window1 (void)
 
   gtk_signal_connect (GTK_OBJECT (window1), "delete_event",
                       GTK_SIGNAL_FUNC (on_window1_delete_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (clist2), "button_press_event",
-                      GTK_SIGNAL_FUNC (on_clist2_button_press_event),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (button1), "clicked",
                       GTK_SIGNAL_FUNC (on_rescan_clicked),
@@ -421,14 +365,8 @@ create_window1 (void)
   gtk_signal_connect (GTK_OBJECT (button2), "clicked",
                       GTK_SIGNAL_FUNC (on_button2_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (clist1), "button_press_event",
-                      GTK_SIGNAL_FUNC (on_clist1_button_press_event),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (clist1), "unselect_row",
-                      GTK_SIGNAL_FUNC (on_clist1_unselect_row),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (clist3), "button_press_event",
-                      GTK_SIGNAL_FUNC (on_clist3_button_press_event),
+  gtk_signal_connect (GTK_OBJECT (list3), "button_press_event",
+                      GTK_SIGNAL_FUNC (on_list3_button_press_event),
                       NULL);
 
   return window1;
@@ -440,17 +378,18 @@ create_window2 (void)
   GtkWidget *window2;
   GtkWidget *vpaned2;
   GtkWidget *scrolledwindow4;
-  GtkWidget *clist4;
-  GtkWidget *label10;
-  GtkWidget *label11;
-  GtkWidget *label12;
+  GtkWidget *list1;
+  GtkListStore *store1;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
+  GtkTreeSelection *select;
   GtkWidget *vbox2;
   GtkWidget *hbox1;
   GtkWidget *button5;
   GtkWidget *button6;
   GtkWidget *statusbar1;
 
-  window2 = gtk_window_new (GTK_WINDOW_DIALOG);
+  window2 = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_object_set_data (GTK_OBJECT (window2), "window2", window2);
   gtk_window_set_title (GTK_WINDOW (window2), _("window2"));
   gtk_window_set_position (GTK_WINDOW (window2), GTK_WIN_POS_CENTER);
@@ -462,54 +401,51 @@ create_window2 (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vpaned2);
   gtk_container_add (GTK_CONTAINER (window2), vpaned2);
-  gtk_paned_set_position (GTK_PANED (vpaned2), 300);
+  gtk_paned_set_position (GTK_PANED (vpaned2), 310);
 
   scrolledwindow4 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_ref (scrolledwindow4);
   gtk_object_set_data_full (GTK_OBJECT (window2), "scrolledwindow4", scrolledwindow4,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (scrolledwindow4);
-  gtk_paned_pack1 (GTK_PANED (vpaned2), scrolledwindow4, FALSE, TRUE);
+  gtk_paned_pack1 (GTK_PANED (vpaned2), scrolledwindow4, TRUE, TRUE);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow4), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+/**********/
+  store1 = gtk_list_store_new(3,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);
+  gtk_object_set_data_full(GTK_OBJECT (window2),"store1",store1,NULL);
+  list1 = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store1));
+  select = gtk_tree_view_get_selection(GTK_TREE_VIEW(list1));
+  gtk_tree_selection_set_mode(select,GTK_SELECTION_SINGLE);
 
-  clist4 = gtk_clist_new (3);
-  gtk_widget_ref (clist4);
-  gtk_object_set_data_full (GTK_OBJECT (window2), "clist4", clist4,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (clist4);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow4), clist4);
-  gtk_clist_set_column_width (GTK_CLIST (clist4), 0, 45);
-  gtk_clist_set_column_width (GTK_CLIST (clist4), 1, 316);
-  gtk_clist_set_column_width (GTK_CLIST (clist4), 2, 80);
-  gtk_clist_column_titles_show (GTK_CLIST (clist4));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list1),0,"Type",renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list1),1,"Name",renderer,"text",1,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(list1),2,"Size",renderer,"text",2,NULL);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(list1),TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list1),0);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,45);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list1),1);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,316);
+  gtk_tree_view_column_set_resizable(column,TRUE);
+  column = gtk_tree_view_get_column(GTK_TREE_VIEW(list1),2);
+  gtk_tree_view_column_set_sizing(column,GTK_TREE_VIEW_COLUMN_FIXED);
+  gtk_tree_view_column_set_fixed_width(column,80);
+  gtk_tree_view_column_set_resizable(column,TRUE);
 
-  label10 = gtk_label_new (_("Type"));
-  gtk_widget_ref (label10);
-  gtk_object_set_data_full (GTK_OBJECT (window2), "label10", label10,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label10);
-  gtk_clist_set_column_widget (GTK_CLIST (clist4), 0, label10);
-
-  label11 = gtk_label_new (_("Name"));
-  gtk_widget_ref (label11);
-  gtk_object_set_data_full (GTK_OBJECT (window2), "label11", label11,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label11);
-  gtk_clist_set_column_widget (GTK_CLIST (clist4), 1, label11);
-
-  label12 = gtk_label_new (_("Size"));
-  gtk_widget_ref (label12);
-  gtk_object_set_data_full (GTK_OBJECT (window2), "label12", label12,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label12);
-  gtk_clist_set_column_widget (GTK_CLIST (clist4), 2, label12);
-
+  gtk_widget_ref(list1);
+  gtk_object_set_data_full(GTK_OBJECT(window2),"list1",list1,(GtkDestroyNotify)gtk_widget_unref);
+  gtk_widget_show(list1);
+  gtk_container_add(GTK_CONTAINER(scrolledwindow4),list1);
+/**********/
   vbox2 = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (vbox2);
   gtk_object_set_data_full (GTK_OBJECT (window2), "vbox2", vbox2,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (vbox2);
-  gtk_paned_pack2 (GTK_PANED (vpaned2), vbox2, TRUE, TRUE);
+  gtk_paned_pack2 (GTK_PANED (vpaned2), vbox2, FALSE, TRUE);
 
   hbox1 = gtk_hbox_new (TRUE, 0);
   gtk_widget_ref (hbox1);
@@ -545,8 +481,8 @@ create_window2 (void)
   gtk_signal_connect (GTK_OBJECT (window2), "delete_event",
                       GTK_SIGNAL_FUNC (on_window2_delete_event),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (clist4), "button_press_event",
-                      GTK_SIGNAL_FUNC (on_clist4_button_press_event),
+  gtk_signal_connect (GTK_OBJECT (list1), "button_press_event",
+                      GTK_SIGNAL_FUNC (on_list1_button_press_event),
                       (gpointer)window2);
   gtk_signal_connect (GTK_OBJECT (button5), "clicked",
                       GTK_SIGNAL_FUNC (on_button5_clicked),
@@ -703,3 +639,6 @@ create_window3 (void)
   return window3;
 }
 
+  GtkTreeModel *store;
+  GtkTreeSelection *select;
+  GtkTreeView *view;

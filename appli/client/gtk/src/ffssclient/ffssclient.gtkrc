@@ -1,0 +1,16 @@
+style "default"
+{
+font_name="Arial 10"
+}
+style "clist"
+{
+font_name="Verdana 10"
+}
+style "label"
+{
+font_name="Arial 10"
+}
+
+class "GtkWidget" style "default"
+class "GtkLabel" style "label"
+class "GtkTreeView" style "clist"

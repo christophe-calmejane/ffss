@@ -7,7 +7,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <string.h>
 
 #include <gdk/gdkkeysyms.h>
@@ -18,7 +18,8 @@
 #ifdef __unix__
 #define MKDIR(x) mkdir(x,493)
 #else /* __unix__ */
-#define MKDIR(x) mkdir(x)
+#include <direct.h>
+#define MKDIR(x) _mkdir(x)
 #endif /* __unix__ */
 
 /* TEMPO */
@@ -38,7 +39,9 @@ typedef struct
   bool Active;              /* Says if Server is valid or not      */
   guint ctx_id;             /* Context id for statusbar            */
   GtkStatusbar *sb;         /* Shortcut to statusbar               */
-  GtkCList *list;           /* Shortcut to clist                   */
+  //GtkCList *list;           /* Shortcut to clist                   */
+  GtkTreeModel *store;      /* Shortcut to GtkListStore            */
+  GtkTreeView *view;        /* Shortcut to GtkTreeView             */
   int ref_count;            /* Number of usage of this structure   */
   bool recursif;            /* If recursive listing is in progress */
   int rec_dir_count;        /* Number of directories to list       */
@@ -46,12 +49,10 @@ typedef struct
   gchar *rec_local_path;
 } TConn, *PConn;
 
+void FC_DQ_AddOpToList_AddFileToDownload(PConn Conn,const char Remote[],const char Local[],const char Size[]);
 void add_conn_count(PConn Conn);
 bool remove_conn(PConn Conn,bool clear_wnd);
 PConn lookup_conn(SU_PClientSocket Server,bool even_null_wnd);
-void launch_next_download(void);
-void add_file_to_download(PConn Conn,char *remote,char *local,char *size,bool lock);
-void move_file_to_failed(char *host_share,char *remote,char *local,char *size,char *error);
 
 /* UDP callbacks */
 void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);

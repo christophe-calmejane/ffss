@@ -1,0 +1,32 @@
+# GTK+ Input Method Modules file
+# Automatically generated file, do not edit
+#
+# ModulesPath = d:\tml\.gtk-2.0\2.0.0\i386-pc-mingw32\immodules;d:\tml\.gtk-2.0\2.0.0\immodules;d:\tml\.gtk-2.0\i386-pc-mingw32\immodules;d:\tml\.gtk-2.0\immodules;d:\target\lib\gtk-2.0\2.0.0\i386-pc-mingw32\immodules;d:\target\lib\gtk-2.0\2.0.0\immodules;d:\target\lib\gtk-2.0\i386-pc-mingw32\immodules;d:\target\lib\gtk-2.0\immodules
+#
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-am-et.dll" 
+"am_et" "Amharic (EZ+)" "gtk+" "/target/lib/locale" "am" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-cyrillic-translit.dll" 
+"cyrillic_translit" "Cyrillic (Transliterated)" "gtk+" "/target/lib/locale" "" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-hangul.dll" 
+"hangul" "Hangul (KSC 5601)" "gtk+" "" "" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-inuktitut.dll" 
+"inuktitut" "Inukitut (Transliterated)" "gtk+" "/target/lib/locale" "iu" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-ipa.dll" 
+"ipa" "IPA" "gtk+" "/target/lib/locale" "" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-thai-broken.dll" 
+"thai_broken" "Thai (Broken)" "gtk+" "/target/lib/locale" "" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-ti-er.dll" 
+"ti_er" "Tigrigna-Eritrean (EZ+)" "gtk+" "/target/lib/locale" "ti" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-ti-et.dll" 
+"ti_et" "Tigrigna-Ethiopian (EZ+)" "gtk+" "/target/lib/locale" "ti" 
+
+"d:\\target\\lib\\gtk-2.0\\2.0.0\\immodules\\im-viqr.dll" 
+"viqr" "Vietnamese (VIQR)" "gtk+" "/target/lib/locale" "vi" 
+

@@ -1,0 +1,11 @@
+# Pango Modules file
+# Automatically generated file, do not edit
+#
+# ModulesPath = /target/lib/pango/1.0.0/modules
+#
+#/target/lib/pango/1.0.0/modules/pango-arabic-ft2.dll ArabicScriptEngineFt2 PangoEngineShape PangoRenderFT2 1548-1785:*
+#/target/lib/pango/1.0.0/modules/pango-basic-ft2.dll BasicScriptEngineFT2 PangoEngineShape PangoRenderFT2 0-687:* 688-767: 896-1423:* 1425-1524: 1548-1785: 3585-3675: 7680-8191:* 8192-40959:* 44032-55203:kr 63744-64011:kr 65280-65507:*
+#/target/lib/pango/1.0.0/modules/pango-basic-win32.dll BasicScriptEngineWin32 PangoEngineShape PangoRenderWin32 0-687:* 688-767: 896-1423:* 1425-1524:* 1548-1785: 3585-3675: 4256-4351:* 4608-5887:* 7680-8191:* 8192-40959:* 44032-55203:kr 63744-64011:kr 65280-65507:*
+#/target/lib/pango/1.0.0/modules/pango-hebrew-ft2.dll HebrewScriptEngineFT2 PangoEngineShape PangoRenderFT2 1425-1524:*
+
+./pango-basic-win32.dll BasicScriptEngineWin32 PangoEngineShape PangoRenderWin32 0-687:* 688-767: 896-1423:* 1425-1524:* 1548-1785: 3585-3675: 4256-4351:* 4608-5887:* 7680-8191:* 8192-40959:* 44032-55203:kr 63744-64011:kr 65280-65507:*

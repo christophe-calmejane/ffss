@@ -8,7 +8,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <string.h>
 
 #include <gtk/gtk.h>
@@ -154,7 +154,7 @@ check_file_exists                      (const gchar     *directory,
   strcat (full_filename, filename);
 
   status = stat (full_filename, &s);
-  if (status == 0 && S_ISREG (s.st_mode))
+  if (status == 0 )//&& S_ISREG (s.st_mode))
     return full_filename;
   g_free (full_filename);
   return NULL;

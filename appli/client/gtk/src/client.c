@@ -1,125 +1,250 @@
 #include "client.h"
 #include "interface.h"
 #include "main.h"
+#include "draw.h"
+
+/* ************************* */
+
+void FC_DQ_Init()
+{
+  static bool init = false;
+  if(!init)
+  {
+    init = true;
+    SU_CreateSem(&FCQ_Sem,1,1,"FCQ_Sem");
+    g_idle_add(FCQ_IdleFunc,NULL);
+  }
+}
+
+void FC_DQ_AddServerToList(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[])
+{
+  FCQ_PHost H2;
+
+  H2 = (FCQ_PHost) malloc(sizeof(FCQ_THost));
+  memset(H2,0,sizeof(FCQ_THost));
+  H2->Name = strdup(Name);
+  H2->OS = strdup(OS);
+  H2->Comment = strdup(Comment);
+  H2->IP = (char *)IP;
+  H2->State = State;
+  H2->Domain = strdup(Domain);
+
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Hosts = SU_AddElementTail(FCQ_Hosts,H2);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddHostToList(FM_PHost H,const char Domain[])
+{
+  FCQ_PHost H2;
+
+  H2 = (FCQ_PHost) malloc(sizeof(FCQ_THost));
+  memset(H2,0,sizeof(FCQ_THost));
+  H2->Name = strdup(H->Name);
+  H2->OS = strdup(H->OS);
+  H2->Comment = strdup(H->Comment);
+  H2->IP = H->IP;
+  H2->State = H->State;
+  H2->Domain = strdup(Domain);
+
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Hosts = SU_AddElementTail(FCQ_Hosts,H2);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddDomainToList(const char Domain[])
+{
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Domains = SU_AddElementTail(FCQ_Domains,strdup(Domain));
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddShareToList(const char Name[],const char Comment[])
+{
+  FCQ_PShare Shr;
+
+  Shr = (FCQ_PShare) malloc(sizeof(FCQ_TShare));
+  memset(Shr,0,sizeof(FCQ_TShare));
+  Shr->Name = strdup(Name);
+  Shr->Comment = strdup(Comment);
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Shares = SU_AddElementTail(FCQ_Shares,Shr);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_Status(PConn Conn,const char Text[])
+{
+  FCQ_POperation Op;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_STATUS;
+  Op->Conn = Conn;
+  Op->Strings[0] = strdup(Text);
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+FC_PEntry FC_DupEntry(FC_PEntry Ent)
+{
+  FC_PEntry Ent2;
+
+  Ent2 = (FC_PEntry) malloc(sizeof(FC_TEntry));
+  memset(Ent2,0,sizeof(FC_TEntry));
+  Ent2->Name = strdup(Ent->Name);
+  Ent2->Flags = Ent->Flags;
+  Ent2->Size = Ent->Size;
+  Ent2->Stamp = Ent->Stamp;
+
+  return Ent2;
+}
+
+void FC_DQ_AddOpToList_DirListing(PConn Conn,SU_PList Entries)
+{
+  FCQ_POperation Op;
+  SU_PList Ptr;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_DIRLIST;
+  Op->Conn = Conn;
+  Ptr = Entries;
+  while(Ptr != NULL)
+  {
+    Op->Entries = SU_AddElementTail(Op->Entries,FC_DupEntry((FC_PEntry)Ptr->Data));
+    Ptr = Ptr->Next;
+  }
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_AddFileToDownload(PConn Conn,const char Remote[],const char Local[],const char Size[])
+{
+  FCQ_POperation Op;
+
+  add_conn_count(Conn);
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_ADDFILEDWL;
+  Op->Conn = Conn;
+  Op->Strings[0] = strdup(Conn->host_share);
+  Op->Strings[1] = strdup(Remote);
+  Op->Strings[2] = strdup(Local);
+  Op->Strings[3] = strdup(Size);
+  Op->Strings[4] = strdup("0");
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_EndThread(PConn Conn)
+{
+  FCQ_POperation Op;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_ENDTHREAD;
+  Op->Conn = Conn;
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_XFerFailed(PConn Conn,const char Error[])
+{
+  FCQ_POperation Op;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_XFERFAILED;
+  Op->Conn = Conn;
+  Op->Strings[0] = strdup(Error);
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_XFerSuccess(PConn Conn)
+{
+  FCQ_POperation Op;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_XFERSUCCESS;
+  Op->Conn = Conn;
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+void FC_DQ_AddOpToList_XFerActive(PConn Conn,const long int Amount)
+{
+  FCQ_POperation Op;
+
+  Op = (FCQ_POperation) malloc(sizeof(FCQ_TOperation));
+  memset(Op,0,sizeof(FCQ_TOperation));
+  Op->Type = FCQ_OP_XFERACTIVE;
+  Op->Conn = Conn;
+  Op->Amount = Amount;
+  SU_SEM_WAIT(FCQ_Sem);
+  FCQ_Ops = SU_AddElementTail(FCQ_Ops,Op);
+  SU_SEM_POST(FCQ_Sem);
+}
+
+
+/* ************************* */
 
 /* UDP callbacks */
 void OnNewState(long int State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
 {
-  char *States[]={"","ON","OFF","QUIET"};
-  GtkCList *clist;
-  gchar *strings[6];
-
+  FC_DQ_Init();
   printf("Received a new state (%ld) from %s (%s-%s-%s-%s) using master %s\n",State,IP,Domain,Name,OS,Comment,MasterIP);
-  gdk_threads_enter();
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-/*  if(clist != NULL)
-    gtk_clist_freeze(clist);*/
-  if(clist != NULL)
-  {
-    strings[0] = (gchar *)Name;
-    strings[1] = (gchar *)Comment;
-    strings[2] = (gchar *)States[State];
-    strings[3] = (gchar *)IP;
-    strings[4] = (gchar *)OS;
-    strings[5] = (gchar *)Domain;
-    gtk_clist_append(clist,strings);
-  }
-  gdk_threads_leave();
+  FC_DQ_AddServerToList(State,IP,Domain,Name,OS,Comment);
 }
 
 void OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
 {
   int i;
-  GtkCList *clist;
-  gchar *strings[2];
-
-  gdk_threads_enter();
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist3");
-  if(clist != NULL)
-    gtk_clist_clear(clist);
 
   for(i=0;i<NbShares;i++)
   {
-    if(clist != NULL)
-    {
-      strings[0] = (gchar *)Names[i];
-      strings[1] = (gchar *)Comments[i];
-      gtk_clist_append(clist,strings);
-    }
+    FC_DQ_AddShareToList(Names[i],Comments[i]);
   }
-  gdk_threads_leave();
 }
 
 /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped ! */
 /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
 void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
 {
-  SU_PList Ptr;
+  SU_PList Ptr,Lst = NULL;
   FM_PHost H;
-  char *States[]={"","ON","OFF","QUIET"};
-  GtkCList *clist;
-  gchar *strings[6];
 
-  gdk_threads_enter();
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-/*  if(clist != NULL)
-    gtk_clist_freeze(clist);*/
+  FC_DQ_Init();
   Ptr = HostList;
   while(Ptr != NULL)
   {
     H = (FM_PHost) Ptr->Data;
-    if(clist != NULL)
-    {
-      strings[0] = H->Name;
-      strings[1] = H->Comment;
-      strings[2] = States[H->State];
-      strings[3] = H->IP;
-      strings[4] = H->OS;
-      strings[5] = (gchar *)Domain;
-      gtk_clist_append(clist,strings);
-    }
-    free(H->IP);
+    FC_DQ_AddHostToList(H,Domain);
     Ptr = Ptr->Next;
   }
-  gdk_threads_leave();
 }
 
 void OnEndServerListingAnswer(void)
 {
-/*  GtkCList *clist;
-
-  gdk_threads_enter();
-  printf("unlock\n");
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
-  if(clist != NULL)
-    gtk_clist_thaw(clist);
-  gdk_threads_leave();*/
 }
 
 void OnDomainListingAnswer(const char **Domains,int NbDomains)
 {
   int i;
-  GtkCList *clist;
-  gchar *strings[1];
 
-  gdk_threads_enter();
-  clist = (GtkCList *) lookup_widget(wnd_main,"clist2");
-  if(clist != NULL)
-  {
-    gtk_clist_clear(clist);
-    strings[0] = "All";
-    gtk_clist_append(clist,strings);
-  }
-
+  FC_DQ_Init();
   for(i=0;i<NbDomains;i++)
   {
-    if(clist != NULL)
-    {
-      strings[0] = (gchar *)Domains[i];
-      gtk_clist_append(clist,strings);
-    }
+    FC_DQ_AddDomainToList(Domains[i]);
   }
-  gdk_threads_leave();
 }
 
 void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,const char Domain[])
@@ -131,6 +256,8 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field MasterVersion,con
   else
     FC_SendMessage_ServerSearch();
 }
+
+/* ************************* */
 
 void add_conn_count(PConn Conn)
 {
@@ -173,7 +300,6 @@ PConn lookup_conn(SU_PClientSocket Server,bool even_null_wnd)
 {
   GList *ptr;
   PConn Conn = NULL;
-  //PConn wnd_conn;
 
   G_LOCK(gbl_conns_lock);
   ptr = gbl_conns;
@@ -183,11 +309,6 @@ PConn lookup_conn(SU_PClientSocket Server,bool even_null_wnd)
     assert(Conn != NULL);
     if(Conn->Active && (Conn->wnd || even_null_wnd))
     {
-      /*assert(Conn->wnd != NULL);
-      wnd_conn = (PConn) gtk_object_get_user_data(GTK_OBJECT(Conn->wnd));
-      assert(wnd_conn != NULL);
-      if(wnd_conn->Server == (gpointer)Server)
-        break;*/
       if(Conn->Server == (gpointer)Server)
         break;
     }
@@ -208,45 +329,16 @@ bool OnError(SU_PClientSocket Server,int Code,const char Descr[])
 
   if(Code == FFSS_ERROR_NO_ERROR)
   {
-    gdk_threads_enter();
-    gtk_statusbar_pop(Conn->sb,Conn->ctx_id);
-    gtk_statusbar_push(Conn->sb,Conn->ctx_id,"Successfully connected to server");
-    gdk_threads_leave();
-/*    switch(NextToDo)
-    {
-      case NEXT_TO_DO_LISTING :*/
-        return FC_SendMessage_DirectoryListing(Server,Conn->path);
-    //}
-    return true;
+    FC_DQ_AddOpToList_Status(Conn,"Successfully connected to server");
+    return FC_SendMessage_DirectoryListing(Server,Conn->path);
   }
-  gdk_threads_enter();
-  gtk_statusbar_pop(Conn->sb,Conn->ctx_id);
-  gtk_statusbar_push(Conn->sb,Conn->ctx_id,Descr);
-  gdk_threads_leave();
+  FC_DQ_AddOpToList_Status(Conn,Descr);
   return true;
-}
-
-void PrintSize(FFSS_LongField Size,char *buf,int buf_size)
-{
-  char mod[]=" KMGT";
-  int pos = 0;
-  double val = Size;
-
-  while(val > 1024)
-  {
-    val = val / 1024;
-    pos++;
-  }
-  if(pos == 0)
-    snprintf(buf,buf_size,"%lld",Size);
-  else
-    snprintf(buf,buf_size,"%.2lf%c",val,mod[pos]);
 }
 
 bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries)
 {
   PConn Conn = lookup_conn(Server,false);
-  gchar *strings[3];
   FC_PEntry Ent;
   char buf[1024];
   char buf2[1024];
@@ -257,7 +349,6 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
 
   if(Conn->recursif) /* Within recursive listing */
   {
-    gdk_threads_enter();
     Ptr = Entries;
     while(Ptr != NULL)
     {
@@ -276,7 +367,7 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
       {
         char tmp[1024];
         snprintf(tmp,sizeof(tmp),"%ld",Ent->Size);
-        add_file_to_download(Conn,buf,buf2,tmp,false);
+        FC_DQ_AddOpToList_AddFileToDownload(Conn,buf,buf2,tmp);
       }
       Ptr = Ptr->Next;
     }
@@ -291,48 +382,20 @@ bool OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEn
         free(Conn->rec_path);
       if(Conn->rec_local_path != NULL)
         free(Conn->rec_local_path);
-      gtk_statusbar_pop(Conn->sb,Conn->ctx_id);
-      gtk_statusbar_push(Conn->sb,Conn->ctx_id,"Recursive download : Listing complete");
+      FC_DQ_AddOpToList_Status(Conn,"Recursive download : Listing complete");
     }
     else
     {
       char tmp[1024];
       snprintf(tmp,sizeof(tmp),"Recursive download : Listing directory %s",Path);
-      gtk_statusbar_pop(Conn->sb,Conn->ctx_id);
-      gtk_statusbar_push(Conn->sb,Conn->ctx_id,tmp);
+      FC_DQ_AddOpToList_Status(Conn,tmp);
     }
-    gdk_threads_leave();
   }
   else
   {
-    gdk_threads_enter();
-    gtk_clist_clear(Conn->list);
     free(Conn->path);
     Conn->path = strdup(Path);
-    //Form->StatusBar1->SimpleText = "//" + Host + "/" + Share + Path;
-    if(Conn->path[1] != 0) /* Not root path */
-    {
-      strings[0] = "Dir";
-      strings[1] = "..";
-      strings[2] = "0";
-      gtk_clist_append(Conn->list,strings);
-    }
-
-    Ptr = Entries;
-    while(Ptr != NULL)
-    {
-      Ent = (FC_PEntry) Ptr->Data;
-      if(Ent->Flags & FFSS_FILE_DIRECTORY)
-        strings[0] = strdup("Dir");
-      else
-        strings[0] = "File";
-      strings[1] = Ent->Name;
-      PrintSize(Ent->Size,buf,sizeof(buf));
-      strings[2] = buf;
-      gtk_clist_append(Conn->list,strings);
-      Ptr = Ptr->Next;
-    }
-    gdk_threads_leave();
+    FC_DQ_AddOpToList_DirListing(Conn,Entries);
   }
   return true;
 }
@@ -345,9 +408,7 @@ void OnEndTCPThread(SU_PClientSocket Server)
   if(Conn == NULL)
     return;
   Conn->Active = false;
-  gdk_threads_enter();
-  gtk_clist_clear(Conn->list);
-  gdk_threads_leave();
+  FC_DQ_AddOpToList_EndThread(Conn);
 }
 
 void OnIdleTimeout(SU_PClientSocket Server)
@@ -359,204 +420,44 @@ void OnIdleTimeout(SU_PClientSocket Server)
   Conn->Active = false;
 }
 
-void launch_next_download(void)
-{
-  PConn Conn;
-  gchar *remote = NULL,*local = NULL;
-  FILE *fp;
-
-  while(1)
-  {
-    Conn = (PConn) gtk_clist_get_row_data(clist_dwl,0);
-    if(Conn != NULL)
-    {
-      if(!Conn->Active) /* Connection closed */
-      {
-        gchar *host_share = NULL,*remote = NULL,*local = NULL,*size = NULL;
-        /* Move file to Fail list */
-        gtk_clist_get_text(clist_dwl,0,0,&host_share);
-        assert(host_share);
-        gtk_clist_get_text(clist_dwl,0,1,&remote);
-        assert(remote);
-        gtk_clist_get_text(clist_dwl,0,2,&local);
-        assert(local);
-        gtk_clist_get_text(clist_dwl,0,3,&size);
-        assert(size);
-        move_file_to_failed(host_share,remote,local,size,"Connection with server's share closed");
-        /* Remove Xfer from queue */
-        gtk_clist_remove(clist_dwl,0);
-        remove_conn(Conn,false);
-        /* Launch next download */
-        continue;
-      }
-      gtk_clist_get_text(clist_dwl,0,1,&remote);
-      assert(remote);
-      gtk_clist_get_text(clist_dwl,0,2,&local);
-      assert(local);
-      fp = fopen(local,"rb");
-      if(fp != NULL)
-      {
-        long int fsize;
-        gchar *size = NULL;
-        GtkWidget *wnd,*button;
-        GtkLabel *label;
-        char tmp[1024];
-
-        fseek(fp,0,SEEK_END);
-        fsize = ftell(fp);
-        fclose(fp);
-        gtk_clist_get_text(clist_dwl,0,3,&size);
-        assert(size);
-        /* Create file action windows */
-        wnd = create_window3();
-        label = (GtkLabel *) lookup_widget(wnd,"label29");
-        assert(label != NULL);
-        snprintf(tmp,sizeof(tmp),"File size differs for \"%s\" :\n  Local  : %8ld\n  Remote : %8ld",remote,fsize,atol(size));
-        gtk_label_set_text(label,tmp);
-        gtk_object_set_user_data(GTK_OBJECT(wnd),(gpointer)Conn);
-        if(atol(size) <= fsize) /* Same size or local bigger, overwrite ? */
-          button = lookup_widget(wnd,"button8");
-        else /* File exists, but not same size... resume ? */
-        {
-          snprintf(tmp,sizeof(tmp),"%ld",fsize);
-          gtk_clist_set_text(clist_dwl,0,4,tmp);
-          button = lookup_widget(wnd,"button7");
-        }
-        gtk_widget_grab_focus(button);
-        gtk_widget_show(wnd);
-      }
-      else
-      {
-        add_conn_count(Conn);
-        FFSS_DownloadFile(Conn->Server,remote,local,0,(void *)Conn,false,NULL);
-      }
-    }
-    break;
-  }
-}
-
-void add_file_to_download(PConn Conn,char *remote,char *local,char *size,bool lock)
-{
-  gchar *strings[5];
-  gint row;
-
-  if(lock)
-    gdk_threads_enter();
-  add_conn_count(Conn);
-
-  strings[0] = Conn->host_share;
-  strings[1] = remote;
-  strings[2] = local;
-  strings[3] = size;
-  strings[4] = "0";
-  row = gtk_clist_append(clist_dwl,strings);
-  gtk_clist_set_row_data(clist_dwl,row,(gpointer)Conn);
-  if(row == 0) /* No active download, launch it */
-    launch_next_download();
-
-  if(lock)
-    gdk_threads_leave();
-}
-
-void move_file_to_failed(char *host_share,char *remote,char *local,char *size,char *error)
-{
-  gchar *strings[5];
-
-  strings[0] = host_share;
-  strings[1] = remote;
-  strings[2] = local;
-  strings[3] = size;
-  strings[4] = error;
-  gtk_clist_append(clist_fail,strings);
-}
-
 void OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download)
 {
   PConn Conn;
-  gint row;
-  gchar *host_share = NULL,*remote = NULL,*local = NULL,*size = NULL;
 
-  gdk_threads_enter();
   Conn = (PConn)FT->User;
   assert(Conn);
   if(Conn != NULL)
   {
     FT->User = NULL;
     remove_conn(Conn,false);
-    row = gtk_clist_find_row_from_data(clist_dwl,(gpointer)Conn);
-    assert(row != -1);
-    if(row != -1)
-    {
-      /* Move file to Fail list */
-      gtk_clist_get_text(clist_dwl,row,0,&host_share);
-      assert(host_share);
-      gtk_clist_get_text(clist_dwl,row,1,&remote);
-      assert(remote);
-      gtk_clist_get_text(clist_dwl,row,2,&local);
-      assert(local);
-      gtk_clist_get_text(clist_dwl,row,3,&size);
-      assert(size);
-      move_file_to_failed(host_share,remote,local,size,(char *)Error);
-      /* Remove Xfer from queue */
-      gtk_clist_remove(clist_dwl,row);
-      remove_conn(Conn,false);
-      /* Launch next download */
-      launch_next_download();
-    }
+    FC_DQ_AddOpToList_XFerFailed(Conn,Error);
   }
-  gdk_threads_leave();
 }
 
 void OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
   PConn Conn;
-  gint row;
 
-  gdk_threads_enter();
   Conn = (PConn)FT->User;
   assert(Conn);
   if(Conn != NULL)
   {
     FT->User = NULL;
     remove_conn(Conn,false);
-    row = gtk_clist_find_row_from_data(clist_dwl,(gpointer)Conn);
-    assert(row != -1);
-    if(row != -1)
-    {
-      /* Remove Xfer from queue */
-      gtk_clist_remove(clist_dwl,row);
-      remove_conn(Conn,false);
-      /* Launch next download */
-      launch_next_download();
-    }
+    FC_DQ_AddOpToList_XFerSuccess(Conn);
   }
-  gdk_threads_leave();
 }
 
 void OnTransfertActive(FFSS_PTransfer FT,long int Amount,bool Download)
 {
   PConn Conn;
-  gint row;
-  gchar *position = NULL;
-  char buf[50];
 
-  gdk_threads_enter();
   Conn = (PConn)FT->User;
   assert(Conn);
   if(Conn != NULL)
   {
-    row = gtk_clist_find_row_from_data(clist_dwl,(gpointer)Conn);
-    assert(row != -1);
-    if(row != -1)
-    {
-      /* Update download position */
-      gtk_clist_get_text(clist_dwl,row,4,&position);
-      assert(position);
-      snprintf(buf,sizeof(buf),"%ld",atol(position)+Amount);
-      gtk_clist_set_text(clist_dwl,row,4,buf);
-    }
+    FC_DQ_AddOpToList_XFerActive(Conn,Amount);
   }
-  gdk_threads_leave();
 }
 
 /*
