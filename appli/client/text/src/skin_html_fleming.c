@@ -169,7 +169,8 @@ void FCA_htmlfl_pre_listing(char *path)
 	p=strrchr(path, '/');
 	if(p && p!=path) {
 		*p='\0';
-		FCA_dir_link(path);printf("parent</a>\n");
+		printf("<font class='small'>");
+		FCA_dir_link(path);printf("parent</a></font>\n");
 		*p='/';
 	}
 printf("
