@@ -5,6 +5,21 @@
  *
  *	html skin for playlists via http
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -79,24 +94,24 @@ FCA_Tps FCA_playlist_ps;
 void FCA_playlist_init()
 {
 	FCA_playlist_ps.prog_begin=FCA_playlist_prog_begin;
-	
+
 	FCA_playlist_ps.pre_listing=FCA_playlist_pre_listing;
 	FCA_playlist_ps.pre_search_ans=FCA_playlist_pre_search_ans;
-	
+
 	FCA_playlist_ps.tab_top=FCA_playlist_tab_top;
 	FCA_playlist_ps.tab_title=FCA_playlist_tab_title;
 	FCA_playlist_ps.tab_untitle=FCA_playlist_tab_untitle;
-	
+
 	FCA_playlist_ps.tab_pre_stitle=FCA_playlist_tab_pre_stitle;
 	FCA_playlist_ps.tab_stitle=FCA_playlist_tab_stitle;
 	FCA_playlist_ps.tab_post_stitle=FCA_playlist_tab_post_stitle;
-	
+
 	FCA_playlist_ps.tab_pre_item=FCA_playlist_tab_pre_item;
 	FCA_playlist_ps.pre_tab_item=FCA_playlist_pre_tab_item;
 	FCA_playlist_ps.tab_item=FCA_playlist_tab_item;
 	FCA_playlist_ps.post_tab_item=FCA_playlist_post_tab_item;
 	FCA_playlist_ps.tab_post_item=FCA_playlist_tab_post_item;
-	
+
 	FCA_playlist_ps.tab_btm=FCA_playlist_tab_btm;
 
 	FCA_playlist_ps.pre_infos=FCA_playlist_pre_infos;
@@ -105,9 +120,9 @@ void FCA_playlist_init()
 	FCA_playlist_ps.info_size=FCA_playlist_info_size;
 	FCA_playlist_ps.main_num=FCA_playlist_main_num;
 	FCA_playlist_ps.post_infos=FCA_playlist_post_infos;
-	
+
 	FCA_playlist_ps.size=FCA_playlist_size;
-	
+
 	FCA_playlist_ps.pre_err=FCA_playlist_pre_err;
 	FCA_playlist_ps.post_err=FCA_playlist_post_err;
 
@@ -131,7 +146,7 @@ void FCA_playlist_init()
 
 	FCA_playlist_ps.post_listing=FCA_playlist_post_listing;
 	FCA_playlist_ps.post_search_ans=FCA_playlist_post_search_ans;
-	
+
 	FCA_playlist_ps.prog_end=FCA_playlist_prog_end;
 }
 
@@ -200,7 +215,7 @@ void FCA_playlist_post_serv(bool isName)
 void FCA_playlist_pre_dir(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_playlist_dir_link(name);
@@ -217,7 +232,7 @@ void FCA_playlist_post_dir(bool isName)
 void FCA_playlist_pre_file(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_playlist_file_link(name);
@@ -234,7 +249,7 @@ void FCA_playlist_post_file(bool isName)
 void FCA_playlist_pre_file_exec(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_playlist_file_link(name);
@@ -274,7 +289,7 @@ void FCA_playlist_file_link(const char *file)
 void FCA_playlist_dir_arg(const char *dir, bool isFile)
 {
 	char *tl;
-	
+
 	tl=FCA_cgi_escape_special_chars(dir);
 	FCA_playlist_my_url(isFile);
 	printf("%cdir=%s",
@@ -289,7 +304,7 @@ void FCA_playlist_pre_link()
 void FCA_playlist_post_link(bool firstArg)
 {
 	char *p;
-	
+
 		/* firstArg: if there was an argument before */
 	printf("%c", (!FCA_VAR_IS_ON(FCA_html_firstarg) || !firstArg)?'&':'?');
 	printf("prefix=%s",

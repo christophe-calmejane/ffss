@@ -5,6 +5,21 @@
  *
  *	default skin
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -81,24 +96,24 @@ FCA_Tps FCA_html_ps;
 void FCA_html_init()
 {
 	FCA_html_ps.prog_begin=FCA_html_prog_begin;
-	
+
 	FCA_html_ps.pre_listing=FCA_html_pre_listing;
 	FCA_html_ps.pre_search_ans=FCA_html_pre_search_ans;
-	
+
 	FCA_html_ps.tab_top=FCA_html_tab_top;
 	FCA_html_ps.tab_title=FCA_html_tab_title;
 	FCA_html_ps.tab_untitle=FCA_html_tab_untitle;
-	
+
 	FCA_html_ps.tab_pre_stitle=FCA_html_tab_pre_stitle;
 	FCA_html_ps.tab_stitle=FCA_html_tab_stitle;
 	FCA_html_ps.tab_post_stitle=FCA_html_tab_post_stitle;
-	
+
 	FCA_html_ps.tab_pre_item=FCA_html_tab_pre_item;
 	FCA_html_ps.pre_tab_item=FCA_html_pre_tab_item;
 	FCA_html_ps.tab_item=FCA_html_tab_item;
 	FCA_html_ps.post_tab_item=FCA_html_post_tab_item;
 	FCA_html_ps.tab_post_item=FCA_html_tab_post_item;
-	
+
 	FCA_html_ps.tab_btm=FCA_html_tab_btm;
 
 	FCA_html_ps.infos=FCA_html_infos;
@@ -106,9 +121,9 @@ void FCA_html_init()
 	FCA_html_ps.info_size=FCA_html_info_size;
 	FCA_html_ps.main_num=FCA_html_main_num;
 	FCA_html_ps.post_infos=FCA_html_post_infos;
-	
+
 	FCA_html_ps.size=FCA_html_size;
-	
+
 	FCA_html_ps.pre_err=FCA_html_pre_err;
 	FCA_html_ps.post_err=FCA_html_post_err;
 
@@ -129,13 +144,13 @@ void FCA_html_init()
 
 	FCA_html_ps.pre_file_exec=FCA_html_pre_file_exec;
 	FCA_html_ps.post_file_exec=FCA_html_post_file_exec;
-	
+
 	FCA_html_ps.pre_path=FCA_html_pre_path;
 	FCA_html_ps.post_path=FCA_html_post_path;
 
 	FCA_html_ps.post_listing=FCA_html_post_listing;
 	FCA_html_ps.post_search_ans=FCA_html_post_search_ans;
-	
+
 	FCA_html_ps.prog_end=FCA_html_prog_end;
 }
 
@@ -162,7 +177,7 @@ void FCA_html_pre_listing(char *path)
 {
 	char *p;
 	const FCA_Tskin *ps;
-	
+
 	p=strrchr(path, '/');
 	if(p && p!=path) {
 		*p='\0';
@@ -334,7 +349,7 @@ void FCA_html_tab_btm()
 void FCA_html_infos(const char format[], ...)
 {
 	va_list argptr;
-	
+
 	va_start(argptr,format);
 	vprintf(format, argptr);
 	va_end(argptr);
@@ -408,7 +423,7 @@ void FCA_html_pre_serv(const char *domain, const char *name, long int state, boo
 		printf("<font color=brown>");
 	else
 		printf("<font color=black>");
-	
+
 	if(isName) {
 		if(state!=FFSS_STATE_OFF) {
 			snprintf(all, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s/%s", domain, name);
@@ -427,7 +442,7 @@ void FCA_html_post_serv(bool isName)
 void FCA_html_pre_dir(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_dir_link(name);
@@ -447,7 +462,7 @@ void FCA_html_post_dir(bool isName)
 void FCA_html_pre_file(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_file_link(name);
@@ -467,7 +482,7 @@ void FCA_html_post_file(bool isName)
 void FCA_html_pre_file_exec(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_file_link(name);
@@ -495,7 +510,7 @@ bool FCA_html_pre_path(const char *domain, const char *path, long int state, boo
 		printf("<font color=brown>");
 	else
 		printf("<font color=black>");
-	
+
 	if(isName) {
 		if(!(state & FFSS_STATE_OFF)) {
 			all=strdup(path);
@@ -567,7 +582,7 @@ void FCA_file_link(const char *file)
 void FCA_dir_arg(const char *dir, bool isFile)
 {
 	char *tl;
-	
+
 	tl=FCA_cgi_escape_special_chars(dir);
 	FCA_my_url(isFile);
 	printf("%cdir=%s",
@@ -584,7 +599,7 @@ void FCA_pre_link()
 void FCA_post_link(bool firstArg)
 {
 	char *p;
-	
+
 		/* firstArg: if there was an argument before */
 	printf("%c", (!FCA_VAR_IS_ON(FCA_html_firstarg) || !firstArg)?'&':'?');
 	printf("prefix=%s",
@@ -612,7 +627,7 @@ void FCA_post_link(bool firstArg)
 void FCA_form_hidden_args(bool canskin)
 {
 	char *p;
-	
+
 	printf(" <input type='hidden' name='prefix' value='%s'>\n",
 		p=FCA_cgi_escape_special_chars(FCA_html_prefix) );
 	free(p);
@@ -651,7 +666,7 @@ void FCA_sep_link(char *path, char *prefx, bool isDir)
 {
 	char *p, *begin=path;
 	char p2[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	p=strchr(path, '/');
 	if(p==path)
 		p=strchr(path+1, '/');
@@ -670,7 +685,7 @@ void FCA_sep_link(char *path, char *prefx, bool isDir)
 		FCA_dir_arg(p2, false);
 		FCA_post_link(false);
 		printf("%s</a>", begin);
-		
+
 		*p='/';
 		begin=p+1;
 		p=strchr(p+1, '/');
@@ -689,7 +704,7 @@ void FCA_sep_link(char *path, char *prefx, bool isDir)
 void FCA_smb_sep_link(char *path)
 {
 	char *p, *begin=path;
-	
+
 		/* / -> \ */
 	p=path;
 	while((p=strchr(p, '/')))
@@ -708,7 +723,7 @@ void FCA_smb_sep_link(char *path)
 		FCA_pre_link();
 		printf("\\\\%s'>", path);
 		printf("%s</a>", begin);
-		
+
 		*p='/';
 		begin=p+1;
 		p=strchr(p+1, '\\');

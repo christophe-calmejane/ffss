@@ -1,11 +1,25 @@
-/* 
+/*
  *	FFSS client
- *		
+ *
  *	Copyright (C) 2001 bennyben (Benoit Bourdin)
  *
  *	command-line arguments management
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
 
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 #include "args.h"
 #include "display.h"
 #include "common.h"
@@ -14,7 +28,7 @@
 void FCA_get_args(void)
 {
 	int invalid_arg;
-    
+
 	    	/* more than 65535 args! (just for bad hackers) */
 	if( FCA_args.argc>65535 ) {
 		printf("more than 65535 arguments...\nAre you trying to make this program crashing ?\n");
@@ -35,7 +49,7 @@ unsigned short int FCA_interpret_args(void)
 	unsigned short int invalid_arg = 0;
 	char *parg;
 	unsigned short int stop;
-    
+
 	FCA_args.can_ansi=true;
 	iarg=1;
 	while( iarg<FCA_args.argc && !invalid_arg ) {
@@ -121,7 +135,7 @@ unsigned short int FCA_look_if_long_arg(char *parg)
 			if( !strcmp(parg,FCA_LGARG_GET_HELP) ) {  /* get help */
 				FCA_print_help();
 				return 1;
-			}    
+			}
 		}
 	}
 	return 0;	/* not --... : invalid */

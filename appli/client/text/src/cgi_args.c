@@ -1,10 +1,25 @@
-/* 
+/*
  *	FFSS client
- *		
+ *
  *	Copyright (C) 2001 bennyben (Benoit Bourdin)
  *
  *	CGI functions
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #include <stdlib.h>
 /* libCGI
@@ -113,7 +128,7 @@ void FCA_read_cgi_args()
 	char *p;
 	const FCA_TCGI_arg *pa;
 	const FCA_TCGI_bool_arg *pba;
-	
+
 	if(!FCA_CGI_mode)
 		return;
 		/* init all variables */
@@ -124,7 +139,7 @@ void FCA_read_cgi_args()
 	FCA_dir_to_list[0]='\0';
 	FCA_search[0]='\0';
 	FCA_search_dom[0]='\0';
-	
+
 		/* I know it isn't good to put init_hextable here... */
 	FCA_init_hextable();
 		/* read args */
@@ -166,7 +181,7 @@ void FCA_read_cgi_args()
 	/* just this, because libcgi can be VERY unstable
 		these functions will be deprecated when
 		libcgi will be stable
-		
+
 		functions adapted from libcgi
 	*/
 
@@ -194,7 +209,7 @@ void FCA_process_form()
 {
 	char *meth, *q, *clen;
 	int len;
-	
+
 	meth=getenv("REQUEST_METHOD");
 	if(!meth)
 		return;
@@ -225,9 +240,9 @@ void FCA_process_form_data(char *query)
 {
 	char *eq, *pq=query, *l;
 	FCA_Pcgi_var v;
-	
+
 	FCA_cgi_vars=NULL;
-	
+
 	while( pq && (eq=strchr(pq, '=')) ) {
 			/* non-empty variable and values */
 		l=strchr(pq, '&');
@@ -242,7 +257,7 @@ void FCA_process_form_data(char *query)
 			v->var=strdup(pq);
 				/* it's like strdup */
 			v->val=FCA_cgi_unescape_special_chars(eq+1);
-			/* debug 
+			/* debug
 			printf("var='%s' val='%s'<br>\n", v->var, v->val);
 			*/
 			FCA_cgi_vars=SU_AddElementHead(FCA_cgi_vars, (void*)v);
@@ -260,7 +275,7 @@ void FCA_process_form_data(char *query)
 char *FCA_cgi_param(const char *var)
 {
 	SU_PList p;
-	
+
 		/* look for the variable in the variable list
 			and returns its value
 		*/
@@ -278,7 +293,7 @@ char *FCA_cgi_param(const char *var)
 void FCA_free_cgi_params()
 {
 	SU_PList p=FCA_cgi_vars;
-	
+
 	if(!p)	return;
 	FCA_cgi_vars=p->Next;
 	FCA_free_cgi_params();
@@ -293,7 +308,7 @@ char *FCA_cgi_unescape_special_chars(char *str)
 {
 	char *tmp;
 	register int i, len, pos = 0;
-	
+
 	len = strlen(str);
 		/* len -> len+1 (forgotten the '\0') */
 	tmp = (char *)malloc((len+1) * sizeof(char));
@@ -301,11 +316,11 @@ char *FCA_cgi_unescape_special_chars(char *str)
 		return NULL;
 
 	for (i = 0; i < len; i++) {
-		if (str[i] == '%') 
+		if (str[i] == '%')
 			tmp[pos++] = (FCA_hextable[(int)str[++i]] << 4) + FCA_hextable[(int)str[++i]];
-		else if (str[i] == '+') 
+		else if (str[i] == '+')
 			tmp[pos++] = ' ';
-		else 
+		else
 			tmp[pos++] = str[i];
 	}
 		/* added */

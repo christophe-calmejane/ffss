@@ -5,6 +5,21 @@
  *
  *	skin functions
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #ifndef _FCA_SKIN_H_
 #define _FCA_SKIN_H_
@@ -15,74 +30,74 @@
 typedef struct
 {
 	void (*prog_begin)();
-	
+
 	void (*pre_listing)(char *path);
 	void (*pre_search_ans)(const char *query, const char *domain);
-	
+
 	void (*tab_top)();
 	void (*tab_title)(const char title[]);
 	void (*tab_untitle)();
-	
+
 	void (*tab_pre_stitle)();
 	void (*tab_stitle)(const char name[], const unsigned int size);
 	void (*tab_int_stitle)();
 	void (*tab_post_stitle)();
-	
+
 	void (*tab_pre_bar)();
 	void (*tab_bar)(const unsigned int size);
 	void (*tab_int_bar)();
 	void (*tab_post_bar)();
-	
+
 	void (*tab_pre_item)();
 	void (*pre_tab_item)();
 	void (*tab_item)(const char name[], unsigned int size);
 	void (*post_tab_item)();
 	void (*tab_int_item)();
 	void (*tab_post_item)();
-	
+
 	void (*tab_btm)();
-	
+
 	void (*post_tab)();
-	
+
 	void (*pre_infos)();
 	void (*infos)(const char format[], ...);
 	void (*num)(int n, const char text[]);
 	void (*info_size)(FFSS_LongField n, const char text[]);
 	void (*main_num)(int n, const char text[]);
 	void (*post_infos)();
-	
+
 	void (*size)(FFSS_LongField n, const char text[]);
-	
+
 	void (*pre_err)();
 	void (*post_err)();
-	
+
 	void (*pre_warning)();
 	void (*post_warning)();
-	
+
 	void (*pre_ok)();
 	void (*post_ok)();
 
 	void (*pre_serv)(const char *domain, const char *name, long int state, bool isName);
 	void (*post_serv)(bool isName);
-	
+
 	void (*pre_dir)(const char *prefx, const char *name, bool isName);
 	void (*post_dir)(bool isName);
-	
+
 	void (*pre_file)(const char *prefx, const char *name, bool isName);
 	void (*post_file)(bool isName);
-	
+
 	void (*pre_file_exec)(const char *prefx, const char *name, bool isName);
 	void (*post_file_exec)(bool isName);
-	
+
 	bool (*pre_path)(const char *domain, const char *path, long int state, bool isName, bool isSamba, bool isDir);
 	void (*post_path)(bool isName);
-	
+
 	void (*post_listing)(char *path);
 	void (*post_search_ans)(const char *query);
-	
+
 	void (*progr_bar)();
 	void (*dw_ok)(char *file, float rate);
-	
+
 	void (*prog_end)();
 } FCA_Tps, *FCA_Pps;	/* paint structure */
 
@@ -162,28 +177,28 @@ void FCA_pre_search_ans(const char *query, const char *domain);
 void FCA_tab_top();
 void FCA_tab_title(const char title[]);
 void FCA_tab_untitle();
-	
+
 void FCA_tab_pre_stitle();
 void FCA_tab_stitle(const char name[], const unsigned int size);
 void FCA_tab_int_stitle();
 void FCA_tab_post_stitle();
-	
+
 void FCA_tab_pre_bar();
 void FCA_tab_bar(const unsigned int size);
 void FCA_tab_int_bar();
 void FCA_tab_post_bar();
-	
+
 void FCA_tab_pre_item();
 void FCA_pre_tab_item();
 void FCA_tab_item(const char name[], const unsigned int size);
 void FCA_post_tab_item();
 void FCA_tab_int_item();
 void FCA_tab_post_item();
-	
+
 void FCA_tab_btm();
-	
+
 void FCA_post_tab();
-	
+
 void FCA_pre_infos();
 void FCA_infos(const char format[], ...);
 void FCA_num(int n, const char text[]);
@@ -195,7 +210,7 @@ void FCA_size(FFSS_LongField n, const char text[]);
 
 void FCA_pre_err();
 void FCA_post_err();
-	
+
 void FCA_pre_warning();
 void FCA_post_warning();
 
@@ -207,10 +222,10 @@ void FCA_post_serv(bool isName);
 
 void FCA_pre_dir(const char *prefx, const char *name, bool isName);
 void FCA_post_dir(bool isName);
-	
+
 void FCA_pre_file(const char *prefx, const char *name, bool isName);
 void FCA_post_file(bool isName);
-	
+
 void FCA_pre_file_exec(const char *prefx, const char *name, bool isName);
 void FCA_post_file_exec(bool isName);
 

@@ -5,6 +5,21 @@
  *
  *	html skin for fleming website
  */
+/*
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -84,24 +99,24 @@ FCA_Tps FCA_htmlfl_ps;
 void FCA_htmlfl_init()
 {
 	FCA_htmlfl_ps.prog_begin=FCA_htmlfl_prog_begin;
-	
+
 	FCA_htmlfl_ps.pre_listing=FCA_htmlfl_pre_listing;
 	FCA_htmlfl_ps.pre_search_ans=FCA_htmlfl_pre_search_ans;
-	
+
 	FCA_htmlfl_ps.tab_top=FCA_htmlfl_tab_top;
 	FCA_htmlfl_ps.tab_title=FCA_htmlfl_tab_title;
 	FCA_htmlfl_ps.tab_untitle=FCA_htmlfl_tab_untitle;
-	
+
 	FCA_htmlfl_ps.tab_pre_stitle=FCA_htmlfl_tab_pre_stitle;
 	FCA_htmlfl_ps.tab_stitle=FCA_htmlfl_tab_stitle;
 	FCA_htmlfl_ps.tab_post_stitle=FCA_htmlfl_tab_post_stitle;
-	
+
 	FCA_htmlfl_ps.tab_pre_item=FCA_htmlfl_tab_pre_item;
 	FCA_htmlfl_ps.pre_tab_item=FCA_htmlfl_pre_tab_item;
 	FCA_htmlfl_ps.tab_item=FCA_htmlfl_tab_item;
 	FCA_htmlfl_ps.post_tab_item=FCA_htmlfl_post_tab_item;
 	FCA_htmlfl_ps.tab_post_item=FCA_htmlfl_tab_post_item;
-	
+
 	FCA_htmlfl_ps.tab_btm=FCA_htmlfl_tab_btm;
 
 	FCA_htmlfl_ps.pre_infos=FCA_htmlfl_pre_infos;
@@ -110,9 +125,9 @@ void FCA_htmlfl_init()
 	FCA_htmlfl_ps.info_size=FCA_htmlfl_info_size;
 	FCA_htmlfl_ps.main_num=FCA_htmlfl_main_num;
 	FCA_htmlfl_ps.post_infos=FCA_htmlfl_post_infos;
-	
+
 	FCA_htmlfl_ps.size=FCA_htmlfl_size;
-	
+
 	FCA_htmlfl_ps.pre_err=FCA_htmlfl_pre_err;
 	FCA_htmlfl_ps.post_err=FCA_htmlfl_post_err;
 
@@ -133,13 +148,13 @@ void FCA_htmlfl_init()
 
 	FCA_htmlfl_ps.pre_file_exec=FCA_htmlfl_pre_file_exec;
 	FCA_htmlfl_ps.post_file_exec=FCA_htmlfl_post_file_exec;
-	
+
 	FCA_htmlfl_ps.pre_path=FCA_htmlfl_pre_path;
 	FCA_htmlfl_ps.post_path=FCA_htmlfl_post_path;
 
 	FCA_htmlfl_ps.post_listing=FCA_htmlfl_post_listing;
 	FCA_htmlfl_ps.post_search_ans=FCA_htmlfl_post_search_ans;
-	
+
 	FCA_htmlfl_ps.prog_end=FCA_htmlfl_prog_end;
 }
 
@@ -165,7 +180,7 @@ void FCA_htmlfl_pre_listing(char *path)
 {
 	char *p;
 	const FCA_Tskin *ps;
-	
+
 	p=strrchr(path, '/');
 	if(p && p!=path) {
 		*p='\0';
@@ -417,7 +432,7 @@ void FCA_htmlfl_pre_serv(const char *domain, const char *name, long int state, b
 		printf("<font color=brown class='small'>");
 	else
 		printf("<font color=black class='small'>");
-	
+
 	if(isName) {
 		if(state!=FFSS_STATE_OFF) {
 			snprintf(all, FFSS_MAX_FILEPATH_LENGTH-1, "/$/%s/%s", domain, name);
@@ -436,7 +451,7 @@ void FCA_htmlfl_post_serv(bool isName)
 void FCA_htmlfl_pre_dir(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_dir_link(name);
@@ -456,7 +471,7 @@ void FCA_htmlfl_post_dir(bool isName)
 void FCA_htmlfl_pre_file(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_file_link(name);
@@ -476,7 +491,7 @@ void FCA_htmlfl_post_file(bool isName)
 void FCA_htmlfl_pre_file_exec(const char *prefx, const char *name, bool isName)
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(isName) {
 		if(prefx[0]=='\0')
 			FCA_file_link(name);
@@ -497,14 +512,14 @@ bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, b
 {
 	char *all;
 	char dom[FFSS_MAX_FILEPATH_LENGTH];
-	
+
 	if(state & FFSS_STATE_OFF)
 		printf("<font color=gray>");
 	else if(state & FFSS_STATE_QUIET)
 		printf("<font color=brown>");
 	else
 		printf("<font color=black>");
-	
+
 	if(isName) {
 		if(!(state & FFSS_STATE_OFF)) {
 			all=strdup(path);
@@ -556,7 +571,7 @@ printf("</body>\n"
 void FCA_htmlfl_form_hidden_args(bool canskin)
 {
 	char *p;
-	
+
 #ifdef CGI
 	printf(" <input type='hidden' name='page' value='%s'>\n",
 		FCA_html_page);
