@@ -13,6 +13,8 @@ cd ../cgi
 make clean
 cd ../gtk
 make distclean
+cd ../ffssnetplay
+make distclean
 cd ../../server
 make distclean
 cd ../master
