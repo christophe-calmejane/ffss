@@ -19,7 +19,7 @@ SU_SEM_HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
 SU_SEM_HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
 SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
 
-SU_THREAD_HANDLE FM_THR_PING,FM_THR_QUEUE;
+SU_THREAD_HANDLE FM_THR_PING,FM_THR_SEARCH;
 
 volatile FFSS_Field FM_CurrentIndexSize = 0;
 FFSS_Field FM_CurrentFileTreeSize = 0;
@@ -41,13 +41,18 @@ FM_PHost FM_SearchHostByIP(FM_PDomain Domain,const char IP[])
   SU_PList Ptr;
 
   context;
+  SU_SEM_WAIT(FM_MySem2);
   Ptr = Domain->Hosts;
   while(Ptr != NULL)
   {
     if(strcmp(((FM_PHost)Ptr->Data)->IP,IP) == 0)
+    {
+      SU_SEM_POST(FM_MySem2);
       return (FM_PHost)Ptr->Data;
+    }
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FM_MySem2);
   return NULL;
 }
 
@@ -97,7 +102,7 @@ FM_PHost FM_AddHostToDomain(FM_PDomain Domain,const char Name[],const char OS[],
   Hst->State = State;
   Hst->LastPong = time(NULL);
   FM_SetHostStateInIndex(Name,State);
-  if(Domain == (&FM_MyDomain))
+  if(FM_IsMyDomain(Domain))
   {
     SU_SEM_WAIT(FM_MySem2);
     Domain->Hosts = SU_AddElementHead(Domain->Hosts,Hst);
@@ -312,7 +317,7 @@ void OnClientServerFailed(const char IP[])
 #endif /* DEBUG */
       Hst->State = FFSS_STATE_OFF;
       Hst->OffSince = time(NULL);
-      if(Ptr->Data == (&FM_MyDomain))
+      if(FM_IsMyDomain(Ptr->Data))
         FM_AddStateToMyQueue((FM_PDomain)Ptr->Data,Hst);
       /*else
         FM_AddStateToOtherQueue((FM_PDomain)Ptr->Data,Hst);*/
@@ -331,6 +336,8 @@ void OnPong(struct sockaddr_in Server,FFSS_Field State)
   Hst = FM_SearchHostByIP(&FM_MyDomain,inet_ntoa(Server.sin_addr));
   if(Hst != NULL)
   {
+    if(State != Hst->State)
+      FM_AddStateToMyQueue(&FM_MyDomain,Hst);
     Hst->State = State;
     Hst->LastPong = time(NULL);
     Hst->OffSince = 0;
@@ -344,6 +351,7 @@ void OnDomainListing(struct sockaddr_in Client)
   SU_PList Ptr;
   int nb;
 
+  context;
   nb = 0;
   Ptr = FM_Domains;
   while(Ptr != NULL)
@@ -392,6 +400,7 @@ void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char 
 /* OnMasterSearch is raised by local clients */
 void OnMasterSearch(struct sockaddr_in Client,bool Server)
 {
+  context;
   FM_SendMessage_MasterSearchAnswer(Client,Server,FM_MyDomain.Name);
 }
 
@@ -434,6 +443,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     }
   }
 
+  context;
   FD_ZERO(&rfds);
   FD_SET(sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_INDEX_XFER;
@@ -461,6 +471,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   Host->FileTreeLength = FileTreeSize;
   Host->NbNodes = NodesSize/sizeof(FM_TFTNode);
   Host->FTNodes = (FM_TFTNode *) malloc(NodesSize);
+  context;
   for(i=0;i<NbShares*2;i++)
   {
     FD_ZERO(&rfds);
@@ -590,6 +601,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   SU_SEM_WAIT(FM_MySem5);
   context;
   NumHost = -1;
+  context;
   for(i=0;i<FM_Controler.NbHosts;i++)
   {
     if(SU_strcasecmp(FM_Controler.Hosts[i]->Name,Host->Name))
@@ -617,6 +629,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     FM_Controler.Hosts[NumHost] = Host;
     FM_Controler.NbHosts++;
   }
+  context;
   if(FMI_CheckFileTree(Host))
   {
     FMI_InsertHostInIndex(Host,NumHost); /* calling insert engine */
@@ -675,6 +688,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
     Hst->LastIndex = tim;
   }
 
+  context;
   sock = socket(AF_INET,SOCK_STREAM,getprotobyname("tcp")->p_proto);
   if(sock == SOCKET_ERROR)
     return;
@@ -703,10 +717,12 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
 
 void OnIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port)
 {
+  context;
   GlobalIndexAnswer(Client,CompressionType,IndexSize,FileTreeSize,NodesSize,Port,false);
 }
 void OnIndexAnswerSamba(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port)
 {
+  context;
   GlobalIndexAnswer(Client,CompressionType,IndexSize,FileTreeSize,NodesSize,Port,true);
 }
 
@@ -716,9 +732,10 @@ bool OnCheckConnection(SU_PClientSocket Master)
   FM_PDomain Dom;
   char *buf;
 
+  context;
   buf = inet_ntoa(Master->SAddr.sin_addr);
   Dom = FM_SearchDomainByIP(buf);
-  if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0)) /* Foreign master, and not me ! */
+  if((Dom != NULL) && (!FM_IsMyDomain(Dom))) /* Foreign master, and not me ! */
     return true;
   return false;
 }
@@ -727,6 +744,7 @@ void OnMasterConnected(SU_PClientSocket Master)
 {
   FM_PDomain Dom;
 
+  context;
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if((Dom != NULL) && (Dom->CS == NULL))
   {
@@ -742,7 +760,9 @@ void OnMasterConnected(SU_PClientSocket Master)
 void OnMasterDisconnected(SU_PClientSocket Master)
 {
   FM_PDomain Dom;
+  SU_PList Ptr;
 
+  context;
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if(Dom != NULL)
   {
@@ -750,6 +770,16 @@ void OnMasterDisconnected(SU_PClientSocket Master)
     printf("MASTER : Connection lost with master of domain %s\n",Dom->Name);
 #endif /* DEBUG */
     Dom->CS = NULL;
+    /* Remove all hosts from this domain, as we'll get a fresh clean new list on next connection */
+    SU_SEM_WAIT(FM_MySem2);
+    Ptr = Dom->Hosts;
+    while(Ptr != NULL)
+    {
+      FM_FreeHost((FM_PHost)Ptr->Data);
+      Ptr = Ptr->Next;
+    }
+    Dom->Hosts = NULL;
+    SU_SEM_POST(FM_MySem2);
   }
 }
 
@@ -795,7 +825,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   buf = inet_ntoa(Master->SAddr.sin_addr);
   /* Known master ? */
   Dom = FM_SearchDomainByIP(buf);
-  if((Dom != NULL) && (strcmp(FM_MyDomain.Master,buf) != 0))
+  if((Dom != NULL) && (!FM_IsMyDomain(Dom)))
   {
 #ifdef DEBUG
     printf("MASTER : Received a ServerListing message from foreign master of %s\n",Dom->Name);
@@ -813,7 +843,8 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
     buf = FM_BuildStatesBuffer(Queue,&len);
     if(buf != NULL)
     {
-      FM_SendMessage_NewStatesMaster(Master->sock,buf,len,FFSS_COMPRESSION_BZLIB);
+      if(!FM_SendMessage_NewStatesMaster(Master->sock,buf,len,FFSS_COMPRESSION_BZLIB))
+        FFSS_PrintSyslog(LOG_WARNING,"Error sending New States message %s (%d:%s)\n",Dom->Master,errno,strerror(errno));
       free(buf);
     }
   }
@@ -872,12 +903,21 @@ void PrintHelp(void)
 
 void handint(int sig)
 {
+  SU_PList Ptr;
 
   if(!FM_ShuttingDown)
   {
     FM_ShuttingDown = true;
     FFSS_PrintSyslog(LOG_ERR,"Received a %d signal in %d\n",sig,getpid());
     memset(&FFSS_CB.MCB,0,sizeof(FFSS_CB.MCB));
+    /* Close all foreign master */
+    Ptr = FM_Domains;
+    while(Ptr != NULL)
+    {
+      if(((FM_PDomain)Ptr->Data)->CS != NULL)
+        SU_FreeCS(((FM_PDomain)Ptr->Data)->CS);
+      Ptr = Ptr->Next;
+    }
     /* Close log file, if opened */
     if(FM_SearchLogFile != NULL)
       SU_CloseLogFile(FM_SearchLogFile);
@@ -885,6 +925,9 @@ void handint(int sig)
     FM_SaveHosts(FM_MyDomain.Hosts,FM_MYHOSTS_FILE);
     /* Writing index */
     FMI_SaveIndex(FM_MYINDEX_FILE);
+    /* Term other threads */
+    SU_TermThread(FM_THR_PING);
+    SU_TermThread(FM_THR_SEARCH);
     /* Shutting down master */
     FM_UnInit();
     remove(FM_PID_FILE);
@@ -908,7 +951,6 @@ int main(int argc,char *argv[])
   char ConfigFile[1024];
   bool daemonize = false;
   bool log = false;
-  SU_THREAD_HANDLE Thread;
   FILE *fp;
   pid_t MainPid;
 
@@ -1009,6 +1051,7 @@ int main(int argc,char *argv[])
     FFSS_PrintSyslog(LOG_WARNING,"Warning : Master launched from a non-root user. Cannot use setuid/setgid\n");
 #endif /* __unix__ */
 
+  context;
 #ifdef __unix__
 #ifndef DEBUG
   if(fork() == 0)
@@ -1089,21 +1132,14 @@ int main(int argc,char *argv[])
     FFSS_MyIP = FM_MyDomain.Master;
 
     context;
-    if(!SU_CreateThread(&Thread,FM_ThreadPing,NULL,true))
+    if(!SU_CreateThread(&FM_THR_PING,FM_ThreadPing,NULL,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating PING thread\n");
       FM_UnInit();
       return -3;
     }
 
-    if(!SU_CreateThread(&Thread,FM_ThreadQueue,NULL,true))
-    {
-      FFSS_PrintSyslog(LOG_ERR,"Error creating QUEUE thread\n");
-      FM_UnInit();
-      return -4;
-    }
-
-    if(!SU_CreateThread(&Thread,FM_ThreadSearch,NULL,true))
+    if(!SU_CreateThread(&FM_THR_SEARCH,FM_ThreadSearch,NULL,true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating SEARCH thread\n");
       FM_UnInit();
@@ -1118,6 +1154,7 @@ int main(int argc,char *argv[])
     signal(SIGTERM,handint);
 //#endif /* !DEBUG */
 
+    context;
     MainPid = getpid();
     FFSS_PrintSyslog(LOG_INFO,"Master running with pid : %d\n",MainPid);
     fp = fopen(FM_PID_FILE,"wt");

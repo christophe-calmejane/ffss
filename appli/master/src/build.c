@@ -7,6 +7,7 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
   SU_PList Ptr;
   long int len,nb,pos;
 
+  context;
   nb = SU_ListCount(Queue);
   if(nb == 0)
     return NULL;
@@ -23,38 +24,45 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
   while(Ptr != NULL)
   {
     /* Flush State */
+    context;
     *(FFSS_Field *)(buf+pos) = ((FM_PQueue)Ptr->Data)->Host->State;
     pos += sizeof(FFSS_Field);
     /* Flush Master IP */
+    context;
     *(FFSS_Field *)(buf+pos) = FFSS_IP_TYPE;
     pos += sizeof(FFSS_Field);
     FFSS_PackIP(buf+pos,((FM_PQueue)Ptr->Data)->Domain->Master,FFSS_IP_TYPE);
     pos += FFSS_IP_FIELD_SIZE;
     /* Flush Domain */
+    context;
     len = strlen(((FM_PQueue)Ptr->Data)->Domain->Name)+1;
     if(len > FFSS_MAX_DOMAIN_LENGTH)
       len = FFSS_MAX_DOMAIN_LENGTH;
     SU_strcpy(buf+pos,((FM_PQueue)Ptr->Data)->Domain->Name,len);
     pos += len;
     /* Flush Name */
+    context;
     len = strlen(((FM_PQueue)Ptr->Data)->Host->Name)+1;
     if(len > FFSS_MAX_SERVERNAME_LENGTH)
       len = FFSS_MAX_SERVERNAME_LENGTH;
     SU_strcpy(buf+pos,((FM_PQueue)Ptr->Data)->Host->Name,len);
     pos += len;
     /* Flush OS */
+    context;
     len = strlen(((FM_PQueue)Ptr->Data)->Host->OS)+1;
     if(len > FFSS_MAX_SERVEROS_LENGTH)
       len = FFSS_MAX_SERVEROS_LENGTH;
     SU_strcpy(buf+pos,((FM_PQueue)Ptr->Data)->Host->OS,len);
     pos += len;
     /* Flush Comment */
+    context;
     len = strlen(((FM_PQueue)Ptr->Data)->Host->Comment)+1;
     if(len > FFSS_MAX_SERVERCOMMENT_LENGTH)
       len = FFSS_MAX_SERVERCOMMENT_LENGTH;
     SU_strcpy(buf+pos,((FM_PQueue)Ptr->Data)->Host->Comment,len);
     pos += len;
     /* Flush Host IP */
+    context;
     *(FFSS_Field *)(buf+pos) = FFSS_IP_TYPE;
     pos += sizeof(FFSS_Field);
     FFSS_PackIP(buf+pos,((FM_PQueue)Ptr->Data)->Host->IP,FFSS_IP_TYPE);
@@ -77,6 +85,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
   SU_PList Ptr,Ptr2;
   long int len,pos,i,j,pos_hst;
 
+  context;
   Ptr = FM_Domains;
   len = 0;
   j = 0;
@@ -84,6 +93,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
   {
     if(SU_nocasestrwcmp(((FM_PDomain)Ptr->Data)->Name,Domain))
     {
+      context;
       len += sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_2 + FFSS_MAX_DOMAIN_LENGTH+1;
       i = SU_ListCount(((FM_PDomain)Ptr->Data)->Hosts);
       len += i * (sizeof(FFSS_Field)*FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_3 + FFSS_IP_FIELD_SIZE + FFSS_MAX_SERVERNAME_LENGTH+1 + FFSS_MAX_SERVEROS_LENGTH+1 + FFSS_MAX_SERVERCOMMENT_LENGTH+1);
@@ -96,16 +106,19 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
   pos = 0;
 
   /* Flush number of domains */
+  context;
   *(FFSS_Field *)(buf+pos) = j;
   pos += sizeof(FFSS_Field);
 
   /* Flush Domains */
+  context;
   Ptr = FM_Domains;
   while(Ptr != NULL)
   {
     if(SU_nocasestrwcmp(((FM_PDomain)Ptr->Data)->Name,Domain))
     {
       /* Flush Domain */
+      context;
       len = strlen(((FM_PDomain)Ptr->Data)->Name)+1;
       if(len > FFSS_MAX_DOMAIN_LENGTH)
         len = FFSS_MAX_DOMAIN_LENGTH;
@@ -122,10 +135,12 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
         if(SU_nocasestrwcmp(((FM_PHost)Ptr2->Data)->OS,OS))
         {
           /* Flush State */
+          context;
           *(FFSS_Field *)(buf+pos) = ((FM_PHost)Ptr2->Data)->State;
           pos += sizeof(FFSS_Field);
 
           /* Flush Name */
+          context;
           len = strlen(((FM_PHost)Ptr2->Data)->Name)+1;
           if(len > FFSS_MAX_SERVERNAME_LENGTH)
             len = FFSS_MAX_SERVERNAME_LENGTH;
@@ -133,6 +148,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
           pos += len;
 
           /* Flush OS */
+          context;
           len = strlen(((FM_PHost)Ptr2->Data)->OS)+1;
           if(len > FFSS_MAX_SERVEROS_LENGTH)
             len = FFSS_MAX_SERVEROS_LENGTH;
@@ -140,6 +156,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
           pos += len;
 
           /* Flush Comment */
+          context;
           len = strlen(((FM_PHost)Ptr2->Data)->Comment)+1;
           if(len > FFSS_MAX_SERVERCOMMENT_LENGTH)
             len = FFSS_MAX_SERVERCOMMENT_LENGTH;
@@ -147,6 +164,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
           pos += len;
 
           /* Flush Host IP */
+          context;
           *(FFSS_Field *)(buf+pos) = FFSS_IP_TYPE;
           pos += sizeof(FFSS_Field);
           FFSS_PackIP(buf+pos,((FM_PHost)Ptr2->Data)->IP,FFSS_IP_TYPE);

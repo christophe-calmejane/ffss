@@ -6,6 +6,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
   char Name[256],Value[256],*Nam,*Ip,*V,*User=NULL,*Group=NULL;
   char *Int = NULL;
   FM_PDomain Domain;
+  SU_PList Ptr;
 
   context;
   if(UserGroup)
@@ -60,19 +61,6 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         printf("Config Loader Info : Adding master %s for domain %s\n",Ip,Nam);
 #endif /* DEBUG */
         FM_Domains = SU_AddElementHead(FM_Domains,Domain);
-        context;
-#ifdef DEBUG
-        printf("Config Loader Info : Connecting to master %s:%d\n",Ip,FFSS_MASTER_PORT);
-#endif /* DEBUG */
-        Domain->CS = FM_SendMessage_Connect(Ip);
-        if(Domain->CS != NULL)
-        {
-#ifdef DEBUG
-          printf("Config Loader Info : Successfully connected... requesting servers list\n");
-#endif /* DEBUG */
-          FM_SendMessage_MasterConnection(Domain->CS->sock);
-          FM_SendMessage_ServerList(Domain->CS->sock);
-        }
       }
       else if(strcasecmp(Name,"Domain") == 0)
         FM_MyDomain.Name = strdup(Value);
@@ -135,9 +123,32 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
     if(Int != NULL)
       free(Int);
 
-    FM_Domains = SU_AddElementHead(FM_Domains,&FM_MyDomain);
+    /* Loading my local servers */
     context;
     FM_MyDomain.Hosts = FM_LoadHosts(FM_MYHOSTS_FILE);
+
+    /* Connecting to foreign masters */
+    context;
+    Ptr = FM_Domains;
+    while(Ptr != NULL)
+    {
+      Domain = (FM_PDomain) Ptr->Data;
+#ifdef DEBUG
+      printf("Config Loader Info : Connecting to master %s:%d\n",Domain->Master,FFSS_MASTER_PORT);
+#endif /* DEBUG */
+      Domain->CS = FM_SendMessage_Connect(Domain->Master);
+      if(Domain->CS != NULL)
+      {
+#ifdef DEBUG
+        printf("Config Loader Info : Successfully connected... requesting servers list\n");
+#endif /* DEBUG */
+        FM_SendMessage_MasterConnection(Domain->CS->sock);
+        FM_SendMessage_ServerList(Domain->CS->sock);
+      }
+      Ptr = Ptr->Next;
+    }
+
+    FM_Domains = SU_AddElementHead(FM_Domains,&FM_MyDomain);
   }
   else
   {

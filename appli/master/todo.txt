@@ -15,3 +15,4 @@ POSSIBLE DoS :
 
 KNOW BUGS
 ---------
+ - ATTENTION !! Quand on lance le master en root (donc changement de user en ffss), les fichiers sont crees en 666 !!

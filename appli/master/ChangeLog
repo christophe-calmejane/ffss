@@ -3,9 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : February, 26th 2002
+                  Last Update : March, 3th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+March, 3rd 2002:
+  - Fixed bug in init routine (if network is too fast, master connections might be to fast, and messages arrive before init is complete, then crash)
+  - Not sending all states every ping. Only changing states
+  - Cleaned up code, and removed unused thread
 
 February, 26th 2002:
   - Ignoring empty index sent by servers

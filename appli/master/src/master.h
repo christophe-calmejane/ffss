@@ -10,7 +10,7 @@
 #include "../utils.h"
 #endif /* __unix__ */
 
-#define FFSS_MASTER_VERSION "1.0-pre52"
+#define FFSS_MASTER_VERSION "1.0-pre54"
 #define FM_COMPRESSION_TRIGGER_ZLIB 1000
 #define FM_COMPRESSION_TRIGGER_BZLIB 5000
 #define FM_TOO_MANY_ANSWERS_TRIGGER 20000
@@ -72,9 +72,9 @@ extern SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
 extern char *FM_User,*FM_Group;
 
 SU_THREAD_ROUTINE(FM_ThreadPing,User);
-SU_THREAD_ROUTINE(FM_ThreadQueue,User);
 SU_THREAD_ROUTINE(FM_ThreadSearch,User);
 
+bool FM_IsMyDomain(FM_PDomain Dom);
 FM_PHost FM_SearchHostByIP(FM_PDomain Domain,const char IP[]);
 
 /* Returns a buffer to be sent then freed, or NULL if queue is empty */

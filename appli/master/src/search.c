@@ -195,14 +195,14 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
         Ptr = Ptr->Next;
         continue;
       }
-      if(strcmp(Dom->Name,FM_MyDomain.Name) != 0) /* Not for my domain, forward request */
+      if(!FM_IsMyDomain(Dom)) /* Not for my domain, forward request */
       {
         /* Forwarding request to foreign master */
         FFSS_PrintDebug(4,"Forwarding search \"%s\" to %s\n",KeyWords,Dom->Master);
         if(Dom->CS != NULL)
         {
           if(!FM_SendMessage_SearchForward(Dom->CS->sock,Sch->Client,Sch->Compressions,KeyWords))
-            FFSS_PrintSyslog(LOG_WARNING,"Error forwarding search to %s\n",Dom->Master);
+            FFSS_PrintSyslog(LOG_WARNING,"Error forwarding search to %s (%d:%s)\n",Dom->Master,errno,strerror(errno));
         }
         Ptr = Ptr->Next;
         continue;
@@ -223,7 +223,7 @@ char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
       Ptr = Ptr->Next;
       continue;
     }
-    if(strcmp(Dom->Name,FM_MyDomain.Name) != 0) /* Not for my domain, forward request */
+    if(!FM_IsMyDomain(Dom)) /* Not for my domain, forward request */
     {
       Ptr = Ptr->Next;
       continue;
