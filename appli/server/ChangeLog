@@ -9,6 +9,7 @@ VIRER LE -PREx DE SERVER.H
 
 June, 8th 2002:
   - Added the Startup field in plugin structs (server.h confapi.h)... and in the conf/confapi code
+  - Added bool override (to SU_BOOL) in c++ mode in confapi.h
 
 June, 7th 2002:
   - Added SHUTDOWN command in plugin interface

@@ -2,6 +2,10 @@
 #define __CONFAPI_H__
 
 #ifdef __cplusplus
+/* Undefine c++ bool type (unsigned char ?)
+   Use SU_BOOL type in your appli, every time you use a ffss prototype
+ */
+#define bool SU_BOOL
 extern "C" {
 #endif /* __cplusplus */
 
@@ -88,6 +92,8 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client); /* FSCA_PPluginInfo */ /* Yo
 
 #ifdef __cplusplus
 }
+/* Redefine c++ bool type */
+#undef bool
 #endif /* __cplusplus */
 
 #endif /* !__CONFAPI_H__ */
