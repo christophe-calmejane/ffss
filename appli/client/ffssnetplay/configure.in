@@ -146,9 +146,9 @@ AC_DEFINE_UNQUOTED(PACKAGE_HELP_DIR, "${packageprefix}/${packagehelpdir}")
 AC_DEFINE_UNQUOTED(PACKAGE_MENU_DIR, "${packageprefix}/${packagemenudir}")
 AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
 
-LIBS="$LIBS $ffss_libs"
+LIBS="-L lib -lfnp $LIBS $ffss_libs"
 echo $ffss_cflags
-CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
+CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE -I lib"
 
 AC_OUTPUT([
 Makefile

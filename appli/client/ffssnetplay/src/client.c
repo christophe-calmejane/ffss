@@ -2,13 +2,13 @@
 #include "interface.h"
 
 /*
-  TODO : Attention, le send du StrmClose ne passe pas (bad file descriptor sur la socket)
-         Envoyer un StrmClose qd on change de chanson !!!
+  TODO : Envoyer un StrmClose qd on change de chanson !!!
 */
+
+int FNP_CurrentSong = 0;
 
 void PlayNextFile(bool Lock)
 {
-  GList *items;
   gchar *path;
   gchar *ip;
   char Share[100];
@@ -16,35 +16,34 @@ void PlayNextFile(bool Lock)
 
   if(Lock)
     gdk_threads_enter();
-  items = FNP_clist->selection;
-  if(items != NULL)
+  printf("Playing song %d\n",FNP_CurrentSong);
+  gtk_clist_get_text(FNP_clist,FNP_CurrentSong,0,&path);
+  gtk_clist_get_text(FNP_clist,FNP_CurrentSong,1,&ip);
+  if(path == NULL)
   {
-    gtk_clist_get_text(FNP_clist,(gint)items->data,0,&path);
-    gtk_clist_get_text(FNP_clist,(gint)items->data,1,&ip);
-    assert(path);
-    assert(ip);
-    FNP_PlayFile_Path(ip,path);
+    printf("Looping songs\n");
+    FNP_CurrentSong = 0;
+    gtk_clist_get_text(FNP_clist,FNP_CurrentSong,0,&path);
+    gtk_clist_get_text(FNP_clist,FNP_CurrentSong,1,&ip);
+    if(path == NULL)
+    {
+      printf("Ending... no more valid songs\n");
+      if(Lock)
+        gdk_threads_leave();
+      return;
+    }
   }
+  assert(path);
+  assert(ip);
+  FNP_PlayFile_Path(ip,path);
   if(Lock)
     gdk_threads_leave();
 }
 
 void OnEndOfFile()
 {
-  GList *items;
-  gdk_threads_enter();
-
-  items = FNP_clist->selection;
-  if(items != NULL)
-  {
-    gtk_clist_unselect_row(FNP_clist,(gint)items->data,0);
-    gtk_clist_select_row(FNP_clist,(gint)(items->data)+1,0);
-    if(FNP_clist->selection == NULL)
-      gtk_clist_select_row(FNP_clist,0,0);
-  }
-  gdk_threads_leave();
-
   printf("End of file... playing next one\n");
+  FNP_CurrentSong++;
   PlayNextFile(true);
 }
 

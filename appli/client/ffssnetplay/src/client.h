@@ -23,6 +23,7 @@
 
 extern GtkWidget *wnd_main;
 extern GtkCList *FNP_clist;
+extern int FNP_CurrentSong;
 
 void PlayNextFile(bool Lock);
 

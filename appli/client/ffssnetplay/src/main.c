@@ -43,6 +43,7 @@ int main (int argc, char *argv[])
     printf("Error : %s\n",FNP_GetLastError());
     return -2;
   }
+  N_DebugLevel = 0;
 
   gdk_threads_enter();
   gtk_main();

@@ -14,8 +14,14 @@ on_clist1_button_press_event           (GtkWidget       *widget,
                                         GdkEventButton  *event,
                                         gpointer         user_data)
 {
+  GList *items;
   if(event->type == GDK_2BUTTON_PRESS)
+  {
+    items = FNP_clist->selection;
+    if(items != NULL)
+      FNP_CurrentSong = (gint) items->data;
     PlayNextFile(false);
+  }
   return FALSE;
 }
 

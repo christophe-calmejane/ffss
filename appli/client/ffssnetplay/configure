@@ -1750,9 +1750,9 @@ cat >> confdefs.h <<EOF
 EOF
 
 
-LIBS="$LIBS $ffss_libs"
+LIBS="-L lib -lfnp $LIBS $ffss_libs"
 echo $ffss_cflags
-CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE"
+CFLAGS="$CFLAGS $ffss_cflags $FFSS_ADD_PATH $FFSS_ADD_INCLUDE -I lib"
 
 trap '' 1 2 15
 cat > confcache <<\EOF
