@@ -3,9 +3,13 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 14th 2002
+                  Last Update : May, 20th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+May, 20th 2002:
+  - Fixed a bug in Index dumping function, which causes a corrupted dump
+  - Directly adds my domain to domains list, to avoid wrong domains listing if a foreign master delays the connection
 
 May, 14th 2002:
   - Fixed a bug that cause a seg fault if foreign master rejects the connection before end of init messages

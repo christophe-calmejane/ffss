@@ -119,7 +119,8 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
 
     /* Connecting to foreign masters */
     context;
-    Ptr = FM_Domains;
+    FM_Domains = SU_AddElementHead(FM_Domains,&FM_MyDomain);
+    Ptr = FM_Domains->Next;
     while(Ptr != NULL)
     {
       Domain = (FM_PDomain) Ptr->Data;
@@ -139,8 +140,6 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
       SU_SEM_POST(FM_TmpSem);
       Ptr = Ptr->Next;
     }
-
-    FM_Domains = SU_AddElementHead(FM_Domains,&FM_MyDomain);
   }
   else
   {
