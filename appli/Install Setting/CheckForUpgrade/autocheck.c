@@ -1,4 +1,3 @@
-#include <skyutils.h>
 #include <ffss.h>
 #undef malloc
 
@@ -15,21 +14,27 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
 {
   char *pos;
   char buf[4096];
+  char Version[100];
+  char Data[1024];
 
   if(Ans->Data == NULL)
     return;
-  pos = strchr(Ans->Data,'\n');
+  if(Ans->Data_Length >= sizeof(Data))
+    Ans->Data_Length = sizeof(Data);
+  SU_strcpy(Data,Ans->Data,Ans->Data_Length+1);
+  pos = SU_strchrl(Data,"\n\r",NULL);
   if(pos != NULL)
   {
     pos[0] = 0;
     pos++;
   }
-  if(strncmp(Ans->Data,FFSS_VERSION,sizeof(FFSS_VERSION)) > 0)
+  SU_RB_GetStrValue(FFSS_REGISTRY_PATH "CurrentVersion",Version,sizeof(Version),FFSS_VERSION);
+  if(strncmp(Data,Version,sizeof(Version)) > 0)
   {
     if((pos == NULL) || (pos[0] == 0))
-      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\nftp-samba-ffss://orion.fleming.u-psud.fr\nftp://tabarka.rub.u-psud.fr",Ans->Data);
+      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\nftp-samba-ffss://orion.fleming.u-psud.fr\nftp://tabarka.rub.u-psud.fr",Data);
     else
-      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\n%s",Ans->Data,pos);
+      _snprintf(buf,sizeof(buf),"A new version of FFSS (%s) is available for download - Please upgrade :\n%s",Data,pos);
     MessageBox(NULL,buf,"FFSS UPDATE INFO",MB_OK);
   }
 }
