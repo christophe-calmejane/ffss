@@ -3,10 +3,14 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : Auguest, 20th 2002
+                  Last Update : Auguest, 30th 2002
 
 VIRER LE -PREx DE FFSS.H
 METTRE LA VERSION DE SKYUTILS CHECKEE CORRECTEMENT
+
+August, 30th 2002:
+  - Added protocol version in ping/pong messages
+  - Fixed a bug in QoS check in share connection
 
 August, 20th 2002:
   - Added support for QoS

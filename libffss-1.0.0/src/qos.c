@@ -120,8 +120,8 @@ bool FFSS_QoS_Init(FFSS_LongField BandWidth)
     return false;
 
   FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,"Upload Traffic");
-  FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,"TCP Connection");
-  FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,"TCP FTP Connection");
+  FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_DOWNLOAD,"Download Traffic");
+  FFSS_QoS_CreateChain(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,"Global Traffic");
 
   /* Init FFSS_QoS_Api struct */
   FFSS_QoS_Api.AddRuleToChain_Head = FFSS_QoS_AddRuleToChain_Head;

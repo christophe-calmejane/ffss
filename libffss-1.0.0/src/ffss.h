@@ -221,8 +221,8 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_2    1
 #define FFSS_MESSAGESIZE_SERVER_LISTING_ANSWER_3    2
 #define FFSS_MESSAGESIZE_CLIENT_SERVER_FAILED       3
-#define FFSS_MESSAGESIZE_PING                       2
-#define FFSS_MESSAGESIZE_PONG                       3
+#define FFSS_MESSAGESIZE_PING                       3
+#define FFSS_MESSAGESIZE_PONG                       4
 #define FFSS_MESSAGESIZE_SERVER_SEARCH              2
 #define FFSS_MESSAGESIZE_SHARES_LISTING             4
 #define FFSS_MESSAGESIZE_SHARES_LISTING_ANSWER      6

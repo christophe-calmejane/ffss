@@ -76,13 +76,19 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
       context;
       FFSS_PrintDebug(3,"Received a pong message from server\n");
       state = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       if(state == 0)
       {
         FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_PONG : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client.sin_addr));
         break;
       }
-      if(FFSS_CB.MCB.OnPong != NULL)
-        FFSS_CB.MCB.OnPong(Client,state);
+      if(val >= FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE)
+      {
+        if(FFSS_CB.MCB.OnPong != NULL)
+          FFSS_CB.MCB.OnPong(Client,state);
+      }
+      else
+        FFSS_PrintDebug(1,"Server protocol version mismatch\n");
       break;
     case FFSS_MESSAGE_DOMAINS_LISTING :
       context;

@@ -52,7 +52,7 @@ bool FFSS_SendTcpPacketCS(FfssTCP *TCP,char *msg,long int len,bool FreeMsg,bool 
 }
 
 #else /* !FFSS_DRIVER */
-bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
+bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg,bool QosCheck)
 {
   int resp,retval;
   fd_set rfds;
@@ -75,31 +75,34 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
       free(msg);
     return false;
   }
-  /* Check QoS */
-  if(Client < FFSS_MAX_SOCKETS)
+  if(QosCheck)
   {
-    Qos = FFSS_QosConns[Client];
-    if(Qos != NULL)
+    /* Check QoS */
+    if(Client < FFSS_MAX_SOCKETS)
     {
-      SU_GetTicks(&et);
-      Qos->bytes += len;
-      tim = SU_ElapsedTime(Qos->st,et,FFSS_CpuSpeed);
-      if(tim >= FFSS_QOS_CHECK_DELAY)
+      Qos = FFSS_QosConns[Client];
+      if(Qos != NULL)
       {
-        thrpt = Qos->bytes / tim;
-        sleep_val = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,thrpt-Qos->prev_thrpt,tim);
-        sleep_val2 = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,thrpt-Qos->prev_thrpt,tim);
-        Qos->prev_thrpt = thrpt;
-        /* Reset counters */
-        SU_GetTicks(&Qos->st);
-        Qos->bytes = 0;
-        /* Execute the sleep */
-        if(sleep_val || sleep_val2)
+        SU_GetTicks(&et);
+        Qos->bytes += len;
+        tim = SU_ElapsedTime(Qos->st,et,FFSS_CpuSpeed);
+        if(tim >= FFSS_QOS_CHECK_DELAY)
         {
-          if(sleep_val > sleep_val2)
-            SU_USLEEP(sleep_val);
-          else
-            SU_USLEEP(sleep_val2);
+          thrpt = Qos->bytes / tim;
+          sleep_val = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,Qos->IP,thrpt-Qos->prev_thrpt,tim);
+          sleep_val2 = FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,Qos->IP,thrpt-Qos->prev_thrpt,tim);
+          Qos->prev_thrpt = thrpt;
+          /* Reset counters */
+          SU_GetTicks(&Qos->st);
+          Qos->bytes = 0;
+          /* Execute the sleep */
+          if(sleep_val || sleep_val2)
+          {
+            if(sleep_val > sleep_val2)
+              SU_USLEEP(sleep_val);
+            else
+              SU_USLEEP(sleep_val2);
+          }
         }
       }
     }
@@ -115,7 +118,7 @@ bool FFSS_SendTcpPacket(SU_SOCKET Client,char *msg,long int len,bool FreeMsg)
 
 bool FFSS_SendTcpPacketCS(SU_PClientSocket Client,char *msg,long int len,bool FreeMsg,bool Answer)
 {
-  return FFSS_SendTcpPacket(Client->sock,msg,len,FreeMsg);
+  return FFSS_SendTcpPacket(Client->sock,msg,len,FreeMsg,true);
 }
 
 /* ************************************ */
@@ -268,6 +271,7 @@ bool FS_SendMessage_Pong(struct sockaddr_in Master,int State)
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_PONG);
   pos = FFSS_PackField(msg,pos,State);
+  pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Pong message to master\n");
   resp = SU_UDPSendToAddr(FS_SI_OUT_UDP,msg,pos,inet_ntoa(Master.sin_addr),FFSS_MASTER_PORT_S);
@@ -304,7 +308,7 @@ bool FS_SendMessage_Error(SU_SOCKET Client,FFSS_Field Code,const char Descr[],FF
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Error message (%d:%s:%ld) to client\n",Code,Descr,Value);
-  return FFSS_SendTcpPacket(Client,msg,pos,false);
+  return FFSS_SendTcpPacket(Client,msg,pos,false,false);
 }
 
 /* FS_SendMessage_DirectoryListingAnswer Function                     */
@@ -373,7 +377,7 @@ bool FS_SendMessage_DirectoryListingAnswer(SU_SOCKET Client,const char Path[],co
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Directory listing answer message (\"%s\") to client\n",Path);
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
 /* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
@@ -442,7 +446,7 @@ bool FS_SendMessage_RecursiveDirectoryListingAnswer(SU_SOCKET Client,const char 
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Recursive Directory listing answer message (\"%s\") to client\n",Path);
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
 /* FS_SendMessage_InitXFer Function                        */
@@ -471,7 +475,7 @@ bool FS_SendMessage_InitXFer(SU_SOCKET Client,FFSS_Field Tag,const char FileName
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Init XFer message (%d:%s) to client\n",Tag,FileName);
-  return FFSS_SendTcpPacket(Client,msg,pos,false);
+  return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
 /* FS_SendMessage_MasterSearch Function            */
@@ -749,7 +753,7 @@ bool FS_SendMessage_StrmOpenAnswer(SU_SOCKET Client,const char Path[],FFSS_Field
   pos = FFSS_PackLongField(msg,pos,FileSize);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming OPEN answer message to client\n");
-  return FFSS_SendTcpPacket(Client,msg,pos,false);
+  return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
 /* FS_SendMessage_StrmReadAnswer Function             */
@@ -778,7 +782,7 @@ bool FS_SendMessage_StrmReadAnswer(SU_SOCKET Client,FFSS_Field Handle,char *Buf,
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming READ answer message to client\n");
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,true,true);
 }
 
 /* FS_SendMessage_StrmWriteAnswer Function             */
@@ -800,7 +804,7 @@ bool FS_SendMessage_StrmWriteAnswer(SU_SOCKET Client,FFSS_Field Handle,FFSS_Fiel
   pos = FFSS_PackField(msg,pos,Code);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming WRITE answer message to client\n");
-  return FFSS_SendTcpPacket(Client,msg,pos,false);
+  return FFSS_SendTcpPacket(Client,msg,pos,false,true);
 }
 
 #endif /* FFSS_DRIVER */
@@ -1441,7 +1445,7 @@ bool FM_SendMessage_MasterConnection(SU_SOCKET Master)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Master connection message to master\n");
-  return FFSS_SendTcpPacket(Master,msg,pos,false);
+  return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
 /* FM_SendMessage_Ping Function    */
@@ -1455,6 +1459,7 @@ bool FM_SendMessage_Ping()
   context;
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_PING);
+  pos = FFSS_PackField(msg,pos,FFSS_PROTOCOL_VERSION);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Ping message to servers\n");
   resp = FFSS_SendBroadcast(FM_SI_OUT_UDP,msg,pos,FFSS_SERVER_PORT_S);
@@ -1518,7 +1523,7 @@ bool FM_SendMessage_NewStatesMaster(SU_SOCKET Master,const char *Buffer,long int
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending New States message to master\n");
-  return FFSS_SendTcpPacket(Master,msg,pos,true);
+  return FFSS_SendTcpPacket(Master,msg,pos,true,false);
 }
 
 /* FM_SendMessage_ServerListing Function                            */
@@ -1676,7 +1681,7 @@ bool FM_SendMessage_ErrorMaster(SU_SOCKET Master,FFSS_Field Code,const char Desc
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Error message (%d:%s) to master\n",Code,Descr);
-  return FFSS_SendTcpPacket(Master,msg,pos,false);
+  return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
 /* FM_SendMessage_ServerList Function              */
@@ -1699,7 +1704,7 @@ bool FM_SendMessage_ServerList(SU_SOCKET Master,FFSS_LongField User)
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Server listing message to master\n");
-  return FFSS_SendTcpPacket(Master,msg,pos,false);
+  return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
 /* FM_SendMessage_DomainListingAnswer Function     */
@@ -1865,7 +1870,7 @@ bool FM_SendMessage_SearchForward(SU_SOCKET Master,struct sockaddr_in Client,int
   pos = FFSS_PackString(msg,pos,Key,len);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Search Forward message to master - Reply to %s:%d\n",inet_ntoa(Client.sin_addr),ntohs(Client.sin_port));
-  return FFSS_SendTcpPacket(Master,msg,pos,false);
+  return FFSS_SendTcpPacket(Master,msg,pos,false,false);
 }
 
 #endif /* !FFSS_DRIVER */

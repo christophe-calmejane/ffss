@@ -32,8 +32,14 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
     case FFSS_MESSAGE_PING :
       context;
       FFSS_PrintDebug(3,"Received a ping message\n");
-      if(FFSS_CB.SCB.OnPing != NULL)
-        FFSS_CB.SCB.OnPing(Client);
+      val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      if(val >= FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE)
+      {
+        if(FFSS_CB.SCB.OnPing != NULL)
+          FFSS_CB.SCB.OnPing(Client);
+      }
+      else
+        FFSS_PrintDebug(1,"Master protocol version mismatch\n");
       break;
     case FFSS_MESSAGE_STATE_ANSWER :
       context;
