@@ -1,6 +1,6 @@
 #include <ffss.h>
 
-//#define FFSS_XFERS_IN_CONN
+#define FFSS_XFERS_IN_CONN
 /* Defines to replace with variables taken from the config file */
 //#define HAVE_MASTER
 #ifdef HAVE_MASTER
@@ -198,9 +198,9 @@ int main()
       return -1;
     printf("Client running...\n");
 
-    FC_SendMessage_ShareConnect("172.17.64.135","debug","kiki","toto");
+    FC_SendMessage_ShareConnect("172.17.64.15","test",NULL,NULL);
     //FC_SendMessage_ShareConnect("172.17.64.135","debug",NULL,NULL);
-    sleep(2);
+    sleep(20);
     return 0;
 
     /* Sending server request message to broadcast */
