@@ -12,6 +12,8 @@ June, 2nd 2002:
   - Added log plugin
   - Added sem protection for each plugin callback call
   - Update ffsswho : Can now log on a remote server, using login/pwd
+  - Fixed bug in CheckConfConn in conf.c
+  - Updated ConfConn plugin. Now use login/pwd for remote connections
 
 May, 31th 2002:
   - Fixed a wrong resource freeing in the case of simultaneous conn and xfer close

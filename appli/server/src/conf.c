@@ -684,17 +684,25 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
 bool FS_CheckConfConn(SU_PClientSocket Client)
 {
   SU_PList Ptr;
-  bool ret_val=false;
+  bool ret_val = true,checked = false;
 
+  SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
   while(Ptr != NULL)
   {
+    FS_PPlugin Pl = (FS_PPlugin)Ptr->Data;
     if(((FS_PPlugin)Ptr->Data)->OnCheckConfConn != NULL)
-      ret_val = ((FS_PPlugin)Ptr->Data)->OnCheckConfConn(Client);
-    if(ret_val)
-      return true;
+    {
+      ret_val &= ((FS_PPlugin)Ptr->Data)->OnCheckConfConn(Client);
+      checked = true;
+    }
     Ptr = Ptr->Next;
   }
+  SU_SEM_POST(FS_SemPlugin);
+  if(!ret_val) /* Rejected by plugin */
+    return false;
+  if(checked) /* Accepted by plugin */
+    return true;
 
   if(strcmp(inet_ntoa(Client->SAddr.sin_addr),"127.0.0.1") != 0)
   { /* Non local socket... rejecting */
