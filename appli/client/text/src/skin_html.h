@@ -23,7 +23,7 @@ void FCA_pre_link();
 void FCA_post_link(bool firstArg);
 void FCA_form_hidden_args(bool canskin);
 void FCA_my_url(bool isDownload);
-void FCA_sep_link(char *path, char *prefx);
+void FCA_sep_link(char *path, char *prefx, bool isDir);
 void FCA_smb_sep_link(char *path);
 
 #endif	/* _FCA_HTML_SKIN_ */

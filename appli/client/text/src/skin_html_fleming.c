@@ -214,7 +214,7 @@ printf("   </select>&nbsp;<input type='submit' value='ok'>
 </table>
 <center>
  <h2>
-  ");FCA_sep_link(path, "");printf("
+  ");FCA_sep_link(path, "", true);printf("
  </h2>
 </center>
 </form>
@@ -508,7 +508,7 @@ bool FCA_htmlfl_pre_path(const char *domain, const char *path, long int state, b
 			if(isSamba)
 				FCA_smb_sep_link(all);
 			else
-				FCA_sep_link(all, dom);
+				FCA_sep_link(all, dom, isDir);
 			if(all)
 				free(all);
 		}
