@@ -72,7 +72,7 @@ const FCA_Tvar FCA_VARS[]= {
 	{"sort_by",	"sort method for directory listings",		"name/size/date",NULL},
 	{"log",		"if we must log",				"on/off",	FCA_upd_log},
 	{"log_file",	"the file used to log",				"filename",	FCA_upd_logfile},
-	{"log_level",	"1=downloads 2=browsing 3=commands 4=all",	"1/2/3/4",	NULL},
+	{"log_level",	"1=find 2=downloads 3=browsing 4=arguments 5=cgi 6=commands 7=all",	"1-6",	NULL},
 	FCA_SKIN_VARS
 	{NULL,		NULL,						NULL,		NULL}
 };
@@ -98,7 +98,7 @@ const char *FCA_VAR_VALUES[][FCA_MAX_POSS_VALUES]= {
 	{"name", "size", "date", NULL},
 	{"on","off",NULL},
 	{"", "ffss-client.log", NULL},
-	{"1", "2", "3", "4", NULL},
+	{"1", "2", "3", "4", "5", "6", "7", NULL},
 	FCA_SKIN_VAR_VALUES
 	{NULL}
 };
@@ -276,7 +276,7 @@ void FCA_exit(int code)
 {
 	if(!FCA_exiting) {
 		if(FCA_logf) {
-			FCA_printlog("stopping logging");
+			FCA_printlog("logging stopped");
 			SU_CloseLogFile(FCA_logf);
 			FCA_logf=NULL;
 		}
@@ -1335,7 +1335,7 @@ void FCA_upd_log()
 {
 	if(FCA_logf) {
 		if(FCA_VAR_IS_ON(FCA_log))
-			FCA_printlog("stopping logging");
+			FCA_printlog("logging stopped");
 		SU_CloseLogFile(FCA_logf);
 	}
 	if(FCA_VAR_IS_ON(FCA_log)) {
@@ -1345,7 +1345,7 @@ void FCA_upd_log()
 			sprintf(FCA_log, "off");
 		} else {
 			FFSS_PrintDebug(5, "(client) logfile opened\n");
-			FCA_printlog("starting logging");
+			FCA_printlog("starting to log");
 		}
 	}		
 	
@@ -1361,7 +1361,7 @@ void FCA_upd_logfile()
 			sprintf(FCA_log, "off");
 		} else {
 			FFSS_PrintDebug(5, "(client) logfile reopen\n");
-			FCA_printlog("restarting logging");
+			FCA_printlog("restarting to log");
 		}
 	}
 }

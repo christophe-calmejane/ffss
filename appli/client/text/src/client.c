@@ -147,29 +147,42 @@ void FCA_process_args()
 {
 	char buf[6+FFSS_MAX_PATH_LENGTH];
 
-	if( !FCA_args.can_ansi )
+	if( !FCA_args.can_ansi ) {
+		if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
+			FCA_printlog("(arg) ansi disabled");
 		sprintf(FCA_can_ansi, "off");
+	}
 	if( FCA_args.dbg_level!=NULL ) {	/* debug level */
 		if(FCA_args.dbg_level[0]-'0'<0 || FCA_args.dbg_level[0]-'0'>6)
 			FCA_print_warning("debug option: level must be between 0 and 6");
 		else {
 			N_DebugLevel=FCA_args.dbg_level[0]-'0';
 			sprintf(FCA_debuglevel, "%d", N_DebugLevel);
+			if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
+				FCA_printlog("(arg) debuglevel set to %d", N_DebugLevel);
 		}
 	}
-	if( FCA_args.master!=NULL )
-		sprintf(FCA_master, FCA_args.master);
+	if( FCA_args.master!=NULL ) {
+		snprintf(FCA_master, FCA_VAR_MAX-1, "%s", FCA_args.master);
+		if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
+			FCA_printlog("(arg) master is %s", FCA_master);
+	}
 	if( FCA_args.skin!=NULL ) {
-		sprintf(FCA_skin_name, FCA_args.skin);
+		snprintf(FCA_skin_name, FCA_VAR_MAX-1, "%s", FCA_args.skin);
 		FCA_upd_skin();
+		if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
+			FCA_printlog("(arg) skin is %s", FCA_skin_name);
 	}
 	buf[0]='\0';
 	if( FCA_args.machToSh!=NULL )		/* get shares */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "ls /$/%s", FCA_args.machToSh);
 	else if( FCA_args.dirToLs!=NULL )	/* list a dir */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "ls %s", FCA_args.dirToLs);
-	else if( FCA_args.cmd!=NULL )	 	/* exec a command */
+	else if( FCA_args.cmd!=NULL ) {	 	/* exec a command */
 		snprintf(buf, 5+FFSS_MAX_PATH_LENGTH, "%s", FCA_args.cmd);
+		if(FCA_loglevel>=FCA_ARGUMENTS_LOGLEVEL)
+			FCA_printlog("(arg) running %s", FCA_args.cmd);
+	}
 	if(buf[0]!='\0') {
 		FCA_command=buf;
 		FCA_run_once(false);
@@ -240,7 +253,8 @@ printf("</html>\n");
 exit(0);
 */
 		/* fun to log user agent */
-	FCA_printlog("client : %s", getenv("HTTP_USER_AGENT"));
+	if(FCA_loglevel>=FCA_CGI_LOGLEVEL)
+		FCA_printlog("client : %s", getenv("HTTP_USER_AGENT"));
 	FCA_run_once(dw);
 	FCA_exit(0);
 }

@@ -51,9 +51,18 @@
 #define FCA_sort_by		FCA_env[12]
 #define FCA_log			FCA_env[13]
 #define FCA_logfile		FCA_env[14]
-#define FCA_loglevel		FCA_env[15]
+#define FCA_loglevel		FCA_env[15][0]
 	/* modify this each time you add a variable */
 #define FCA_skin_env_index	16
+
+#define FCA_FIND_LOGLEVEL	'1'
+#define FCA_SHELL_LOGLEVEL	'2'
+#define FCA_DOWNLOADS_LOGLEVEL	'3'
+#define FCA_BROWSING_LOGLEVEL	'4'
+#define FCA_ARGUMENTS_LOGLEVEL	'5'
+#define FCA_CGI_LOGLEVEL	'6'
+#define FCA_COMMANDS_LOGLEVEL	'7'
+#define FCA_ALL_LOGLEVEL	'8'
 
 
 typedef struct
