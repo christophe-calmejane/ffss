@@ -2243,11 +2243,12 @@ FS_PPlugin FS_LoadPlugin(const char Name[])
     return NULL;
   }
   Pl->Handle = handle;
+  Pl->Path = strdup(Name);
   SU_SEM_WAIT(FS_SemPlugin);
   FS_Plugins = SU_AddElementHead(FS_Plugins,(void *)Pl);
   SU_SEM_POST(FS_SemPlugin);
 #ifdef DEBUG
-  printf("Successfully loaded %s\n",Pl->Name);
+  printf("Plugin successfully loaded : %s\n",Pl->Path);
 #endif /* DEBUG */
 #endif /* PLUGINS */
   return Pl;
@@ -2261,8 +2262,6 @@ void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
   int i;
 
   Fonc = (void(*)(void))SU_DL_SYM(Handle,"Plugin_UnInit");
-  if(Fonc != NULL)
-    Fonc();
   SU_DL_CLOSE(Handle);
   SU_SEM_WAIT(FS_SemPlugin);
   Ptr = FS_Plugins;
@@ -2271,9 +2270,11 @@ void FS_UnLoadPlugin(SU_DL_HANDLE Handle)
   {
     if(Handle == ((FS_PPlugin)Ptr->Data)->Handle)
     {
-      if(((FS_PPlugin)Ptr->Data)->Name != NULL)
-        free(((FS_PPlugin)Ptr->Data)->Name);
-      free(Ptr->Data);
+      if(((FS_PPlugin)Ptr->Data)->Path != NULL)
+        free(((FS_PPlugin)Ptr->Data)->Path);
+      /* Do not free anything else.... freed by the plugin itself */
+      if(Fonc != NULL)
+        Fonc();
       FS_Plugins = SU_DelElementPos(FS_Plugins,i);
       break;
     }

@@ -5,8 +5,6 @@
 
 #include "server.h"
 
-#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
-
 void FS_MainThread(void)
 {
   while(1)

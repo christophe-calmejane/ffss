@@ -8,6 +8,7 @@
 #define FS_PLUGIN_EXPORT
 #else /* !__unix__ */
 #define FS_PLUGIN_EXPORT __declspec(dllexport)
+#define FFSS_REGISTRY_PATH "HKEY_CURRENT_USER\\Software\\FFSS\\Server\\"
 #endif /* __unix__ */
 
 #ifdef USE_CRYPT
@@ -176,9 +177,10 @@ typedef struct
 
 typedef struct
 {
-  char *Name;
-  char *Author;
-  char *Version;
+  char *Path;      /* Set and freed by server */
+  char *Name;      /* Set and freed by plugin */
+  char *Author;    /* Set and freed by plugin */
+  char *Version;   /* Set and freed by plugin */
   SU_DL_HANDLE Handle;
   FFSS_TServerCallbacks CB;
   bool (*OnCheckConfConn)(SU_PClientSocket Client);
