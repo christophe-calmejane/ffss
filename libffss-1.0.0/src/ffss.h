@@ -936,6 +936,7 @@ extern FILE *FFSS_LogFile;
 #endif /* __unix__ */
 #else /* DEBUG */
 #define SYSLOG_FN(x,y) printf(y)
+extern bool N_SyslogOn;
 #endif /* DEBUG */
 
 #ifdef FFSS_CONTEXT

@@ -327,11 +327,18 @@ unsigned char FFSS_GetWordTags(const char *Word)  /* <-- word to check for exten
   return FFSS_FILE_TAGS_NOTHING;
 }
 
+#ifdef DEBUG
+bool N_SyslogOn = true;
+#endif
 void FFSS_PrintSyslog(int Level,char *Txt, ...)
 {
   va_list argptr;
   char Str[4096];
 
+#ifdef DEBUG
+  if(!N_SyslogOn)
+    return;
+#endif
   va_start(argptr,Txt);
 #ifdef _WIN32
   _vsnprintf(Str,sizeof(Str),Txt,argptr);
