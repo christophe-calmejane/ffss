@@ -145,7 +145,7 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	FCA_Ptrans = NULL;
 	FCA_dw_amount=0;
 	FCA_dw_size=size;
-	time(&FCA_dw_begin);
+	FCA_dw_begin=time(NULL);
 	start=0;
 	FCA_dw_file=strrchr(RemotePath, '/');
 	if(!FCA_dw_file || !(FCA_dw_file++))
@@ -1268,7 +1268,6 @@ void FCA_dw_dir(char *path, char *dir, char *dest)
 				if(! FCA_posted) {
 					FFSS_PrintDebug(5, "(client) waiting transfert of %s\n",E->Name);
 					FCA_sem_wait_no_timeout();
-					FCA_progr_bar();
 					FFSS_PrintDebug(5, "(client) transfert ended for file %s\n",E->Name);
 				}
 			}

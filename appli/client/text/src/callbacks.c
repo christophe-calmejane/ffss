@@ -108,8 +108,13 @@ void FCA_OnTransfertFailed(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Err
 
 void FCA_OnTransfertSuccess(FFSS_PTransfer FT,bool Download)
 {
+	time_t end;
+	
 	FFSS_PrintDebug(3, "(client) download ended without any error\n");
-	FCA_print_dw_ok(FCA_dw_file, 12.2);
+	end=time(NULL);
+	if(end-FCA_dw_begin==0)
+		end++;
+	FCA_print_dw_ok(FCA_dw_file, FCA_dw_amount/(end-FCA_dw_begin));
 	FCA_Ptrans=NULL;
 
 /*FFSS_PrintDebug(3, "(client) sleeeeeeeep\n");

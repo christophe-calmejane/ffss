@@ -570,6 +570,7 @@ bool FCA_get_func(char *rmFile, bool toDisk)
 	char *domain, *machine, *share, *dir, *IP;
 	SU_PList dom, serv, Ps;
 	int code;
+	time_t t1, t2;
     
 	if(rmFile==NULL || *rmFile=='\0')
 		return false;
@@ -651,7 +652,9 @@ or get /$/none/127.0.0.1/tmp/toto/
 				*(share-1)='/';
 				if(FCA_loglevel>=FCA_DOWNLOADS_LOGLEVEL)
 					FCA_printlog("downloading directory %s in share %s of machine %s (%s) to %s", dir-1, share, machine, domain, to);
+				t1=time(NULL);
 				FCA_dw_dir(tgt,dir-1, to);
+				t2=time(NULL);
 				FCA_print_cmd_ok("Download sucessful");
 				ding(); /* dong */
 			} else {
@@ -678,7 +681,6 @@ or get /$/none/127.0.0.1/tmp/toto/
 			else if(!code) {
 				if(!FCA_posted)
 					FCA_sem_wait_no_timeout();
-				FCA_progr_bar();
 				FCA_quiet=false;
 				return false;
 			}

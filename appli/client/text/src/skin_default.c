@@ -8,6 +8,7 @@
 
 #include <stdarg.h>
 #include <ffss.h>
+#include <time.h>
 
 #include "display.h"
 #include "skin.h"
@@ -420,10 +421,11 @@ void FCA_def_post_file_exec(bool isName)
 void FCA_def_progr_bar()
 {
 	int i, s;
+	time_t t2;
 	
 		/* download progress bar */
 	FCA_progr++;
-	if(FCA_progr>50) {
+	if(FCA_progr>100) {
 		FCA_progr=0;
 		if( FCA_VAR_IS_ON(FCA_can_ansi) ) {
 				/* hardcoded size: 80 caracters */
@@ -441,7 +443,12 @@ void FCA_def_progr_bar()
 			printf("]");
 			FCA_ansi_chs(0);
 			printf(" %d%% ", (int)(100*FCA_dw_amount/FCA_dw_size));
-			FCA_print_size(12.3,"%4d");
+			t2=time(NULL);
+			
+			if(t2-FCA_dw_begin==0)
+				t2++;
+			
+			FCA_print_size((int)(FCA_dw_amount/(t2-FCA_dw_begin)),"%4d");
 			printf("B/s");
 			FCA_ansi_clrl();
 		} else
@@ -454,8 +461,12 @@ void FCA_def_progr_bar()
 void FCA_def_dw_ok(char *file, float rate)
 {
 	printf("\r ");
+	FCA_ansi_chs(35);FCA_ansi_chs(1);
 	FCA_print_size((int)rate,"%4d");
-	printf("B/s  %s", file);
+	printf("B/s  ");
+	FCA_ansi_chs(0);FCA_ansi_chs(32);
+	printf("%s", file);
+	FCA_ansi_chs(0);
 	FCA_ansi_clrl();
 	printf("\n");
 }
