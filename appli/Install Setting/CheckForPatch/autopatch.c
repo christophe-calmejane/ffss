@@ -7,14 +7,23 @@
   <FFSS version patch applies to> <ID of file to patch> <Version of patched file> <File Name>
 */
 
-#define FFSS_CHECK_FILES_SERVER        1
-#define FFSS_CHECK_FILES_MANAGER       2
-#define FFSS_CHECK_FILES_AUTO_CHECK    3
-#define FFSS_CHECK_FILES_UPDATER       4
-#define FFSS_CHECK_FILES_WINFFSS       5
-#define FFSS_CHECK_FILES_TRAYCONN      6
-#define FFSS_CHECK_FILES_LOG           7
-#define FFSS_CHECK_FILES_COUNT         8
+#define FFSS_CHECK_FILES_AUTO_CHECK    1
+#define FFSS_CHECK_FILES_UPDATER       2
+
+#define FFSS_CHECK_FILES_WINFFSS       3
+
+#define FFSS_CHECK_FILES_SERVER        4
+#define FFSS_CHECK_FILES_MANAGER       5
+#define FFSS_CHECK_FILES_SHAREMAN      6
+#define FFSS_CHECK_FILES_FFSSDKILLER   7
+
+#define FFSS_CHECK_FILES_TRAYCONN      8
+#define FFSS_CHECK_FILES_LOG           9
+#define FFSS_CHECK_FILES_CONFCONN      10
+#define FFSS_CHECK_FILES_IPFILTER      11
+
+#define FFSS_CHECK_FILES_COUNT         12
+
 
 #define FFSS_CHECK_URL_BASE "http://ffss.fr.st/"
 #define FFSS_CHECK_URL_PATCHES FFSS_CHECK_URL_BASE "CurrentPatches"
@@ -32,7 +41,24 @@ typedef struct
   bool KillServer;
 } FCU_TFiles;
 
-FCU_TFiles FCU_Files[FFSS_CHECK_FILES_COUNT] = {{"",false},{"Server\\ffssd.exe",true},{"Server\\FFSS_Share.exe",false},{"AutoCheck.exe",false},{"ffssupdater.exe",false},{"Client\\winffss.exe",false},{"Server\\Plugins\\TrayConn.dll",true},{"Server\\Plugins\\Log.dll",true}};
+FCU_TFiles FCU_Files[FFSS_CHECK_FILES_COUNT] = {{"",false},
+                                                {"AutoCheck.exe",false},
+                                                {"ffssupdater.exe",false},
+
+                                                {"Client\\winffss.exe",false},
+
+                                                {"Server\\ffssd.exe",true},
+                                                {"Server\\FFSS_Share.exe",false},
+                                                {"Server\\ShareMan.exe",false},
+                                                {"Server\\ffssdkiller.exe",false},
+
+                                                {"Server\\Plugins\\TrayConn.dll",true},
+                                                {"Server\\Plugins\\Log.dll",true},
+                                                {"Server\\Plugins\\ConfConn.dll",true},
+                                                {"Server\\Plugins\\ipfilter.dll",true}
+
+                                                };
+
 int CurrentIdx = 0; /* Idx of file to patch */
 char *CurrentFileVersion = NULL; /* New file version to set in registry */
 HINSTANCE AP_hInstance;
