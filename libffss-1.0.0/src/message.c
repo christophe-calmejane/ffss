@@ -285,6 +285,90 @@ bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const ch
   return (resp == pos);
 }
 
+/* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
+/* Sends a RECURSIVE DIRECTORY LISTING ANSWER message to a client     */
+/*  Client : The socket of the client                                 */
+/*  Path : The path of the directory IN the share                     */
+/*  Buffer : The buffer containing the nb of entries, and the entries */
+/*  BufSize : The size of the buffer                                  */
+/*  Compression : The type of compression to be applied to Buffer     */
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression)
+{
+  char *msg;
+  long int len,size,pos;
+  int resp;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
+  long int CompSize;
+
+  context;
+  if((Buffer == NULL) || (BufSize == 0))
+    return true;
+  CompSize = BufSize*1.05+6000;
+  size = sizeof(FFSS_Field)*FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER + FFSS_MAX_PATH_LENGTH+1 + CompSize;
+  msg = (char *) malloc(size);
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_REC_DIR_LISTING_ANSWER);
+
+  len = strlen(Path)+1;
+  if(len > FFSS_MAX_PATH_LENGTH)
+    len = FFSS_MAX_PATH_LENGTH;
+  pos = FFSS_PackString(msg,pos,Path,len);
+
+  pos = FFSS_PackField(msg,pos,Compression);
+  switch(Compression)
+  {
+    case FFSS_COMPRESSION_NONE :
+      memcpy(msg+pos,Buffer,BufSize);
+      pos += BufSize;
+      break;
+#ifndef DISABLE_ZLIB
+    case FFSS_COMPRESSION_ZLIB :
+      if(!FFSS_CompresseZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
+      {
+        FFSS_PrintDebug(1,"Error in Z compression routine : Buffer too small ?\n");
+        free(msg);
+        return false;
+      }
+      pos += CompSize;
+      break;
+#endif /* !DISABLE_ZLIB */
+#ifdef HAVE_BZLIB
+    case FFSS_COMPRESSION_BZLIB :
+      if(!FFSS_CompresseBZlib((char *)Buffer,BufSize,msg+pos,&CompSize))
+      {
+        FFSS_PrintDebug(1,"Error in BZ compression routine : Buffer too small ?\n");
+        free(msg);
+        return false;
+      }
+      pos += CompSize;
+      break;
+#endif
+    default :
+      FFSS_PrintDebug(1,"Unknown compression type : %d\n",Compression);
+      free(msg);
+      return false;
+  }
+
+  FFSS_PackField(msg,0,pos);
+  FFSS_PrintDebug(3,"Sending Recursive Directory listing answer message (\"%s\") to client\n",Path);
+  FD_ZERO(&rfds);
+  FD_SET(Client,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Client+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    free(msg);
+    FFSS_PrintDebug(3,"Sending Recursive Directory listing message timed out !\n");
+    return false;
+  }
+  resp = send(Client,msg,pos,SU_MSG_NOSIGNAL);
+  free(msg);
+  return (resp == pos);
+}
+
 /* FS_SendMessage_InitXFer Function                        */
 /* Sends an INIT XFER message to a client                  */
 /*  Client : The socket of the client                      */
@@ -911,6 +995,44 @@ bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[])
   if(!retval)
   {
     FFSS_PrintDebug(3,"Sending Directory listing message timed out !\n");
+    return false;
+  }
+  resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);
+  return (resp != SOCKET_ERROR);
+}
+
+/* FC_SendMessage_RecursiveDirectoryListing Function       */
+/* Sends a RECURSIVE DIRECTORY LISTING message to a server */
+/*  Server : The Server's structure we are connected to    */
+/*  Path : The path we request a listing                   */
+bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[])
+{
+  char msg[sizeof(FFSS_Field)*FFSS_MESSAGESIZE_REC_DIR_LISTING + FFSS_MAX_PATH_LENGTH+1];
+  long int pos;
+  int resp,len;
+  fd_set rfds;
+  struct timeval tv;
+  int retval;
+
+  context;
+  if(Server == NULL)
+    return true;
+  pos = sizeof(FFSS_Field);
+  pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_REC_DIR_LISTING);
+  len = strlen(Path)+1;
+  if(len > FFSS_MAX_PATH_LENGTH)
+    len = FFSS_MAX_PATH_LENGTH;
+  pos = FFSS_PackString(msg,pos,Path,len);
+  FFSS_PackField(msg,0,pos);
+  FFSS_PrintDebug(3,"Sending Recursive Directory Listing message to server for %s\n",Path);
+  FD_ZERO(&rfds);
+  FD_SET(Server->sock,&rfds);
+  tv.tv_sec = FFSS_TIMEOUT_TCP_MESSAGE;
+  tv.tv_usec = 0;
+  retval = select(Server->sock+1,NULL,&rfds,NULL,&tv);
+  if(!retval)
+  {
+    FFSS_PrintDebug(3,"Sending Recursive Directory listing message timed out !\n");
     return false;
   }
   resp = send(Server->sock,msg,pos,SU_MSG_NOSIGNAL);

@@ -482,6 +482,82 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         ret_val = FFSS_CB.CCB.OnDirectoryListingAnswer(Server,str,val,Ptr);
       SU_FreeListElem(Ptr);
       break;
+    case FFSS_MESSAGE_REC_DIR_LISTING_ANSWER :
+      str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+      val2 = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
+      if(str == NULL)
+      {
+        FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr));
+        ret_val = false;
+        break;
+      }
+      switch (val2)
+      {
+        case FFSS_COMPRESSION_NONE:
+          u_pos = pos;
+          break;
+#ifndef DISABLE_ZLIB
+        case FFSS_COMPRESSION_ZLIB:
+          u_Buf = FFSS_UncompresseZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted Z compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr));
+            ret_val = false;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif /* !DISABLE_ZLIB */
+#ifdef HAVE_BZLIB
+        case FFSS_COMPRESSION_BZLIB:
+          u_Buf = FFSS_UncompresseBZlib(Buf+pos,Len-sizeof(FFSS_Field)*3-(strlen(str)+1),&u_Len);
+          if(u_Buf == NULL)
+          {
+            FFSS_PrintSyslog(LOG_WARNING,"Corrupted BZ compressed buffer (%s) ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr));
+            ret_val = false;
+            break;
+          }
+          free_it = true;
+          u_pos = 0;
+          break;
+#endif
+        default:
+          FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %ld ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),val2);
+          ret_val = false;
+          break;
+      }
+      if(!ret_val)
+        break;
+      val = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+      Ptr = NULL;
+      for(i=0;i<val;i++)
+      {
+        Ent = (FC_PEntry) malloc(sizeof(FC_TEntry));
+        memset(Ent,0,sizeof(FC_TEntry));
+        str2 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        val2 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        lval = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        val4 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+        if(str2 == NULL)
+        {
+          FFSS_PrintSyslog(LOG_WARNING,"One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr));
+          free (Ent);
+          SU_FreeListElem(Ptr);
+          ret_val = false;
+          break;
+        }
+        Ent->Name = str2;
+        Ent->Flags = val2;
+        Ent->Size = lval;
+        Ent->Stamp = val4;
+        Ptr = SU_AddElementTail(Ptr,Ent);
+      }
+      FFSS_PrintDebug(3,"Received a recursive directory listing answer (%d entries)\n",val);
+      if(FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer != NULL)
+        ret_val = FFSS_CB.CCB.OnRecursiveDirectoryListingAnswer(Server,str,val,Ptr);
+      SU_FreeListElem(Ptr);
+      break;
     case FFSS_MESSAGE_INIT_XFER :
       val = FFSS_UnpackField(Buf,Buf+pos,Len,&pos);
       str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
@@ -558,6 +634,8 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
         FFSS_CB.CCB.OnStrmWriteAnswer(Server,val,val2);
       break;
     default:
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
       FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),Type);
       ret_val = false;
   }
@@ -617,14 +695,18 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(1,"Error on TCP port of the client (SOCKET_ERROR : %d)\n",errno);
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
-	FFSS_CB.CCB.OnEndTCPThread(Client);
+        FFSS_CB.CCB.OnEndTCPThread(Client);
       free(Buf);
       SU_END_THREAD(NULL);
     }
     else if(res == 0)
     {
+      if(FFSS_CB.CCB.OnError != NULL)
+        FFSS_CB.CCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       SU_FreeCS(Client);
       if(FFSS_CB.CCB.OnEndTCPThread != NULL)
         FFSS_CB.CCB.OnEndTCPThread(Client);
@@ -639,6 +721,8 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       if(len < 5)
       {
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
+        if(FFSS_CB.CCB.OnError != NULL)
+          FFSS_CB.CCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
         SU_FreeCS(Client);
         if(FFSS_CB.CCB.OnEndTCPThread != NULL)
           FFSS_CB.CCB.OnEndTCPThread(Client);
@@ -655,7 +739,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       else
       {
         if(!FC_AnalyseTCP(Client,Buf,Size))
-	{
+        {
           SU_FreeCS(Client);
           if(FFSS_CB.CCB.OnEndTCPThread != NULL)
             FFSS_CB.CCB.OnEndTCPThread(Client);

@@ -284,6 +284,25 @@ Detail of the protocol (Version 1):
     12 : File already existing
   -> If no error then the server send an FFSS_ERROR_NO_ERROR
 
+ * Recursive folders listing request message (Client->Server connecte) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 23 (Recursive folders listing request)
+   ZStr : Path of the repertoire in the share
+  ->  Awaited error messages
+    5 : Unknown file or folder
+    6 : Refused access
+
+ * Recursive folder listing request message (Server->Client connecte) (TCP) :
+   DWord : Size of the message
+   DWord : Message type = 24 (Recursive folder listing)
+   ZStr : Path of the folder in the share
+   DWord : Compression type (0=Nil 1=??)(If compressing then every buffer in the index's connection will be compressed)
+   DWord : Number of entries
+    ZStr : Path of filename in the share
+    DWord : Flags of the file (see below)
+    DWord : Size of the file
+    DWord : TimeStamp of the file
+
 * Deconnection messages (Client->Server connected) (TCP) :
    DWord : Size of the message
    DWord : Message type = 100 (deconnection query)

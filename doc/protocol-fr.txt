@@ -39,7 +39,7 @@ Le master n'envoie en broadcast des messages d'etats que toutes les x secondes, 
 Si le master recoie un message de type recherche ala friandise, il envoie la requete a ses co-masters, et attends les reponses avant de repondre au client.
 
 
-Detail du protocole (Version 0x0010003) :
+Detail du protocole (Version 0x0010005) :
 ---------------------------------
  * Message d'etat (Serveur->Master 695) (UDP) :
    DWord : Taille du message
@@ -282,6 +282,25 @@ Detail du protocole (Version 0x0010003) :
     6 : Acces refuse
     12 : Fichier deja existant
   -> Si aucune erreur, le serveur envoie un FFSS_ERROR_NO_ERROR
+
+ * Message de demande de listing recursif d'un repertoire (Client->Serveur connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 23 (demande de listing recursif d'un repertoire)
+   ZStr : Path du repertoire dans le partage
+  -> Messages d'erreur possibles
+    5 : Fichier ou repertoire inconnu
+    6 : Acces refuse
+
+ * Message de listing recursif du repertoire courant (Serveur->Client connecte) (TCP) :
+   DWord : Taille du message
+   DWord : Type de message = 24 (listing recursif d'un repertoire)
+   ZStr : Path du repertoire dans le partage
+   DWord : Type de compression (0=Néant 1=??) (Si compression, tout ce qui suit est compresse, la taille est connue par celle du paquet)
+   DWord : Nombre d'entrees
+    ZStr : Path du fichier dans le share
+    DWord : Flags du fichier (voir flags des fichiers ci-dessous)
+    QWord : Taille du fichier
+    DWord : TimeStamp du fichier
 
 * Message de deconnexion (Client->Server connecte) (TCP) :
    DWord : Taille du message

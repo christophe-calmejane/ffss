@@ -66,7 +66,7 @@
 #define FFSS_COPYRIGHT "FFSS library v" FFSS_VERSION " (c) Ze KiLleR / SkyTech 2001'02"
 #define FFSS_FTP_SERVER "FFSS FTP compatibility v" FFSS_VERSION
 
-#define FFSS_PROTOCOL_VERSION                  0x0010004
+#define FFSS_PROTOCOL_VERSION                  0x0010005
 #define FFSS_PROTOCOL_VERSION_LEAST_COMPATIBLE 0x0010004
 
 #define FFSS_MASTER_PORT 10001
@@ -92,7 +92,7 @@
 #define FFSS_IP_TYPE FFSS_IP_V4
 
 #define FFSS_MAX_SERVERNAME_LENGTH 15
-#define FFSS_MAX_SERVEROS_LENGTH 15
+#define FFSS_MAX_SERVEROS_LENGTH 10
 #define FFSS_MAX_SERVERCOMMENT_LENGTH 50
 #define FFSS_MAX_DOMAIN_LENGTH 20
 #define FFSS_MAX_SHARENAME_LENGTH 20
@@ -164,6 +164,8 @@
 #define FFSS_MESSAGE_COPY                      20
 #define FFSS_MESSAGE_DELETE                    21
 #define FFSS_MESSAGE_MKDIR                     22
+#define FFSS_MESSAGE_REC_DIR_LISTING           23
+#define FFSS_MESSAGE_REC_DIR_LISTING_ANSWER    24
 #define FFSS_MESSAGE_DOMAINS_LISTING           30
 #define FFSS_MESSAGE_DOMAINS_LISTING_ANSWER    31
 #define FFSS_MESSAGE_SEARCH                    50
@@ -215,6 +217,9 @@
 #define FFSS_MESSAGESIZE_COPY                       2
 #define FFSS_MESSAGESIZE_DELETE                     2
 #define FFSS_MESSAGESIZE_MKDIR                      2
+#define FFSS_MESSAGESIZE_REC_DIR_LISTING            2
+#define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER     4
+#define FFSS_MESSAGESIZE_REC_DIR_LISTING_ANSWER_2   3
 #define FFSS_MESSAGESIZE_DOMAINS_LISTING            2
 #define FFSS_MESSAGESIZE_DOMAINS_LISTING_ANSWER     3
 #define FFSS_MESSAGESIZE_SEARCH                     4
@@ -280,6 +285,8 @@
 #define FFSS_ERROR_RESEND_LAST_UDP           19
 #define FFSS_ERROR_BAD_SEARCH_REQUEST        20
 #define FFSS_ERROR_TOO_MANY_ANSWERS          21
+#define FFSS_ERROR_SOCKET_ERROR              22
+#define FFSS_ERROR_ATTACK                    23
 #define FFSS_ERROR_NOT_IMPLEMENTED          100
 #define FFSS_ERROR_NO_ERROR                 666
 
@@ -403,6 +410,7 @@ typedef struct
   bool (*OnCheckConnection)(SU_PClientSocket Client);
   bool (*OnShareConnection)(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions);
   bool (*OnDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
+  bool (*OnRecursiveDirectoryListing)(SU_PClientSocket Client,const char Path[]); /* Path IN the share (without share name) */
   bool (*OnDownload)(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,int Port); /* Path IN the share (without share name) */
   bool (*OnUpload)(SU_PClientSocket Client,const char Path[],FFSS_LongField Size,int Port); /* Path IN the share (without share name) */
   bool (*OnRename)(SU_PClientSocket Client,const char Path[],const char NewPath[]); /* Path IN the share (without share name) */
@@ -459,6 +467,7 @@ typedef struct
   void (*OnBeginTCPThread)(SU_PClientSocket Server);
   bool (*OnError)(SU_PClientSocket Server,int Code,const char Descr[]);
   bool (*OnDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
+  bool (*OnRecursiveDirectoryListingAnswer)(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries); /* FC_PEntry */
   void (*OnEndTCPThread)(SU_PClientSocket Server); /* Last callback raised before ending thread and freeing Server struct */
   void (*OnIdleTimeout)(SU_PClientSocket Server);
   void (*OnTransferFailed)(FFSS_PTransfer FT,FFSS_Field ErrorCode,const char Error[],bool Download);
@@ -676,6 +685,15 @@ bool FS_SendMessage_Error(int Client,FFSS_Field Code,const char Descr[]);
 /*  Compression : The type of compression to be applied to Buffer     */
 bool FS_SendMessage_DirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
 
+/* FS_SendMessage_RecursiveDirectoryListingAnswer Function            */
+/* Sends a RECURSIVE DIRECTORY LISTING ANSWER message to a client     */
+/*  Client : The socket of the client                                 */
+/*  Path : The path of the directory IN the share                     */
+/*  Buffer : The buffer containing the nb of entries, and the entries */
+/*  BufSize : The size of the buffer                                  */
+/*  Compression : The type of compression to be applied to Buffer     */
+bool FS_SendMessage_RecursiveDirectoryListingAnswer(int Client,const char Path[],const char *Buffer,long int BufSize,int Compression);
+
 /* FS_SendMessage_InitXFer Function                        */
 /* Sends an INIT XFER message to a client                  */
 /*  Client : The socket of the client                      */
@@ -754,6 +772,12 @@ SU_PClientSocket FC_SendMessage_ShareConnect(const char Server[],const char Shar
 /*  Server : The Server's structure we are connected to */
 /*  Path : The path we request a listing                */
 bool FC_SendMessage_DirectoryListing(SU_PClientSocket Server,const char Path[]);
+
+/* FC_SendMessage_RecursiveDirectoryListing Function       */
+/* Sends a RECURSIVE DIRECTORY LISTING message to a server */
+/*  Server : The Server's structure we are connected to    */
+/*  Path : The path we request a listing                   */
+bool FC_SendMessage_RecursiveDirectoryListing(SU_PClientSocket Server,const char Path[]);
 
 /* FC_SendMessage_Download Function                                 */
 /* Sends a DOWNLOAD message to a server                             */

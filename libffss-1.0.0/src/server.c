@@ -8,7 +8,7 @@ bool FS_FTP;
 SU_PServerInfo FS_SI_UDP=NULL,FS_SI_OUT_UDP=NULL,FS_SI_TCP=NULL,FS_SI_TCP_FTP=NULL;
 SU_THREAD_HANDLE FS_THR_UDP,FS_THR_TCP,FS_THR_TCP_FTP;
 
-char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers"};
+char *FFSS_ErrorTable[]={"Nothing","Protocol version mismatch","Resource not available","Wrong login/password, or not specified","Too many connections","File or directory not found","Access denied","Not enough space","Cannot connect","Internal error","Too many active transfers","Directory not empty","File already exists","Idle time out","Quiet mode","Share is disabled","Ejected from share","Your message will overflow my receipt buffer","Requested transfer mode not supported","Please resend last UDP message","Bad search request","Too many answers","Socket Error","Possible DoS attack"};
 
 void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 {
@@ -145,6 +145,18 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
         }
         if(FFSS_CB.SCB.OnDirectoryListing != NULL)
           ret_val = FFSS_CB.SCB.OnDirectoryListing(Client,str);
+        break;
+      case FFSS_MESSAGE_REC_DIR_LISTING :
+        FFSS_PrintDebug(3,"Received a recursive directory listing message from client\n");
+        str = FFSS_UnpackString(Buf,Buf+pos,Len,&pos);
+        if(str == NULL)
+        {
+          FFSS_PrintSyslog(LOG_WARNING,"FFSS_MESSAGE_REC_DIR_LISTING : One or many fields empty, or out of buffer (%s) ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr));
+          ret_val = false;
+          break;
+        }
+        if(FFSS_CB.SCB.OnRecursiveDirectoryListing != NULL)
+          ret_val = FFSS_CB.SCB.OnRecursiveDirectoryListing(Client,str);
         break;
       case FFSS_MESSAGE_DOWNLOAD :
         FFSS_PrintDebug(3,"Received a download message from client\n");
@@ -304,6 +316,8 @@ bool FS_AnalyseTCP(SU_PClientSocket Client,char Buf[],long int Len,bool *ident)
           FFSS_CB.SCB.OnStrmSeek(Client,val,val2,lval);
         break;
       default :
+        if(FFSS_CB.SCB.OnError != NULL)
+          FFSS_CB.SCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
         FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client->SAddr.sin_addr),Type);
         ret_val = false;
     }
@@ -599,6 +613,8 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     if(res == SOCKET_ERROR)
     {
       FFSS_PrintDebug(1,"Error on TCP port of the server (SOCKET_ERROR : %d)\n",errno);
+      if(FFSS_CB.SCB.OnError != NULL)
+        FFSS_CB.SCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
       SU_FreeCS(Client);
@@ -607,6 +623,8 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
     }
     else if(res == 0)
     {
+      if(FFSS_CB.SCB.OnError != NULL)
+        FFSS_CB.SCB.OnError(Client,FFSS_ERROR_SOCKET_ERROR,FFSS_ErrorTable[FFSS_ERROR_SOCKET_ERROR]);
       if(FFSS_CB.SCB.OnEndTCPThread != NULL)
         FFSS_CB.SCB.OnEndTCPThread();
       SU_FreeCS(Client);
@@ -621,6 +639,8 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP,User)
       if(len < 5)
       {
         FFSS_PrintSyslog(LOG_WARNING,"Length of the message is less than 5 (%d) (%s) ... DoS attack ?\n",len,inet_ntoa(Client->SAddr.sin_addr));
+        if(FFSS_CB.SCB.OnError != NULL)
+          FFSS_CB.SCB.OnError(Client,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK]);
         if(FFSS_CB.SCB.OnEndTCPThread != NULL)
           FFSS_CB.SCB.OnEndTCPThread();
         SU_FreeCS(Client);
