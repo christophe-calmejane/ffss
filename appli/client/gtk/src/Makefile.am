@@ -2,9 +2,9 @@
 
 INCLUDES = `gtk-config --cflags`
 
-bin_PROGRAMS = ffssclient
+bin_PROGRAMS = ffss-client
 
-ffssclient_SOURCES = \
+ffss_client_SOURCES = \
 	callbacks.c\
 	callbacks.h\
 	interface.c\
@@ -16,7 +16,7 @@ ffssclient_SOURCES = \
 	client.h\
 	main.h
 
-ffssclient_LDADD =  \
+ffss_client_LDADD =  \
 	$(GTK_LIBS)\
 	 -lgthread
 

@@ -77,12 +77,12 @@ VERSION = @VERSION@
 
 INCLUDES = `gtk-config --cflags`
 
-bin_PROGRAMS = ffssclient
+bin_PROGRAMS = ffss-client
 
-ffssclient_SOURCES =  	callbacks.c 	callbacks.h 	interface.c 	interface.h 	main.c 	support.c 	support.h 	client.c 	client.h 	main.h
+ffss_client_SOURCES =  	callbacks.c 	callbacks.h 	interface.c 	interface.h 	main.c 	support.c 	support.h 	client.c 	client.h 	main.h
 
 
-ffssclient_LDADD =  	$(GTK_LIBS) 	 -lgthread
+ffss_client_LDADD =  	$(GTK_LIBS) 	 -lgthread
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -94,9 +94,9 @@ DEFS = @DEFS@ -I. -I$(srcdir) -I..
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-ffssclient_OBJECTS =  callbacks.o interface.o main.o support.o client.o
-ffssclient_DEPENDENCIES = 
-ffssclient_LDFLAGS = 
+ffss_client_OBJECTS =  callbacks.o interface.o main.o support.o client.o
+ffss_client_DEPENDENCIES = 
+ffss_client_LDFLAGS = 
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -110,8 +110,8 @@ TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/callbacks.P .deps/client.P .deps/interface.P \
 .deps/main.P .deps/support.P
-SOURCES = $(ffssclient_SOURCES)
-OBJECTS = $(ffssclient_OBJECTS)
+SOURCES = $(ffss_client_SOURCES)
+OBJECTS = $(ffss_client_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -165,9 +165,9 @@ distclean-compile:
 
 maintainer-clean-compile:
 
-ffssclient: $(ffssclient_OBJECTS) $(ffssclient_DEPENDENCIES)
-	@rm -f ffssclient
-	$(LINK) $(ffssclient_LDFLAGS) $(ffssclient_OBJECTS) $(ffssclient_LDADD) $(LIBS)
+ffss-client: $(ffss_client_OBJECTS) $(ffss_client_DEPENDENCIES)
+	@rm -f ffss-client
+	$(LINK) $(ffss_client_LDFLAGS) $(ffss_client_OBJECTS) $(ffss_client_LDADD) $(LIBS)
 
 tags: TAGS
 

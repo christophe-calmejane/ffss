@@ -1,6 +1,6 @@
 #include <ffss.h>
 
-#define FFSS_XFERS_IN_CONN
+//#define FFSS_XFERS_IN_CONN
 /* Defines to replace with variables taken from the config file */
 //#define HAVE_MASTER
 #ifdef HAVE_MASTER
