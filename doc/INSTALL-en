@@ -16,7 +16,7 @@ User's manual
 To get FFSS, you can use :
 
  * CVS: cvs.sourceforge.net:/cvsroot/FFSS/
- * samba: on machine bennyben or orion
+ * samba: on machine orion
        from FLEMING (u-psud.fr)
 
 
@@ -30,7 +30,7 @@ libpthread (libpth12, libpth-dev)
 libreadline (libreadline, libreadline-dev)
 libz (zlib, zlib-devel), version >=1.0
 libbz2 (optional but recommended and needed by the master)
-lex (to compile the server)
+lex + bison/yacc (flex, yacc - to compile the server)
 
 There are 4 steps :
 
