@@ -770,7 +770,7 @@ bool FCA_find_cmd(char *args)
 			FCA_printlog("looking for '%s' on all domains", args, domain);
 		FCA_inDispFind=true;
 		FCA_multiFind=true;
-		res=FC_SendMessage_Search(FCA_master,NULL, args);
+		res=FC_SendMessage_Search(FCA_master,NULL, args, 0);
 		if(res) {
 			sleep(FCA_search_timeout);
 			FCA_inDispFind=false;
@@ -782,7 +782,7 @@ bool FCA_find_cmd(char *args)
 		if(FCA_loglevel>=FCA_FIND_LOGLEVEL)
 			FCA_printlog("looking for '%s' on domain '%s'", args, domain);
 		FFSS_PrintDebug(5, "(client) looking for '%s' on domain '%s'\n", args, domain);
-		res=FC_SendMessage_Search(FCA_master,domain, args);
+		res=FC_SendMessage_Search(FCA_master,domain, args, 0);
 	}
 	if(machine!=NULL)
 		*(machine-1)='/';

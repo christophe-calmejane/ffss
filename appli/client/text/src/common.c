@@ -184,11 +184,11 @@ int FCA_RequestDownload(SU_PClientSocket Server,const char RemotePath[],const ch
 	if(FCA_VAR_IS_ON(FCA_prompt)) {
 		printf("download file ");
 		if( FCA_question(RemotePath) )
-			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n',&FCA_Ptrans);
+			return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
 		else		/* unlike an error if we answer 'n' */
 			return -1;
 	} else
-		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n',&FCA_Ptrans);
+		return !FFSS_DownloadFile(Server,RemotePath,LocalPath,start,NULL,FCA_useConnSock[1]=='n', 0, &FCA_Ptrans);
 }
 
 unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passwd)
@@ -206,7 +206,7 @@ unsigned short int FCA_ShConnect(char *IP, char *share, char *login, char *passw
 		FCA_canChange_pwd=true;
 	}
 		/******* todo: login/pass ******/
-	FCA_shrSkt=FC_SendMessage_ShareConnect(IP, share, login, passwd);
+	FCA_shrSkt=FC_SendMessage_ShareConnect(IP, share, login, passwd, 0);
 	if(FCA_shrSkt==NULL)
 		FCA_print_err("cannot connect to this share");
 	else {
@@ -221,7 +221,7 @@ bool FCA_list_servs(const char *domain)
 {
 	FCA_UDP_errno=0;
 	FCA_posted=false;
-	if( FCA_master[0]=='\0' || !SU_strcasecmp(domain, "None") || ! FC_SendMessage_ServerList(FCA_master,NULL,domain) ) {
+	if( FCA_master[0]=='\0' || !SU_strcasecmp(domain, "None") || ! FC_SendMessage_ServerList(FCA_master,NULL,domain, 0) ) {
 		FCA_posted=false;
 	    	FCA_broadcast();
 	        return false;
@@ -240,7 +240,7 @@ void FCA_list_domains()
 	FCA_posted=false;
 	FCA_everListDom=true;
 	FCA_UDP_errno=0;
-	if(! FC_SendMessage_DomainListing(FCA_master) ) {
+	if(! FC_SendMessage_DomainListing(FCA_master, 0) ) {
 		FCA_print_warning("cannot get domain listing");
 		FCA_print_domains(NULL,0);
 	} else {
@@ -1298,14 +1298,14 @@ bool FCA_list_dir(SU_PClientSocket Server,const char Path[], const char Dir[])
 {
 		/* just send the message */
 	SU_strcpy(FCA_tolist_dir, Path, FFSS_MAX_FILEPATH_LENGTH);
-	return FC_SendMessage_DirectoryListing(Server,Dir);
+	return FC_SendMessage_DirectoryListing(Server,Dir, 0);
 }
 
 bool FCA_list_shares(const char Path[], const char Server[])
 {
 		/* just send the message */
 	SU_strcpy(FCA_tolist_dir, Path, FFSS_MAX_FILEPATH_LENGTH);
-	return FC_SendMessage_SharesListing(Server);
+	return FC_SendMessage_SharesListing(Server, 0);
 }
 
 bool FCA_if_same_share(char *path, char *path2)

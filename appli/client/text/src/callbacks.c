@@ -26,7 +26,7 @@ void FCA_OnNewState(FFSS_Field State,const char IP[],const char Domain[],const c
 	}
 }
 
-void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains)
+void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User)
 {
 	FFSS_PrintDebug(1, "(client) received a domain listing\n");
 	FCA_print_domains(Domains, NbDomains);
@@ -36,7 +36,7 @@ void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains)
 
 /* WARNING !! (char *) of the FM_PHost structure are pointers to STATIC buffer, and must be dupped !!! */
 /* Except for the FM_PHost->IP that is dupped internaly, and if you don't use it, you MUST free it !! */
-void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList)
+void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User)
 {
 	FFSS_PrintDebug(1, "(client) received a server listing for domain %s\n", Domain);
 	FCA_print_servers(Domain, NbHost, HostList);
@@ -53,7 +53,7 @@ void FCA_OnEndServerListingAnswer(void)
 }
 
     /* new ls */
-bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries)
+bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User)
 {
 	FFSS_PrintDebug(3, "(client) received a dir listing for path %s\n", Path);
 	FCA_print_ls(Path, NbEntries,Entries);
@@ -62,7 +62,7 @@ bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int 
 	return true;
 }
     /* listing shares */
-void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares)
+void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares, FFSS_LongField User)
 {
 	FFSS_PrintDebug(3, "(client) received a share listing from %s\n", IP);
 	FCA_print_shares(IP,Names,Comments,NbShares);
@@ -74,7 +74,7 @@ printf("POUF\n");
 	FCA_sem_post();
 }
 
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers)
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User)
 {
 	FFSS_PrintDebug(3, "(client) received search answer for domain %s, query=%s\n", Domain, Query);
 
@@ -132,7 +132,7 @@ void FCA_OnMasterError(int Code,const char Descr[])
 }
 
     /* error */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value)
+bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
 	FFSS_PrintDebug(1, "(client) error message recieved: Code: %d (%s, value=%d)\n", Code, Descr, Code==FFSS_ERROR_PROTOCOL_VERSION_ERROR?Value:0);
 	if(Code==FFSS_ERROR_XFER_MODE_NOT_SUPPORTED) {

@@ -14,15 +14,15 @@
     /* UDP */
 void FCA_OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[]);
 void FCA_OnBeginTCPThread(SU_PClientSocket Server);
-void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList);
+void FCA_OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS_LongField User);
 void FCA_OnEndServerListingAnswer(void);
-void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains);
-void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares);
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
+void FCA_OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField User);
+void FCA_OnSharesListing(const char IP[],const char **Names,const char **Comments,int NbShares, FFSS_LongField User);
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers,FFSS_LongField User);
 void FCA_OnMasterError(int Code,const char Descr[]);
     /* TCP */
-bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value);
-bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries);
+bool FCA_OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User);
+bool FCA_OnDirectoryListingAnswer(SU_PClientSocket Server,const char Path[],int NbEntries,SU_PList Entries,FFSS_LongField User);
 void FCA_OnEndTCPThread(SU_PClientSocket Server);
 void FCA_OnIdleTimeout(SU_PClientSocket Client);
 void FCA_OnTransfertActive(FFSS_PTransfer FT,long int Amount,bool Download);
