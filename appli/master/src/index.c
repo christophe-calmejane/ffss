@@ -748,6 +748,7 @@ bool FMI_StoreFileTrees(FILE *fp)
   fwrite(&FM_Controler.NbHosts,sizeof(FM_Controler.NbHosts),1,fp);
   for(i=0;i<FM_Controler.NbHosts;i++)
   {
+    fwrite(&FM_Controler.Hosts[i]->Samba,FM_Controler.Hosts[i]->Samba,1,fp);
     Length = strlen(FM_Controler.Hosts[i]->Name) + 1;
     fwrite(&Length,sizeof(Length),1,fp);
     fwrite(FM_Controler.Hosts[i]->Name,Length,1,fp);
@@ -898,6 +899,8 @@ bool FMI_LoadFileTrees(FILE *fp)
         return false;
       }
       memset(FM_Controler.Hosts[i],0,sizeof(FM_TFTControler));
+      fread(&FM_Controler.Hosts[i]->Samba,sizeof(FM_Controler.Hosts[i]->Samba),1,fp);
+      FM_Controler.Hosts[i]->State = FFSS_STATE_OFF;
       fread(&Length,sizeof(Length),1,fp);
       FM_Controler.Hosts[i]->Name = (char *) malloc(Length);
       if(FM_Controler.Hosts[i]->Name == NULL)
