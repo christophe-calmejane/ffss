@@ -9,6 +9,7 @@ int N_DebugLevel = 6;
 int N_DebugLevel = 0;
 #endif /* DEBUG */
 bool N_SyslogOn = true;
+char *FFSS_MyIP = NULL;
 
 char *FFSS_MusicExt[FFSS_MUSIC_NB_EXT] = {"mp3","wav","au","wma","snd","xm","mid","mod","ra"} ; /* 9 */
 char *FFSS_VideoExt[FFSS_VIDEO_NB_EXT] = {"mpg","mpeg","avi","vob","asf","rm","ram","mov"} ; /* 8 */

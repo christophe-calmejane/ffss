@@ -8,7 +8,6 @@ void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
 void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
 void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
 
-char *FFSS_MyIP = NULL;
 struct sockaddr_in FFSS_CurrentSIN;
 time_t FFSS_When;
 bool FFSS_ShuttingDown = false;

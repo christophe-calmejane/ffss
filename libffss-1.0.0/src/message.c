@@ -377,7 +377,7 @@ bool FS_SendMessage_InitXFer(int Client,FFSS_Field Tag,const char FileName[])
 
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Init XFer message (%d:%s) to client\n",Tag,FileName);
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
 /* FS_SendMessage_MasterSearch Function      */
@@ -651,7 +651,7 @@ bool FS_SendMessage_StrmOpenAnswer(int Client,const char Path[],FFSS_Field Code,
   pos = FFSS_PackLongField(msg,pos,FileSize);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming OPEN answer message to client\n");
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
 /* FS_SendMessage_StrmReadAnswer Function             */
@@ -696,7 +696,7 @@ bool FS_SendMessage_StrmWriteAnswer(int Client,long int Handle,FFSS_Field Code)
   pos = FFSS_PackField(msg,pos,Code);
   FFSS_PackField(msg,0,pos);
   FFSS_PrintDebug(3,"Sending Streaming WRITE answer message to client\n");
-  return FFSS_SendTcpPacket(Client,msg,pos,true);
+  return FFSS_SendTcpPacket(Client,msg,pos,false);
 }
 
 

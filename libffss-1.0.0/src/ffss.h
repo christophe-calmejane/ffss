@@ -40,9 +40,11 @@ extern char FFSS_WinServerVersion[20];
 #define USE_ALIGNED_WORD
 #endif /* __arm__ */
 
+#ifndef DISABLE_BZLIB
 #ifdef _WIN32
 #define HAVE_BZLIB 1
 #endif /* _WIN32 */
+#endif /* !DISABLE_BZLIB */
 
 #include <skyutils.h>
 #include <stdio.h>
