@@ -52,6 +52,7 @@ type
     MaxXFerPerConn : Integer;
     FTP : Boolean;
     FTP_MaxConn : Integer;
+    XFerInConn : Boolean;
   end;
   PGlobal = ^TGlobal;
 
@@ -135,6 +136,7 @@ type
     Connexiondistance1: TMenuItem;
     N3: TMenuItem;
     Quitter1: TMenuItem;
+    CheckBox4: TCheckBox;
     procedure GetInitValues(Remote : Boolean);
     procedure Button2Click(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
@@ -168,6 +170,7 @@ type
       Change: TItemChange);
     procedure Quitter1Click(Sender: TObject);
     procedure Connexiondistance1Click(Sender: TObject);
+    procedure CheckBox4Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -291,6 +294,7 @@ begin
     Edit8.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',10));
     Edit10.Text:=IntToStr(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',2));
     CheckBox1.Checked:=Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',0));
+    CheckBox4.Checked:=Not Boolean(RB1.GetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_XFerInConn',0));
   End
   Else
   Begin
@@ -313,6 +317,7 @@ begin
     Edit7.Text:=IntToStr(Global.MaxConn);
     CheckBox1.Checked:=Global.FTP;
     Edit8.Text:=IntToStr(Global.FTP_MaxConn);
+    CheckBox4.Checked:=Not Global.XFerInConn;
   End;
   If OnFolder And Not Limited Then
   Begin
@@ -397,6 +402,8 @@ begin
   Gbl.FTP:=Boolean(StrToInt(String(Buf+Pos)));
   Inc(Pos,StrLen(Buf+Pos)+1);
   Gbl.FTP_MaxConn:=StrToInt(String(Buf+Pos));
+  Inc(Pos,StrLen(Buf+Pos)+1);
+  Gbl.XFerInConn:=Boolean(StrToInt(String(Buf+Pos)));
   Result:=Gbl;
 end;
 
@@ -835,6 +842,7 @@ begin
     RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP_MaxConn',StrToInt(Edit8.Text));
     RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_MaxXFerPerConn',StrToInt(Edit10.Text));
     RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_FTP',Integer(CheckBox1.Checked));
+    RB1.SetIntValue('HKEY_CURRENT_USER\Software\FFSS\Server\Global_XFerInConn',Integer(Not CheckBox4.Checked));
     Exit;
   End;
   Buf[0]:=Char(FS_OPCODE_UPDTGLOBAL);
@@ -858,6 +866,11 @@ begin
   Inc(Size,1+1);
   StrPCopy(Buf+Size,Edit8.Text);
   Inc(Size,Length(Edit8.Text)+1);
+  If CheckBox4.Checked Then
+    StrPCopy(Buf+Size,'0')
+  Else
+    StrPCopy(Buf+Size,'1');
+  Inc(Size,1+1);
   CS.Socket.SendBuf(Size,sizeof(Size));
   CS.Socket.SendBuf(Buf,Size);
 
@@ -1281,6 +1294,12 @@ end;
 procedure TForm1.Connexiondistance1Click(Sender: TObject);
 begin
   Form5.ShowModal;
+end;
+
+procedure TForm1.CheckBox4Click(Sender: TObject);
+begin
+  GblChanged:=True;
+  Button3.Enabled:=True;
 end;
 
 end.

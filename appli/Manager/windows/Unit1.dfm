@@ -226,6 +226,17 @@ object Form1: TForm1
         Text = '2'
         OnChange = Edit5Change
       end
+      object CheckBox4: TCheckBox
+        Left = 200
+        Top = 208
+        Width = 113
+        Height = 17
+        Caption = 'Transferts multiples'
+        Checked = True
+        State = cbChecked
+        TabOrder = 7
+        OnClick = CheckBox4Click
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Partage'
