@@ -50,7 +50,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   if(Buf[0] != FS_OPCODE_ACK)
   {
     *Len = 1;
-    return true;
+    return false;
   }
   while(Got < Size)
   {
@@ -165,7 +165,7 @@ int FSCA_RequestStateInfo(SU_PClientSocket Client) /* -1 on error */
   Size = 1;
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return -1;
-  return (int) Buf[0];
+  return (int) Buf[1];
 }
 
 SU_PList FSCA_RequestConns(SU_PClientSocket Client,const char Path[])
@@ -318,7 +318,7 @@ bool FSCA_SetGlobalInfo(SU_PClientSocket Client,FSCA_PGlobal Gbl)
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;
-  return (Buf[0] == FS_OPCODE_ACK);
+  return true;
 }
 
 bool FSCA_SetStateInfo(SU_PClientSocket Client,int State)
@@ -375,7 +375,7 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShar
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;
-  return (Buf[0] == FS_OPCODE_ACK);
+  return true;
 }
 
 bool FSCA_AddShare(SU_PClientSocket Client,const char SharePath[],FSCA_PShare Share)
@@ -400,5 +400,5 @@ bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[])
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;
-  return (Buf[0] == FS_OPCODE_ACK);
+  return true;
 }

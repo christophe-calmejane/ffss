@@ -110,7 +110,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = 1;
           send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         s_p = FFSS_UnpackString(buf,buf+pos,Size,&pos);
@@ -138,7 +138,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
-        send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_DELSHARE :
         pos = 1;
@@ -150,7 +150,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = 1;
           send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         SU_SEM_WAIT(FS_SemShr);
@@ -163,7 +163,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
-        send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_GETGLOBAL :
         buf[0] = FS_OPCODE_ACK;
@@ -250,7 +250,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = 1;
           send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         s_c = FFSS_UnpackString(buf,buf+pos,Size,&pos);
@@ -279,7 +279,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
-        send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_UPDTGLOBAL :
       {
@@ -324,14 +324,14 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = 1;
           send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         FS_SaveConfig(CONFIG_FILE_NAME);
         Size = 1;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         buf[0] = FS_OPCODE_ACK;
-        send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         if(MasterChanged)
         {
           /* Sending login message to my master */
@@ -351,10 +351,11 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         break;
       case FS_OPCODE_GETSTATE :
-        Size = 1;
+        Size = 2;
         send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
-        buf[0] = FS_MyState;
-        send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+        buf[0] = FS_OPCODE_ACK;
+        buf[1] = FS_MyState;
+        send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
       case FS_OPCODE_GETSHRLIST :
         SU_SEM_WAIT(FS_SemConn);
@@ -441,7 +442,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Size = 1;
           send(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           buf[0] = FS_OPCODE_NACK;
-          send(Client->sock,buf,1,SU_MSG_NOSIGNAL);
+          send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
           break;
         }
         SU_SEM_WAIT(FS_SemConn);

@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : February, 28th 2002
+                  Last Update : March, 1th 2002
 
 VIRER LE -PREx DE SERVER.H
+
+March, 1st 2002:
+  - Added ACK/NACK to every return message for conf api (and fixed a bug in boolean returned for some functions)
 
 February, 28th 2002:
   - Fixed a bug in conf socket (if multiple messages are in the buffer, only the first is parsed)
