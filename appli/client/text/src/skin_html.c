@@ -150,14 +150,12 @@ printf("<html>
  
 <body>
 ");
-printf("
-<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
+
 printf("<center>\n");
 printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>\n");
-FCA_form_hidden_args(true);
 }
 
 void FCA_html_pre_listing(char *path)
@@ -171,6 +169,9 @@ void FCA_html_pre_listing(char *path)
 		FCA_dir_link(path);printf("parent</a>\n");
 		*p='/';
 	}
+printf("
+<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
+FCA_form_hidden_args(true);
 printf("address: <input type='text' name='dir' value='%s' tabindex=1>
 &nbsp;<input type='submit' value='go'><br>\n", path);printf("
 <input type='hidden' name='s' value=''>
@@ -221,6 +222,9 @@ void FCA_html_pre_search_ans(const char *query)
 	char *p;
 	const FCA_Tskin *ps;
 
+printf("
+<form name='browsing' action='");FCA_my_url(false);printf("' method=GET>");
+FCA_form_hidden_args(true);
 printf("address: <input type='text' name='dir' value='/$' tabindex=1>
 &nbsp;<input type='submit' value='go'><br>\n");printf("
 <input type='hidden' name='s' value=''>
@@ -531,7 +535,6 @@ printf(" <a href='javascript:history.back()'>&lt;-</a>&nbsp;\n");
 printf(" ");FCA_dir_link("/$");printf("home</a>&nbsp;\n");
 printf(" <a href='javascript:history.forward()'>-&gt;</a>\n");
 printf("</center>
-</form>
 ");
 if(!FCA_VAR_IS_ON(FCA_html_included_doc))
 printf("
