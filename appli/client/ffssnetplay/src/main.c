@@ -19,8 +19,6 @@ SU_THREAD_HANDLE FNP_Thread;
 
 int main (int argc, char *argv[])
 {
-  SU_PServerInfo SI;
-
   g_thread_init(NULL);
   gtk_set_locale ();
   gtk_init (&argc, &argv);
@@ -34,46 +32,23 @@ int main (int argc, char *argv[])
   gtk_widget_show (wnd_main);
   FNP_clist = (GtkCList *) lookup_widget(wnd_main,"clist1");
 
-  SI = SU_CreateServer(FNP_PORT,SOCK_STREAM,false);
-  if(SI == NULL)
+  FNP_CB.OnEndOfFile = OnEndOfFile;
+  FNP_CB.OnEndTCPThread = OnEndTCPThread;
+  FNP_CB.OnError = OnError;
+  FNP_CB.OnSearchAnswerStart = OnSearchAnswerStart;
+  FNP_CB.OnSearchAnswerItem = OnSearchAnswerItem;
+  FNP_CB.OnSearchAnswerEnd = OnSearchAnswerEnd;
+  if(!FNP_Init("ffss"))
   {
-    printf("Cannot create socket on port %d\n",FNP_PORT);
-    return -1;
+    printf("Error : %s\n",FNP_GetLastError());
+    return -2;
   }
-  if(SU_ServerListen(SI) == SOCKET_ERROR)
-  {
-    printf("Cannot create listening socket\n");
-    return -1;
-  }
-  if(!SU_CreateThread(&FNP_Thread,StreamingRoutine,(void *)SI,true))
-  {
-    printf("Cannot create listening thread\n");
-    return -1;
-  }
-  if(!SU_CreateSem(&FNP_Sem,1,1,"FNP_Sem"))
-  {
-    printf("Couldn't allocate semaphore\n");
-    return -1;
-  }
-  /* FFSS Initialization */
-  memset(&FFSS_CB,0,sizeof(FFSS_CB));
-  /* UDP CALLBACKS */
-  FFSS_CB.CCB.OnSearchAnswer = OnSearchAnswer;
-  /* TCP CALLBACKS */
-  FFSS_CB.CCB.OnError = OnError;
-  FFSS_CB.CCB.OnEndTCPThread = OnEndTCPThread;
-  FFSS_CB.CCB.OnStrmOpenAnswer = OnStrmOpenAnswer;
-  FFSS_CB.CCB.OnStrmReadAnswer = OnStrmReadAnswer;
-  if(!FC_Init())
-    return -1;
-
 
   gdk_threads_enter();
   gtk_main();
   gdk_threads_leave();
 
-  /* Shutting down server */
-  FC_UnInit();
+  FNP_Uninit();
   return 0;
 }
 

@@ -92,6 +92,11 @@ void FFSS_OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FF
 
 void FFSS_OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize)
 {
+  if(FNP_CurrentFileHandle != Handle) /* FNP_CurrentFileHandle Changed since last call */
+  {
+    printf("FNP : OnStrmReadAnswer : FNP_CurrentFileHandle changed\n");
+    return;
+  }
   if(BlocSize == 0) /* End of file */
   {
     if(FNP_CB.OnEndOfFile != NULL)

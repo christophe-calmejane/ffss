@@ -12,7 +12,7 @@
 
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
-#include <ffss.h>
+#include <fnp.h>
 #include <assert.h>
 
 #ifdef __unix__
@@ -21,35 +21,17 @@
 #define MKDIR(x) mkdir(x)
 #endif /* __unix__ */
 
-#define FNP_NAME "FFSSNetPlay"
-#define FNP_VERSION "0.3"
-#define FNP_PORT 8080
-#define FNP_BUFFER_SIZE 65536
-
-/* TEMPO */
-#define HAVE_MASTER
-#ifdef HAVE_MASTER
-#define CLT_MASTER "orion"
-#endif
-
 extern GtkWidget *wnd_main;
 extern GtkCList *FNP_clist;
-extern SU_SEM_HANDLE FNP_Sem;
-extern FFSS_LongField FNP_CurrentFilePos;
-extern FFSS_LongField FNP_CurrentFileSize;
 
-SU_THREAD_ROUTINE(StreamingRoutine,User);
-void FNP_PlayNextFile(bool Lock);
-void FNP_ConnectServer(const char IP[],const char Share[]);
+void PlayNextFile(bool Lock);
 
-/* UDP callbacks */
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,int NbAnswers);
-
-/* TCP callbacks */
-bool OnError(SU_PClientSocket Server,int Code,const char Descr[],FFSS_LongField Value);
-void OnEndTCPThread(SU_PClientSocket Server);
-void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,long int Handle,FFSS_LongField FileSize);
-void OnStrmReadAnswer(SU_PClientSocket Client,long int Handle,const char Bloc[],long int BlocSize);
+void OnEndOfFile();
+void OnEndTCPThread(void);
+void OnError(int Code);
+void OnSearchAnswerStart(void);
+void OnSearchAnswerItem(const char IP[],const char Path[]);
+void OnSearchAnswerEnd(void);
 
 
 #endif /* _CLIENT_H_ */

@@ -15,7 +15,7 @@ on_clist1_button_press_event           (GtkWidget       *widget,
                                         gpointer         user_data)
 {
   if(event->type == GDK_2BUTTON_PRESS)
-    FNP_PlayNextFile(false);
+    PlayNextFile(false);
   return FALSE;
 }
 
@@ -26,14 +26,13 @@ on_button1_clicked                     (GtkButton       *button,
 {
   GtkEntry *entry;
   gchar *query;
-  char buf[1024];
 
   entry = (GtkEntry *) lookup_widget(wnd_main,"entry1");
   if(entry != NULL)
   {
     query = gtk_entry_get_text(entry);
-    snprintf(buf,sizeof(buf),"%s mp3",query);
-    FC_SendMessage_Search(CLT_MASTER,NULL,buf);
+    gtk_clist_clear(FNP_clist);
+    FNP_SearchFiles(query);
   }
 }
 
