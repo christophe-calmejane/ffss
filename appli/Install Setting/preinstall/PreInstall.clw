@@ -28,14 +28,14 @@ ImplementationFile=PreInstallDlg.cpp
 Filter=D
 BaseClass=CDialog
 VirtualFilter=dWC
-LastObject=ID_BUTTON
+LastObject=CPreInstallDlg
 
 
 
 [DLG:IDD_PREINSTALL_DIALOG]
 Type=1
 Class=CPreInstallDlg
-ControlCount=8
+ControlCount=12
 Control1=ID_BUTTON,button,1342242817
 Control2=IDC_STATIC,static,1342308352
 Control3=IDC_STATIC,static,1342308352
@@ -44,4 +44,8 @@ Control5=IDC_SERVER,edit,1350631552
 Control6=IDC_COMMENT,edit,1350631552
 Control7=IDC_MASTER,edit,1350631552
 Control8=IDC_SAMBA,button,1342242819
+Control9=IDC_PLUGINS,SysListView32,1350664197
+Control10=IDC_STATIC,button,1342177287
+Control11=IDC_PLUGINDESC,static,1342308352
+Control12=IDC_STATIC,button,1342177287
 

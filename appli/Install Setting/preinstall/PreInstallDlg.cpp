@@ -2,6 +2,8 @@
 //
 
 #include "stdafx.h"
+#include <fstream.h>
+
 #include "PreInstall.h"
 #include "PreInstallDlg.h"
 
@@ -13,6 +15,9 @@ static char THIS_FILE[] = __FILE__;
 
 #define SHARE_LIST_SEP "|"
 #define SHARE_LIST_OLD_SEP "#"
+
+#define PLUGINS_FILE	"plugins.lst"
+#define PLUGINS_PROMPT	"\n    Select a plugin in the list"
 
 #pragma pack(1)
 struct share_info_50 {
@@ -49,6 +54,7 @@ void CPreInstallDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CPreInstallDlg)
+	DDX_Control(pDX, IDC_PLUGINS, m_Plugins);
 	DDX_Text(pDX, IDC_COMMENT, m_strComment);
 	DDX_Text(pDX, IDC_MASTER, m_strMaster);
 	DDX_Check(pDX, IDC_SAMBA, m_bImportSamba);
@@ -61,6 +67,7 @@ BEGIN_MESSAGE_MAP(CPreInstallDlg, CDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(ID_BUTTON, OnOk)
+	ON_NOTIFY(NM_CLICK, IDC_PLUGINS, OnClickPlugins)
 	//}}AFX_MSG_MAP
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
@@ -141,6 +148,13 @@ BOOL CPreInstallDlg::OnInitDialog()
 		m_RegKey.Close();
 	} 
 
+	/*************************************************************************/ 
+	SetDlgItemText(IDC_PLUGINDESC,PLUGINS_PROMPT);
+
+	m_Plugins.InsertColumn(0,"Name",LVCFMT_LEFT,160);
+	m_Plugins.SetExtendedStyle(LVS_EX_CHECKBOXES|LVS_EX_FULLROWSELECT);
+	GetPlugins();
+
 	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -186,11 +200,15 @@ HCURSOR CPreInstallDlg::OnQueryDragIcon()
 void CPreInstallDlg::OnOk() 
 {
 	// TODO: Add your control notification handler code here
-	CString strReport;
-	long	lSharesAdded;
+	CString		strReport;
+	long		lSharesAdded;
+	int			nItem;
+	PluginInfo*	pPI;
 
 	UpdateData(TRUE);
 
+	/*************************************************************************/
+	/* Save registry keys                                                    */
 	m_RegKey.Create(HKEY_CURRENT_USER,"Software\\FFSS\\Server");
 
 	/* Save server name to registry */
@@ -211,7 +229,8 @@ void CPreInstallDlg::OnOk()
 		m_RegKey.SetValue((LPCTSTR)m_strMaster,"Global_Master");
 	}
 
-	/* Import samba shares */
+	/*************************************************************************/
+	/* Import samba shares                                                   */
 	if( m_bImportSamba==FALSE ) {
 		ConvertFromOldFormat();	/* Convert # => |in share list */
 	} else {
@@ -223,8 +242,22 @@ void CPreInstallDlg::OnOk()
 		strReport.Format("%d shares have been added",lSharesAdded);
 		MessageBox((LPCTSTR)strReport,"Shares added",MB_OK|MB_ICONINFORMATION);
 	}
-
+	
 	m_RegKey.Close();
+
+	/*************************************************************************/
+	/* Do some stuff with plugins                                            */
+	m_RegKey.Create(HKEY_CURRENT_USER,"Software\\FFSS\\Server\\Plugins");
+	for(nItem=0; nItem<m_Plugins.GetItemCount(); nItem++) {
+		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
+		if( m_Plugins.GetCheck(nItem)==FALSE ) {
+			m_RegKey.DeleteValue(pPI->szName);
+		} else {
+			m_RegKey.SetValue(pPI->szPathToDLL,pPI->szName);
+		}
+	}
+	
+	//m_RegKey.Close();
 
 	if( m_hinstLib!=NULL ) {
 		FreeLibrary(m_hinstLib); 
@@ -404,10 +437,177 @@ void CPreInstallDlg::ConvertFromOldFormat()
 	}
 }
 
+/*****************************************************************************/
 void CPreInstallDlg::OnDestroy()
 {
-	CDialog::OnDestroy();
+	int			i;
+	PluginInfo*	pPI;
 
-	// TODO: Add your message handler code here
+	for(i=0;i<m_Plugins.GetItemCount();i++) {
+		pPI=(PluginInfo*)m_Plugins.GetItemData(i);
+		delete(pPI);
+	}
+
 	m_RegKey.Close();
+	
+	CDialog::OnDestroy();
+}
+
+/*****************************************************************************/
+bool CPreInstallDlg::GetPlugins()
+{
+	WIN32_FIND_DATA	wfd;
+	HANDLE			hFind;
+	char			szPluginsWildCards[MAX_PATH+1];
+	char			szPluginsDirectory[MAX_PATH+1];
+	char			szPluginFilename[MAX_PATH+1];
+	DWORD			dwStringSize;
+	CRegKey			RegKey;
+	int				nItem=0;
+	PluginInfo*		pPI;
+	bool			bKeyExists=false;
+
+	strcpy(szPluginsDirectory,"");
+
+	/* Get server directory */
+	if( RegKey.Open(HKEY_CURRENT_USER,"Software\\FFSS\\Server")==ERROR_SUCCESS ) {
+		dwStringSize=sizeof(szPluginsDirectory);
+		if( RegKey.QueryValue(szPluginsDirectory,"ServerDirectory",&dwStringSize)!=ERROR_SUCCESS ) {
+			strcpy(szPluginsDirectory,"");
+		}
+		RegKey.Close();
+	} 
+
+	if( strlen(szPluginsDirectory)==0 ) {
+		// error, string is empty
+		return(false);
+	}
+
+	strcat(szPluginsDirectory,"\\Plugins\\");
+	strcpy(szPluginsWildCards,szPluginsDirectory);
+	strcat(szPluginsWildCards,"*.dll");
+
+	if( RegKey.Open(HKEY_CURRENT_USER,"Software\\FFSS\\Server\\Plugins")==ERROR_SUCCESS ) {
+		bKeyExists=true;
+	}
+
+	hFind=FindFirstFile(szPluginsWildCards,&wfd);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		return(false);
+	} else {
+		// Process first file
+		strcpy(szPluginFilename,szPluginsDirectory);
+		strcat(szPluginFilename,wfd.cFileName);
+		pPI=GetPluginInfo(szPluginFilename);
+		if( pPI!=NULL ) {
+			m_Plugins.InsertItem(nItem,pPI->szName);
+			m_Plugins.SetItemData(nItem, (DWORD)pPI );
+			if( bKeyExists==true ) {
+				m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
+			}
+		}
+
+		while( FindNextFile(hFind, &wfd)==TRUE ) {
+			nItem++;
+			strcpy(szPluginFilename,szPluginsDirectory);
+			strcat(szPluginFilename,wfd.cFileName);
+			pPI=GetPluginInfo(szPluginFilename);
+			if( pPI!=NULL ) {
+				m_Plugins.InsertItem(nItem,pPI->szName);
+				m_Plugins.SetItemData(nItem, (DWORD)pPI );
+				if( bKeyExists==true ) {
+					m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
+				}
+			}
+		}
+		FindClose(hFind);
+
+		if( bKeyExists==true ) {
+			RegKey.Close();
+		}
+	}
+	
+	return(true);
+}
+
+/*****************************************************************************/
+bool CPreInstallDlg::RegValueExists(CRegKey& RegKey,const char* szValueName)
+{
+	char	c;
+	DWORD	dwBufferSize=1;
+	LONG	lRetCode;
+
+	lRetCode=RegKey.QueryValue(&c,szValueName,&dwBufferSize);
+
+	return( (lRetCode==ERROR_SUCCESS) || (lRetCode==ERROR_MORE_DATA) );
+}
+
+/*****************************************************************************/
+void CPreInstallDlg::OnClickPlugins(NMHDR* pNMHDR, LRESULT* pResult) 
+{
+	POSITION	pos = m_Plugins.GetFirstSelectedItemPosition();
+	int			nItem;
+	PluginInfo*	pPI;
+
+	if( pos==NULL ) {
+		SetDlgItemText(IDC_PLUGINDESC,PLUGINS_PROMPT);
+	} else {
+		nItem = m_Plugins.GetNextSelectedItem(pos);
+		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
+		SetDlgItemText(IDC_PLUGINDESC,pPI->szDescription);
+	}
+
+	*pResult = 0;
+}
+
+/*****************************************************************************/
+PluginInfo* CPreInstallDlg::GetPluginInfo(const char* szPathToDLL)
+{
+	HINSTANCE				hinstLib;
+	procPluginQueryInfos	fnPluginQueryInfos=NULL;
+	PluginInfo*				pPI=NULL;
+	FSP_PInfos				pInfos;
+
+
+	hinstLib = LoadLibrary(szPathToDLL);
+    if( hinstLib!=NULL ) {
+		fnPluginQueryInfos=(procPluginQueryInfos)GetProcAddress(hinstLib, "Plugin_QueryInfos");
+		if( fnPluginQueryInfos!=NULL ) {
+			pPI=new PluginInfo();
+			if( pPI!=NULL ) {
+				pInfos=fnPluginQueryInfos();
+				if( pInfos!=NULL ) {
+					pPI->szName=strdup(pInfos->Name);
+					pPI->szCopyright=strdup(pInfos->Copyright);
+					pPI->szDescription=strdup(pInfos->Description);
+					pPI->szVersion=strdup(pInfos->Version);
+					pPI->szPathToDLL=strdup(szPathToDLL);
+				}
+			}
+		}
+	}
+	FreeLibrary(hinstLib); 
+
+	return(pPI);
+}
+
+/*****************************************************************************/
+/*****************************************************************************/
+PluginInfo::~PluginInfo()
+{
+	if( szName!=NULL ) {
+		free(szName);
+	}
+	if( szCopyright!=NULL ) {
+		free(szCopyright);
+	}
+	if( szDescription!=NULL ) {
+		free(szDescription);
+	}
+	if( szVersion!=NULL ) {
+		free(szVersion);
+	}
+	if( szPathToDLL!=NULL ) {
+		free(szPathToDLL);
+	}
 }

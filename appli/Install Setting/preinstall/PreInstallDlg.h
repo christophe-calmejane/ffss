@@ -13,6 +13,30 @@
 
 #include <lm.h>
 
+/*****************************************************************************/
+typedef struct
+{
+  char *Name;
+  char *Version;
+  char *Copyright;
+  char *Description;
+} FSP_TInfos, *FSP_PInfos;
+
+/*****************************************************************************/
+class PluginInfo
+{
+public:
+	char*	szName;
+	char*	szVersion;
+	char*	szCopyright;
+	char*	szDescription;
+	char*	szPathToDLL;
+
+	~PluginInfo();
+};
+
+/*****************************************************************************/
+
 /* WinNT function */
 typedef NET_API_STATUS (__stdcall *procNetShareEnumNT)(LPWSTR,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD,LPDWORD);
 
@@ -20,6 +44,9 @@ typedef NET_API_STATUS (__stdcall *procNetShareEnumNT)(LPWSTR,DWORD,LPBYTE*,DWOR
 typedef NET_API_STATUS (__stdcall *procNetShareEnum)(const char FAR *,
 													 short,char FAR *,unsigned short,
 													 unsigned short FAR *,unsigned short FAR *);
+
+typedef FSP_PInfos (*procPluginQueryInfos)(void);
+
 
 class CPreInstallDlg : public CDialog
 {
@@ -30,11 +57,16 @@ private:
 				   DWORD dwMaxUsers);
 	long ImportWinNTShares(void);
 	long ImportWin9xShares(void);
+	bool GetPlugins();
+	PluginInfo* GetPluginInfo(const char* szPathToDLL);
+	bool RegValueExists(CRegKey& RegKEy,const char* szValueName);
+
 	CRegKey				m_RegKey;
 	HINSTANCE			m_hinstLib;
 	bool				m_bIsWinNT;
 	procNetShareEnumNT	m_fnNetShareEnumNT;
 	procNetShareEnum	m_fnNetShareEnum;
+
 
 
 // Construction
@@ -44,6 +76,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CPreInstallDlg)
 	enum { IDD = IDD_PREINSTALL_DIALOG };
+	CListCtrl	m_Plugins;
 	CString	m_strComment;
 	CString	m_strMaster;
 	BOOL	m_bImportSamba;
@@ -66,10 +99,10 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnOk();
+	afx_msg void OnClickPlugins(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnDestroy();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
-public:
-	afx_msg void OnDestroy();
 };
 
 //{{AFX_INSERT_LOCATION}}
