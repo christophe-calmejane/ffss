@@ -82,7 +82,7 @@ void ProcOnOkRedirect(SU_PAnswer Ans,void *User)
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS UPDATE INFO",MB_OK);
+    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS UPDATE INFO",MB_OK);
     exit(2);
   }
   SU_FreeAction(Act);
@@ -114,7 +114,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS UPDATE INFO",MB_OK);
+    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS UPDATE INFO",MB_OK);
     return 2;
   }
   SU_FreeAction(Act);

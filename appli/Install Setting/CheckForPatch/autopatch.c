@@ -287,7 +287,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
     Exec = SU_AddElementHead(Exec,Act);
     if(SU_ExecuteActions(Exec) != 0)
     {
-      MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS Auto Patch Info",MB_OK);
+      MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
       exit(2);
     }
     SU_FreeAction(Act);
@@ -317,7 +317,7 @@ void ProcOnOkCheckUpdate(SU_PAnswer Ans,void *User)
       Exec = SU_AddElementHead(Exec,Act);
       if(SU_ExecuteActions(Exec) != 0)
       {
-        MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS Auto Patch Info",MB_OK);
+        MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
         exit(2);
       }
       SU_FreeAction(Act);
@@ -375,7 +375,7 @@ void ProcOnOkRedirect(SU_PAnswer Ans,void *User)
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS Auto Patch Info",MB_OK);
+    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
     exit(2);
   }
   SU_FreeAction(Act);
@@ -408,7 +408,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   Exec = SU_AddElementHead(Exec,Act);
   if(SU_ExecuteActions(Exec) != 0)
   {
-    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE,"FFSS Auto Patch Info",MB_OK);
+    MessageBox(NULL,"Cannot connect to " FFSS_CHECK_URL_BASE ". Check HTTP settings (re-run 'Configure FFSS')","FFSS Auto Patch Info",MB_OK);
     return 2;
   }
   SU_FreeAction(Act);
