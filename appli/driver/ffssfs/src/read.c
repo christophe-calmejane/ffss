@@ -117,11 +117,11 @@ FsdReadNormal (
                 __leave;
             }
 
-            if (!Nocache || ByteOffset.LowPart & (SECTOR_SIZE - 1) || Length & (SECTOR_SIZE - 1))
+            /*if (!Nocache || ByteOffset.LowPart & (SECTOR_SIZE - 1) || Length & (SECTOR_SIZE - 1))
             {
                 Status = STATUS_INVALID_PARAMETER;
                 __leave;
-            }
+            }*/
 
             if (!ExAcquireResourceSharedLite(
                      &Vcb->MainResource,
@@ -168,7 +168,7 @@ FsdReadNormal (
 #endif
                 ByteOffset.QuadPart);
 
-                Length &= ~(SECTOR_SIZE - 1);
+                //Length &= ~(SECTOR_SIZE - 1);
             }
 
             UserBuffer = FsdGetUserBuffer(Irp);
@@ -254,13 +254,13 @@ FsdReadNormal (
             __leave;
         }
 
-        if (Nocache &&
+/*        if (Nocache &&
            (ByteOffset.LowPart & (SECTOR_SIZE - 1) ||
             Length & (SECTOR_SIZE - 1)))
         {
             Status = STATUS_INVALID_PARAMETER;
             __leave;
-        }
+        }*/
 
         if (FlagOn(IrpContext->MinorFunction, IRP_MN_DPC))
         {
@@ -378,8 +378,7 @@ FsdReadNormal (
             if ((ByteOffset.QuadPart + Length) > Fcb->ffss_inode->Size)
             {
                 ReturnedLength = Fcb->ffss_inode->Size - ByteOffset.LowPart;
-
-                Length = (ReturnedLength & ~(SECTOR_SIZE - 1)) + SECTOR_SIZE;
+                //Length = (ReturnedLength & ~(SECTOR_SIZE - 1)) + SECTOR_SIZE;
             }
 
             UserBuffer = FsdGetUserBuffer(Irp);
@@ -404,8 +403,8 @@ FsdReadNormal (
                 Vcb->TargetDeviceObject,
                 Ccb,
                 Fcb->ffss_inode,
-                &ByteOffset.QuadPart,
-                Length,
+                ByteOffset.QuadPart,
+                ReturnedLength,
                 UserBuffer
                 );
 
@@ -640,7 +639,7 @@ FsdReadFileData (
 }*/
 
 
-void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User)
+void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],FFSS_Field ErrorCode,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User)
 {
   PFSD_CCB Ccb;
 
@@ -651,7 +650,7 @@ void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Fi
     return;
   }
 
-  if(Code == FFSS_ERROR_NO_ERROR)
+  if(ErrorCode == FFSS_ERROR_NO_ERROR)
   {
     KdPrint(("OnStrmOpenAnswer : File successfully opened by server with handle %d\n",Handle));
     Ccb->State = FFSS_HANDLE_STATE_OPEN;
@@ -659,7 +658,7 @@ void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Fi
   }
 }
 
-void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User)
+void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_Field ErrorCode,FFSS_LongField User)
 {
   PFSD_CCB Ccb;
 
@@ -670,18 +669,25 @@ void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[
     return;
   }
 
-  if(BlocSize == 0)
+  switch(ErrorCode)
   {
-    KdPrint(("OnStrmReadAnswer : EOF for file %d\n",Handle));
-    Ccb->eof = true;
-  }
-  else
-  {
-    if(BlocSize > STREAMING_BUFFER_SIZE)
-      BlocSize = STREAMING_BUFFER_SIZE;
-    KdPrint(("OnStrmReadAnswer : %ld bytes read from %d\n",BlocSize,Handle));
-    RtlCopyMemory(Ccb->Buffer,Bloc,BlocSize);
-    Ccb->BufferPos = BlocSize;
+    case FFSS_ERROR_END_OF_FILE:
+      KdPrint(("OnStrmReadAnswer : EOF for file %d\n",Handle));
+      Ccb->eof = true;
+    case FFSS_ERROR_NO_ERROR:
+      if(BlocSize != 0)
+      {
+        if(BlocSize > STREAMING_BUFFER_SIZE)
+          BlocSize = STREAMING_BUFFER_SIZE;
+        KdPrint(("OnStrmReadAnswer : %ld bytes read from %d\n",BlocSize,Handle));
+        RtlCopyMemory(Ccb->Buffer,Bloc,BlocSize);
+        Ccb->BufferPos = BlocSize;
+        Ccb->FilePos += BlocSize;
+      }
+      Ccb->error = false;
+      break;
+    default:
+      Ccb->error = true;
   }
 }
 

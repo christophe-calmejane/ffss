@@ -29,33 +29,28 @@ FsdIsDeviceRomfs (
     PUCHAR          Buffer;
     LARGE_INTEGER   Offset;
     NTSTATUS        Status;
-/* TO DO */
+
     ASSERT(DeviceObject != NULL);
 
-    Buffer = FsdAllocatePool(NonPagedPoolCacheAligned, SECTOR_SIZE, '1ceR');
+    Buffer = FsdAllocatePool(NonPagedPoolCacheAligned, 512, '1ceR');
 
     if (!Buffer)
     {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Offset.QuadPart = 0; //ROMFS_MAGIC_OFFSET;
+    Offset.QuadPart = 0;
 
     Status = FsdReadWriteBlockDevice(
         IRP_MJ_READ,
         DeviceObject,
         &Offset,
-        SECTOR_SIZE,
+        512,
         TRUE,
         Buffer
         );
 
-	/*KdPrint(("FFSSFS == Buffer=%X %X %X %X %X %X %X %X",
-		*(Buffer+0), *(Buffer+1), *(Buffer+2), *(Buffer+3),
-		*(Buffer+4), *(Buffer+5), *(Buffer+6), *(Buffer+7)));*/
-
-    if (!NT_SUCCESS(Status) ||
-        strncmp(Buffer, FFSSDISK_ID, sizeof(FFSSDISK_ID)))
+    if (!NT_SUCCESS(Status) || strncmp(Buffer, FFSSDISK_ID, sizeof(FFSSDISK_ID)))
     {
 		KdPrint((DBGNAME "Not FFSS Volume"));
         Status = STATUS_UNRECOGNIZED_VOLUME;

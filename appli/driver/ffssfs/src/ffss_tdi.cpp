@@ -18,8 +18,8 @@
 
 /* ***************************** TO DO ***************************** *
    - Tester un FileOpen sur un path complet (existant) sans avoir scanner avec le domain/server/share -> Devrait pas trouver le fichier (le domain ... server ... et/ou share)
-   - AJOUTER UN CHAMP "VALID" dans la classe FfssTCP qui indique si la structure est en cours de liberation (deconnexion par ex), que l'on met a false dans le disconnect.
-     Et dans le GetConnection, tester si cette variable est a TRUE, si c'est pas le cas, liberer l'inode "/" connecté.
+   - Dans le GetConnection, tester si la connexion est toujours active, si c'est pas le cas, liberer l'inode "/" connecté.
+   - Ajouter un parametre au OnStrmReadAnswer, indiquant entre autre une fin de fichier
 
   TODO :
    - Mettre une var qq part pour savoir si une conn est tjs active ou non... et dans le getconnection, si non active, relancer la connexion.
@@ -151,39 +151,40 @@ void OnSharesListing(const char IP[],const char **Names,const char **Comments,in
 /* ********************************************************************** */
 /* ************************** TCP CALLBACKS ***************************** */
 /* ********************************************************************** */
-SU_BOOL OnError(FfssTCP *Server,int Code,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
+SU_BOOL OnError(FfssTCP *Server,FFSS_Field ErrorCode,const char Descr[],FFSS_LongField Value,FFSS_LongField User)
 {
   struct ffss_inode *Root = (struct ffss_inode *) User; /* Don't free this inode here ! */
 
-  switch(Code)
+  switch(ErrorCode)
   {
-  case FFSS_ERROR_RESOURCE_NOT_AVAIL :
-  case FFSS_ERROR_NEED_LOGIN_PASS :
-  case FFSS_ERROR_TOO_MANY_CONNECTIONS :
-  case FFSS_ERROR_IDLE_TIMEOUT :
-  case FFSS_ERROR_SHARE_DISABLED :
-  case FFSS_ERROR_SHARE_EJECTED :
-  case FFSS_ERROR_INTERNAL_ERROR :
-    FsdFreeInode(Root,false);
-    KdPrint(("OnError : Found fatal error code (%s). Disconnecting\n",Descr));
-    return false;
-  case FFSS_ERROR_FILE_NOT_FOUND :
-  case FFSS_ERROR_ACCESS_DENIED :
-  case FFSS_ERROR_NOT_ENOUGH_SPACE :
-  case FFSS_ERROR_CANNOT_CONNECT :
-  case FFSS_ERROR_TOO_MANY_TRANSFERS :
-  case FFSS_ERROR_DIRECTORY_NOT_EMPTY :
-  case FFSS_ERROR_FILE_ALREADY_EXISTS :
-  case FFSS_ERROR_SERVER_IS_QUIET :
-  case FFSS_ERROR_BUFFER_OVERFLOW :
-  case FFSS_ERROR_XFER_MODE_NOT_SUPPORTED :
-  case FFSS_ERROR_RESEND_LAST_UDP :
-  case FFSS_ERROR_BAD_SEARCH_REQUEST :
-  case FFSS_ERROR_NOT_IMPLEMENTED :
-  case FFSS_ERROR_NO_ERROR :
-    FsdFreeInode(Root,false);
-    KdPrint(("OnError : Found non fatal error code (%s). Continuing\n",Descr));
-    break;
+    case FFSS_ERROR_FILE_NOT_FOUND :
+    case FFSS_ERROR_ACCESS_DENIED :
+    case FFSS_ERROR_NOT_ENOUGH_SPACE :
+    case FFSS_ERROR_CANNOT_CONNECT :
+    case FFSS_ERROR_TOO_MANY_TRANSFERS :
+    case FFSS_ERROR_DIRECTORY_NOT_EMPTY :
+    case FFSS_ERROR_FILE_ALREADY_EXISTS :
+    case FFSS_ERROR_SERVER_IS_QUIET :
+    case FFSS_ERROR_BUFFER_OVERFLOW :
+    case FFSS_ERROR_XFER_MODE_NOT_SUPPORTED :
+    case FFSS_ERROR_RESEND_LAST_UDP :
+    case FFSS_ERROR_BAD_SEARCH_REQUEST :
+    case FFSS_ERROR_NOT_IMPLEMENTED :
+    case FFSS_ERROR_NO_ERROR :
+      FsdFreeInode(Root,false);
+      KdPrint(("OnError : Found non fatal error code (%s). Continuing\n",Descr));
+      break;
+    case FFSS_ERROR_RESOURCE_NOT_AVAIL :
+    case FFSS_ERROR_NEED_LOGIN_PASS :
+    case FFSS_ERROR_TOO_MANY_CONNECTIONS :
+    case FFSS_ERROR_IDLE_TIMEOUT :
+    case FFSS_ERROR_SHARE_DISABLED :
+    case FFSS_ERROR_SHARE_EJECTED :
+    case FFSS_ERROR_INTERNAL_ERROR :
+    default:
+      FsdFreeInode(Root,false);
+      KdPrint(("OnError : Found fatal error code (%s). Disconnecting\n",Descr));
+      return false;
   }
   return true;
 }
@@ -633,6 +634,7 @@ void FfssTCP::On_disconnectComplete(PVOID pCxt,TDI_STATUS Status,uint ByteCount)
 void FfssTCP::OnDisconnect(uint OptionsLength,PVOID Options,BOOLEAN bAbort)
 {
   KdPrint(("FfssTCP::OnDisconnect : Remote peer disconnected...\n"));
+  Sem->SignalTimer();
 }
 
 
@@ -727,6 +729,11 @@ struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share)
     Inode = (struct ffss_inode *) Ptr->Data;
     if(FFSS_strcasecmp(Share->Name,((FfssTCP *)Inode->Conn)->Share))
     {
+      if(!((FfssTCP *)Inode->Conn)->IsConnected())
+      {
+        KdPrint(("FsdGetConnection : Found a connection, but not active\n"));
+        break;
+      }
       KdPrint(("FsdGetConnection : Active connection found\n"));
       Inode = FsdAssignInode(Inode,false);
 #if DBG
@@ -803,7 +810,7 @@ NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,stru
   /* Right now, if current file ofs is != of requested ofs, we invalidate the whole current buffer */
   if(Ccb->FilePos != Offset)
   {
-    KdPrint(("FsdReadFileData : HEY HEY HEY ... NOT OPTIMAL ... Check if a part of the requested ofs is in actual buffer (%ld-%ld)!!\n",Offset,Ccb->FilePos));
+    KdPrint(("FsdReadFileData : HEY HEY HEY ... NOT OPTIMAL ... Check if a part of the requested ofs is in actual buffer (%I64u-%I64u)!!\n",Offset,Ccb->FilePos));
     Ccb->BufferPos = 0;
   }
   data_pos = 0;
@@ -833,6 +840,7 @@ NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,stru
     KdPrint(("Handle Read : Sending STREAMING READ for %ld starting at %ld",Ccb->Handle,Offset+data_pos));
     Ccb->BufferPos = 0;
     Ccb->eof = false;
+    Ccb->error = true;
     // Synchronized function
     KdPrint(("Handle Read : setting sem\n"));
     ((FfssTCP *)FcbInode->Conn)->Sem->SetTimeout(FFSS_TIMEOUT_TRANSFER*1000);
@@ -848,16 +856,9 @@ NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,stru
     KdPrint(("Handle Read : waiting data\n"));
     ((FfssTCP *)FcbInode->Conn)->Sem->SetTimeout(FFSS_TIMEOUT_TCP_MESSAGE*1000);
     KdPrint(("Handle Read : got data\n"));
-    if(Ccb->eof)
+    if(Ccb->error)
     {
-      KdPrint(("Read File : EOF\n"));
-      Length = data_pos; /* TO DO */
-      Offset += Length; /* TO DO */
-      return STATUS_END_OF_FILE;
-    }
-    if(Ccb->BufferPos == 0)
-    {
-      KdPrint(("Read File : Timed out reading file\n"));
+      KdPrint(("Read File : Error or Timed out reading file\n"));
       Length = data_pos; /* TO DO */
       Offset += Length; /* TO DO */
       return STATUS_DATA_ERROR;
@@ -872,7 +873,7 @@ NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,stru
       Ccb->BufferPos -= Length;
       Length = 0;
     }
-    else
+    else if(Ccb->BufferPos != 0)
     {
       KdPrint(("Copy whole block : %ld %ld\n",data_pos,Ccb->BufferPos));
       RtlCopyMemory((char *)Buffer+data_pos,Ccb->Buffer,Ccb->BufferPos); /* Copy to user's buffer */
@@ -880,7 +881,21 @@ NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,stru
       Length -= Ccb->BufferPos;
       Ccb->BufferPos = 0;
     }
-
+    if(Ccb->eof)
+    {
+      if(data_pos != 0)
+      {
+#if DBG
+        if(Length != 0)
+          KdPrint(("AIE AIE AIE... In FsdReadFileData : EOF and Length != 0 !!! (%d,%d)",Length,data_pos));
+#endif /* DBG */
+        break;
+      }
+      KdPrint(("Read File : EOF\n"));
+      Length = data_pos; /* TO DO */
+      Offset += Length; /* TO DO */
+      return STATUS_END_OF_FILE;
+    }
   }
   KdPrint(("Read File : Read complete. Returning\n"));
   Length = data_pos; /* TO DO */

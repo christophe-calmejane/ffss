@@ -189,8 +189,8 @@ FsdQueryVolumeInformation (
                         0;
                 }
 
-                Buffer->SectorsPerAllocationUnit =
-                    ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
+                Buffer->SectorsPerAllocationUnit = 8192;
+                    //ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
 
                 Buffer->BytesPerSector = Vcb->DiskGeometry.BytesPerSector;
 
@@ -263,7 +263,7 @@ FsdQueryVolumeInformation (
                 Buffer->FileSystemAttributes =
                     FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES;
 
-                Buffer->MaximumComponentNameLength = ROMFS_MAXFN;
+                Buffer->MaximumComponentNameLength = FFSS_MAX_FILEPATH_LENGTH;
 
                 Buffer->FileSystemNameLength = sizeof(DRIVER_NAME) * 2;
 
@@ -339,8 +339,8 @@ FsdQueryVolumeInformation (
                         0;
                 }
 
-                Buffer->SectorsPerAllocationUnit =
-                    ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
+                Buffer->SectorsPerAllocationUnit = 8192;
+                    //ROMBSIZE / Vcb->DiskGeometry.BytesPerSector;
 
                 Buffer->BytesPerSector = Vcb->DiskGeometry.BytesPerSector;
 

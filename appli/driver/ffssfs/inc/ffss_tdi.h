@@ -230,6 +230,8 @@ typedef struct _FSD_CCB {
     int                            State;
     /* Is EndOfFile ? */
     unsigned char                  eof;
+    /* Error during last I/O ? */
+    unsigned char                  error;
     /* Buffer for streaming */
     char *                         Buffer[STREAMING_BUFFER_SIZE];
     /* Current pos of buffer */
@@ -272,8 +274,8 @@ NTSTATUS TDI_Init();
 struct ffss_inode *FsdGetConnection(IN struct ffss_inode *Share);
 void FsdFreeConnection(IN struct ffss_inode *Conn);
 NTSTATUS FsdReadFileData(IN PDEVICE_OBJECT DeviceObject,IN OUT PFSD_CCB Ccb,struct ffss_inode *IN FcbInode,IN __int64 Offset,IN ULONG Length,IN OUT PVOID Buffer);
-void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],int Code,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
-void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_LongField User);
+void OnStrmOpenAnswer(SU_PClientSocket Client,const char Path[],FFSS_Field ErrorCode,FFSS_Field Handle,FFSS_LongField FileSize,FFSS_LongField User);
+void OnStrmReadAnswer(SU_PClientSocket Client,FFSS_Field Handle,const char Bloc[],long int BlocSize,FFSS_Field ErrorCode,FFSS_LongField User);
 
 #ifdef __cplusplus
 };

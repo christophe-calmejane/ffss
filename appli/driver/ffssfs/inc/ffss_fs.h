@@ -25,17 +25,17 @@
 #define SU_PClientSocket void *
 #include <ffss.h>
 
-#define SECTOR_SIZE         512
+//#define SECTOR_SIZE         512
 
-#define BLOCK_SIZE          PAGE_SIZE
+//#define BLOCK_SIZE          PAGE_SIZE
 
 //#define ROMFS_MAGIC         "-rom1fs-"
 
 //#define ROMFS_MAGIC_OFFSET  0
 
-#define SIZEOF_FFSS_INODE(x) \
+/*#define SIZEOF_FFSS_INODE(x) \
     ((sizeof(struct ffss_inode) + ROMFH_PAD) \
-    & ROMFH_MASK)
+    & ROMFH_MASK)*/
 
 //
 // Types used by Linux
@@ -54,7 +54,7 @@
 
 /* The basic structures of the romfs filesystem */
 
-#define ROMBSIZE    BLOCK_SIZE
+/*#define ROMBSIZE    BLOCK_SIZE
 
 #define ROMFS_MAXFN 128
 
@@ -68,12 +68,12 @@
 #define ROMFH_SCK   6
 #define ROMFH_FIF   7
 #define ROMFH_EXEC  8
-
+*/
 /* Alignment */
 
-#define ROMFH_SIZE  16
+/*#define ROMFH_SIZE  16
 #define ROMFH_PAD   (ROMFH_SIZE-1)
-#define ROMFH_MASK  (~ROMFH_PAD)
+#define ROMFH_MASK  (~ROMFH_PAD)*/
 
 
 //
