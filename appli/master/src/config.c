@@ -126,6 +126,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
 #ifdef DEBUG
       printf("Config Loader Info : Connecting to master %s:%d\n",Domain->Master,FFSS_MASTER_PORT);
 #endif /* DEBUG */
+      SU_SEM_WAIT(FM_TmpSem); /* Lock to protect a free of the CS struct before end of init */
       Domain->CS = FM_SendMessage_Connect(Domain->Master);
       if(Domain->CS != NULL)
       {
@@ -135,6 +136,7 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
         FM_SendMessage_MasterConnection(Domain->CS->sock);
         FM_SendMessage_ServerList(Domain->CS->sock);
       }
+      SU_SEM_POST(FM_TmpSem);
       Ptr = Ptr->Next;
     }
 

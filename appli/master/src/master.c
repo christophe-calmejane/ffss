@@ -18,6 +18,7 @@ SU_SEM_HANDLE FM_MySem2; /* Semaphore to protect the use of the Hosts of FM_MyDo
 SU_SEM_HANDLE FM_MySem3; /* Semaphore to protect the use of FM_OtherQueue */
 SU_SEM_HANDLE FM_MySem4; /* Semaphore to protect the use of FM_SearchQueue */
 SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
+SU_SEM_HANDLE FM_TmpSem; /* Temporary semaphore */
 
 SU_THREAD_HANDLE FM_THR_PING,FM_THR_SEARCH;
 
@@ -763,6 +764,7 @@ void OnMasterDisconnected(SU_PClientSocket Master)
   SU_PList Ptr;
 
   context;
+  SU_SEM_WAIT(FM_TmpSem); /* Lock to stall the callback if we are still in the FM_LoadConfigFile function */
   Dom = FM_SearchDomainByIP(inet_ntoa(Master->SAddr.sin_addr));
   if(Dom != NULL)
   {
@@ -781,6 +783,7 @@ void OnMasterDisconnected(SU_PClientSocket Master)
     Dom->Hosts = NULL;
     SU_SEM_POST(FM_MySem2);
   }
+  SU_SEM_POST(FM_TmpSem);
 }
 
 void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char Name[],const char OS[],const char Comment[],const char MasterIP[])
@@ -1071,6 +1074,11 @@ int main(int argc,char *argv[])
       return -3;
     }
     if(!SU_CreateSem(&FM_MySem5,1,1,"FFSSMasterSem5"))
+    {
+      FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
+      return -3;
+    }
+    if(!SU_CreateSem(&FM_TmpSem,1,1,"FFSSMasterTmpSem"))
     {
       FFSS_PrintSyslog(LOG_ERR,"FFSS Master Error : Couldn't allocate semaphore\n");
       return -3;

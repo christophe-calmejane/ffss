@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : May, 11th 2002
+                  Last Update : May, 14th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+May, 14th 2002:
+  - Fixed a bug that cause a seg fault if foreign master rejects the connection before end of init messages
 
 May, 11th 2002:
   - Added a field char at the beginning of each search answer (file/dir samba/ffss state)
