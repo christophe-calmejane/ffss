@@ -55,6 +55,8 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
           FFSS_PrintSyslog(LOG_WARNING,"Config Loader : Cannot find ip for %s\n",V);
           continue;
         }
+        /* Add TCP rule to allow master to connect */
+        FFSS_Filter_AddRuleToChain_Head(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,Ip,"255.255.255.255",FFSS_FILTER_ACTION_ACCEPT,Nam);
         Domain = (FM_PDomain) malloc(sizeof(FM_TDomain));
         memset(Domain,0,sizeof(FM_TDomain));
         Domain->Name = strdup(Nam);
@@ -79,7 +81,11 @@ bool FM_LoadConfigFile(const char FileName[],bool UserGroup)
   if(UserGroup)
     rewind(fp);
   else
+  {
+    /* Add Default rule, to reject all non-master connections */
+    FFSS_Filter_AddDefaultRuleToChain(FFSS_FILTER_CHAINS_MASTER_TCP_CONNECTION_MASTER,FFSS_FILTER_ACTION_REJECT);
     fclose(fp);
+  }
 
   if(UserGroup == false)
   {

@@ -3,9 +3,12 @@
 
                       Stable Version : 1.0.0
                       Devel  Version : 1.0.0
-                  Last Update : June, 2th 2002
+                  Last Update : June, 9th 2002
 
 VIRER LE -PREx DE MASTER.H
+
+June, 9th 2002:
+  - Added firewalling rules to check master connections, using new ffss filter engine
 
 June, 3rd 2002:
   - Fixed wrong STATE update in search index (again)

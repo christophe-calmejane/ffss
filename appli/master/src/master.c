@@ -712,19 +712,6 @@ void OnIndexAnswerSamba(struct sockaddr_in Client,FFSS_Field CompressionType,FFS
 }
 
 /* TCP callbacks */
-bool OnCheckConnection(SU_PClientSocket Master)
-{
-  FM_PDomain Dom;
-  char *buf;
-
-  context;
-  buf = inet_ntoa(Master->SAddr.sin_addr);
-  Dom = FM_SearchDomainByIP(buf);
-  if((Dom != NULL) && (!FM_IsMyDomain(Dom))) /* Foreign master, and not me ! */
-    return true;
-  return false;
-}
-
 void OnMasterConnected(SU_PClientSocket Master)
 {
   FM_PDomain Dom;
@@ -1098,7 +1085,6 @@ int main(int argc,char *argv[])
 #endif /* ENABLE_SAMBA */
 #endif /* !DISABLE_INDEX */
     /* TCP callbacks */
-    FFSS_CB.MCB.OnCheckConnection = OnCheckConnection;
     FFSS_CB.MCB.OnMasterConnected = OnMasterConnected;
     FFSS_CB.MCB.OnMasterDisconnected = OnMasterDisconnected;
     FFSS_CB.MCB.OnNewState = OnNewState;
