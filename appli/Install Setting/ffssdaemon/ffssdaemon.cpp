@@ -162,7 +162,7 @@ VOID WINAPI FFSSDaemonCtrlHandler (DWORD opcode)
 {
 
 	DWORD status,res; 
-	DWORD pid=0;
+	int pid=0;
 	DWORD spid=sizeof(pid);
 	HANDLE h;
     int nb=0;
@@ -185,7 +185,7 @@ VOID WINAPI FFSSDaemonCtrlHandler (DWORD opcode)
 			// Get FFSSD pid
 			// Try to kill it
 
-			pid = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_PROCESSID,0);
+			SU_RB_GetIntValue(FFSS_REGISTRY_PATH_PROCESSID,&pid,0);
 			if(!pid)
 			{
 				StopService();
