@@ -302,6 +302,7 @@ begin
   Begin
     TabSheet3.TabVisible:=True;
     TabSheet4.TabVisible:=True;
+
     ConnInit:=true;
   End;
   If (ParamCount = 0) Or Remote Then

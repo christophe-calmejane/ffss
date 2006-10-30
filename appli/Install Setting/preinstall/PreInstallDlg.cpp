@@ -606,6 +606,7 @@ PluginInfo::~PluginInfo()
 	if( szDescription!=NULL ) {
 		free(szDescription);
 	}
+
 	if( szVersion!=NULL ) {
 		free(szVersion);
 	}

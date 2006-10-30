@@ -903,6 +903,7 @@ FsdPurgeFile (
 VOID
 FsdSetVpbFlag (
     IN PVPB     Vpb,
+
     IN USHORT   Flag
     )
 {

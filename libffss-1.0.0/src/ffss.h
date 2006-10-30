@@ -48,6 +48,7 @@ extern char FFSS_WinServerVersion[20];
 #define FFSS_SERVER_OS "SunOS"
 #else
 #error "Unknown OS... contact devel team"
+
 #endif /* __linux__ */
 
 /* Define the target arch word alignment (not needed on x86) */
@@ -1112,6 +1113,7 @@ void FFSS_InitXFerDownload(FFSS_PTransfer FT,FFSS_Field XFerTag);
 extern char *FFSS_TransferErrorTable[];
 extern long int FFSS_TransferBufferSize;
 extern long int FFSS_TransferReadBufferSize;
+
 
 
 /* ************************************************************************* */

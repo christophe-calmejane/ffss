@@ -256,6 +256,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
           }
           /* Reset throughput */
           FT->Throughput = 0;
+
           FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_UPLOAD,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
           FFSS_QoS_UpdateRate(FFSS_QOS_CHAINS_TRAFFIC_GLOBAL,IP,FT->Throughput-prev_thrpt,FFSS_QOS_CHECK_DELAY);
           FFSS_FreeTransfer(FT);

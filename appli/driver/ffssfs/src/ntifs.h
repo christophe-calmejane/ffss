@@ -422,6 +422,7 @@
         Added:
           Defines:
             IO_TYPE_XXX
+
             OB_TYPE_XXX
             THREAD_STATE_XXX
           Data types:
@@ -701,6 +702,7 @@
          TOKEN_DEFAULT_DACL
          TOKEN_GROUPS
          TOKEN_OWNER
+
          TOKEN_PRIMARY_GROUP
          TOKEN_PRIVILEGES
          TOKEN_SOURCE
@@ -4511,6 +4513,7 @@ RtlCompressChunks (
     OUT PUCHAR                      CompressedBuffer,
     IN ULONG                        CompressedBufferSize,
     IN OUT PCOMPRESSED_DATA_INFO    CompressedDataInfo,
+
     IN ULONG                        CompressedDataInfoLength,
     IN PVOID                        WorkSpace
 );

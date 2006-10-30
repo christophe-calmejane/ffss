@@ -251,6 +251,7 @@ bool FS_SendMessage_ServerSharesAnswer(struct sockaddr_in Client,const char IP[]
   pos = sizeof(FFSS_Field);
   pos = FFSS_PackField(msg,pos,FFSS_MESSAGE_SHARES_LISTING_ANSWER);
   pos = FFSS_PackLongField(msg,pos,User);
+
   pos = FFSS_PackField(msg,pos,FFSS_IP_TYPE);
   FFSS_PackIP(msg+pos,IP,FFSS_IP_TYPE);
   pos += FFSS_IP_FIELD_SIZE;

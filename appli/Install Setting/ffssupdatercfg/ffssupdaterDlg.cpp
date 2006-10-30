@@ -296,6 +296,7 @@ void CFfssupdaterDlg::OnDestroy()
 /*****************************************************************************/
 void CFfssupdaterDlg::OnTestSettings() 
 {
+
 	// TODO: Add your control notification handler code here
 	HINTERNET	hInet;
 	HINTERNET	hConnection;

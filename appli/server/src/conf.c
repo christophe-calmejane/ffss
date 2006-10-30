@@ -74,6 +74,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       free(Users);
       SU_END_THREAD(NULL);
     }
+
     if(Size >= buf_len)
     {
       SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (Command greater than receive buffer)");

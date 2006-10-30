@@ -526,7 +526,8 @@ bool FFSS_OnError(SU_PClientSocket Server,FFSS_Field Code,const char Descr[],FFS
       Path->HaveIdx = false;
     }
     SU_SEM_POST(FMP_Sem_Blocs);
-  }
+
+  }
 
   if(Path->Locked)
     SU_SEM_POST(Path->Sem);

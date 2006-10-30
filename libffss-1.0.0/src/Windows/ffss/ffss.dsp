@@ -14,6 +14,7 @@ CFG=ffss - Win32 Debug
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
 !MESSAGE NMAKE /f "ffss.mak" CFG="ffss - Win32 Debug"
+
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 

@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zconf.h,v 1.2 2006-10-04 15:56:48 kiki Exp $ */
+/* @(#) $Id: zconf.h,v 1.3 2006-10-30 12:04:30 kiki Exp $ */
 
 #ifndef ZCONF_H
 #define ZCONF_H
@@ -246,6 +246,7 @@
 #ifndef ZEXTERN
 #  define ZEXTERN extern
 #endif
+
 #ifndef ZEXPORT
 #  define ZEXPORT
 #endif

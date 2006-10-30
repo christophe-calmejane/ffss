@@ -914,6 +914,7 @@ SU_THREAD_ROUTINE(FS_ClientThreadTCP_FTP,User)
     {
       Size = 0;
       p = NULL;
+
       while(Size < len)
       {
         if((Buf[Size] == 0x0D) || (Buf[Size] == 0x0A))

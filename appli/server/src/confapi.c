@@ -233,6 +233,7 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
   q = Buf+Pos;
   r = strchr(q,',');
   while(r != NULL)
+
   {
     r[0] = 0; r++;
     u_l = q;

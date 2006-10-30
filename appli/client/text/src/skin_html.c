@@ -414,6 +414,7 @@ void FCA_html_post_ok()
 }
 
 void FCA_html_pre_serv(const char *domain, const char *name, long int state, bool isName)
+
 {
 	char all[FFSS_MAX_FILEPATH_LENGTH];
 
@@ -619,6 +620,7 @@ void FCA_post_link(bool firstArg)
 	free(p);
 	printf("&debug=%s",
 		p=FCA_cgi_escape_special_chars(FCA_debuglevel) );
+
 	printf("&included_doc=%s", FCA_html_included_doc);
 	free(p);
 	printf("'>");

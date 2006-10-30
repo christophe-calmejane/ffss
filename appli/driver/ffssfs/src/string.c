@@ -1,5 +1,6 @@
 /*
     This is a ffssfs file system driver for Windows NT/2000/XP.
+
     Copyright (C) 2002 Christophe Calmejane
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

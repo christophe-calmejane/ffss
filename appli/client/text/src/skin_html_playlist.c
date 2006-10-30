@@ -127,6 +127,7 @@ void FCA_playlist_init()
 	FCA_playlist_ps.post_err=FCA_playlist_post_err;
 
 	FCA_playlist_ps.pre_warning=FCA_playlist_pre_warning;
+
 	FCA_playlist_ps.post_warning=FCA_playlist_post_warning;
 
 	FCA_playlist_ps.pre_ok=FCA_playlist_pre_ok;

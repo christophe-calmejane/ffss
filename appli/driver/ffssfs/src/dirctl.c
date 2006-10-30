@@ -389,6 +389,7 @@ FsdQueryDirectory (
                         } FILE_DIRECTORY_INFORMATION, *PFILE_DIRECTORY_INFORMATION;
 */
 
+
                         Buffer->FileIndex = FileIndex;
 /*                        FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->CreationTime);
                         FsdUnixTimeToNTTime(&Inode->Stamp,&Buffer->LastAccessTime);

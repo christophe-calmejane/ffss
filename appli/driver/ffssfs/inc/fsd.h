@@ -245,6 +245,7 @@ typedef struct _FSD_FCB {
 
     /* FFSS file handle */
     //unsigned long int              Handle;
+
     /* State of file (see FFSS_HANDLE_STATE_xxx) */
     //int                            State;
     /* Is EndOfFile ? */

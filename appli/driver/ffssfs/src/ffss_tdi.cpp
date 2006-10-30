@@ -43,6 +43,7 @@ void OnDomainListingAnswer(const char **Domains,int NbDomains,FFSS_LongField Use
   if(Root == NULL)
     return;
 
+
   FsdFreeSubInodes(Root,false);
 
   if(NbDomains != 0)
@@ -99,6 +100,7 @@ void OnServerListingAnswer(const char Domain[],int NbHost,SU_PList HostList,FFSS
         Inode->Flags = FFSS_FILE_DIRECTORY;
         Inode->IP = Host->IP;
         Inode->Parent = FsdAssignInode(domain,false);
+
         domain->Inodes[i] = FsdAssignInode(Inode,false);
         count++;
       }

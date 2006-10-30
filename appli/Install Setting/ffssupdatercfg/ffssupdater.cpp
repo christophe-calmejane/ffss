@@ -85,6 +85,7 @@ void CFfssupdaterApp::InstallStringTables()
 		if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_SUBKEY)!=ERROR_SUCCESS ) {
 			MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
 		} else {
+
 			nBufSize=sizeof(buffer);
 			if( RegKey.QueryValue(buffer,FFSS_REG_FAVORITE_LANGUAGE,&nBufSize)!=ERROR_SUCCESS ) {
 				MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
