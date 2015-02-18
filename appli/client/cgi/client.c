@@ -1,6 +1,8 @@
 #include <ffss.h>
 
-#define CLT_MASTER "ffss.fleming.u-psud.fr"
+// cl client.c /I ../../../skyutils/include/ /I ../../../libffss-1.0.0/src/ /D DISABLE_ZLIB /D DISABLE_BZLIB ../../../libffss-1.0.0/src/Windows/ffss/Debug/ffss.lib ws2_32.lib ../../../skyutils/src/Windows/skyutils/Debug/skyutils.lib user32.lib
+
+#define CLT_MASTER "localhost"
 
 static int Printing = false;
 
@@ -87,7 +89,7 @@ int main(int argc,char *argv[])
   printf("<HTML><HEAD><TITLE>Search result for \"%s\"</TITLE></HEAD><BODY BGCOLOR=#EEEEEE><FONT FACE=\"Verdana\"><DIV ALIGN=\"CENTER\"><BR>",argv[1]);
   Printing = true;
   FC_SendMessage_Search(CLT_MASTER,NULL,argv[1],0);
-  sleep(3);
+  SU_USLEEP(1200);
   Printing = false;
   printf("</DIV></FONT></BODY></HTML>");
 

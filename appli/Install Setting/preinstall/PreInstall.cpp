@@ -11,6 +11,17 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+static WCHAR* convertToUnicode(const char* text)
+{
+	WCHAR* utf16_text = NULL;
+	int size_text = MultiByteToWideChar(CP_UTF8, 0, text, -1, utf16_text, 0);
+	utf16_text = (WCHAR*)calloc((size_text + 1), sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, text, -1, utf16_text, size_text);
+
+	return utf16_text;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // CPreInstallApp
 
@@ -79,8 +90,8 @@ void CPreInstallApp::InstallStringTables()
 	DWORD		nBufSize;
 
 #ifdef _DEBUG
-	MT_ST_INSTANCE->AddTable("English","en.txt");
-	MT_ST_INSTANCE->AddTable("French","fr.txt");
+	//MT_ST_INSTANCE->AddTable("English","en.txt");
+	//MT_ST_INSTANCE->AddTable("French","fr.txt");
 #else
 	MT_ST_INSTANCE->AddTable("English",__argv[0]);
 	MT_ST_INSTANCE->AddTable("French",__argv[0]);
@@ -88,18 +99,20 @@ void CPreInstallApp::InstallStringTables()
 
 	if( __argc!=2 ) {
 		// Check for the registry
-		if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_SUBKEY)!=ERROR_SUCCESS ) {
-			MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+		if(RegKey.Open(FFSS_REG_KEY, convertToUnicode(FFSS_REG_SUBKEY)) != ERROR_SUCCESS)
+		{
+			//MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
 		} else {
 			nBufSize=sizeof(buffer);
-			if( RegKey.QueryValue(buffer,FFSS_REG_FAVORITE_LANGUAGE,&nBufSize)!=ERROR_SUCCESS ) {
-				MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+			if(RegKey.QueryValue(convertToUnicode(buffer), convertToUnicode(FFSS_REG_FAVORITE_LANGUAGE), &nBufSize) != ERROR_SUCCESS)
+			{
+				//MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
 			} else {
 				if( stricmp(buffer,"en")==0 ) {
-					MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+					//MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
 				} else {
 					if( stricmp(buffer,"fr")==0 ) {
-						MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
+						//MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
 					}
 				}				
 			}
@@ -107,10 +120,10 @@ void CPreInstallApp::InstallStringTables()
 		}
 	} else {
 		if( stricmp(__argv[1],"en")==0 ) {
-			MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
+			//MT_ST_INSTANCE->UseTable(LANGUAGE_ENGLISH);
 		} else {
 			if( stricmp(__argv[1],"fr")==0 ) {
-				MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
+				//MT_ST_INSTANCE->UseTable(LANGUAGE_FRENCH);
 			}
 		}
 	}

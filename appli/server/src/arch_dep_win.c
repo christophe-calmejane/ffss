@@ -93,16 +93,16 @@ bool FS_LoadConfig(const char FileName[])
     SU_RB_GetStrValue(key,Comment,sizeof(Comment),"");
     /* Get Share Writeable */
     _snprintf(key,sizeof(key),"%s%s_Writeable",FFSS_REGISTRY_PATH_SERVER,p);
-    Writeable = SU_RB_GetIntValue(key,0);
+    SU_RB_GetIntValue(key,&Writeable,0);
     /* Get Share Private */
     _snprintf(key,sizeof(key),"%s%s_Private",FFSS_REGISTRY_PATH_SERVER,p);
-    Private = SU_RB_GetIntValue(key,0);
+    SU_RB_GetIntValue(key,&Private,0);
     /* Get Share NoChksum */
     _snprintf(key,sizeof(key),"%s%s_NoChksum",FFSS_REGISTRY_PATH_SERVER,p);
-    NoChksum = SU_RB_GetIntValue(key,0);
+    SU_RB_GetIntValue(key,&NoChksum,0);
     /* Get Share MaxConnections */
     _snprintf(key,sizeof(key),"%s%s_MaxConnections",FFSS_REGISTRY_PATH_SERVER,p);
-    MaxConn = SU_RB_GetIntValue(key,0);
+    SU_RB_GetIntValue(key,&MaxConn,0);
     /* Get Share Users */
     Ptr = NULL;
     _snprintf(key,sizeof(key),"%s%s_Users",FFSS_REGISTRY_PATH_SERVER,p);
@@ -168,21 +168,21 @@ bool FS_LoadConfig(const char FileName[])
   if(GBL_Master[0] != 0)
     FS_MyGlobal.Master = strdup(GBL_Master);
   /* Get global Idle */
-  FS_MyGlobal.Idle = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_Idle",5*60);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_Idle",&FS_MyGlobal.Idle,5*60);
   /* Get global MaxConn */
-  FS_MyGlobal.MaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxConn",FFSS_DEFAULT_MAX_CONN);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxConn",&FS_MyGlobal.MaxConn,FFSS_DEFAULT_MAX_CONN);
   /* Get global MaxXFerPerConn */
-  FS_MyGlobal.MaxXFerPerConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxXFerPerConn",FFSS_DEFAULT_MAX_XFER_PER_CONN);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_MaxXFerPerConn",&FS_MyGlobal.MaxXFerPerConn,FFSS_DEFAULT_MAX_XFER_PER_CONN);
   /* Get global FTP */
-  FS_MyGlobal.FTP = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP",0);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP",&FS_MyGlobal.FTP,0);
   /* Get global FTP MaxConn */
-  FS_MyGlobal.FTPMaxConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP_MaxConn",10);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_FTP_MaxConn",&FS_MyGlobal.FTPMaxConn,10);
   /* Get global XFerInConn */
-  FS_MyGlobal.XFerInConn = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerInConn",0);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerInConn",&FS_MyGlobal.XFerInConn,0);
   /* Get global ReadBufferSize */
-  FFSS_TransferReadBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_ReadBufferSize",FFSS_TRANSFER_READ_BUFFER_SIZE);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_ReadBufferSize",&FFSS_TransferReadBufferSize,FFSS_TRANSFER_READ_BUFFER_SIZE);
   /* Get global BufferSize */
-  FFSS_TransferBufferSize = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerBufferSize",FFSS_TRANSFER_BUFFER_SIZE);
+  SU_RB_GetIntValue(FFSS_REGISTRY_PATH_SERVER "Global_XFerBufferSize",&FFSS_TransferBufferSize,FFSS_TRANSFER_BUFFER_SIZE);
 
   /* Load plugins */
   _snprintf(key,sizeof(key),"%sPlugins\\",FFSS_REGISTRY_PATH_SERVER);

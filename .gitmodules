@@ -1,0 +1,3 @@
+[submodule "skyutils"]
+	path = skyutils
+	url = ssh://dakikifr@gitent-scm.com/git/dakiki/skyutils.git

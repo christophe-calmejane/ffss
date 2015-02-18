@@ -346,7 +346,8 @@ void FMI_InsertKeyWordInSuffixTree(const char *Word,  /* <--  Key word to insert
 {
   char KW[1024]={0,};
   char HW[FM_STR_HASH_LENGTH+1];
-  int len,i,hash_pos;
+  size_t len,i;
+  int hash_pos;
   FM_PSTNode Node;
   unsigned int indexingSize = FM_STR_HASH_LENGTH;
 
@@ -381,7 +382,8 @@ void FMI_InsertKeyWordInSuffixTree(const char *Word,  /* <--  Key word to insert
 void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structure */
                            int NumHost)           /* <-- Number of this host      */
 {
-  int i,j,s,e,len;
+	size_t j;
+  int i,s,e,len;
   char buf[1024];
   char *dotPos;
 

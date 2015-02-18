@@ -34,7 +34,7 @@
 
 #include "StringTable.h"
 
-#include "MT.h"
+//#include "MT.h"
 #ifdef _DEBUG
 #define MT_ST_INSTANCE  MT_CSingleton<MT_CStringTable>::Instance()
 #else

@@ -23,7 +23,6 @@
 #include "index.h"
 #ifdef _WIN32
 #define pid_t int
-#define getpid() _getpid()
 #endif /* _WIN32 */
 
 FM_TDomain FM_MyDomain;
@@ -40,6 +39,8 @@ SU_SEM_HANDLE FM_MySem5; /* Semaphore to protect the use of the index */
 SU_SEM_HANDLE FM_TmpSem; /* Temporary semaphore */
 
 SU_THREAD_HANDLE FM_THR_PING,FM_THR_SEARCH;
+SU_THREAD_ID FM_THRID_PING, FM_THRID_SEARCH;
+static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
 volatile FFSS_Field FM_CurrentIndexSize = 0;
 FFSS_Field FM_CurrentFileTreeSize = 0;
@@ -418,7 +419,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     {
       SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"%s is not on my domain... rejecting index",tmp_ip);
       SU_CLOSE_SOCKET(sock);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
   }
 
@@ -432,13 +433,13 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   {
     SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
     SU_CLOSE_SOCKET(sock);
-    SU_END_THREAD(NULL);
+	SU_END_THREAD(threadwork_ret_zero);
   }
   res = recv(sock,(char *)&NbShares,sizeof(NbShares),SU_MSG_NOSIGNAL);
   if(res <= 0)
   {
     SU_CLOSE_SOCKET(sock);
-    SU_END_THREAD(NULL);
+	SU_END_THREAD(threadwork_ret_zero);
   }
   Host = (FM_PFTControler) malloc(sizeof(FM_TFTControler));
   memset(Host,0,sizeof(FM_TFTControler));
@@ -453,7 +454,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   Host->NbNodes = NodesSize/sizeof(FM_TFTNode);
   Host->FTNodes = (FM_TFTNode *) malloc(NodesSize);
   context;
-  for(i=0;i<NbShares*2;i++)
+  for(i=0;i<(int)NbShares*2;i++)
   {
     FD_ZERO(&rfds);
     FD_SET(sock,&rfds);
@@ -465,7 +466,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     res = recv(sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
     if(res <= 0)
@@ -473,7 +474,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Error receiving index from server");
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     total += Size;
     if(total > IndexSize)
@@ -481,7 +482,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"WARNING : Index sent is greater than specified size : %ld-%ld",total,IndexSize);
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
 
     buf = (char *) malloc(Size);
@@ -498,7 +499,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
         FMI_FreeFTControler(Host);
         SU_CLOSE_SOCKET(sock);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       res = recv(sock,buf+actual,Size-actual,SU_MSG_NOSIGNAL);
       if(res <= 0)
@@ -507,7 +508,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         FMI_FreeFTControler(Host);
         SU_CLOSE_SOCKET(sock);
         free(buf);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       actual += res;
     }
@@ -520,7 +521,8 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       case FFSS_COMPRESSION_NONE :
         length = Size;
         break;
-      case FFSS_COMPRESSION_ZLIB :
+#ifndef DISABLE_ZLIB
+			case FFSS_COMPRESSION_ZLIB:
         data = FFSS_UncompresseZlib(buf,Size,&length);
         if(data == NULL)
         {
@@ -530,7 +532,9 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         }
         free_it = true;
         break;
-      case FFSS_COMPRESSION_BZLIB :
+#endif /* !DISABLE_ZLIB */
+#ifndef DISABLE_BZLIB
+			case FFSS_COMPRESSION_BZLIB :
         data = FFSS_UncompresseBZlib(buf,Size,&length);
         if(data == NULL)
         {
@@ -540,7 +544,8 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
         }
         free_it = true;
         break;
-      default :
+#endif /* !DISABLE_BZLIB */
+			default:
         FFSS_PrintSyslog(LOG_WARNING,"Unknown compression type (%s) : %d\n",Compression,tmp_ip);
         error = true;
     }
@@ -549,7 +554,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       FMI_FreeFTControler(Host);
       SU_CLOSE_SOCKET(sock);
       free(buf);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     if(i%2) /* Nodes */
     {
@@ -612,7 +617,8 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   }
   SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"Ending index thread... indexing completed (%d hosts)",FM_Controler.NbHosts);
   SU_SEM_POST(FM_MySem5);
-  SU_END_THREAD(NULL);
+  SU_END_THREAD(threadwork_ret_zero);
+  SU_THREAD_RETURN(0);
 }
 
 void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS_Field IndexSize,FFSS_Field FileTreeSize,FFSS_Field NodesSize,int Port,bool Samba)
@@ -622,6 +628,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   int sock=0;
   struct sockaddr_in SAddr;
   SU_THREAD_HANDLE ClientThr;
+	SU_THREAD_ID ClientThrId;
 
   context;
   if((FileTreeSize == 0) || (NodesSize == 0))
@@ -673,7 +680,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
   FM_CurrentCompression = CompressionType;
   FM_CurrentSamba = Samba;
   memcpy(&FM_CurrentClient,&Client,sizeof(FM_CurrentClient));
-  if(!SU_CreateThread(&ClientThr,ThreadIndexing,(void *)sock,true))
+	if(!SU_CreateThread(&ClientThr, &ClientThrId,ThreadIndexing, (void *)sock, true))
   {
     SU_CLOSE_SOCKET(sock);
     return;
@@ -890,7 +897,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
 int main(int argc,char *argv[])
 #endif /* _WIN32 */
 {
-  int i;
   char ConfigFile[1024];
   bool daemonize = false;
   bool log = false;
@@ -910,7 +916,7 @@ int main(int argc,char *argv[])
   }
 
   SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF);
-  SU_DBG_SetOptions(true,true);
+  SU_DBG_SetOptions(true,true,true);
 #ifdef DEBUG
   SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
 #endif /* DEBUG */
@@ -919,7 +925,7 @@ int main(int argc,char *argv[])
 #if defined(__unix__) || defined(_CONSOLE)
   if(argc != 1)
   {
-    i = 1;
+    int i = 1;
     while(i<argc)
     {
       if((strcmp(argv[i],"--help") == 0) || (strcmp(argv[i],"-h") == 0))
@@ -970,7 +976,7 @@ int main(int argc,char *argv[])
 #else /* !__unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Master.log");
   FFSS_PrintSyslog(LOG_INFO,"FFSS Master started\n");
-  if(!SU_WSInit(2,2))
+	if(!SU_SockInit(2, 2))
   {
     FFSS_PrintSyslog(LOG_ERR,"Cannot start WinSock\n");
   }
@@ -1072,14 +1078,14 @@ int main(int argc,char *argv[])
     FFSS_MyIP = FM_MyDomain.Master;
 
     context;
-    if(!SU_CreateThread(&FM_THR_PING,FM_ThreadPing,NULL,true))
+		if(!SU_CreateThread(&FM_THR_PING, &FM_THRID_PING, FM_ThreadPing, NULL, true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating PING thread\n");
       FM_UnInit();
       return -3;
     }
 
-    if(!SU_CreateThread(&FM_THR_SEARCH,FM_ThreadSearch,NULL,true))
+		if(!SU_CreateThread(&FM_THR_SEARCH, &FM_THRID_SEARCH,FM_ThreadSearch, NULL, true))
     {
       FFSS_PrintSyslog(LOG_ERR,"Error creating SEARCH thread\n");
       FM_UnInit();

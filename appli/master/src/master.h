@@ -16,7 +16,7 @@
 #ifndef __MASTER_H__
 #define __MASTER_H__
 
-#include <ffss.h>
+#include <ffss/ffss.h>
 #ifdef __unix__
 #include <sys/ioctl.h>
 #include <net/if.h>

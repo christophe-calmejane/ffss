@@ -22,6 +22,7 @@ SU_SEM_HANDLE FS_SemShr;   /* Semaphore to protect the use of FS_Index and all s
 SU_SEM_HANDLE FS_SemPlugin;/* Semaphore to protect the use of FS_Plugins */
 SU_THREAD_KEY_HANDLE FS_tskey;
 SU_THREAD_ONCE_HANDLE FS_once = SU_THREAD_ONCE_INIT;
+static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
 FS_TGlobal FS_MyGlobal;
 char *FS_MyDomain = "None";
@@ -1572,7 +1573,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
     }
     if(FS->Position != StartPos)
     {
-      fseek(FS->fp,StartPos,SEEK_SET);
+      fseek(FS->fp,(long)StartPos,SEEK_SET);
       FS->Position = StartPos;
     }
     len = Length;
@@ -1692,13 +1693,13 @@ void OnStrmSeek(SU_PClientSocket Client,FFSS_Field Handle,long int Flags,FFSS_Lo
     switch(Flags)
     {
       case FFSS_SEEK_SET :
-        fseek(FS->fp,Pos,SEEK_SET);
+        fseek(FS->fp,(long)Pos,SEEK_SET);
         break;
       case FFSS_SEEK_CUR :
-        fseek(FS->fp,Pos,SEEK_CUR);
+		  fseek(FS->fp, (long)Pos, SEEK_CUR);
         break;
       case FFSS_SEEK_END :
-        fseek(FS->fp,Pos,SEEK_END);
+		  fseek(FS->fp, (long)Pos, SEEK_END);
         break;
       default :
         SU_SEM_POST(FS_SemShr);
@@ -2269,7 +2270,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
     snprintf(msg,sizeof(msg),"426 Memory allocation error.\n");
     send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
     FS_FreeTransferFTP(FT);
-    SU_END_THREAD(NULL);
+	SU_END_THREAD(threadwork_ret_zero);
   }
 
   while(total < fsize)
@@ -2285,7 +2286,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
       send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
       FS_FreeTransferFTP(FT);
       free(RBuf);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     rpos = 0;
     while(rpos < rlen)
@@ -2306,7 +2307,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
         send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
         FS_FreeTransferFTP(FT);
         free(RBuf);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       res = send(FT->Client->sock,RBuf+rpos,len,SU_MSG_NOSIGNAL);
       if(res != len)
@@ -2316,7 +2317,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
         send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
         FS_FreeTransferFTP(FT);
         free(RBuf);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       /* Faire ici ce qu'on veut... on vient d'envoyer un paquet */
       rpos += len;
@@ -2327,7 +2328,8 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   snprintf(msg,sizeof(msg),"226 Transfer complete.\n");
   send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
   FS_FreeTransferFTP(FT);
-  SU_END_THREAD(NULL);
+  SU_END_THREAD(threadwork_ret_zero);
+  SU_THREAD_RETURN(0);
 }
 
 void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPos,const char Host[],const char Port[])
@@ -2337,6 +2339,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
   FS_PTransferFTP TFTP;
   FILE *fp;
   SU_THREAD_HANDLE Thread;
+	SU_THREAD_ID ThreadId;
   FS_PThreadSpecific ts;
   char *p,*q;
 #ifndef _WIN32
@@ -2476,7 +2479,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
   }
   snprintf(msg,sizeof(msg),"150 Opening %s mode data connection for /bin/ls." CRLF,(ts->Type == 'I')?"BINARY":"ASCII");
   send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
-  DataPort = SU_ClientConnect((char *)Host,(char *)Port,SOCK_STREAM);
+  DataPort = SU_ClientConnect((char *)Host,atoi(Port),SOCK_STREAM);
   if(DataPort == NULL)
   {
     SU_SEM_POST(FS_SemShr);
@@ -2494,7 +2497,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     TFTP->LocalPath = strdup(Path);
     TFTP->StartingPos = StartPos;
     TFTP->Client = DataPort;
-    if(!SU_CreateThread(&Thread,FS_DownloadFileFunc,(void *)TFTP,true))
+    if(!SU_CreateThread(&Thread,&ThreadId,FS_DownloadFileFunc,(void *)TFTP,true))
     {
       SU_SEM_POST(FS_SemShr);
       FS_FreeTransferFTP(TFTP);
@@ -2693,6 +2696,7 @@ char *FS_CheckGlobal(void)
 {
   char *ip;
   SU_THREAD_HANDLE Thread;
+	SU_THREAD_ID ThreadId;
   SU_PServerInfo SI;
 
   FS_MyGlobal.Conn = 0;
@@ -2718,7 +2722,7 @@ char *FS_CheckGlobal(void)
     SI = SU_CreateServer(FFSS_SERVER_CONF_PORT,SOCK_STREAM,false);
     if(SI != NULL)
     {
-      if(!SU_CreateThread(&Thread,FS_ConfFunc,(void *)SI,true))
+      if(!SU_CreateThread(&Thread,&ThreadId,FS_ConfFunc,(void *)SI,true))
       {
         FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (thread)\n");
         SU_FreeSI(SI);
@@ -2834,7 +2838,7 @@ int main(int argc,char *argv[])
   printf("%s\n",FFSS_COPYRIGHT);
 
   SU_DBG_SetOutput(SU_DBG_OUTPUT_PRINTF | SU_DBG_OUTPUT_CONSOLE);
-  SU_DBG_SetOptions(true,true);
+  SU_DBG_SetOptions(true,true,true);
 #ifdef DEBUG
   SU_DBG_SetFlags(FFSS_DBGMSG_ALL);
   SU_DBG_OUT_CONSOLE_SetOptions("");
@@ -2908,7 +2912,7 @@ int main(int argc,char *argv[])
 #else /* !__unix__ */
   FFSS_LogFile = SU_OpenLogFile("FFSS_Server.log");
   FFSS_PrintSyslog(LOG_INFO,"Server started\n");
-  if(!SU_WSInit(2,2))
+  if(!SU_SockInit(2,2))
   {
     FFSS_PrintSyslog(LOG_ERR,"Cannot start WinSock\n");
   }

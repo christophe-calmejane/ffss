@@ -16,7 +16,7 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
-#include <ffss.h>
+#include <ffss/ffss.h>
 
 /* Undefine c++ bool type (unsigned char ?)
    Use SU_BOOL type in your appli, every time you use a ffss prototype

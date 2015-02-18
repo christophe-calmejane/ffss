@@ -36,7 +36,7 @@ bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path
   FT->XI.Checksum = FFSS_ComputeChecksum(0,NULL,0);
   if(FT->StartingPos != 0)
   {
-    fseek(FT->fp,FT->StartingPos,SEEK_SET);
+    fseek(FT->fp,(long)FT->StartingPos,SEEK_SET);
     FT->XI.fsize -= FT->StartingPos;
   }
 

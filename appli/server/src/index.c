@@ -148,7 +148,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
   FFSS_LongField total_dir_size = 0;
   FILE *fp;
   char ChksumBuf[1024];
-  int siz;
+  size_t siz;
 
   SU_DBG_PrintDebug(FS_DBGMSG_INDEX,"\tBuilding index for sub-dir %s",Path);
   /* List all files in Path, and fill Node with it */
@@ -199,7 +199,7 @@ FFSS_LongField FS_BuildIndex_rec(FS_PShare Share,FS_PNode Node,const char Path[]
           {
             siz = sizeof(ChksumBuf);
             if(siz > File->Size)
-              siz = File->Size;
+              siz = (size_t)File->Size;
             fread(ChksumBuf,1,siz,fp);
             fclose(fp);
             File->ChkSum = FFSS_ComputeChecksum(0,ChksumBuf,siz);
@@ -523,7 +523,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
       buf_size += (Node->NbDirs-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Time);
+    pos = FFSS_PackField(buf,pos,(FFSS_Field)((FS_PDir)Ptr->Data)->Time);
 
     i++;
     Ptr = Ptr->Next;
@@ -563,7 +563,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
       buf_size += (Node->NbFiles-i+1)*FS_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    pos = FFSS_PackField(buf,pos,((FS_PFile)Ptr->Data)->Time);
+	pos = FFSS_PackField(buf, pos, (FFSS_Field)((FS_PFile)Ptr->Data)->Time);
 
     i++;
     Ptr = Ptr->Next;
@@ -635,7 +635,7 @@ char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const 
       buf_size += (Node->NbDirs-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    pos = FFSS_PackField(buf,pos,((FS_PDir)Ptr->Data)->Time);
+	pos = FFSS_PackField(buf, pos, (FFSS_Field)((FS_PDir)Ptr->Data)->Time);
 
     if((NewNode->NbFiles+NewNode->NbDirs) != 0) /* If the directory is not empty */
     {
@@ -684,7 +684,7 @@ char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const 
       buf_size += (Node->NbFiles-i+1)*FS_REC_AVERAGE_FILE_LENGTH;
       buf = (char *) realloc(buf,buf_size);
     }
-    pos = FFSS_PackField(buf,pos,((FS_PFile)Ptr->Data)->Time);
+	pos = FFSS_PackField(buf, pos, (FFSS_Field)((FS_PFile)Ptr->Data)->Time);
 
     i++;
     Ptr = Ptr->Next;

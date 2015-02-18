@@ -158,7 +158,7 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
           if(do_it)
           {
 #endif /* INTER_BOURRIN */
-        while((buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE+sizeof(FFSS_Field)+sizeof(FFSS_LongField)) >= buf_size)
+        while((long)(buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE+sizeof(FFSS_Field)+sizeof(FFSS_LongField)) >= buf_size)
         {
           buf_size += 50*FFSS_MAX_FILEPATH_LENGTH;
           Ans = (char *) realloc(Ans,buf_size);

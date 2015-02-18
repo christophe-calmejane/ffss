@@ -16,6 +16,7 @@
 #include "index.h"
 
 extern volatile bool FM_ShuttingDown;
+static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
 void FM_CheckMasterConnections(void)
 {
@@ -62,7 +63,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
   {
     SU_SLEEP(FFSS_PING_INTERVAL);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     SaveIndexCount++;
     if(SaveIndexCount > FM_INDEX_DUMP_INTERVAL_PING)
     {
@@ -82,7 +83,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     now = time(NULL);
     SU_SEM_WAIT(FM_MySem2);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     Ptr = FM_MyDomain.Hosts;
     while(Ptr != NULL)
     {
@@ -109,12 +110,12 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
 
     /* REMOVE SEQUENCE */
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending REMOVE sequence");
     now = time(NULL);
     SU_SEM_WAIT(FM_MySem2);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     Ptr = FM_MyDomain.Hosts;
     Ptr2 = NULL;
     while(Ptr != NULL)
@@ -158,14 +159,14 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
     /* UPDATE CO-MASTERS SEQUENCE */
     SU_SLEEP(5); /* Wait for some servers to answer the ping message */
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     SU_DBG_PrintDebug(FM_DBGMSG_GLOBAL,"THREADS : PING : Sending UPDATE sequence");
     /* Building states of servers of my domain */
     context;
     /* Acquire semaphore */
     SU_SEM_WAIT(FM_MySem);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
 #if 0
     buf = FM_BuildStatesBuffer(FM_MyQueue,&len);
     FM_MyQueue = NULL;
@@ -211,7 +212,8 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
       free(buf);
     }
   }
-  SU_END_THREAD(NULL);
+  SU_END_THREAD(threadwork_ret_zero);
+  SU_THREAD_RETURN(0);
 }
 
 void FM_FreeSearch(FM_PSearch Sch)
@@ -241,7 +243,7 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
   {
     SU_SLEEP(1);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
 
     if(FM_SearchQueue == NULL)
       continue;
@@ -250,7 +252,7 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
     Sch = (FM_PSearch)FM_SearchQueue->Data;
     SU_SEM_WAIT(FM_MySem5);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     if(FM_SearchLogFile != NULL)
     {
       snprintf(tmp,sizeof(tmp),"Search from %s for domain %s : %s",inet_ntoa(Sch->Client.sin_addr),Sch->Domain,Sch->KeyWords);
@@ -302,9 +304,10 @@ SU_THREAD_ROUTINE(FM_ThreadSearch,User)
 
     SU_SEM_WAIT(FM_MySem4);
     if(FM_ShuttingDown)
-      SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
     FM_SearchQueue = SU_DelElementHead(FM_SearchQueue);
     SU_SEM_POST(FM_MySem4);
   }
-  SU_END_THREAD(NULL);
+  SU_END_THREAD(threadwork_ret_zero);
+  SU_THREAD_RETURN(0);
 }

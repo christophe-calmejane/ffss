@@ -53,7 +53,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
     SU_ClientDisconnect(Client);
     return false;
   }
-  Got = recv(Client->sock,&Size,sizeof(Size),SU_MSG_NOSIGNAL);
+  Got = recv(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
   if(Got != sizeof(Size))
   {
     SU_ClientDisconnect(Client);
@@ -80,7 +80,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
     *Len = 1;
     return false;
   }
-  while(Got < Size)
+  while ((FFSS_Field)Got < Size)
   {
     FD_ZERO(&rfds);
     FD_SET(Client->sock,&rfds);
@@ -123,7 +123,7 @@ bool FSCA_Request(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
 /* Connection & authentification */
 SU_PClientSocket FSCA_Connection(const char Server[])
 {
-  return SU_ClientConnect((char *)Server,FFSS_SERVER_CONF_PORT_S,SOCK_STREAM);
+  return SU_ClientConnect((char *)Server,FFSS_SERVER_CONF_PORT,SOCK_STREAM);
 }
 
 bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[])

@@ -92,11 +92,11 @@ void *FS_PluginQuery(int Type,...)
 /* Locks FS_SemPlugin */
 FS_PPlugin FS_LoadPlugin(const char Name[])
 {
+	FS_PPlugin Pl = NULL;
 #ifdef PLUGINS
   SU_DL_HANDLE handle;
   FS_PPlugin (*fonc)(void *,void *(*QueryFunc)(int Type,...));
   void (*fonc2)(void);
-  FS_PPlugin Pl;
 
   handle = SU_DL_OPEN(Name);
   if(!handle)

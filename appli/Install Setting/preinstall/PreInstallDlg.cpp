@@ -28,6 +28,16 @@ struct share_info_50 {
   char            shi50_ro_password[SHPWLEN+1];
 };
 
+static WCHAR* convertToUnicode(const char* text)
+{
+	WCHAR* utf16_text = NULL;
+	int size_text = MultiByteToWideChar(CP_UTF8, 0, text, -1, utf16_text, 0);
+	utf16_text = (WCHAR*)calloc((size_text + 1), sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, text, -1, utf16_text, size_text);
+
+	return utf16_text;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPreInstallDlg dialog
 
@@ -83,7 +93,8 @@ BOOL CPreInstallDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 	
 	// TODO: Add extra initialization here
-	char			szLocalHostName[512],szName[512],szComment[512],szMaster[512];
+	char			szLocalHostName[512];
+	WCHAR szName[512], szComment[512], szMaster[512];
 	struct hostent*	pHostEnt;
 	DWORD			dwStringSize;
 	OSVERSIONINFO	Os;
@@ -97,14 +108,14 @@ BOOL CPreInstallDlg::OnInitDialog()
 	if( Os.dwPlatformId != VER_PLATFORM_WIN32_NT ) {
 		/* Win9x*/
 		m_bIsWinNT=false;
-		m_hinstLib = LoadLibrary("SvrApi.dll");
+		m_hinstLib = LoadLibrary(convertToUnicode("SvrApi.dll"));
 		if( m_hinstLib!=NULL ) {
 			m_fnNetShareEnum=(procNetShareEnum)GetProcAddress(m_hinstLib, "NetShareEnum");
 		}
 	} else {
 		/* WinNT*/
 		m_bIsWinNT=true;
-		m_hinstLib = LoadLibrary("Netapi32.dll");
+		m_hinstLib = LoadLibrary(convertToUnicode("Netapi32.dll"));
 		if( m_hinstLib!=NULL ) {
 			m_fnNetShareEnumNT=(procNetShareEnumNT)GetProcAddress(m_hinstLib, "NetShareEnum");
 		}
@@ -123,7 +134,7 @@ BOOL CPreInstallDlg::OnInitDialog()
 
 	/* Get local hostname, and set it as default server name */
 	gethostname(szLocalHostName,sizeof(szLocalHostName));
-	m_strServer=szLocalHostName;
+	m_strServer = convertToUnicode(szLocalHostName);
 
 	/* Get ffss master hostname */
 	pHostEnt=gethostbyname("ffss");
@@ -132,17 +143,21 @@ BOOL CPreInstallDlg::OnInitDialog()
 	}
 
 	/* Get values from a previous configuration in registry */
-	if( m_RegKey.Open(FFSS_REG_KEY,FFSS_REG_SERVERKEY)==ERROR_SUCCESS ) {
+	if(m_RegKey.Open(FFSS_REG_KEY, convertToUnicode(FFSS_REG_SERVERKEY)) == ERROR_SUCCESS)
+	{
 		dwStringSize=sizeof(szName);
-		if( m_RegKey.QueryValue(szName,FFSS_REG_SVR_NAME,&dwStringSize)==ERROR_SUCCESS ) {
+		if(m_RegKey.QueryValue(szName, convertToUnicode(FFSS_REG_SVR_NAME), &dwStringSize) == ERROR_SUCCESS)
+		{
 			m_strServer=szName;
 		}
 		dwStringSize=sizeof(szComment);
-		if( m_RegKey.QueryValue(szComment,FFSS_REG_SVR_COMMENT,&dwStringSize)==ERROR_SUCCESS ) {
+		if(m_RegKey.QueryValue(szComment, convertToUnicode(FFSS_REG_SVR_COMMENT), &dwStringSize) == ERROR_SUCCESS)
+		{
 			m_strComment=szComment;
 		}
 		dwStringSize=sizeof(szMaster);
-		if( m_RegKey.QueryValue(szMaster,FFSS_REG_SVR_MASTER,&dwStringSize)==ERROR_SUCCESS ) {
+		if(m_RegKey.QueryValue(szMaster, convertToUnicode(FFSS_REG_SVR_MASTER), &dwStringSize) == ERROR_SUCCESS)
+		{
 			m_strMaster=szMaster;
 		}
 
@@ -151,9 +166,9 @@ BOOL CPreInstallDlg::OnInitDialog()
 
 	/*************************************************************************/ 
 
-	m_Plugins.InsertColumn(0,MT_ST_LOCAL(ST_HDR_NAME),LVCFMT_LEFT,160);
-	m_Plugins.SetExtendedStyle(LVS_EX_CHECKBOXES|LVS_EX_FULLROWSELECT);
-	GetPlugins();
+//	m_Plugins.InsertColumn(0,MT_ST_LOCAL(ST_HDR_NAME),LVCFMT_LEFT,160);
+//	m_Plugins.SetExtendedStyle(LVS_EX_CHECKBOXES|LVS_EX_FULLROWSELECT);
+//	GetPlugins();
 
 	UpdateData(FALSE);
 
@@ -209,24 +224,24 @@ void CPreInstallDlg::OnOk()
 
 	/*************************************************************************/
 	/* Save registry keys                                                    */
-	m_RegKey.Create(FFSS_REG_KEY,FFSS_REG_SERVERKEY);
+	m_RegKey.Create(FFSS_REG_KEY, convertToUnicode(FFSS_REG_SERVERKEY));
 
 	/* Save server name to registry */
 	if( m_strServer.IsEmpty() ) {
-		AfxMessageBox(MT_ST_LOCAL(ST_SET_A_NAME));
+		//AfxMessageBox(MT_ST_LOCAL(ST_SET_A_NAME));
 		return;
 	} else {
-		m_RegKey.SetValue((LPCTSTR)m_strServer,FFSS_REG_SVR_NAME);
+		m_RegKey.SetValue((LPCTSTR)m_strServer, convertToUnicode(FFSS_REG_SVR_NAME));
 	}
 
 	/* Save server comment to registry */
 	if( m_strComment.IsEmpty()==FALSE ) {
-		m_RegKey.SetValue((LPCTSTR)m_strComment,FFSS_REG_SVR_COMMENT);
+		m_RegKey.SetValue((LPCTSTR)m_strComment, convertToUnicode(FFSS_REG_SVR_COMMENT));
 	}
 
 	/* Save master name to registry */
 	if( m_strMaster.IsEmpty()==FALSE ) {
-		m_RegKey.SetValue((LPCTSTR)m_strMaster,FFSS_REG_SVR_MASTER);
+		m_RegKey.SetValue((LPCTSTR)m_strMaster, convertToUnicode(FFSS_REG_SVR_MASTER));
 	}
 
 	/*************************************************************************/
@@ -239,22 +254,22 @@ void CPreInstallDlg::OnOk()
 		} else {
 			lSharesAdded=ImportWin9xShares();
 		}
-		strReport.Format(MT_ST_LOCAL(ST_SHARES_COUNT),lSharesAdded);
-		MessageBox((LPCTSTR)strReport,MT_ST_LOCAL(ST_SHARE_ADDED),
-			MB_OK|MB_ICONINFORMATION);
+		//strReport.Format(MT_ST_LOCAL(ST_SHARES_COUNT),lSharesAdded);
+		/*MessageBox((LPCTSTR)strReport,MT_ST_LOCAL(ST_SHARE_ADDED),
+			MB_OK|MB_ICONINFORMATION);*/
 	}
 	
 	m_RegKey.Close();
 
 	/*************************************************************************/
 	/* Do some stuff with plugins                                            */
-	m_RegKey.Create(FFSS_REG_KEY,FFSS_REG_PLUGINSKEY);
+	m_RegKey.Create(FFSS_REG_KEY, convertToUnicode(FFSS_REG_PLUGINSKEY));
 	for(nItem=0; nItem<m_Plugins.GetItemCount(); nItem++) {
 		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
 		if( m_Plugins.GetCheck(nItem)==FALSE ) {
-			m_RegKey.DeleteValue(pPI->szName);
+			m_RegKey.DeleteValue(convertToUnicode(pPI->szName));
 		} else {
-			m_RegKey.SetValue(pPI->szPathToDLL,pPI->szName);
+			m_RegKey.SetValue(convertToUnicode(pPI->szPathToDLL), convertToUnicode(pPI->szName));
 		}
 	}
 	
@@ -312,7 +327,7 @@ long CPreInstallDlg::ImportWin9xShares()
 			}
 		}
 	} while( nStatus==ERROR_MORE_DATA );
-	m_RegKey.SetValue(szShareList,"ShareNames");
+	m_RegKey.SetValue(convertToUnicode(szShareList), convertToUnicode("ShareNames"));
 
 	free(pBuffer);
 	return(nShareProcessed);
@@ -371,7 +386,7 @@ long CPreInstallDlg::ImportWinNTShares()
 			}
 		}
 	} while(res==ERROR_MORE_DATA);
-	m_RegKey.SetValue(szShareList,"ShareNames");
+	m_RegKey.SetValue(convertToUnicode(szShareList), convertToUnicode("ShareNames"));
 	return(dwShareProcessed);
 }
 
@@ -384,17 +399,17 @@ void CPreInstallDlg::AddShare(const char *szShareName, const char *szSharePath,
 	DWORD	dwDefault=0;
 
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Path",szShareName);
-	m_RegKey.SetValue(szSharePath,szKeyValueName);
+	m_RegKey.SetValue(convertToUnicode(szSharePath), convertToUnicode(szKeyValueName));
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Comment",szShareName);
-	m_RegKey.SetValue(szShareComment,szKeyValueName);
+	m_RegKey.SetValue(convertToUnicode(szShareComment), convertToUnicode(szKeyValueName));
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Users",szShareName);
-	m_RegKey.SetValue("",szKeyValueName);
+	m_RegKey.SetValue(convertToUnicode(""), convertToUnicode(szKeyValueName));
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_MaxConnections",szShareName);
-	m_RegKey.SetValue(dwMaxUsers,szKeyValueName);
+	m_RegKey.SetValue(dwMaxUsers, convertToUnicode(szKeyValueName));
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Private",szShareName);
-	m_RegKey.SetValue(dwDefault,szKeyValueName);
+	m_RegKey.SetValue(dwDefault, convertToUnicode(szKeyValueName));
 	_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Writeable",szShareName);
-	m_RegKey.SetValue(dwDefault,szKeyValueName);
+	m_RegKey.SetValue(dwDefault, convertToUnicode(szKeyValueName));
 }
 
 /*****************************************************************************/
@@ -408,7 +423,7 @@ void CPreInstallDlg::ConvertFromOldFormat()
 	char*	p;
 
 	lStringLength=sizeof(szShareList);
-	m_RegKey.QueryValue(szShareList,"ShareNames",&lStringLength);
+	m_RegKey.QueryValue(convertToUnicode(szShareList), convertToUnicode("ShareNames"), &lStringLength);
 	strcpy(szConvertedShareList,"");
 
 	if( lStringLength>0 ) {
@@ -423,7 +438,8 @@ void CPreInstallDlg::ConvertFromOldFormat()
 		while( p!=NULL ) {
 			/* Check if share files exist */
 			_snprintf(szKeyValueName,sizeof(szKeyValueName),"%s_Writeable",p);
-			if( m_RegKey.QueryValue(dwValue,szKeyValueName)!=ERROR_SUCCESS ) {
+			if(m_RegKey.QueryValue(dwValue, convertToUnicode(szKeyValueName)) != ERROR_SUCCESS)
+			{
 				/* New format, do nothing  */
 				return;
 			} else {
@@ -434,7 +450,7 @@ void CPreInstallDlg::ConvertFromOldFormat()
 			}
 			p=strtok(NULL,SHARE_LIST_OLD_SEP);
 		}
-		m_RegKey.SetValue(szConvertedShareList,"ShareNames");
+		m_RegKey.SetValue(convertToUnicode(szConvertedShareList), convertToUnicode("ShareNames"));
 	}
 }
 
@@ -471,9 +487,11 @@ bool CPreInstallDlg::GetPlugins()
 	strcpy(szPluginsDirectory,"");
 
 	/* Get server directory */
-	if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_SERVERKEY)==ERROR_SUCCESS ) {
+	if(RegKey.Open(FFSS_REG_KEY, convertToUnicode(FFSS_REG_SERVERKEY)) == ERROR_SUCCESS)
+	{
 		dwStringSize=sizeof(szPluginsDirectory);
-		if( RegKey.QueryValue(szPluginsDirectory,"ServerDirectory",&dwStringSize)!=ERROR_SUCCESS ) {
+		if(RegKey.QueryValue(convertToUnicode(szPluginsDirectory), convertToUnicode("ServerDirectory"), &dwStringSize) != ERROR_SUCCESS)
+		{
 			strcpy(szPluginsDirectory,"");
 		}
 		RegKey.Close();
@@ -488,20 +506,21 @@ bool CPreInstallDlg::GetPlugins()
 	strcpy(szPluginsWildCards,szPluginsDirectory);
 	strcat(szPluginsWildCards,"*.dll");
 
-	if( RegKey.Open(FFSS_REG_KEY,FFSS_REG_PLUGINSKEY)==ERROR_SUCCESS ) {
+	if(RegKey.Open(FFSS_REG_KEY, convertToUnicode(FFSS_REG_PLUGINSKEY)) == ERROR_SUCCESS)
+	{
 		bKeyExists=true;
 	}
 
-	hFind=FindFirstFile(szPluginsWildCards,&wfd);
+	hFind = FindFirstFile(convertToUnicode(szPluginsWildCards), &wfd);
 	if (hFind == INVALID_HANDLE_VALUE) {
 		return(false);
 	} else {
 		// Process first file
 		strcpy(szPluginFilename,szPluginsDirectory);
-		strcat(szPluginFilename,wfd.cFileName);
+		//strcat(szPluginFilename,wfd.cFileName);
 		pPI=GetPluginInfo(szPluginFilename);
 		if( pPI!=NULL ) {
-			m_Plugins.InsertItem(nItem,pPI->szName);
+			m_Plugins.InsertItem(nItem, convertToUnicode(pPI->szName));
 			m_Plugins.SetItemData(nItem, (DWORD)pPI );
 			if( bKeyExists==true ) {
 				m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
@@ -511,10 +530,10 @@ bool CPreInstallDlg::GetPlugins()
 
 		while( FindNextFile(hFind, &wfd)==TRUE ) {
 			strcpy(szPluginFilename,szPluginsDirectory);
-			strcat(szPluginFilename,wfd.cFileName);
+			//strcat(szPluginFilename,wfd.cFileName);
 			pPI=GetPluginInfo(szPluginFilename);
 			if( pPI!=NULL ) {
-				m_Plugins.InsertItem(nItem,pPI->szName);
+				m_Plugins.InsertItem(nItem, convertToUnicode(pPI->szName));
 				m_Plugins.SetItemData(nItem, (DWORD)pPI );
 				if( bKeyExists==true ) {
 					m_Plugins.SetCheck(nItem, RegValueExists(RegKey, pPI->szName) );
@@ -535,11 +554,11 @@ bool CPreInstallDlg::GetPlugins()
 /*****************************************************************************/
 bool CPreInstallDlg::RegValueExists(CRegKey& RegKey,const char* szValueName)
 {
-	char	c;
+	WCHAR	c;
 	DWORD	dwBufferSize=1;
 	LONG	lRetCode;
 
-	lRetCode=RegKey.QueryValue(&c,szValueName,&dwBufferSize);
+	lRetCode = RegKey.QueryValue(&c, convertToUnicode(szValueName), &dwBufferSize);
 
 	return( (lRetCode==ERROR_SUCCESS) || (lRetCode==ERROR_MORE_DATA) );
 }
@@ -552,11 +571,11 @@ void CPreInstallDlg::OnClickPlugins(NMHDR* pNMHDR, LRESULT* pResult)
 	PluginInfo*	pPI;
 
 	if( pos==NULL ) {
-		SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));
+		//SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));
 	} else {
 		nItem = m_Plugins.GetNextSelectedItem(pos);
 		pPI=(PluginInfo*)m_Plugins.GetItemData(nItem);
-		SetDlgItemText(IDC_PLUGINDESC,pPI->szDescription);
+		//SetDlgItemText(IDC_PLUGINDESC,pPI->szDescription);
 	}
 
 	*pResult = 0;
@@ -571,7 +590,7 @@ PluginInfo* CPreInstallDlg::GetPluginInfo(const char* szPathToDLL)
 	FSP_PInfos				pInfos;
 
 
-	hinstLib = LoadLibrary(szPathToDLL);
+	hinstLib = LoadLibrary(convertToUnicode(szPathToDLL));
     if( hinstLib!=NULL ) {
 		fnPluginQueryInfos=(procPluginQueryInfos)GetProcAddress(hinstLib, "Plugin_QueryInfos");
 		if( fnPluginQueryInfos!=NULL ) {
@@ -618,13 +637,13 @@ PluginInfo::~PluginInfo()
 /*****************************************************************************/
 bool CPreInstallDlg::Localize()
 {
-	SetWindowText(MT_ST_LOCAL(ST_WIN_TITLE));
+	/*SetWindowText(MT_ST_LOCAL(ST_WIN_TITLE));
 	SetDlgItemText(IDC_LSVRNAME,MT_ST_LOCAL(ST_SVR_NAME));
 	SetDlgItemText(IDC_LSVRCOMMENT,MT_ST_LOCAL(ST_SVR_COMMENT));
 	SetDlgItemText(IDC_LMSTNAME,MT_ST_LOCAL(ST_MST_NAME));
 	SetDlgItemText(IDC_SAMBA,MT_ST_LOCAL(ST_IMPORT_SHARES));
 	SetDlgItemText(IDC_LPANEL,MT_ST_LOCAL(ST_LPANEL));	
-	SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));
+	SetDlgItemText(IDC_PLUGINDESC,MT_ST_LOCAL(ST_LPLUGIN_DESC));*/
 		
 	return(true);
 }

@@ -15,6 +15,8 @@
 */
 #include "server.h"
 
+static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
+
 int FS_GetIntLen(int v)
 {
   if(v < 10)
@@ -64,7 +66,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       SU_FreeCS(Client);
       free(buf);
       free(Users);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     else if(res == 0)
     {
@@ -72,7 +74,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       SU_FreeCS(Client);
       free(buf);
       free(Users);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
 
     if(Size >= buf_len)
@@ -81,7 +83,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       SU_FreeCS(Client);
       free(buf);
       free(Users);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
     while(pos < Size)
     {
@@ -97,7 +99,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_FreeCS(Client);
         free(buf);
         free(Users);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       res = recv(Client->sock,buf+pos,Size-pos,SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
@@ -106,7 +108,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_FreeCS(Client);
         free(buf);
         free(Users);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       else if(res == 0)
       {
@@ -114,7 +116,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         SU_FreeCS(Client);
         free(buf);
         free(Users);
-        SU_END_THREAD(NULL);
+		SU_END_THREAD(threadwork_ret_zero);
       }
       pos += res;
     }
@@ -736,7 +738,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       SU_FreeCS(Client);
       free(buf);
       free(Users);
-      SU_END_THREAD(NULL);
+	  SU_END_THREAD(threadwork_ret_zero);
     }
   }
 }
@@ -776,6 +778,7 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   SU_PServerInfo SI = (SU_PServerInfo) Info;
   SU_PClientSocket Client;
   SU_THREAD_HANDLE ClientThr;
+	SU_THREAD_ID ClientThrId;
 
   SU_ThreadBlockSigs();
   while(FS_MyState == FFSS_STATE_OFF) /* Wait till server is up */
@@ -786,7 +789,7 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
   {
     FFSS_PrintSyslog(LOG_WARNING,"Cannot create listening socket for runtime configuration (listen)\n");
     SU_FreeSI(SI);
-    SU_END_THREAD(NULL);
+	SU_END_THREAD(threadwork_ret_zero);
   }
   while(1)
   {
@@ -804,13 +807,14 @@ SU_THREAD_ROUTINE(FS_ConfFunc,Info)
       continue;
     }
     SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Connection accepted ... creating new thread");
-    if(!SU_CreateThread(&ClientThr,FS_ClientConf,(void *)Client,true))
+    if(!SU_CreateThread(&ClientThr,&ClientThrId,FS_ClientConf,(void *)Client,true))
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error creating conf Client thread");
       SU_FreeCS(Client);
       continue;
     }
   }
-  SU_END_THREAD(NULL);
+  SU_END_THREAD(threadwork_ret_zero);
+  SU_THREAD_RETURN(0);
 }
 
