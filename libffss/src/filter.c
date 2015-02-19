@@ -17,8 +17,8 @@
 
 typedef struct
 {
-  unsigned long IP;          /* IP base of the rule */
-  unsigned long Mask;        /* Mask of the rule */
+  FFSS_Field IP;          /* IP base of the rule */
+  FFSS_Field Mask;        /* Mask of the rule */
   char *IP_str;              /* String version of the IP */
   char *Mask_str;            /* String version of the mask */
   FFSS_FILTER_ACTION Action; /* Action to perform if rule matches */
@@ -59,8 +59,8 @@ void FFSS_Filter_FreeRule(FFSS_PRule Rule)
 FFSS_PRule FFSS_Filter_CreateRule(const char IP[],const char Mask[],FFSS_FILTER_ACTION Action,const char Name[])
 {
   FFSS_PRule Rule;
-  unsigned long ip;
-  unsigned long mask;
+  FFSS_Field ip;
+	FFSS_Field mask;
 
   ip = inet_addr(IP);
   mask = inet_addr(Mask);
@@ -385,7 +385,7 @@ bool FFSS_Filter_EnumRulesOfChain(FFSS_FILTER_CHAIN Chain,FFSS_FILTER_RULES_ENUM
   return true;
 }
 
-FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAIN Chain,unsigned long IP)
+FFSS_FILTER_ACTION FFSS_Filter_GetActionOfChainFromIP(FFSS_FILTER_CHAIN Chain, FFSS_Field IP)
 {
   SU_PList Ptr;
   FFSS_PRule Rule;

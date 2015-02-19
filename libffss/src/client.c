@@ -25,23 +25,23 @@ SU_THREAD_HANDLE FC_THR_UDP;
 SU_THREAD_ID FC_THRID_UDP;
 static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
-void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
+void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],size_t Len)
 {
   int Type;
   char *str,*str2,*str3,*str4;
   char **Names,**Comments;
   char **answers,**ips;
-  long int pos;
+  size_t pos;
   FFSS_Field val,val2,val3;
-  FFSS_LongField lval,lval2;
+  FFSS_LongField lval,lval2,lval3;
   FFSS_Field i,j,state,type_ip,type_ip2;
   char IP[512], IP2[512];
   FM_PHost Hst;
   SU_PList HostList;
   bool do_it,error,free_it;
   char *u_Buf;
-  long int u_pos,u_Len;
-  FFSS_Field *chksums;
+  size_t u_pos,u_Len;
+  FFSS_LongField *chksums;
   FFSS_LongField *sizes;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
@@ -365,13 +365,13 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
         }
         answers = (char **) malloc(val2*sizeof(char *));
         ips = (char **) malloc(val2*sizeof(char *));
-        chksums = (FFSS_Field *) malloc(val2*sizeof(FFSS_Field));
+				chksums = (FFSS_LongField *)malloc(val2*sizeof(FFSS_LongField));
         sizes = (FFSS_LongField *) malloc(val2*sizeof(FFSS_LongField));
         for(j=0;j<val2;j++)
         {
           type_ip = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           FFSS_UnpackIP(u_Buf,u_Buf+u_pos,u_Len,&u_pos,IP,type_ip);
-          val3 = FFSS_UnpackField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
+          lval3 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           lval2 = FFSS_UnpackLongField(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           str3 = FFSS_UnpackString(u_Buf,u_Buf+u_pos,u_Len,&u_pos);
           if((str3 == NULL) || (type_ip == 0) || (IP[0] == 0))
@@ -382,7 +382,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
           }
           ips[j] = strdup(IP);
           answers[j] = str3;
-          chksums[j] = val3;
+          chksums[j] = lval3;
           sizes[j] = lval2;
         }
         if(!error)
@@ -425,10 +425,10 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
     free(u_Buf);
 }
 
-bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
+bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],size_t Len)
 {
   unsigned int Type,i;
-  long int pos;
+  size_t pos;
   FFSS_Field val,val2,val4;
   FFSS_LongField lval,lval2;
   char *str,*str2;
@@ -438,8 +438,8 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   FFSS_PTransfer FT;
   bool free_it;
   char *u_Buf;
-  long int u_pos,u_Len;
-  long int Length;
+  size_t u_pos,u_Len;
+  size_t Length;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
   pos = sizeof (FFSS_Field)*2;
@@ -719,7 +719,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
 SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
 {
   SU_PClientSocket Client = (SU_PClientSocket) User;
-  unsigned int len;
+	size_t len;
   int res;
   FFSS_Field Size;
   bool analyse;
@@ -727,7 +727,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
   struct timeval tv;
   int retval;
   char *Buf;
-  unsigned long int BufSize;
+  size_t BufSize;
 
   SU_ThreadBlockSigs();
   BufSize = FFSS_TCP_CLIENT_BUFFER_SIZE;
@@ -746,7 +746,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       FD_SET(Client->sock,&rfds);
       tv.tv_sec = (int)Client->User;
       tv.tv_usec = 0;
-      retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+      retval = select((int)Client->sock+1,&rfds,NULL,NULL,&tv);
       if(!retval)
       {
         if(FFSS_CB.CCB.OnIdleTimeout != NULL)
@@ -771,7 +771,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
       free(Buf);
 	  SU_END_THREAD(threadwork_ret_zero);
     }
-    res = recv(Client->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
+    res = recv(Client->sock,Buf+len,(int)(BufSize-len),SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP port of the client (SOCKET_ERROR : %d)",errno);
@@ -849,7 +849,7 @@ SU_THREAD_ROUTINE(FC_ClientThreadTCP,User)
 /* Returns true on success, false otherwise */
 bool FC_Init(void)
 {
-  int len;
+	int len;
 
 #ifdef FFSS_CONTEXT
   signal(SIGSEGV,FFSS_handle_SIGNAL);
@@ -888,7 +888,7 @@ bool FC_Init(void)
     FFSS_PrintSyslog(LOG_ERR,"Error creating outgoing UDP socket (%d:%s)\n",errno,strerror(errno));
     return false;
   }
-  len = sizeof(struct sockaddr_in);
+  len = (int)sizeof(struct sockaddr_in);
   if(getsockname(FC_SI_OUT_UDP->sock,(struct sockaddr *)&(FC_SI_OUT_UDP->SAddr),&len) == -1)
   {
     FFSS_PrintSyslog(LOG_ERR,"Error getting socket name\n",errno,strerror(errno));

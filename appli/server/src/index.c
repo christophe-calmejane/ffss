@@ -436,7 +436,7 @@ void FS_RescanShare(FS_PShare Share)
 
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
-char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out)
+char *FS_BuildDirectoryBuffer(FS_PShare Share, const char Dir[], size_t *size_out)
 {
   char *buf;
   SU_PList Ptr;
@@ -445,7 +445,7 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   char *p;
 #endif /* __unix__ */
   FS_PNode Node;
-  unsigned long int buf_size,len,pos,i;
+  size_t buf_size,len,pos,i;
 
   assert(Share);
   if(Share == NULL)
@@ -573,12 +573,13 @@ char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_ou
   return buf;
 }
 
-char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const char Relative[],char *buf,unsigned long int *buf_size_in_out,unsigned long int *nb_entries_in_out,long int *size_in_out)
+char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const char Relative[],char *buf,size_t *buf_size_in_out,unsigned int *nb_entries_in_out,size_t *size_in_out)
 {
   char NewDir[512],NewRelative[512];
-  int newdir_eos,newrelative_eos;
-  long int pos;
-  unsigned long int buf_size,nb_entries,i,len;
+  size_t newdir_eos,newrelative_eos;
+  ptrdiff_t pos;
+	unsigned int nb_entries;
+	size_t buf_size, i, len;
   SU_PList Ptr;
   FS_PNode NewNode;
 
@@ -698,7 +699,7 @@ char *FS_BuildRecursiveDirectoryBuffer_rec(FS_PNode Node,const char Dir[],const 
 
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
-char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out)
+char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],size_t *size_out)
 {
   char *buf;
   SU_PList Ptr;
@@ -707,7 +708,8 @@ char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int
   char *p;
 #endif /* __unix__ */
   FS_PNode Node;
-  unsigned long int buf_size,pos,nb_entries = 0;
+  unsigned int nb_entries = 0;
+	size_t buf_size, pos;
 
   assert(Share);
   if(Share == NULL)
@@ -762,13 +764,14 @@ char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int
 
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed */
-char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int total,long int *buf_size,FM_TFTNode *TabNodes,long int *NodePos,unsigned char *Tags,long int father,long int total_node,FFSS_LongField *fsize_out)
+char *FS_BuildIndexBuffer(FS_PNode Node, char *buf_in, size_t *buf_pos, size_t total, size_t *buf_size, FM_TFTNode *TabNodes, FFSS_LongField *NodePos, FFSS_BitField *Tags, FFSS_LongField father, FFSS_LongField total_node, size_t *fsize_out)
 {
   SU_PList Ptr;
   char *buf;
-  unsigned char tags,tg;
-  long int size,pos,len,i,node,old;
-  FFSS_LongField total_fsize = 0,fsize;
+  size_t size,pos,len,i;
+	FFSS_LongField node, old;
+	FFSS_BitField tags, tg;
+  size_t total_fsize = 0,fsize;
 
   buf = buf_in;
   pos = *buf_pos;
@@ -833,7 +836,7 @@ char *FS_BuildIndexBuffer(FS_PNode Node,char *buf_in,long int *buf_pos,long int 
     TabNodes[node].Tags = tg;
     TabNodes[node].Size = ((FS_PFile)Ptr->Data)->Size;
     TabNodes[node].ChkSum = ((FS_PFile)Ptr->Data)->ChkSum;
-    total_fsize += ((FS_PFile)Ptr->Data)->Size;
+    total_fsize += (size_t)((FS_PFile)Ptr->Data)->Size;
     node++;
     len = strlen(((FS_PFile)Ptr->Data)->FileName)+1;
     while((pos+len) >= size)
@@ -862,15 +865,16 @@ bool FS_SendIndex(const char Host[],const char Port[])
 {
   char *buf;
   SU_PList Ptr,Bufs,Sizes,Plugs;
-  long int pos,size,len,total,total_node;
+	size_t pos, size, len, total;
+	FFSS_LongField total_node;
   FS_PShare Share;
   bool res,do_it,checked;
   int comp;
   FM_TFTNode *TabNodes;
-  long int NodePos;
-  long int NodeSize;
-  unsigned char Tags;
-  FFSS_LongField fsize;
+	FFSS_LongField NodePos;
+  size_t NodeSize;
+	FFSS_BitField Tags;
+  size_t fsize;
 
   if(Host == NULL)
     return true;
@@ -959,7 +963,7 @@ bool FS_CaseFilePath(FS_PShare Share,char Path[])
   char *p;
 #endif /* __unix__ */
   FS_PNode Node;
-  long int pos=1,len;
+  size_t pos=1,len;
 
   Node = &Share->Root;
   if((Path[0] != 0) && (Path[0] == '/'))

@@ -49,8 +49,8 @@ bool FS_InitXFerUpload(SU_PClientSocket Client,FFSS_PTransfer FT,const char Path
 
 bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFER */
 {
-  unsigned long int rpos=0,rlen;
-  int len;
+	size_t rpos = 0, rlen;
+	size_t len;
   bool last;
 
   if(FT->Cancel)
@@ -68,7 +68,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
   }
   else
   {
-    rlen = (unsigned long int)(FT->XI.fsize - FT->XI.total);
+		rlen = (size_t)(FT->XI.fsize - FT->XI.total);
     last = true;
   }
   if(fread(Conn->TransferBuffer,1,rlen,FT->fp) != rlen)
@@ -91,7 +91,7 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn) /* False on END OF TRANSFE
     if(!FFSS_SendData(FT,FT->XI.XFerTag,Conn->TransferBuffer+rpos,len))
       return false;
     if(FFSS_CB.SCB.OnTransferActive != NULL)
-      FFSS_CB.SCB.OnTransferActive(FT,len,false);
+			FFSS_CB.SCB.OnTransferActive(FT, (FFSS_Field)len, false);
     rpos += len;
   }
 

@@ -33,7 +33,8 @@ int FS_GetIntLen(int v)
 SU_THREAD_ROUTINE(FS_ClientConf,Info)
 {
   SU_PClientSocket Client = (SU_PClientSocket) Info;
-  FFSS_Field Size,pos,User;
+  FFSS_Field Size,User;
+	ptrdiff_t pos;
   char *buf;
   unsigned int buf_len;
   char *s_p,*s_n,*s_c,*s_w,*s_pr,*s_nchk,*s_m,*s_u;
@@ -85,14 +86,14 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
       free(Users);
 	  SU_END_THREAD(threadwork_ret_zero);
     }
-    while(pos < Size)
+    while((FFSS_Field)pos < Size)
     {
       /* Receiving the command */
       FD_ZERO(&rfds);
       FD_SET(Client->sock,&rfds);
       tv.tv_sec = 5;
       tv.tv_usec = 0;
-      retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+			retval = select((int)(Client->sock + 1), &rfds, NULL, NULL, &tv);
       if(!retval)
       {
         SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (timed out)");
@@ -101,7 +102,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         free(Users);
 		SU_END_THREAD(threadwork_ret_zero);
       }
-      res = recv(Client->sock,buf+pos,Size-pos,SU_MSG_NOSIGNAL);
+      res = recv(Client->sock,buf+pos,(int)(Size-pos),SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
       {
         SU_DBG_PrintDebug(FS_DBGMSG_CONF_CONN,"Client from runtime configuration socket disconnected (read error)");
@@ -257,7 +258,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%d%c%d",FS_MyGlobal.Idle,0,FS_MyGlobal.MaxConn,0,FS_MyGlobal.MaxXFerPerConn,0,FS_MyGlobal.FTP,0,FS_MyGlobal.FTPMaxConn,0,FS_MyGlobal.XFerInConn);
         pos += FS_GetIntLen(FS_MyGlobal.Idle) + FS_GetIntLen(FS_MyGlobal.MaxConn) + FS_GetIntLen(FS_MyGlobal.MaxXFerPerConn) + FS_GetIntLen(FS_MyGlobal.FTP) + FS_GetIntLen(FS_MyGlobal.FTPMaxConn) + FS_GetIntLen(FS_MyGlobal.XFerInConn) + 6;
         SU_SEM_POST(FS_SemGbl);
-        Size = pos;
+        Size = (FFSS_Field)pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -305,7 +306,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         }
         snprintf(buf+pos,buf_len-pos,"%d%c%d%c%d%c%d%c%s",Share->Writeable,0,Share->Private,0,Share->NoChksum,0,Share->MaxConnections,0,Users);
         pos += FS_GetIntLen(Share->Writeable) + FS_GetIntLen(Share->Private) + FS_GetIntLen(Share->NoChksum) + FS_GetIntLen(Share->MaxConnections) + strlen(Users) + 4;
-        Size = pos;
+        Size = (FFSS_Field)pos;
         SU_SEM_POST(FS_SemShr);
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
@@ -535,7 +536,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Ptr = Ptr->Next;
         }
         SU_SEM_POST(FS_SemShr);
-        Size = pos;
+        Size = (FFSS_Field)pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -635,7 +636,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           Ptr = Ptr->Next;
         }
         SU_SEM_POST(FS_SemShr);
-        Size = pos;
+        Size = (FFSS_Field)pos;
         send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
         send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         break;
@@ -668,14 +669,14 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
           }
           Size = 1;
           buf[0] = FS_OPCODE_ACK;
-          Size = FFSS_PackField(buf,Size,(FFSS_Field)Plugin);
+					Size = (FFSS_Field)FFSS_PackLongField(buf, Size, (FFSS_LongField)Plugin);
           send(Client->sock,(char *)&Size,sizeof(Size),SU_MSG_NOSIGNAL);
           send(Client->sock,buf,Size,SU_MSG_NOSIGNAL);
         }
         break;
       case FS_OPCODE_PL_UNLOAD :
         pos = 1;
-        Plugin = (FS_PPlugin) FFSS_UnpackField(buf,buf+pos,Size,&pos);
+        Plugin = (FS_PPlugin) FFSS_UnpackLongField(buf,buf+pos,Size,&pos);
         Size = 1;
         if(FS_IsPluginValid(Plugin))
         {
@@ -693,7 +694,7 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         break;
       case FS_OPCODE_PL_CONFIGURE :
         pos = 1;
-        Plugin = (FS_PPlugin) FFSS_UnpackField(buf,buf+pos,Size,&pos);
+        Plugin = (FS_PPlugin) FFSS_UnpackLongField(buf,buf+pos,Size,&pos);
         User = FFSS_UnpackField(buf,buf+pos,Size,&pos);
         Size = 1;
         if(FS_IsPluginValid(Plugin))
@@ -712,15 +713,15 @@ SU_THREAD_ROUTINE(FS_ClientConf,Info)
         Size = 1;
         buf[0] = FS_OPCODE_ACK;
         SU_SEM_WAIT(FS_SemPlugin);
-        Size = FFSS_PackField(buf,Size,SU_ListCount(FS_Plugins));
+				Size = (FFSS_Field)FFSS_PackField(buf, Size, SU_ListCount(FS_Plugins));
         Ptr = FS_Plugins;
         while(Ptr != NULL)
         {
           Plugin = (FS_PPlugin) Ptr->Data;
-          Size = FFSS_PackField(buf,Size,(FFSS_Field)Plugin);
-          Size = FFSS_PackString(buf,Size,Plugin->Name,strlen(Plugin->Name)+1);
-          Size = FFSS_PackString(buf,Size,Plugin->Copyright,strlen(Plugin->Copyright)+1);
-          Size = FFSS_PackString(buf,Size,Plugin->Version,strlen(Plugin->Version)+1);
+					Size = (FFSS_Field)FFSS_PackLongField(buf, Size, (FFSS_LongField)Plugin);
+					Size = (FFSS_Field)FFSS_PackString(buf, Size, Plugin->Name, strlen(Plugin->Name) + 1);
+					Size = (FFSS_Field)FFSS_PackString(buf, Size, Plugin->Copyright, strlen(Plugin->Copyright) + 1);
+					Size = (FFSS_Field)FFSS_PackString(buf, Size, Plugin->Version, strlen(Plugin->Version) + 1);
           buf[Size++] = (char) Plugin->Startup;
           buf[Size++] = (char) Plugin->Configurable;
           Ptr = Ptr->Next;

@@ -124,7 +124,7 @@ void OnMasterSearchAnswer(struct sockaddr_in Master,FFSS_Field ProtocolVersion,c
 }
 
 /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
+void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_LongField *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
   printf("Received a SEARCH answer from domain %s for query %s : %d answers\n",Domain,Query,NbAnswers);
 }

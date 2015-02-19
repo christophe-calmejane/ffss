@@ -58,7 +58,7 @@ void *memmem(const void *haystack,size_t haystacklen,const void *needle,size_t n
 
 void FM_ToUpper(char S[])
 {
-  int i,l;
+  size_t i,l;
 
   l = strlen(S);
   for(i=0;i<l;i++)
@@ -72,9 +72,9 @@ void FM_ToUpper(char S[])
 char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
                    FM_PFTNode Node,      /* <-- Node to build path from  */
                    char Answer[],        /* --> Buffer to fill with path */
-                   long int AnswerSize)  /* <-- Size of buffer           */
+									 size_t AnswerSize)    /* <-- Size of buffer           */
 {
-  int Indexes[1024];
+  FFSS_LongField Indexes[1024];
   int NbIdx,i;
 
   Answer[0] = (char) Host->State;
@@ -116,15 +116,16 @@ char *FM_BuildPath(FM_PFTControler Host, /* <-- Host struct              */
 char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node              */
                               unsigned char Tags, /* <-- Tags of requested keyword */
                               char *Answers,      /* <-- Answer buffer             */
-                              long int *BufSize,  /* <-> Buffer size               */
-                              long int *BufPos,   /* <-> Buffer pos                */
-                              long int *Count)    /* <-> Nb results                */
+															size_t *BufSize,    /* <-> Buffer size               */
+															ptrdiff_t *BufPos,  /* <-> Buffer pos                */
+                              int *Count)         /* <-> Nb results                */
 {
   char *Ans,*str;
   int i,j;
   FM_PSTLeaf Leaf;
   FM_PFTControler Host;
-  long int buf_size,buf_pos,count,len;
+	size_t buf_size, buf_pos, len;
+	int count;
   char StrBuf[1024];
 
   Ans = Answers;
@@ -158,7 +159,7 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
           if(do_it)
           {
 #endif /* INTER_BOURRIN */
-        while((long)(buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE+sizeof(FFSS_Field)+sizeof(FFSS_LongField)) >= buf_size)
+        while((size_t)(buf_pos+len+sizeof(FFSS_Field)+FFSS_IP_FIELD_SIZE+sizeof(FFSS_Field)+sizeof(FFSS_LongField)) >= buf_size)
         {
           buf_size += 50*FFSS_MAX_FILEPATH_LENGTH;
           Ans = (char *) realloc(Ans,buf_size);
@@ -168,7 +169,7 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
         FFSS_PackIP(Ans+buf_pos,Host->IP,FFSS_IP_TYPE);
         buf_pos += FFSS_IP_FIELD_SIZE;
         /* Copy Chksum */
-        buf_pos = FFSS_PackField(Ans,buf_pos,Host->FTNodes[Leaf->NumFiles[j]].ChkSum);
+        buf_pos = FFSS_PackLongField(Ans,buf_pos,Host->FTNodes[Leaf->NumFiles[j]].ChkSum);
         /* Copy Size */
         buf_pos = FFSS_PackLongField(Ans,buf_pos,Host->FTNodes[Leaf->NumFiles[j]].Size);
         /* Copy answer string */
@@ -191,9 +192,9 @@ char *FM_IntersectAnswers_rec(FM_PSTNode Node,    /* <-- Current Node           
 char *FM_IntersectAnswers(SU_PList STAnswers, /* <-- List of Nodes             */
                           unsigned char Tags, /* <-- Tags of requested keyword */
                           char *str,          /* <-- Answer buffer             */
-                          long int *BufSize,  /* <-> Buffer size               */
-                          long int *BufPos,   /* <-> Buffer pos                */
-                          long int *Count)    /* <-> Nb results                */
+													size_t *BufSize,    /* <-> Buffer size               */
+                          ptrdiff_t *BufPos,  /* <-> Buffer pos                */
+                          int *Count)         /* <-> Nb results                */
 {
   SU_PList Ptr;
   char *Ans;
@@ -212,12 +213,13 @@ char *FM_IntersectAnswers(SU_PList STAnswers, /* <-- List of Nodes             *
 
 /* Returns a buffer to be sent then freed, or NULL if request failed */
 char *FM_Search(FM_PSearch Sch,     /* <-- Search struct         */
-                long int *size_out) /* --> Size of answer string */
+								size_t *size_out)   /* --> Size of answer string */
 {
   char KeyWords[1024];
   int i,key_pos,nb_sch;
   char *answer;
-  long int pos,len,curr,dom,dom_pos,buf_size,pos_nb;
+	size_t pos, len, dom_pos, buf_size, pos_nb;
+	int curr, dom;
   SU_PList Ptr;
   FM_PDomain Dom;
   FM_PSTNode Node;

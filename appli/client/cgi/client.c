@@ -1,13 +1,14 @@
-#include <ffss.h>
+// cl client.c /MDd /I ../../../skyutils/include/ /I ../../../libffss/include/ /D DISABLE_ZLIB /D DISABLE_BZLIB ../../../Build-32/skyutils/src/Debug/skyutils.lib ../../../Build-32/libffss/src/Debug/ffss.lib ws2_32.lib user32.lib
 
-// cl client.c /I ../../../skyutils/include/ /I ../../../libffss-1.0.0/src/ /D DISABLE_ZLIB /D DISABLE_BZLIB ../../../libffss-1.0.0/src/Windows/ffss/Debug/ffss.lib ws2_32.lib ../../../skyutils/src/Windows/skyutils/Debug/skyutils.lib user32.lib
+
+#include <ffss/ffss.h>
 
 #define CLT_MASTER "localhost"
 
 static int Printing = false;
 
 /* UDP callbacks */
-void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
+void OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_LongField *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
   int i = 0;
   char *col;

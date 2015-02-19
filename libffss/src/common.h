@@ -23,9 +23,9 @@ void FFSS_SignalHandler_Term(int sig);
 typedef struct
 {
   SU_TICKS st;
-  unsigned long IP;
-  unsigned long int bytes;
-  unsigned long int prev_thrpt;
+	FFSS_Field IP;
+  FFSS_LongField bytes;
+  FFSS_LongField prev_thrpt;
 } FFSS_TQosConn,*FFSS_PQosConn;
 
 #define FFSS_MAX_SOCKETS 65536

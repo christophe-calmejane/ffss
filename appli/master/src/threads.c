@@ -53,7 +53,7 @@ SU_THREAD_ROUTINE(FM_ThreadPing,User)
   time_t now;
   int SaveIndexCount;
   char *buf;
-  long int len;
+	size_t len;
 
   context;
   SU_ThreadBlockSigs();
@@ -227,8 +227,8 @@ void FM_FreeSearch(FM_PSearch Sch)
 SU_THREAD_ROUTINE(FM_ThreadSearch,User)
 {
   char *buf;
-  long int len;
-  long int comp;
+	size_t len;
+  int comp;
 #ifdef STATS
   struct timeval t1,t2;
   struct timezone tz={0,0};

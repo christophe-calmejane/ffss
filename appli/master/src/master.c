@@ -244,11 +244,11 @@ void OnState(struct sockaddr_in Server,FFSS_Field State,const char Name[],const 
 }
 
 /* OnServerListing is raised by local clients */
-void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User)
+void OnServerListing(struct sockaddr_in Client,const char OS[],const char Domain[],FFSS_BitField Compressions,FFSS_LongField User)
 {
   char *buf,*s_dom,*s_os;
-  long int len;
-  long int comp;
+	size_t len;
+  int comp;
 
   context;
   buf = inet_ntoa(Client.sin_addr);
@@ -348,7 +348,7 @@ void OnDomainListing(struct sockaddr_in Client,FFSS_LongField User)
 }
 
 /* OnSearch is raised by local clients */
-void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],long int Compressions,FFSS_LongField User)
+void OnSearch(struct sockaddr_in Client,int Port,const char Domain[],const char KeyWords[],FFSS_BitField Compressions,FFSS_LongField User)
 {
   char *s_dom;
   FM_PSearch Sch;
@@ -428,7 +428,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
   FD_SET(sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_INDEX_XFER;
   tv.tv_usec = 0;
-  retval = select(sock+1,&rfds,NULL,NULL,&tv);
+  retval = select((int)(sock+1),&rfds,NULL,NULL,&tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
@@ -460,7 +460,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
     FD_SET(sock,&rfds);
     tv.tv_sec = FFSS_TIMEOUT_INDEX_XFER;
     tv.tv_usec = 0;
-    retval = select(sock+1,&rfds,NULL,NULL,&tv);
+		retval = select((int)(sock + 1), &rfds, NULL, NULL, &tv);
     if(!retval)
     {
       SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
@@ -493,7 +493,7 @@ SU_THREAD_ROUTINE(ThreadIndexing,Info)
       FD_SET(sock,&rfds);
       tv.tv_sec = FFSS_TIMEOUT_INDEX_XFER;
       tv.tv_usec = 0;
-      retval = select(sock+1,&rfds,NULL,NULL,&tv);
+			retval = select((int)(sock + 1), &rfds, NULL, NULL, &tv);
       if(!retval)
       {
         SU_DBG_PrintDebug(FM_DBGMSG_INDEX,"WARNING : Timed out waiting index from server");
@@ -625,7 +625,7 @@ void GlobalIndexAnswer(struct sockaddr_in Client,FFSS_Field CompressionType,FFSS
 {
   FM_PHost Hst;
   time_t tim;
-  int sock=0;
+	SU_SOCKET sock = SU_INVALID_SOCKET;
   struct sockaddr_in SAddr;
   SU_THREAD_HANDLE ClientThr;
 	SU_THREAD_ID ClientThrId;
@@ -767,10 +767,10 @@ void OnNewState(FFSS_Field State,const char IP[],const char Domain[],const char 
     FM_AddStateToMyQueue(Dom,Hst);
 }
 
-void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],long int Compressions,FFSS_LongField User)
+void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Domain[],FFSS_BitField Compressions,FFSS_LongField User)
 {
   char *buf;
-  long int len;
+	size_t len;
   SU_PList Queue,Ptr;
   FM_PQueue Que;
   FM_PDomain Dom;
@@ -803,7 +803,7 @@ void OnServerListingMaster(SU_PClientSocket Master,const char OS[],const char Do
   }
 }
 
-void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],long int Compressions,FFSS_LongField User)
+void OnSearchForward(SU_PClientSocket Master,const char ClientIP[],int Port,const char KeyWords[],FFSS_BitField Compressions,FFSS_LongField User)
 {
   FM_PSearch Sch;
   FM_PDomain Dom;
@@ -1033,11 +1033,7 @@ int main(int argc,char *argv[])
     context;
     FMI_IndexInit(); /* Init indexing engine */
     context;
-#ifdef DEBUG
-    FMI_LoadIndex("./Dump.dat");
-#else /* !DEBUG */
     FMI_LoadIndex(FM_MYINDEX_FILE);
-#endif /* DEBUG */
     if(log)
       FM_SearchLogFile = SU_OpenLogFile(FM_SEARCHLOG_FILE);
 

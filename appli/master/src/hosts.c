@@ -15,10 +15,10 @@
 */
 #include "master.h"
 
-bool FM_ReadString(FILE *fp,char Buf[],int len)
+bool FM_ReadString(FILE *fp, char Buf[], size_t len)
 {
   char c;
-  int pos,res;
+  size_t pos,res;
   bool writ;
 
   pos = 0;
@@ -49,7 +49,7 @@ SU_PList FM_LoadHosts(const char FileName[])
   FILE *fp;
   SU_PList Hosts = NULL;
   FM_PHost Hst;
-  time_t OffSince;
+  FFSS_LongField OffSince;
   char Dom[FFSS_MAX_DOMAIN_LENGTH+1];
   char Name[FFSS_MAX_SERVERNAME_LENGTH+1];
   char OS[FFSS_MAX_SERVEROS_LENGTH+1];
@@ -71,7 +71,8 @@ SU_PList FM_LoadHosts(const char FileName[])
     FM_ReadString(fp,OS,sizeof(OS));
     FM_ReadString(fp,Comment,sizeof(Comment));
     FM_ReadString(fp,IP,sizeof(IP));
-    fscanf(fp,"%ld",&OffSince);
+		OffSince = 0; // Force 0, in case it was saved as a 4 bytes value
+		fscanf(fp, "%ld", &OffSince);
     fread(&c,1,1,fp); /* Zaps ending \0 */
     context;
     Hst = (FM_PHost) malloc(sizeof(FM_THost));
@@ -80,7 +81,7 @@ SU_PList FM_LoadHosts(const char FileName[])
     Hst->OS = strdup(OS);
     Hst->Comment = strdup(Comment);
     Hst->IP = strdup(IP);
-    Hst->OffSince = OffSince;
+    Hst->OffSince = (time_t)OffSince;
     Hst->LastPong = time(NULL);
     Hst->State = FFSS_STATE_OFF;
 
@@ -106,7 +107,7 @@ bool FM_SaveHosts(SU_PList Hosts,const char FileName[])
   while(Ptr != NULL)
   {
     Hst = (FM_PHost) Ptr->Data;
-    fprintf(fp,"%s%c%s%c%s%c%s%c%ld%c",Hst->Name,0,Hst->OS,0,Hst->Comment,0,Hst->IP,0,(Hst->OffSince == 0)?time(NULL):Hst->OffSince,0);
+		fprintf(fp, "%s%c%s%c%s%c%s%c%ld%c", Hst->Name, 0, Hst->OS, 0, Hst->Comment, 0, Hst->IP, 0, (FFSS_LongField)((Hst->OffSince == 0) ? time(NULL) : Hst->OffSince), 0);
     Ptr = Ptr->Next;
   }
   fclose(fp);

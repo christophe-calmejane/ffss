@@ -155,7 +155,7 @@ typedef struct
   /* FFSS variables */
   char *ShareName;                 /* NULL if FTP connection */
   bool Remove;                     /* If this connection is to be removed */
-  FFSS_Field Comps;                /* Supported compressions */
+  FFSS_BitField Comps;             /* Supported compressions */
 
   /* FTP variables */
   char Path[FFSS_MAX_PATH_LENGTH]; /* Only used for FTP connections - Current path */
@@ -260,10 +260,10 @@ void FS_FreeIndex(void);
 void FS_RescanShare(FS_PShare Share);
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed (its size in size_out), or NULL if the path is incorrect */
-char *FS_BuildDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
+char *FS_BuildDirectoryBuffer(FS_PShare Share, const char Dir[], size_t *size_out);
 /* Assumes FS_SemShr is locked */
 /* Returns a buffer to be sent then freed, or NULL if the path is incorrect */
-char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],long int *size_out);
+char *FS_BuildRecursiveDirectoryBuffer(FS_PShare Share,const char Dir[],size_t *size_out);
 /* Locks FS_SemShr */
 bool FS_SendIndex(const char Host[],const char Port[]);
 /* Assumes FS_SemShr is locked */
@@ -314,14 +314,14 @@ bool FS_TransferBloc(FFSS_PTransfer FT,FS_PConn Conn); /* False on END OF TRANSF
 
 /* Included from MASTER's index.h */
 
-typedef struct /* 28 bytes */
+typedef struct /* 48 bytes */
 {
-  int Pos;                     /* Pos is the offset in 'char *FileTree' for the string of this node        */ /* -1 if not used */
-  int Father;                  /* Father is the index in 'FM_TFTNode *FTNodes' for the father of this node */ /* -1 if no father */
-  int Last;                    /* Last index in host's nodes table for this directory                      */
+	FFSS_LongField Pos;          /* Pos is the offset in 'char *FileTree' for the string of this node        */ /* -1 if not used */
+	FFSS_LongField Father;       /* Father is the index in 'FM_TFTNode *FTNodes' for the father of this node */ /* -1 if no father */
+	FFSS_LongField Last;         /* Last index in host's nodes table for this directory                      */
   FFSS_LongField Size;         /* Size of the file                                                         */
-  FFSS_Field ChkSum;           /* Checksum of the beginning of the file (if available)                     */
-  unsigned char Tags;          /* Bit field for tags of file                                               */
+	FFSS_LongField ChkSum;       /* Checksum of the beginning of the file (if available)                     */
+  FFSS_BitField Tags;          /* Bit field for tags of file                                               */
 } FM_TFTNode, *FM_PFTNode;
 
 

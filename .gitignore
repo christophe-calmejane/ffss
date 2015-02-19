@@ -1,0 +1,21 @@
+# Temp files
+*.o
+*.a
+*.lo
+*.la
+*.so
+*.aps
+*.ncb
+*.suo
+*.vcproj.*.user
+*.sdf
+*.opensdf
+
+# CMake build folder
+/Build-32
+/Build-64
+
+# Runtime files
+*.log
+*.dat
+

@@ -383,7 +383,8 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
                            int NumHost)           /* <-- Number of this host      */
 {
 	size_t j;
-  int i,s,e,len;
+	int i, s, e;
+	size_t len;
   char buf[1024];
   char *dotPos;
 
@@ -403,10 +404,10 @@ void FMI_InsertHostInIndex(FM_PFTControler Host,  /* <-- Host controler structur
     len = strlen(buf);
 
     s = 0;
-    while(s <= (len-FM_MIN_INDEX_LENGTH))
+    while(s <= (int)(len-FM_MIN_INDEX_LENGTH))
     {
       e = 0;
-      while((s+e) < len)
+      while((s+e) < (int)len)
       {
         if(!isalnum(buf[s+e]))
         {
@@ -737,7 +738,7 @@ void FMI_StoreSuffixTree(FILE *fp)
 {
   int i;
   FM_PSTNode Node;
-  bool used;
+	SU_BOOL used;
 
   context;
   for(i=0;i<HASHTABLE_SIZE;i++)
@@ -769,17 +770,17 @@ bool FMI_StoreFTNodes(FILE *fp,FM_PFTNode Node)
 bool FMI_StoreFileTrees(FILE *fp)
 {
   int i,j;
-  long int Length;
+	FFSS_Field Length;
 
   context;
   fwrite(&FM_Controler.NbHosts,sizeof(FM_Controler.NbHosts),1,fp);
   for(i=0;i<FM_Controler.NbHosts;i++)
   {
     fwrite(&FM_Controler.Hosts[i]->Samba,sizeof(FM_Controler.Hosts[i]->Samba),1,fp);
-    Length = strlen(FM_Controler.Hosts[i]->Name) + 1;
+		Length = (FFSS_Field)strlen(FM_Controler.Hosts[i]->Name) + 1;
     fwrite(&Length,sizeof(Length),1,fp);
     fwrite(FM_Controler.Hosts[i]->Name,Length,1,fp);
-    Length = strlen(FM_Controler.Hosts[i]->IP) + 1;
+		Length = (FFSS_Field)strlen(FM_Controler.Hosts[i]->IP) + 1;
     fwrite(&Length,sizeof(Length),1,fp);
     fwrite(FM_Controler.Hosts[i]->IP,Length,1,fp);
     fwrite(&FM_Controler.Hosts[i]->FileTreeLength,sizeof(FM_Controler.Hosts[i]->FileTreeLength),1,fp);
@@ -871,7 +872,7 @@ bool FMI_LoadSuffixTree(FILE *fp)
 {
   int i;
   FM_PSTNode Root;
-  bool used;
+	SU_BOOL used;
 
   context;
   for(i=0;i<HASHTABLE_SIZE;i++)
@@ -910,7 +911,7 @@ bool FMI_LoadFTNodes(FILE *fp,FM_PFTNode Node)
 bool FMI_LoadFileTrees(FILE *fp)
 {
   int i,j;
-  long int Length;
+	FFSS_Field Length;
 
   context;
   fread(&FM_Controler.NbHosts,sizeof(FM_Controler.NbHosts),1,fp);

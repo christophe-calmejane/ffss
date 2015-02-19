@@ -19,8 +19,8 @@
 #include "transfer.h"
 
 char *FFSS_TransferErrorTable[]={"","Transfer buffer allocation failed","Timed out","Send error","EOF from remote host","Error reading file","Error accepting connection","Error opening file","Recv error","Local write error. Disk full ?","Received file bigger than specified","Checksum check failed","Transfer canceled"};
-long int FFSS_TransferBufferSize = FFSS_TRANSFER_BUFFER_SIZE;
-long int FFSS_TransferReadBufferSize = FFSS_TRANSFER_READ_BUFFER_SIZE;
+FFSS_Field FFSS_TransferBufferSize = FFSS_TRANSFER_BUFFER_SIZE;
+FFSS_Field FFSS_TransferReadBufferSize = FFSS_TRANSFER_READ_BUFFER_SIZE;
 static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
 void FFSS_FreeTransfer(FFSS_PTransfer T)
@@ -39,19 +39,21 @@ void FFSS_FreeTransfer(FFSS_PTransfer T)
 SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
-  unsigned long int rpos=0,rlen;
-  FFSS_LongField fsize,total=0;
+	size_t rpos = 0, rlen;
+  size_t fsize,total=0;
   FFSS_Field Checksum;
   fd_set rfds;
   struct timeval tv;
-  int retval,res,len;
+	int retval, res;
+	size_t len;
   char *RBuf;
   time_t t1,t2;
   SU_TICKS st,et;
-  unsigned long int tim;
-  unsigned long int bytes;
-  unsigned long int prev_thrpt,sleep_val,sleep_val2;
-  unsigned long IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
+  SU_u32 tim;
+	size_t bytes;
+	FFSS_LongField prev_thrpt;
+	FFSS_Field sleep_val, sleep_val2;
+  FFSS_Field IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
 
   SU_ThreadBlockSigs();
   fseek(FT->fp,0,SEEK_END);
@@ -60,7 +62,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   if(FT->EndingPos != 0)
   {
     if(FT->EndingPos < fsize)
-      fsize = FT->EndingPos + 1;
+      fsize = (size_t)(FT->EndingPos + 1);
     else
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Requested EndingSize is less than actual file size");
   }
@@ -69,7 +71,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   if(FT->StartingPos != 0)
   {
     fseek(FT->fp,(long)FT->StartingPos,SEEK_SET);
-    fsize -= FT->StartingPos;
+		fsize -= (size_t)FT->StartingPos;
   }
   FT->XFerPos = 0; /* Do not set this to real pos, because if resume is used, FT->FileSize will be remaning bytes only */
 
@@ -98,7 +100,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   FD_SET(FT->sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
   tv.tv_usec = 0;
-  retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
+	retval = select((int)(FT->sock + 1), NULL, &rfds, NULL, &tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
@@ -182,7 +184,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
     if((total+FFSS_TransferReadBufferSize) <= fsize)
       rlen = FFSS_TransferReadBufferSize;
     else
-      rlen = (long int)(fsize - total);
+      rlen = fsize - total;
     if(fread(RBuf,1,rlen,FT->fp) != rlen)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error reading file while uploading : %d",errno);
@@ -219,7 +221,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
         FD_SET(FT->sock,&rfds);
         tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
         tv.tv_usec = 0;
-        retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
+				retval = select((int)(FT->sock + 1), NULL, &rfds, NULL, &tv);
         if(!retval)
         {
           SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while uploading file");
@@ -241,7 +243,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
           free(RBuf);
 		  SU_END_THREAD(threadwork_ret_zero);
         }
-        res += send(FT->sock,RBuf+rpos+res,len-res,SU_MSG_NOSIGNAL);
+        res += send(FT->sock,RBuf+rpos+res,(int)(len-res),SU_MSG_NOSIGNAL);
         if(res <= 0)
         {
           SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (buf) : %d %s",errno,strerror(errno));
@@ -269,12 +271,12 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
       if(FT->ThreadType == FFSS_THREAD_SERVER)
       {
         if(FFSS_CB.SCB.OnTransferActive != NULL)
-          FFSS_CB.SCB.OnTransferActive(FT,len,false);
+          FFSS_CB.SCB.OnTransferActive(FT,(FFSS_Field)len,false);
       }
       else
       {
         if(FFSS_CB.CCB.OnTransferActive != NULL)
-          FFSS_CB.CCB.OnTransferActive(FT,len,false);
+					FFSS_CB.CCB.OnTransferActive(FT, (FFSS_Field)len, false);
       }
       rpos += len;
 
@@ -319,7 +321,7 @@ SU_THREAD_ROUTINE(FFSS_UploadFileFunc,Info)
   FD_SET(FT->sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
   tv.tv_usec = 0;
-  retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
+	retval = select((int)(FT->sock + 1), NULL, &rfds, NULL, &tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
@@ -418,7 +420,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
 {
   FFSS_PTransfer FT = (FFSS_PTransfer) Info;
   struct sockaddr sad;
-  unsigned long int len;
+	size_t len;
   int res;
   SU_SOCKET client;
   char Buf[FFSS_TRANSFER_BUFFER_SIZE*2];
@@ -431,10 +433,11 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   bool error = false;
   time_t t1,t2;
   SU_TICKS st,et;
-  unsigned long int tim;
-  unsigned long int bytes;
-  unsigned long int prev_thrpt,sleep_val,sleep_val2;
-  unsigned long IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
+  SU_u32 tim;
+	size_t bytes;
+	FFSS_LongField prev_thrpt;
+	FFSS_Field sleep_val, sleep_val2;
+  FFSS_Field IP = INADDR_GET_IP(FT->Client->SAddr.sin_addr);
 
   SU_ThreadBlockSigs();
   context;
@@ -444,7 +447,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   FD_SET(FT->sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_ACCEPT;
   tv.tv_usec = 0;
-  retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
+	retval = select((int)(FT->sock + 1), &rfds, NULL, NULL, &tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error accepting connection (timed out)");
@@ -516,7 +519,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
   FD_SET(FT->sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
   tv.tv_usec = 0;
-  retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
+	retval = select((int)(FT->sock + 1), &rfds, NULL, NULL, &tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while downloading file");
@@ -609,7 +612,7 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     FD_SET(FT->sock,&rfds);
     tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
     tv.tv_usec = 0;
-    retval = select(FT->sock+1,&rfds,NULL,NULL,&tv);
+		retval = select((int)(FT->sock + 1), &rfds, NULL, NULL, &tv);
     if(!retval)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while downloading file");
@@ -632,12 +635,12 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
     {
       context;
       len = sizeof(Buf);
-      if(len > (unsigned long int)(Size-total)) /* WARNING HERE !!! This may bug, depending on the cast policy */
-        len = (unsigned long int)(Size-total);
+      if(len > (Size-total))
+				len = (size_t)(Size - total);
       if(len == 0) /* End of file, getting checksum */
         res = recv(FT->sock,(char *)&ChkSum,sizeof(Checksum),SU_MSG_NOSIGNAL);
       else
-        res = recv(FT->sock,Buf,len,SU_MSG_NOSIGNAL);
+				res = recv(FT->sock, Buf, (int)len, SU_MSG_NOSIGNAL);
       if(res == SOCKET_ERROR)
       {
         SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while downloading file (buf) : %d %s",errno,strerror(errno));
@@ -680,12 +683,12 @@ SU_THREAD_ROUTINE(FFSS_DownloadFileFunc,Info)
         if(FT->ThreadType == FFSS_THREAD_SERVER)
         {
           if(FFSS_CB.SCB.OnTransferActive != NULL)
-            FFSS_CB.SCB.OnTransferActive(FT,res,true);
+						FFSS_CB.SCB.OnTransferActive(FT, (FFSS_Field)res, true);
         }
         else
         {
           if(FFSS_CB.CCB.OnTransferActive != NULL)
-            FFSS_CB.CCB.OnTransferActive(FT,res,true);
+						FFSS_CB.CCB.OnTransferActive(FT, (FFSS_Field)res, true);
         }
       }
       if(!error)
@@ -995,10 +998,10 @@ bool FFSS_DownloadFile(SU_PClientSocket Server,const char RemotePath[],const cha
   return true;
 }
 
-bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
+bool FFSS_SendData(FFSS_PTransfer FT, FFSS_Field Tag, char *Buf, size_t len)
 {
   char *msg;
-  int size,pos;
+  size_t size,pos;
   int res;
   fd_set rfds;
   struct timeval tv;
@@ -1014,13 +1017,13 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
   memcpy(msg+pos,Buf,len);
   pos += len;
 
-  *(FFSS_Field *)(msg) = pos;
+	*(FFSS_Field *)(msg) = (FFSS_Field)pos;
 
   FD_ZERO(&rfds);
   FD_SET(FT->sock,&rfds);
   tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
   tv.tv_usec = 0;
-  retval = select(FT->sock+1,NULL,&rfds,NULL,&tv);
+	retval = select((int)(FT->sock + 1), NULL, &rfds, NULL, &tv);
   if(!retval)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out");
@@ -1033,7 +1036,7 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
   res = 0;
   while(res != pos)
   {
-    res += send(FT->sock,msg+res,pos-res,SU_MSG_NOSIGNAL);
+    res += send(FT->sock,msg+res,(int)(pos-res),SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file (data) : %d %s",errno,strerror(errno));
@@ -1056,18 +1059,18 @@ bool FFSS_SendData(FFSS_PTransfer FT,FFSS_Field Tag,char *Buf,int len)
   if(FT->ThreadType == FFSS_THREAD_SERVER)
   {
     if(FFSS_CB.SCB.OnTransferActive != NULL)
-      FFSS_CB.SCB.OnTransferActive(FT,len,false);
+			FFSS_CB.SCB.OnTransferActive(FT, (FFSS_Field)len, false);
   }
   else
   {
     if(FFSS_CB.CCB.OnTransferActive != NULL)
-      FFSS_CB.CCB.OnTransferActive(FT,len,false);
+			FFSS_CB.CCB.OnTransferActive(FT, (FFSS_Field)len, false);
   }
   free(msg);
   return true;
 }
 
-void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
+void FFSS_OnDataDownload(FFSS_PTransfer FT, const char Buf[], size_t Len)
 {
   FFSS_Field Checksum=0;
 
@@ -1092,12 +1095,12 @@ void FFSS_OnDataDownload(FFSS_PTransfer FT,const char Buf[],int Len)
     if(FT->ThreadType == FFSS_THREAD_SERVER)
     {
       if(FFSS_CB.SCB.OnTransferActive != NULL)
-        FFSS_CB.SCB.OnTransferActive(FT,Len,false);
+				FFSS_CB.SCB.OnTransferActive(FT, (FFSS_Field)Len, false);
     }
     else
     {
       if(FFSS_CB.CCB.OnTransferActive != NULL)
-        FFSS_CB.CCB.OnTransferActive(FT,Len,false);
+				FFSS_CB.CCB.OnTransferActive(FT, (FFSS_Field)Len, false);
     }
   }
   if(FT->XI.total == (FT->XI.fsize+sizeof(FFSS_Field))) /* Compares checksum */

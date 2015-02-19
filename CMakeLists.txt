@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 
-project(ffss C CXX)
+if(NOT FFSS_PROJECT_NAME)
+	set(FFSS_PROJECT_NAME ffss)
+endif()
+project(${FFSS_PROJECT_NAME} C CXX)
 
 # Add skyutils flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSU_ENABLE_ANSI_CODE -D_REENTRANT -DSU_USE_DL -DSU_USE_ARCH")

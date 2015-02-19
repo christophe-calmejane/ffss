@@ -18,14 +18,14 @@
 
 typedef struct
 {
-  unsigned long IP;             /* IP base of the rule */
-  unsigned long Mask;           /* Mask of the rule */
+  FFSS_Field IP;             /* IP base of the rule */
+	FFSS_Field Mask;           /* Mask of the rule */
   char *IP_str;                 /* String version of the IP */
   char *Mask_str;               /* String version of the mask */
   FFSS_QOS_CRITERIA Criteria;   /* Criteria to use if rule matches */
   FFSS_QOS_VALUE Value;         /* Criteria's value */
   char *Name;                   /* Optional name of the rule */
-  unsigned long int Throughput; /* Current throughput (bytes/msec) */
+  FFSS_LongField Throughput; /* Current throughput (bytes/msec) */
 } FFSS_TQosRule, *FFSS_PQosRule;
 
 typedef struct
@@ -64,8 +64,8 @@ void FFSS_QoS_FreeRule(FFSS_PQosRule Rule)
 FFSS_PQosRule FFSS_QoS_CreateRule(const char IP[],const char Mask[],FFSS_QOS_CRITERIA Criteria,FFSS_QOS_VALUE Value,const char Name[])
 {
   FFSS_PQosRule Rule;
-  unsigned long ip;
-  unsigned long mask;
+	FFSS_Field ip;
+	FFSS_Field mask;
 
   ip = inet_addr(IP);
   mask = inet_addr(Mask);
@@ -383,11 +383,12 @@ bool FFSS_QoS_EnumRulesOfChain(FFSS_QOS_CHAIN Chain,FFSS_QOS_RULES_ENUM_CB EnumC
   return true;
 }
 
-unsigned long int FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain,unsigned long IP,signed long int ThroughputDelta,unsigned long int TimeDelta)
+FFSS_Field FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain, FFSS_Field IP, FFSS_SLongField ThroughputDelta, FFSS_LongField TimeDelta)
 {
   SU_PList Ptr;
   FFSS_PQosRule Rule;
-  unsigned long int value = 1,ret = 0;
+	FFSS_LongField value = 1;
+	FFSS_Field ret = 0;
 
   if(Chain >= FFSS_QOS_CHAINS_COUNT)
     return 0;
@@ -407,12 +408,12 @@ unsigned long int FFSS_QoS_UpdateRate(FFSS_QOS_CHAIN Chain,unsigned long IP,sign
           value = Rule->Value;
           break;
         case FFSS_QOS_CRITERIA_BANDWIDTH_PER_CENT :
-          value = (unsigned long int)(FFSS_QoS_Api.BandWidth / 100 * Rule->Value);
+					value = FFSS_QoS_Api.BandWidth / 100 * Rule->Value;
           break;
       }
       if(Rule->Throughput > value)
       {
-        ret = (unsigned long int)((Rule->Throughput - value) / (float)value * TimeDelta); /* Nb msec to wait */
+				ret = (FFSS_Field)(MIN(32000,(Rule->Throughput - value) / (float)value * TimeDelta)); /* Nb msec to wait */
         SU_DBG_PrintDebug(FFSS_DBGMSG_GLOBAL,"QoS Engine : Quota excedeed... sleeping for %d msec",ret);
       }
       break;

@@ -89,7 +89,7 @@ printf("POUF\n");
 	FCA_sem_post();
 }
 
-void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
+void FCA_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_LongField *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
 	SU_DBG_PrintDebug(FC_DBGMSG_GLOBAL, "(client) received search answer for domain %s, query=%s", Domain, Query);
 

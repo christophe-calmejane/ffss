@@ -341,7 +341,7 @@ void FMP_FreeSearch(struct FMP_SSearch *Sch)
 /* ******************* FFSS CALLBACKS ******************* */
 /* FFSS UDP callbacks */
 /* Each IP from IPs table is dupped internaly, and if you don't use it, you MUST free it !! */
-void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_Field *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
+void FFSS_OnSearchAnswer(const char Query[],const char Domain[],const char **Answers,char **IPs,FFSS_LongField *ChkSums,FFSS_LongField *Sizes,int NbAnswers,FFSS_LongField User)
 {
   int i;
   FMP_PFile File;

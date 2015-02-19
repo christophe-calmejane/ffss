@@ -122,7 +122,7 @@ void FFSS_handle_SIGNAL(int signal)
     {
       FFSS_PrintSyslog(LOG_ERR,"I (%d) am not the main thread (%d). Signaling the main thread\n",SU_THREAD_SELF,FFSS_MainThread);
 #ifdef __linux__
-      pthread_kill_other_threads_np();
+      //pthread_kill_other_threads_np();
 #endif /* __linux__ */
       SU_TermThread(FFSS_MainThread);
     }
@@ -142,10 +142,10 @@ bool FFSS_CheckSizeofTTransfer(int Size)
 
 /* Unpacks a string from a message, checking if the string really terminates (prevents DoS attacks) */
 /*  Returns the string, or NULL if there is a problem */
-char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int *new_pos)
+char *FFSS_UnpackString(const char beginning[], const char buf[], size_t len, ptrdiff_t *new_pos)
 {
-  long int pos = buf - beginning;
-  while(pos < len)
+  ptrdiff_t pos = buf - beginning;
+	while(pos < (ptrdiff_t)len)
   {
     if(beginning[pos] == 0)
     {
@@ -160,12 +160,12 @@ char *FFSS_UnpackString(const char beginning[],const char buf[],int len,long int
 
 /* Unpacks a FFSS_Field from a message, checking if the FFSS_Field is fully in the message (prevents DoS attacks) */
 /*  Returns the FFSS_Field, or 0 if there is a problem */
-FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long int *new_pos)
+FFSS_Field FFSS_UnpackField(const char beginning[], const char buf[], size_t len, ptrdiff_t *new_pos)
 {
-  unsigned int pos = buf - beginning;
+	ptrdiff_t pos = buf - beginning;
   FFSS_Field ret = 0;
 
-  if((pos+sizeof(FFSS_Field)) <= (unsigned int)len)
+  if((pos+sizeof(FFSS_Field)) <= len)
   {
     *new_pos = pos + sizeof(FFSS_Field);
 #ifdef WORDS_BIGENDIAN
@@ -191,12 +191,12 @@ FFSS_Field FFSS_UnpackField(const char beginning[],const char buf[],int len,long
 
 /* Unpacks a FFSS_LongField from a message, checking if the FFSS_Field is fully in the message (prevents DoS attacks) */
 /*  Returns the FFSS_Field, or 0 if there is a problem */
-FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int len,long int *new_pos)
+FFSS_LongField FFSS_UnpackLongField(const char beginning[], const char buf[], size_t len, ptrdiff_t *new_pos)
 {
-  unsigned int pos = buf - beginning;
+	ptrdiff_t pos = buf - beginning;
   FFSS_LongField ret = 0;
 
-  if((pos+sizeof(FFSS_LongField)) <= (unsigned int)len)
+  if((pos+sizeof(FFSS_LongField)) <= len)
   {
     *new_pos = pos + sizeof(FFSS_LongField);
 #ifdef WORDS_BIGENDIAN
@@ -228,13 +228,13 @@ FFSS_LongField FFSS_UnpackLongField(const char beginning[],const char buf[],int 
   return ret;
 }
 
-void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,char buf_out[],int Type)
+void FFSS_UnpackIP(const char beginning[], char *buf, size_t len, ptrdiff_t *new_pos, char buf_out[], int Type)
 {
   int a,b,c,d;
-  int pos = buf - beginning;
+	ptrdiff_t pos = buf - beginning;
 
   buf_out[0] = 0;
-  if((pos+FFSS_IP_FIELD_SIZE) <= len)
+	if((pos + FFSS_IP_FIELD_SIZE) <= (ptrdiff_t)len)
   {
     switch(Type)
     {
@@ -264,7 +264,7 @@ void FFSS_UnpackIP(const char beginning[],char *buf,int len,long int *new_pos,ch
 
 /* Packs a string (with len max char) into a message */
 /*  Returns the new pos in the message buffer */
-long int FFSS_PackString(char buf[],int pos,const char strn[],int len)
+ptrdiff_t FFSS_PackString(char buf[], ptrdiff_t pos, const char strn[], size_t len)
 {
   SU_strcpy(buf+pos,strn,len);
   return pos + len;
@@ -272,7 +272,7 @@ long int FFSS_PackString(char buf[],int pos,const char strn[],int len)
 
 /* Packs a FFSS_Field into a message */
 /*  Returns the new pos in the message buffer */
-long int FFSS_PackField(char buf[],int pos,FFSS_Field val)
+ptrdiff_t FFSS_PackField(char buf[],ptrdiff_t pos,FFSS_Field val)
 {
 #ifdef WORDS_BIGENDIAN
   buf[pos+0] = *(((char *)&val)+3);
@@ -294,7 +294,7 @@ long int FFSS_PackField(char buf[],int pos,FFSS_Field val)
 
 /* Packs a FFSS_LongField into a message */
 /*  Returns the new pos in the message buffer */
-long int FFSS_PackLongField(char buf[],int pos,FFSS_LongField val)
+ptrdiff_t FFSS_PackLongField(char buf[],ptrdiff_t pos,FFSS_LongField val)
 {
 #ifdef WORDS_BIGENDIAN
   buf[pos+0] = *(((char *)&val)+7);
@@ -349,7 +349,7 @@ void FFSS_PackIP(char *buf,const char IP[],int Type)
   }
 }
 
-FFSS_Field FFSS_ComputeChecksum(FFSS_Field Old,const char Buf[],long int Len)
+FFSS_Field FFSS_ComputeChecksum(FFSS_Field Old, const char Buf[], size_t Len)
 {
 #ifdef DISABLE_CHECKSUM
   return 1;
@@ -397,19 +397,19 @@ void FFSS_AddBroadcastAddr(const char Addr[])
   FFSS_Broadcast = SU_AddElementTail(FFSS_Broadcast,strdup(Addr));
 }
 
-int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port)
+int FFSS_SendBroadcast(SU_PServerInfo SI, char *Text, size_t len, char *port)
 {
-  int res=len,v;
+  int res=(int)len,v;
   SU_PList Ptr;
 
   if(FFSS_Broadcast == NULL)
-    return SU_UDPSendBroadcast(SI,Text,len,port);
+    return SU_UDPSendBroadcast(SI,Text,(int)len,port);
   else
   {
     Ptr = FFSS_Broadcast;
     while(Ptr != NULL)
     {
-      v = SU_UDPSendToAddr(SI,Text,len,(char *)Ptr->Data,port);
+      v = SU_UDPSendToAddr(SI,Text,(int)len,(char *)Ptr->Data,port);
       if(v == SOCKET_ERROR)
         res = v;
       Ptr = Ptr->Next;
@@ -420,7 +420,7 @@ int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port)
 #endif /* !FFSS_DRIVER */
 
 #ifndef DISABLE_ZLIB
-bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
+bool FFSS_CompresseZlib(char *in,size_t len_in,char *out,size_t *len_out)
 {
   int res;
 
@@ -429,10 +429,10 @@ bool FFSS_CompresseZlib(char *in,long int len_in,char *out,long int *len_out)
   return (res == Z_OK);
 }
 
-char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out)
+char *FFSS_UncompresseZlib(char *in,size_t len_in,size_t *len_out)
 {
   char *out,*old_out;
-  long int len;
+	size_t len;
   int res;
 
   len = len_in*3;
@@ -466,7 +466,7 @@ char *FFSS_UncompresseZlib(char *in,long int len_in,long int *len_out)
 #endif /* !DISABLE_ZLIB */
 
 #ifdef HAVE_BZLIB
-bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out)
+bool FFSS_CompresseBZlib(char *in,size_t len_in,char *out,size_t *len_out)
 {
   int res;
 
@@ -475,10 +475,10 @@ bool FFSS_CompresseBZlib(char *in,long int len_in,char *out,long int *len_out)
   return (res == BZ_OK);
 }
 
-char *FFSS_UncompresseBZlib(char *in,long int len_in,long int *len_out)
+char *FFSS_UncompresseBZlib(char *in,size_t len_in,size_t *len_out)
 {
   char *out,*old_out;
-  long int len;
+	size_t len;
   int res;
 
   len = len_in*3;
@@ -578,7 +578,7 @@ void *FFSS_malloc(size_t size)
     if(FFSS_MainThread != (SU_THREAD_HANDLE)SU_THREAD_SELF)
     {
 #ifdef __linux__
-      pthread_kill_other_threads_np();
+      //pthread_kill_other_threads_np();
 #endif /* __linux__ */
       SU_TermThread(FFSS_MainThread);
     }

@@ -24,11 +24,11 @@ SU_THREAD_HANDLE FM_THR_UDP,FM_THR_TCP;
 SU_THREAD_ID FM_THRID_UDP,FM_THRID_TCP;
 static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
-void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
+void FM_AnalyseUDP(struct sockaddr_in Client, char Buf[], size_t Len)
 {
   int Type;
   char *str,*str2,*str3;
-  long int pos;
+	size_t pos;
   FFSS_Field val,val2,val3,val4,val5;
   FFSS_LongField lval;
   FFSS_Field state,type_ip;
@@ -172,15 +172,15 @@ void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
   }
 }
 
-bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
+bool FM_AnalyseTCP(SU_PClientSocket Master, char Buf[], size_t Len, bool *ident)
 {
   int Type;
-  long int pos;
+	size_t pos;
   char *str,*str2,*str3,*str4;
   FFSS_Field i,val,val2;
   FFSS_LongField lval;
   bool ret_val;
-  long int u_pos,u_Len;
+	size_t u_pos, u_Len;
   char *u_Buf;
   bool free_it;
   FFSS_Field state,type_ip,type_ip2;
@@ -338,14 +338,14 @@ bool FM_AnalyseTCP(SU_PClientSocket Master,char Buf[],long int Len,bool *ident)
 SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
 {
   SU_PClientSocket Master = (SU_PClientSocket) User;
-  unsigned int len;
+	size_t len;
   int res;
   FFSS_Field Size;
   bool analyse;
   fd_set rfds;
   int retval;
   char *Buf;
-  unsigned long int BufSize;
+	size_t BufSize;
   bool Ident = false;
 
   context;
@@ -364,7 +364,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
   {
     FD_ZERO(&rfds);
     FD_SET(Master->sock,&rfds);
-    retval = select(Master->sock+1,&rfds,NULL,NULL,NULL);
+		retval = select((int)(Master->sock + 1), &rfds, NULL, NULL, NULL);
     if(retval <= 0) /* Some error occured */
     {
       if(FFSS_CB.MCB.OnMasterDisconnected != NULL)
@@ -384,7 +384,7 @@ SU_THREAD_ROUTINE(FM_MasterThreadTCP,User)
       free(Buf);
 	  SU_END_THREAD(threadwork_ret_zero);
     }
-    res = recv(Master->sock,Buf+len,BufSize-len,SU_MSG_NOSIGNAL);
+		res = recv(Master->sock, Buf + len, (int)(BufSize - len), SU_MSG_NOSIGNAL);
     if(res == SOCKET_ERROR)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error on TCP port of the master (SOCKET_ERROR : %d)",errno);

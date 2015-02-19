@@ -76,7 +76,7 @@ typedef struct
 
 typedef struct
 {
-  void *Handle;      /* DO NOT FREE */
+	FFSS_Handle Handle;/* DO NOT FREE */
   char *Name;        /* Free it */
   char *Copyright;   /* Free it */
   char *Version;     /* Free it */
@@ -112,9 +112,9 @@ bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[]);
 bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share);
 
 /* ***************  Plugins  *************** */
-void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup);
-bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStartup);
-bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle,void *User);
+FFSS_Handle FSCA_Plugin_Load(SU_PClientSocket Client, const char Path[], bool AddToStartup);
+bool FSCA_Plugin_Unload(SU_PClientSocket Client, FFSS_Handle Handle, bool RemoveFromStartup);
+bool FSCA_Plugin_Configure(SU_PClientSocket Client, FFSS_Handle Handle, void *User);
 SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client); /* FSCA_PPluginInfo */ /* You are responsible for freeing the list and the structs */
 
 #ifdef __cplusplus

@@ -19,9 +19,9 @@
 #include "utils.h"
 #include "common.h"
 
-void FS_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
-void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
-void FM_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len);
+void FS_AnalyseUDP(struct sockaddr_in Client, char Buf[], size_t Len);
+void FC_AnalyseUDP(struct sockaddr_in Client, char Buf[], size_t Len);
+void FM_AnalyseUDP(struct sockaddr_in Client, char Buf[], size_t Len);
 
 struct sockaddr_in FFSS_CurrentSIN;
 time_t FFSS_When;
@@ -31,14 +31,14 @@ static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 SU_THREAD_ROUTINE(F_ThreadUDP,User)
 {
   struct sockaddr_in Client;
-  unsigned int len;
+	size_t len;
   int res = SOCKET_ERROR;
   FFSS_Field Size;
   bool analyse;
   int err;
   char whom[150];
   char *Buf;
-  unsigned long int BufSize = 0;
+	size_t BufSize = 0;
   fd_set rfds;
   struct timeval tv;
   int retval = 0;
@@ -86,15 +86,15 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
       {
         case FFSS_THREAD_SERVER :
           FD_SET(FS_SI_UDP->sock,&rfds);
-          retval = select(FS_SI_UDP->sock+1,&rfds,NULL,NULL,&tv);
+					retval = select((int)(FS_SI_UDP->sock + 1), &rfds, NULL, NULL, &tv);
           break;
         case FFSS_THREAD_CLIENT :
           FD_SET(FC_SI_OUT_UDP->sock,&rfds);
-          retval = select(FC_SI_OUT_UDP->sock+1,&rfds,NULL,NULL,&tv);
+					retval = select((int)(FC_SI_OUT_UDP->sock + 1), &rfds, NULL, NULL, &tv);
           break;
         case FFSS_THREAD_MASTER :
           FD_SET(FM_SI_UDP->sock,&rfds);
-          retval = select(FM_SI_UDP->sock+1,&rfds,NULL,NULL,&tv);
+					retval = select((int)(FM_SI_UDP->sock + 1), &rfds, NULL, NULL, &tv);
           break;
         default :
           SU_DBG_PrintDebug(FFSS_DBGMSG_FATAL,"Error in UDP common thread, unknown thread type !");
@@ -112,13 +112,13 @@ SU_THREAD_ROUTINE(F_ThreadUDP,User)
     switch((int)User)
     {
       case FFSS_THREAD_SERVER :
-        res = SU_UDPReceiveFromSin(FS_SI_UDP,Buf+len,BufSize-len,&Client,true);
+        res = SU_UDPReceiveFromSin(FS_SI_UDP,Buf+len,(int)(BufSize-len),&Client,true);
         break;
       case FFSS_THREAD_CLIENT :
-        res = SU_UDPReceiveFromSin(FC_SI_OUT_UDP,Buf+len,BufSize-len,&Client,true);
+				res = SU_UDPReceiveFromSin(FC_SI_OUT_UDP, Buf + len, (int)(BufSize - len), &Client, true);
         break;
       case FFSS_THREAD_MASTER :
-        res = SU_UDPReceiveFromSin(FM_SI_UDP,Buf+len,BufSize-len,&Client,true);
+				res = SU_UDPReceiveFromSin(FM_SI_UDP, Buf + len, (int)(BufSize - len), &Client, true);
         break;
       default :
         SU_DBG_PrintDebug(FFSS_DBGMSG_FATAL,"Error in UDP common thread, unknown thread type !");

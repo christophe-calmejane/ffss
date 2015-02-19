@@ -32,7 +32,7 @@
 #ifndef FFSS_DRIVER
 extern SU_THREAD_HANDLE FFSS_MainThread;
 #endif /* !FFSS_DRIVER */
-int FFSS_SendBroadcast(SU_PServerInfo SI,char *Text,int len,char *port);
+int FFSS_SendBroadcast(SU_PServerInfo SI, char *Text, size_t len, char *port);
 extern SU_PList FFSS_Broadcast; /* char * */
 
 #endif /* !__FFSS_UTILS_H__ */

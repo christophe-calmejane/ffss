@@ -33,7 +33,7 @@ char *FS_MyIntName = "eth0";
 #endif
 volatile int FS_MyState;
 char *FS_TimeTable[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-long int FS_CurrentStrmTag = 1;
+FFSS_Field FS_CurrentStrmTag = 1;
 SU_PList FS_Plugins; /* FS_PPlugin */
 
 #ifdef _WIN32
@@ -381,10 +381,10 @@ void OnEndTCPThread(void)
 }
 
 /* Assumes FS_SemShr is locked */
-bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps,FFSS_LongField User)
+bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],FFSS_BitField Comps,FFSS_LongField User)
 {
   char *buf;
-  long int len;
+	size_t len;
   int comp;
   bool ans;
 
@@ -422,10 +422,10 @@ bool FS_SendDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char 
 }
 
 /* Assumes FS_SemShr is locked */
-bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],long int Comps,FFSS_LongField User)
+bool FS_SendRecursiveDirectoryListing(SU_PClientSocket Client,FS_PShare Share,const char Path[],FFSS_BitField Comps,FFSS_LongField User)
 {
   char *buf;
-  long int len;
+	size_t len;
   int comp;
   bool ans;
 
@@ -738,7 +738,7 @@ void OnBeginTCPThread(SU_PClientSocket Client,void *Info)
   SU_SEM_POST(FS_SemShr);
 }
 
-void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],long int Compressions,FFSS_LongField User)
+void *OnShareConnection(SU_PClientSocket Client,const char ShareName[],const char Login[],const char Password[],FFSS_BitField Compressions,FFSS_LongField User)
 {
   SU_PList Ptr;
   FS_PShare Share;
@@ -971,7 +971,7 @@ bool OnDownload(SU_PClientSocket Client,const char Path[],FFSS_LongField StartPo
   SU_PList Ptr;
   bool ret;
 
-  SU_DBG_PrintDebug(FS_DBGMSG_IN_MSG,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d",Path,(long int)StartPos,Port);
+  SU_DBG_PrintDebug(FS_DBGMSG_IN_MSG,"Received a DOWNLOAD message for file %s (starting at pos %ld). Send it to port %d",Path,StartPos,Port);
 
   SU_SEM_WAIT(FS_SemShr);
   ts = FS_GetThreadSpecific(false);
@@ -1408,7 +1408,7 @@ void OnCancelXFer(SU_PClientSocket Server,FFSS_Field XFerTag)
 }
 
 /* Streaming callbacks */
-void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
+void OnStrmOpen(SU_PClientSocket Client,FFSS_BitField Flags,const char Path[],FFSS_LongField User) /* Path IN the share (without share name) */
 {
   FS_PConn Conn;
   FS_PThreadSpecific ts;
@@ -1481,7 +1481,7 @@ void OnStrmOpen(SU_PClientSocket Client,long int Flags,const char Path[],FFSS_Lo
   if(Conn != NULL)
   {
     Conn->Strms = SU_AddElementHead(Conn->Strms,FS);
-    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"OnStrmOpen : Adding Streaming to conn (Handle=%ld Size=%ld)",FS->Handle,(long int)FS->fsize);
+    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"OnStrmOpen : Adding Streaming to conn (Handle=%ld Size=%ld)",FS->Handle,FS->fsize);
   }
   else
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"OnStrmOpen : Conn not found !!");
@@ -1543,13 +1543,13 @@ void OnStrmClose(SU_PClientSocket Client,FFSS_Field Handle)
   }
 }
 
-void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,long int Length,FFSS_LongField User)
+void OnStrmRead(SU_PClientSocket Client, FFSS_Field Handle, FFSS_LongField StartPos, FFSS_Field Length, FFSS_LongField User)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
   FS_PThreadSpecific ts;
   char Buffer[FFSS_STREAMING_BUFFER_SIZE];
-  long int res,len;
+	size_t res, len;
   SU_PList Ptr;
 
   SU_SEM_WAIT(FS_SemShr);
@@ -1581,7 +1581,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
       len = sizeof(Buffer);
     if(len < (sizeof(Buffer)/2))
       len = sizeof(Buffer)/2;
-    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"Reading %ld bytes from file starting at %ld",len,(long int)StartPos);
+    SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"Reading %ld bytes from file starting at %ld",len,StartPos);
     res = fread(Buffer,1,len,FS->fp);
     if(res == 0)
     {
@@ -1620,7 +1620,7 @@ void OnStrmRead(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPo
   }
 }
 
-void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartPos,const char Bloc[],long int BlocSize,FFSS_LongField User)
+void OnStrmWrite(SU_PClientSocket Client, FFSS_Field Handle, FFSS_LongField StartPos, const char Bloc[], FFSS_Field BlocSize, FFSS_LongField User)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1667,7 +1667,7 @@ void OnStrmWrite(SU_PClientSocket Client,FFSS_Field Handle,FFSS_LongField StartP
   }
 }
 
-void OnStrmSeek(SU_PClientSocket Client,FFSS_Field Handle,long int Flags,FFSS_LongField Pos)
+void OnStrmSeek(SU_PClientSocket Client,FFSS_Field Handle,FFSS_BitField Flags,FFSS_LongField Pos)
 {
   FS_PStreaming FS;
   FS_PConn Conn;
@@ -1752,7 +1752,7 @@ bool OnConnectionFTP(SU_PClientSocket Client)
     {
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"421 Service not available, remote server has closed connection" CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+      send(Client->sock,msg,(int)strlen(msg),SU_MSG_NOSIGNAL);
       SU_SEM_POST(FS_SemGbl);
       return false;
     }
@@ -1798,7 +1798,7 @@ void OnPWDFTP(SU_PClientSocket Client)
       tspath[strlen(tspath)-1] = 0;
   }
   snprintf(msg,sizeof(msg),"257 \"%s\" is current directory." CRLF,tspath);
-  send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   SU_SEM_POST(FS_SemShr);
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -1824,15 +1824,15 @@ void OnTypeFTP(SU_PClientSocket Client,const char Type)
   {
     case 'A' :
       snprintf(msg,sizeof(msg),"200 Type set to A." CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       break;
     case 'I'  :
       snprintf(msg,sizeof(msg),"200 Type set to I." CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       break;
     default :
       snprintf(msg,sizeof(msg),"504 TYPE %c not supported" CRLF,Type);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
   }
   SU_SEM_WAIT(FS_SemShr);
@@ -1868,11 +1868,11 @@ void OnModeFTP(SU_PClientSocket Client,const char Mode)
   {
     case 'S' :
       snprintf(msg,sizeof(msg),"200 Mode set to S." CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       break;
     default :
       snprintf(msg,sizeof(msg),"504 MODE %c not supported" CRLF,Mode);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
   }
 /*  SU_SEM_WAIT(FS_SemShr);
@@ -1920,9 +1920,9 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
     return false;
   }
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 ." CRLF);
-  send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(DataPort->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 .." CRLF);
-  send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(DataPort->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   if(strcmp(ts->Path,"/") == 0)
   {
     /* FTP root directory requested - Listing all shares */
@@ -1930,7 +1930,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
     while(Ptr != NULL)
     {
       snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 Jan  1 00:00 %s" CRLF,((FS_PShare)Ptr->Data)->ShareName);
-      send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(DataPort->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       Ptr = Ptr->Next;
     }
     SU_SEM_POST(FS_SemShr);
@@ -1981,7 +1981,7 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
     Tm = localtime(&((FS_PDir)Ptr->Data)->Time);
     snprintf(Tim,sizeof(Tim),"%s %2d %2d:%2d",FS_TimeTable[Tm->tm_mon],Tm->tm_mday,Tm->tm_hour,Tm->tm_min);
     snprintf(msg,sizeof(msg),"drwxr-xr-x    1 nobody   nobody       1024 %s %s" CRLF,Tim,((FS_PDir)Ptr->Data)->DirName);
-    send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(DataPort->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
     Ptr = Ptr->Next;
   }
   Ptr = Node->Files;
@@ -1989,8 +1989,8 @@ bool OnDirectoryListingFTP(SU_PClientSocket Client,SU_PClientSocket DataPort,con
   {
     Tm = localtime(&((FS_PFile)Ptr->Data)->Time);
     snprintf(Tim,sizeof(Tim),"%s %2d %2d:%2d",FS_TimeTable[Tm->tm_mon],Tm->tm_mday,Tm->tm_hour,Tm->tm_min);
-    snprintf(msg,sizeof(msg),"-rw%cr-%cr-%c    1 nobody   nobody   %8ld %s %s" CRLF,(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(long int)((FS_PFile)Ptr->Data)->Size,Tim,((FS_PFile)Ptr->Data)->FileName);
-    send(DataPort->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+    snprintf(msg,sizeof(msg),"-rw%cr-%cr-%c    1 nobody   nobody   %8ld %s %s" CRLF,(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',(((FS_PFile)Ptr->Data)->Flags & FFSS_FILE_EXECUTABLE)?'x':'-',((FS_PFile)Ptr->Data)->Size,Tim,((FS_PFile)Ptr->Data)->FileName);
+		send(DataPort->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
     Ptr = Ptr->Next;
   }
   SU_SEM_POST(FS_SemShr);
@@ -2117,7 +2117,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
       SU_strcpy(ts->Path,"/",sizeof(ts->Path));
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"200 CWD command successful." CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     Share = FS_GetShareFromName(p);
@@ -2125,7 +2125,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
     { /* Share not found - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     p = strtok_r(NULL,"\0",&tmp);
@@ -2134,14 +2134,14 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
     { /* Path not found in share - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     /* CWD successful - Updating Path and sending reply */
     SU_strcpy(ts->Path,Path,sizeof(ts->Path));
     ts->Share = Share;
     snprintf(msg,sizeof(msg),"200 CWD command successful." CRLF);
-    send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   }
   else /* Relative path */
   {
@@ -2159,7 +2159,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
         {
           SU_SEM_POST(FS_SemShr);
           snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-          send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+					send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
           return;
         }
         q[0] = 0;
@@ -2178,7 +2178,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
         SU_strcpy(ts->Path,"/",sizeof(ts->Path));
         SU_SEM_POST(FS_SemShr);
         snprintf(msg,sizeof(msg),"200 CWD command successful." CRLF);
-        send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         return;
       }
       Share = FS_GetShareFromName(p);
@@ -2186,7 +2186,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
       { /* Share not found - Aborting */
         SU_SEM_POST(FS_SemShr);
         snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-        send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         return;
       }
       SU_strcat(tspath,p,sizeof(tspath));
@@ -2204,7 +2204,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
     {
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     while(p != NULL)
@@ -2220,7 +2220,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
       { /* Path not found in share - Aborting */
         SU_SEM_POST(FS_SemShr);
         snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-        send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         return;
       }
       Node = &((FS_PDir)Ptr->Data)->Files;
@@ -2232,7 +2232,7 @@ void OnCWDFTP(SU_PClientSocket Client,const char Path[])
     ts->Share = Share;
     SU_strcpy(ts->Path,tspath,sizeof(ts->Path));
     snprintf(msg,sizeof(msg),"200 CWD command successful." CRLF);
-    send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   }
   SU_SEM_POST(FS_SemShr);
 }
@@ -2253,9 +2253,10 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   FS_PTransferFTP FT = (FS_PTransferFTP) Info;
   fd_set rfds;
   struct timeval tv;
-  int retval,res,len;
+	int retval, res;
+	size_t len;
   char *RBuf;
-  unsigned long int total=0,rpos=0,rlen;
+	size_t total = 0, rpos = 0, rlen;
   FFSS_Field fsize;
 
   SU_ThreadBlockSigs();
@@ -2268,7 +2269,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   {
     SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Cannot allocate buffer in Upload function");
     snprintf(msg,sizeof(msg),"426 Memory allocation error.\n");
-    send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(FT->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
     FS_FreeTransferFTP(FT);
 	SU_END_THREAD(threadwork_ret_zero);
   }
@@ -2283,7 +2284,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
     {
       SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error reading file while uploading : %d",errno);
       snprintf(msg,sizeof(msg),"426 Error reading file.\n");
-      send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(FT->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       FS_FreeTransferFTP(FT);
       free(RBuf);
 	  SU_END_THREAD(threadwork_ret_zero);
@@ -2299,22 +2300,22 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
       FD_SET(FT->Client->sock,&rfds);
       tv.tv_sec = FFSS_TIMEOUT_TRANSFER;
       tv.tv_usec = 0;
-      retval = select(FT->Client->sock+1,NULL,&rfds,NULL,&tv);
+			retval = select((int)(FT->Client->sock + 1), NULL, &rfds, NULL, &tv);
       if(!retval)
       {
         SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Transfer timed out while uploading file");
         snprintf(msg,sizeof(msg),"426 Transfer timed out.\n");
-        send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(FT->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         FS_FreeTransferFTP(FT);
         free(RBuf);
 		SU_END_THREAD(threadwork_ret_zero);
       }
-      res = send(FT->Client->sock,RBuf+rpos,len,SU_MSG_NOSIGNAL);
+			res = send(FT->Client->sock, RBuf + rpos, (int)len, SU_MSG_NOSIGNAL);
       if(res != len)
       {
         SU_DBG_PrintDebug(FFSS_DBGMSG_WARNING,"Error while uploading file : %d",errno);
         snprintf(msg,sizeof(msg),"426 Error sending file.\n");
-        send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(FT->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         FS_FreeTransferFTP(FT);
         free(RBuf);
 		SU_END_THREAD(threadwork_ret_zero);
@@ -2326,7 +2327,7 @@ SU_THREAD_ROUTINE(FS_DownloadFileFunc,Info)
   }
 
   snprintf(msg,sizeof(msg),"226 Transfer complete.\n");
-  send(FT->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(FT->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   FS_FreeTransferFTP(FT);
   SU_END_THREAD(threadwork_ret_zero);
   SU_THREAD_RETURN(0);
@@ -2369,7 +2370,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     {
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     Share = FS_GetShareFromName(p);
@@ -2377,7 +2378,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     { /* Share not found - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     p = strtok_r(NULL,"\0",&tmp);
@@ -2386,7 +2387,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     { /* Path not found in share - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     snprintf(FPath,sizeof(FPath),"%s/%s",Share->Path,p);
@@ -2407,7 +2408,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
         {
           SU_SEM_POST(FS_SemShr);
           snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-          send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+					send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
           return;
         }
         q[0] = 0;
@@ -2423,7 +2424,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
       {
         SU_SEM_POST(FS_SemShr);
         snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-        send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         return;
       }
       Share = FS_GetShareFromName(p);
@@ -2431,7 +2432,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
       { /* Share not found - Aborting */
         SU_SEM_POST(FS_SemShr);
         snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-        send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+				send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
         return;
       }
       SU_strcat(tspath,p,sizeof(tspath));
@@ -2445,7 +2446,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     { /* Path not found in share - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     snprintf(New2,sizeof(New2),"%s%s",q,p);
@@ -2460,7 +2461,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
     { /* Path not found in share - Aborting */
       SU_SEM_POST(FS_SemShr);
       snprintf(msg,sizeof(msg),"550 %s: no such file or directory." CRLF,Path);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     snprintf(FPath,sizeof(FPath),"%s%s",Share->Path,New2);
@@ -2474,18 +2475,18 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
   {
     SU_SEM_POST(FS_SemShr);
     snprintf(msg,sizeof(msg),"550 File %s not found." CRLF,Path);
-    send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
     return;
   }
   snprintf(msg,sizeof(msg),"150 Opening %s mode data connection for /bin/ls." CRLF,(ts->Type == 'I')?"BINARY":"ASCII");
-  send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   DataPort = SU_ClientConnect((char *)Host,atoi(Port),SOCK_STREAM);
   if(DataPort == NULL)
   {
     SU_SEM_POST(FS_SemShr);
     fclose(fp);
     snprintf(msg,sizeof(msg),"425 Can't open data connection to %s:%s : %d." CRLF,Host,Port,errno);
-    send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+		send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
     return;
   }
   else
@@ -2502,7 +2503,7 @@ void OnDownloadFTP(SU_PClientSocket Client,const char Path[],FFSS_LongField Star
       SU_SEM_POST(FS_SemShr);
       FS_FreeTransferFTP(TFTP);
       snprintf(msg,sizeof(msg),"426 Error creating upload thread." CRLF);
-      send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+			send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
       return;
     }
     SU_SEM_POST(FS_SemShr);
@@ -2525,7 +2526,7 @@ void OnIdleTimeoutFTP(SU_PClientSocket Client)
   SU_PList Ptr;
 
   snprintf(msg,sizeof(msg),"421 Idle time out." CRLF);
-  send(Client->sock,msg,strlen(msg),SU_MSG_NOSIGNAL);
+	send(Client->sock, msg, (int)strlen(msg), SU_MSG_NOSIGNAL);
   /* OnEndThread will be called just after returning this function */
 
   SU_SEM_WAIT(FS_SemPlugin);
@@ -2685,7 +2686,7 @@ void OnTransferSuccess(FFSS_PTransfer FT,bool Download)
     SU_DBG_PrintDebug(FS_DBGMSG_CONNS,"(SUCCESS) REMOVE XFER %p - Conn is NULL",FT);
 }
 
-void OnTransferActive(FFSS_PTransfer FT,long int Amount,bool Download)
+void OnTransferActive(FFSS_PTransfer FT, FFSS_Field Amount, bool Download)
 {
 }
 

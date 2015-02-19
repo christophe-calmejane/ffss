@@ -1,5 +1,14 @@
 # Server CMake file
 
+if("${CMAKE_SYSTEM}" MATCHES "Linux")
+	find_package(BISON)
+	find_package(FLEX)
+	BISON_TARGET(ServerParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.c)
+	FLEX_TARGET(ServerScanner lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.c)
+	ADD_FLEX_BISON_DEPENDENCY(ServerScanner ServerParser)
+	include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 set (HEADER_FILES_COMMON
 	${CMAKE_SOURCE_DIR}/libffss/include/ffss/ffss.h
 	confapi.h
@@ -29,6 +38,8 @@ set (SOURCE_FILES_WINDOWS
 
 set (SOURCE_FILES_LINUX
 	arch_dep_unix.c
+	${BISON_ServerParser_OUTPUTS}
+	${FLEX_ServerScanner_OUTPUTS}
 )
 
 set(LINK_LIBRARIES skyutils ffss)

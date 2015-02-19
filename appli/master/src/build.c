@@ -16,11 +16,11 @@
 #include "master.h"
 
 /* Returns a buffer to be sent then freed, or NULL if queue is empty */
-char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
+char *FM_BuildStatesBuffer(SU_PList Queue, size_t *size_out)
 {
   char *buf;
   SU_PList Ptr;
-  long int len,nb,pos;
+	size_t len, nb, pos;
 
   context;
   nb = SU_ListCount(Queue);
@@ -93,7 +93,7 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
   }
 
   /* Flush number of entries */
-  *(FFSS_Field *)(buf+0) = nb;
+	*(FFSS_Field *)(buf + 0) = (FFSS_Field)nb;
 
   /* Emptying Queue */
   SU_FreeListElem(Queue);
@@ -104,11 +104,11 @@ char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out)
 
 
 /* Returns a buffer to be sent then freed */
-char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_out)
+char *FM_BuildServerListing(const char Domain[],const char OS[],size_t *size_out)
 {
   char *buf;
   SU_PList Ptr,Ptr2;
-  long int len,pos,i,j,pos_hst;
+	size_t len, pos, i, j, pos_hst;
 
   context;
   Ptr = FM_Domains;
@@ -132,7 +132,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
 
   /* Flush number of domains */
   context;
-  *(FFSS_Field *)(buf+pos) = j;
+	*(FFSS_Field *)(buf + pos) = (FFSS_Field)j;
   pos += sizeof(FFSS_Field);
 
   /* Flush Domains */
@@ -201,7 +201,7 @@ char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_o
         Ptr2 = Ptr2->Next;
       }
       /* Flush number of hosts in the domain */
-      *(FFSS_Field *)(buf+pos_hst) = i;
+			*(FFSS_Field *)(buf + pos_hst) = (FFSS_Field)i;
     }
     Ptr = Ptr->Next;
   }

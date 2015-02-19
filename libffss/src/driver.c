@@ -123,7 +123,7 @@ void SU_FreeList(SU_PList List)
   }
 }
 
-char *SU_strcpy(char *dest,const char *src,int len)
+char *SU_strcpy(char *dest,const char *src,size_t len)
 {
   int pos=0;
 
@@ -164,7 +164,7 @@ bool SU_strcasecmp(const char *s,const char *p)
 char *FFSS_strdup(const char *in)
 {
   char *s;
-  long int len;
+	size_t len;
 
   len = strlen(in) + 1;
   s = (char *) malloc(len);
@@ -189,7 +189,7 @@ void SU_DBG_PrintDebug(const SU_u64 Type,char *Txt, ...)
 /* ********************************** */
 /*        UDP Packet dispatcher       */
 /* ********************************** */
-void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
+void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long size_t Len)
 {
   int Type;
   char *str,*str2,*str3,*str4;
@@ -593,7 +593,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],long int Len)
 /* ********************************** */
 /*        TCP Packet dispatcher       */
 /* ********************************** */
-SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
+SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],size_t Len)
 {
   unsigned int Type,i;
   long int pos;
@@ -605,8 +605,8 @@ SU_BOOL FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],long int Len)
   bool ret_val;
   bool free_it;
   char *u_Buf;
-  long int u_pos,u_Len;
-  long int Length;
+	size_t u_pos,u_Len;
+	size_t Length;
 
   Type = *(FFSS_Field *)(Buf+sizeof(FFSS_Field));
   pos = sizeof (FFSS_Field)*2;

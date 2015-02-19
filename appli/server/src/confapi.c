@@ -29,7 +29,7 @@ int FSCA_GetIntLen(int v)
   return 5;
 }
 
-bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
+bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],size_t *Len)
 {
   FFSS_Field Size;
   int Got;
@@ -37,7 +37,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   struct timeval tv;
   int retval;
 
-  Size = *Len;
+	Size = (FFSS_Field)*Len;
   /* Send request */
   SU_ClientSendBuf(Client,(char *)&Size,sizeof(Size));
   SU_ClientSendBuf(Client,Buf,Size);
@@ -47,7 +47,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   FD_SET(Client->sock,&rfds);
   tv.tv_sec = 5;
   tv.tv_usec = 0;
-  retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+	retval = select((int)(Client->sock + 1), &rfds, NULL, NULL, &tv);
   if(!retval)
   {
     SU_ClientDisconnect(Client);
@@ -63,7 +63,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
   FD_SET(Client->sock,&rfds);
   tv.tv_sec = 5;
   tv.tv_usec = 0;
-  retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+	retval = select((int)(Client->sock + 1), &rfds, NULL, NULL, &tv);
   if(!retval)
   {
     SU_ClientDisconnect(Client);
@@ -86,7 +86,7 @@ bool FSCA_RequestAndReceive(SU_PClientSocket Client,char Buf[],FFSS_Field *Len)
     FD_SET(Client->sock,&rfds);
     tv.tv_sec = 5;
     tv.tv_usec = 0;
-    retval = select(Client->sock+1,&rfds,NULL,NULL,&tv);
+		retval = select((int)(Client->sock + 1), &rfds, NULL, NULL, &tv);
     if(!retval)
     {
       SU_ClientDisconnect(Client);
@@ -131,7 +131,7 @@ bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[
   FFSS_Field Length;
   int res;
 
-  Length = strlen(Login);
+	Length = (FFSS_Field)strlen(Login);
   res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != sizeof(Length)))
   {
@@ -144,7 +144,7 @@ bool FSCA_RequestAuth(SU_PClientSocket Client,const char Login[],const char Pwd[
     SU_ClientDisconnect(Client);
     return false;
   }
-  Length = strlen(Pwd);
+	Length = (FFSS_Field)strlen(Pwd);
   res = send(Client->sock,(char *)&Length,sizeof(Length),SU_MSG_NOSIGNAL);
   if((res <= 0) || (res != sizeof(Length)))
   {
@@ -165,7 +165,8 @@ FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
 {
   FSCA_PGlobal Gbl = NULL;
   char Buf[10000];
-  FFSS_Field Size,Pos;
+	size_t Size;
+	ptrdiff_t Pos;
 
   Buf[0] = FS_OPCODE_GETGLOBAL;
   Size = 1;
@@ -199,8 +200,8 @@ FSCA_PGlobal FSCA_RequestGlobalInfo(SU_PClientSocket Client)
 FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[])
 {
   char Buf[10000];
-  FFSS_Field Size;
-  int Pos;
+  size_t Size;
+  ptrdiff_t Pos;
   FSCA_PShare Share;
   char *q,*r;
   char *u_l,*u_p,*u_w;
@@ -211,7 +212,7 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
   Buf[0] = FS_OPCODE_GETSHARE;
   Size = 1;
   SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
-  Size += strlen(SharePath) + 1;
+	Size += (FFSS_Field)strlen(SharePath) + 1;
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return NULL;
 
@@ -269,20 +270,20 @@ FSCA_PShare FSCA_RequestShareInfo(SU_PClientSocket Client,const char SharePath[]
 bool FSCA_RequestShareNameAvailable(SU_PClientSocket Client,const char ShareName[])
 {
   char Buf[10000];
-  FFSS_Field Size;
+  size_t Size;
 
   /* Create request */
   Buf[0] = FS_OPCODE_GETNAMEAVAIL;
   Size = 1;
   SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
-  Size += strlen(ShareName) + 1;
+	Size += (FFSS_Field)strlen(ShareName) + 1;
   return FSCA_RequestAndReceive(Client,Buf,&Size);
 }
 
 int FSCA_RequestStateInfo(SU_PClientSocket Client) /* -1 on error */
 {
   char Buf[10000];
-  FFSS_Field Size;
+	size_t Size;
 
   Buf[0] = FS_OPCODE_GETSTATE;
   Size = 1;
@@ -294,8 +295,9 @@ int FSCA_RequestStateInfo(SU_PClientSocket Client) /* -1 on error */
 SU_PList FSCA_RequestConns(SU_PClientSocket Client,const char Path[])
 {
   char Buf[10000];
-  FFSS_Field Size;
-  int Pos,Nb,I,J;
+	size_t Size;
+  int Nb,I,J;
+	ptrdiff_t Pos;
   char *IP,*X,*Y,*File,*Pct;
   SU_PList Conns = NULL;
   FSCA_PConn Conn;
@@ -305,7 +307,7 @@ SU_PList FSCA_RequestConns(SU_PClientSocket Client,const char Path[])
   Buf[0] = FS_OPCODE_GETSHRCONNS;
   Size = 1;
   SU_strcpy(Buf+Size,Path,sizeof(Buf)-Size);
-  Size += strlen(Path) + 1;
+	Size += (FFSS_Field)(strlen(Path) + 1);
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return NULL;
 
@@ -365,8 +367,9 @@ SU_PList FSCA_RequestConns(SU_PClientSocket Client,const char Path[])
 SU_PList FSCA_RequestSharesList(SU_PClientSocket Client)
 {
   char Buf[10000];
-  FFSS_Field Size;
-  int Pos,Nb,I,Conns,XFers,Disabled;
+	size_t Size;
+  int Nb,I,Conns,XFers,Disabled;
+	ptrdiff_t Pos;
   char *Shr,*Path;
   SU_PList Shares = NULL;
   FSCA_PShareLst Share;
@@ -416,7 +419,7 @@ bool FSCA_RequestEject(SU_PClientSocket Client,const char ShareName[])
   Buf[0] = FS_OPCODE_EJECT;
   Size = 1;
   SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
-  Size += strlen(ShareName) + 1;
+	Size += (FFSS_Field)(strlen(ShareName) + 1);
   if(!FSCA_Request(Client,Buf,&Size))
     return false;
   return true;
@@ -426,16 +429,16 @@ bool FSCA_RequestEject(SU_PClientSocket Client,const char ShareName[])
 bool FSCA_SetGlobalInfo(SU_PClientSocket Client,const FSCA_PGlobal Gbl)
 {
   char Buf[10000];
-  FFSS_Field Size;
+	size_t Size;
 
   Buf[0] = FS_OPCODE_UPDTGLOBAL;
   Size = 1;
   SU_strcpy(Buf+Size,Gbl->Name,sizeof(Buf)-Size);
-  Size += strlen(Gbl->Name) + 1;
+	Size += (FFSS_Field)(strlen(Gbl->Name) + 1);
   SU_strcpy(Buf+Size,Gbl->Comment,sizeof(Buf)-Size);
-  Size += strlen(Gbl->Comment) + 1;
+	Size += (FFSS_Field)(strlen(Gbl->Comment) + 1);
   SU_strcpy(Buf+Size,Gbl->Master,sizeof(Buf)-Size);
-  Size += strlen(Gbl->Master) + 1;
+	Size += (FFSS_Field)(strlen(Gbl->Master) + 1);
   snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d%c%d%c%d",Gbl->Idle,0,Gbl->MaxConn,0,Gbl->MaxXFerPerConn,0,Gbl->FTP,0,Gbl->FTP_MaxConn,0,Gbl->XFerInConn);
   Size += FSCA_GetIntLen(Gbl->Idle) + FSCA_GetIntLen(Gbl->MaxConn) + FSCA_GetIntLen(Gbl->MaxXFerPerConn) + FSCA_GetIntLen(Gbl->FTP) + FSCA_GetIntLen(Gbl->FTP_MaxConn) + FSCA_GetIntLen(Gbl->XFerInConn) + 6;
 
@@ -464,7 +467,7 @@ bool FSCA_SetShareState(SU_PClientSocket Client,const char ShareName[],bool Acti
   Buf[1] = (char)Active;
   Size = 2;
   SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
-  Size += strlen(ShareName) + 1;
+	Size += (FFSS_Field)(strlen(ShareName) + 1);
   return FSCA_Request(Client,Buf,&Size);
 }
 
@@ -476,14 +479,14 @@ bool FSCA_RescanQuery(SU_PClientSocket Client,const char ShareName[])
   Buf[0] = FS_OPCODE_RESCAN;
   Size = 1;
   SU_strcpy(Buf+Size,ShareName,sizeof(Buf)-Size);
-  Size += strlen(ShareName) + 1;
+	Size += (FFSS_Field)(strlen(ShareName) + 1);
   return FSCA_Request(Client,Buf,&Size);
 }
 
 bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],const FSCA_PShare Share,char Opcode)
 {
   char Buf[1000];
-  FFSS_Field Size;
+	size_t Size;
   char Users[2048];
   FS_PUser Usr;
   SU_PList Ptr;
@@ -491,11 +494,11 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],const FSCA
   Buf[0] = Opcode;
   Size = 1;
   SU_strcpy(Buf+Size,Share->Name,sizeof(Buf)-Size);
-  Size += strlen(Share->Name) + 1;
+	Size += (FFSS_Field)(strlen(Share->Name) + 1);
   SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
-  Size += strlen(SharePath) + 1;
+	Size += (FFSS_Field)(strlen(SharePath) + 1);
   SU_strcpy(Buf+Size,Share->Comment,sizeof(Buf)-Size);
-  Size += strlen(Share->Comment) + 1;
+	Size += (FFSS_Field)(strlen(Share->Comment) + 1);
   snprintf(Buf+Size,sizeof(Buf)-Size,"%d%c%d%c%d%c%d",Share->Writeable,0,Share->Private,0,Share->NoChksum,0,Share->MaxConn);
   Size += FSCA_GetIntLen(Share->Writeable) + FSCA_GetIntLen(Share->Private) + FSCA_GetIntLen(Share->NoChksum) + FSCA_GetIntLen(Share->MaxConn) + 3;
   Ptr = Share->Users;
@@ -516,7 +519,7 @@ bool FSCA_AddUpdtShare(SU_PClientSocket Client,const char SharePath[],const FSCA
     Ptr = Ptr->Next;
   }
   SU_strcpy(Buf+Size,Users,sizeof(Buf)-Size);
-  Size += strlen(Users) + 1;
+	Size += (FFSS_Field)(strlen(Users) + 1);
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;
@@ -536,45 +539,46 @@ bool FSCA_SetShareInfo(SU_PClientSocket Client,const char SharePath[],const FSCA
 bool FSCA_DelShare(SU_PClientSocket Client,const char SharePath[])
 {
   char Buf[1000];
-  FFSS_Field Size;
+	size_t Size;
 
   Buf[0] = FS_OPCODE_DELSHARE;
   Size = 1;
   SU_strcpy(Buf+Size,SharePath,sizeof(Buf)-Size);
-  Size += strlen(SharePath) + 1;
+	Size += (FFSS_Field)(strlen(SharePath) + 1);
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
     return false;
   return true;
 }
 
-void *FSCA_Plugin_Load(SU_PClientSocket Client,const char Path[],bool AddToStartup)
+FFSS_Handle FSCA_Plugin_Load(SU_PClientSocket Client, const char Path[], bool AddToStartup)
 {
   char Buf[10000];
-  FFSS_Field Size,Pos;
-  void *ret;
+	size_t Size;
+	ptrdiff_t Pos;
+	FFSS_Handle ret;
 
   Buf[0] = FS_OPCODE_PL_LOAD;
   Size = 1;
   SU_strcpy(Buf+Size,Path,sizeof(Buf)-Size);
-  Size += strlen(Path) + 1;
+	Size += (FFSS_Field)(strlen(Path) + 1);
   Buf[Size++] = (char) AddToStartup;
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
-    return NULL;
+    return 0;
 
   Pos = 1;
-  ret = (void *) FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
+	ret = (FFSS_Handle)FFSS_UnpackLongField(Buf, Buf + Pos, Size, &Pos);
   return ret;
 }
 
-bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStartup)
+bool FSCA_Plugin_Unload(SU_PClientSocket Client, FFSS_Handle Handle, bool RemoveFromStartup)
 {
   char Buf[1000];
-  FFSS_Field Size;
+	size_t Size;
 
   Buf[0] = FS_OPCODE_PL_UNLOAD;
   Size = 1;
-  Size = FFSS_PackField(Buf,Size,(FFSS_Field)Handle);
+  Size = FFSS_PackLongField(Buf,Size,(FFSS_LongField)Handle);
   Buf[Size++] = (char) RemoveFromStartup;
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
@@ -582,14 +586,14 @@ bool FSCA_Plugin_Unload(SU_PClientSocket Client,void *Handle,bool RemoveFromStar
   return true;
 }
 
-bool FSCA_Plugin_Configure(SU_PClientSocket Client,void *Handle,void *User)
+bool FSCA_Plugin_Configure(SU_PClientSocket Client, FFSS_Handle Handle, void *User)
 {
   char Buf[1000];
-  FFSS_Field Size;
+	size_t Size;
 
   Buf[0] = FS_OPCODE_PL_CONFIGURE;
   Size = 1;
-  Size = FFSS_PackField(Buf,Size,(FFSS_Field)Handle);
+  Size = FFSS_PackLongField(Buf,Size,(FFSS_LongField)Handle);
   Size = FFSS_PackField(Buf,Size,(FFSS_Field)User);
 
   if(!FSCA_RequestAndReceive(Client,Buf,&Size))
@@ -603,7 +607,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
   FSCA_PPluginInfo Pl;
   int nb,i;
   char Buf[10000],*tmp1,*tmp2,*tmp3;
-  FFSS_Field Size,Pos;
+	size_t Size, Pos;
 
   Buf[0] = FS_OPCODE_PL_ENUM;
   Size = 1;
@@ -616,7 +620,7 @@ SU_PList FSCA_Plugin_Enum(SU_PClientSocket Client)
   {
     Pl = (FSCA_PPluginInfo) malloc(sizeof(FSCA_TPluginInfo));
     memset(Pl,0,sizeof(FSCA_TPluginInfo));
-    Pl->Handle = (void *) FFSS_UnpackField(Buf,Buf+Pos,Size,&Pos);
+		Pl->Handle = (FFSS_Handle)FFSS_UnpackLongField(Buf, Buf + Pos, Size, &Pos);
     tmp1 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);
     tmp2 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);
     tmp3 = FFSS_UnpackString(Buf,Buf+Pos,Size,&Pos);

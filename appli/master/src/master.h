@@ -75,7 +75,7 @@ typedef struct
   int Port;
   char *Domain;
   char *KeyWords;
-  long int Compressions;
+  FFSS_BitField Compressions;
   bool Master;
   FFSS_LongField User;
 } FM_TSearch, *FM_PSearch;
@@ -103,9 +103,9 @@ bool FM_IsMyDomain(FM_PDomain Dom);
 FM_PHost FM_SearchHostByIP(FM_PDomain Domain,const char IP[]);
 
 /* Returns a buffer to be sent then freed, or NULL if queue is empty */
-char *FM_BuildStatesBuffer(SU_PList Queue,long int *size_out);
+char *FM_BuildStatesBuffer(SU_PList Queue, size_t *size_out);
 /* Returns a buffer to be sent then freed */
-char *FM_BuildServerListing(const char Domain[],const char OS[],long int *size_out);
+char *FM_BuildServerListing(const char Domain[], const char OS[], size_t *size_out);
 
 void FM_AddStateToMyQueue(FM_PDomain Domain,FM_PHost Hst);
 void FM_AddStateToOtherQueue(FM_PDomain Domain,FM_PHost Hst);
@@ -117,11 +117,11 @@ SU_PList FM_LoadHosts(const char FileName[]);
 bool FM_SaveHosts(SU_PList Hosts,const char FileName[]);
 
 /* Returns a buffer to be sent then freed, or NULL if request failed */
-char *FM_Search(FM_PSearch Sch,long int *size_out);
+char *FM_Search(FM_PSearch Sch, size_t *size_out);
 
 void FM_BeginIndexAnswerParse(struct sockaddr_in Client);
 /* Must return TRUE on error */
-bool FM_IndexAnswerParse(struct sockaddr_in Client,const char Buf[],long int Len);
+bool FM_IndexAnswerParse(struct sockaddr_in Client, const char Buf[], size_t Len);
 
 void FM_SetHostStateInIndex(const char Host[],FFSS_Field State);
 
