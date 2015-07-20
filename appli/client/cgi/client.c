@@ -3,7 +3,7 @@
 
 #include <ffss/ffss.h>
 
-#define CLT_MASTER "localhost"
+#define CLT_MASTER "192.168.0.98"
 
 static int Printing = false;
 
@@ -61,7 +61,7 @@ void OnMasterError(FFSS_Field ErrorCode,const char Descr[])
 }
 
 /* Fatal error, must shutdown */
-void OnUDPError()
+void OnUDPError(int ErrNum)
 {
   printf("Fatal error while trying to reach ffss master. Aborting<BR>\n");
   /* Shutting down server */
@@ -90,7 +90,7 @@ int main(int argc,char *argv[])
   printf("<HTML><HEAD><TITLE>Search result for \"%s\"</TITLE></HEAD><BODY BGCOLOR=#EEEEEE><FONT FACE=\"Verdana\"><DIV ALIGN=\"CENTER\"><BR>",argv[1]);
   Printing = true;
   FC_SendMessage_Search(CLT_MASTER,NULL,argv[1],0);
-  SU_USLEEP(1200);
+  SU_USLEEP(2500);
   Printing = false;
   printf("</DIV></FONT></BODY></HTML>");
 

@@ -341,6 +341,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
   /* Get pointer to plugin query function */
   PluginQueryFunc = QueryFunc;
 #ifdef _WIN32
+	SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
   L_hInstance = (HINSTANCE)Info;
 #endif /* _WIN32 */
 

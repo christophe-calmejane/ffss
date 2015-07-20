@@ -405,6 +405,9 @@ SU_THREAD_ROUTINE(ThreadFunc,info)
 /* This is the Init fonction (Name it CAREFULLY) called on each LoadPlugin call */
 FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
 {
+#ifdef _WIN32
+	SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
+#endif
   /* Get pointer to plugin query function */
   PluginQueryFunc = QueryFunc;
 

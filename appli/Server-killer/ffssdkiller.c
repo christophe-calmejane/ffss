@@ -11,6 +11,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine
   DWORD res;
   int nb = 0;
 
+  SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
   ProcessId = SU_RB_GetIntValue(FFSS_REGISTRY_PATH_PROCESSID,0);
   if(ProcessId == 0)
     return 0;

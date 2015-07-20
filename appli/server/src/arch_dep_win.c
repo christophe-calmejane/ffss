@@ -62,6 +62,7 @@ bool FS_LoadConfig(const char FileName[])
   char GBL_Master[1024];
   HKEY HK;
 
+	SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
   SU_SEM_WAIT(FS_SemGbl);
   GetCurrentDirectory(sizeof(Path),Path);
   SU_RB_SetStrValue(FFSS_REGISTRY_PATH_SERVER "ServerDirectory",Path);

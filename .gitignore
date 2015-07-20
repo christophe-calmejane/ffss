@@ -10,6 +10,8 @@
 *.vcproj.*.user
 *.sdf
 *.opensdf
+*.exe
+*.obj
 
 # CMake build folder
 /Build-32

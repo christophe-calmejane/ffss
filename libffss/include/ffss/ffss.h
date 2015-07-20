@@ -428,8 +428,8 @@ extern char FFSS_WinServerVersion[20];
 #ifdef __unix__
 #include <sys/types.h>
 #include <stddef.h>
-typedef u_int16_t FFSS_Field;
-typedef int16_t FFSS_SField;
+typedef u_int32_t FFSS_Field;
+typedef int32_t FFSS_SField;
 typedef u_int64_t FFSS_LongField;
 typedef int64_t FFSS_SLongField;
 typedef u_int64_t FFSS_BitField;

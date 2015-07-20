@@ -630,6 +630,7 @@ FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,.
 {
 #ifdef _WIN32
   CC_hInstance = (HINSTANCE)Info;
+	SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
 #endif /* _WIN32 */
   /* Setting all callbacks to NULL */
   Pl = (FS_PPlugin) malloc(sizeof(FS_TPlugin));

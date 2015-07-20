@@ -104,6 +104,7 @@ extern "C" FS_PLUGIN_EXPORT void Plugin_UnInit(void)
 /////////////////////////////////////////////////////////////////////////////
 extern "C" FS_PLUGIN_EXPORT FS_PPlugin Plugin_Init(void *Info,void *(*QueryFunc)(int Type,...))
 {
+	SU_RB_SetRegistry64Mode(SU_RB_MODE_FORCE_WOW64_KEY);
 	// Place significant initialization here
 	g_Language=GetFavoriteLanguage();
 	g_fnQueryFunc=QueryFunc;

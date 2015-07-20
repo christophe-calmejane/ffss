@@ -1,0 +1,42 @@
+# CGI client
+
+set (HEADER_FILES_COMMON
+)
+
+set (HEADER_FILES_WINDOWS
+)
+
+set (HEADER_FILES_LINUX
+)
+
+
+set (SOURCE_FILES_COMMON
+	client.c
+)
+
+set (SOURCE_FILES_WINDOWS
+)
+
+set (SOURCE_FILES_LINUX
+)
+
+set(LINK_LIBRARIES skyutils ffss)
+if(WIN32)
+	set (SOURCE_FILES ${SOURCE_FILES_COMMON} ${SOURCE_FILES_WINDOWS})
+	set (HEADER_FILES ${HEADER_FILES_COMMON} ${HEADER_FILES_WINDOWS})
+	add_executable(client ${HEADER_FILES} ${SOURCE_FILES})
+	if(MSVC)
+		set_property(TARGET client APPEND_STRING PROPERTY COMPILE_FLAGS /WX)
+	endif()
+	set (LINK_LIBRARIES ${LINK_LIBRARIES} ws2_32)
+	target_link_libraries(client ${LINK_LIBRARIES})
+else()
+	set (SOURCE_FILES ${SOURCE_FILES_COMMON} ${SOURCE_FILES_LINUX})
+	set (HEADER_FILES ${HEADER_FILES_COMMON} ${HEADER_FILES_LINUX})
+	add_executable(client ${HEADER_FILES} ${SOURCE_FILES})
+	if(CMAKE_COMPILER_IS_GNUCC)
+		set_property(TARGET client APPEND_STRING PROPERTY COMPILE_FLAGS -Wall)
+	endif()
+	set (LINK_LIBRARIES ${LINK_LIBRARIES} pthread dl m)
+	target_link_libraries(client ${LINK_LIBRARIES})
+endif()

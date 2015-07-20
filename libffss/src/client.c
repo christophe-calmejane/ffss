@@ -27,7 +27,7 @@ static SU_THREAD_RET_TYPE threadwork_ret_zero = 0;
 
 void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],size_t Len)
 {
-  int Type;
+	FFSS_Field Type;
   char *str,*str2,*str3,*str4;
   char **Names,**Comments;
   char **answers,**ips;
@@ -419,7 +419,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],size_t Len)
         FFSS_CB.CCB.OnShortMessage(Client,str);
       break;
     default:
-      FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client.sin_addr),Type);
+      FFSS_PrintSyslog(LOG_WARNING,"Unknown UDP message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Client.sin_addr),Type);
   }
   if(free_it)
     free(u_Buf);
@@ -427,7 +427,7 @@ void FC_AnalyseUDP(struct sockaddr_in Client,char Buf[],size_t Len)
 
 bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],size_t Len)
 {
-  unsigned int Type,i;
+	FFSS_Field Type, i;
   size_t pos;
   FFSS_Field val,val2,val4;
   FFSS_LongField lval,lval2;
@@ -708,7 +708,7 @@ bool FC_AnalyseTCP(SU_PClientSocket Server,char Buf[],size_t Len)
     default:
       if(FFSS_CB.CCB.OnError != NULL)
         FFSS_CB.CCB.OnError(Server,FFSS_ERROR_ATTACK,FFSS_ErrorTable[FFSS_ERROR_ATTACK],0,0);
-      FFSS_PrintSyslog(LOG_WARNING,"Unknown message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),Type);
+      FFSS_PrintSyslog(LOG_WARNING,"Unknown TCP message type (%s) : %d ... DoS attack ?\n",inet_ntoa(Server->SAddr.sin_addr),Type);
       ret_val = false;
   }
   if(free_it)
