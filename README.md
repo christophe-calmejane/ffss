@@ -1,4 +1,4 @@
-Publishing with old repository so it doesn't get lost.
+Publishing this old repository so it doesn't get lost.
 
 ## What is FFSS?
 It's a set of specifications and implementations for a files sharing system that was designed by/for students at the Orsay (France) university during the early 2000's.
